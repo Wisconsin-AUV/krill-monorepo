@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import App from './App.tsx'
+import App from './App'
 
 describe('App', () => {
-  it('renders the title', () => {
+  it('renders the navigation', async () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'krill' })).toBeInTheDocument()
+    expect(await screen.findAllByText('Videos')).not.toHaveLength(0)
   })
 })
