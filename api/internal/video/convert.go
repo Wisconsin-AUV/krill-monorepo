@@ -12,7 +12,17 @@ import (
 	"github.com/wauv/krill/api/internal/storage"
 )
 
-const urlExpiry = 12 * time.Hour
+// URLExpiry covers a long labeling session without re-fetching the clip.
+const URLExpiry = 12 * time.Hour
+
+// Presenter converts rows to protos and signs their image URLs.
+type Presenter struct {
+	store *storage.Store
+}
+
+func NewPresenter(store *storage.Store) *Presenter {
+	return &Presenter{store: store}
+}
 
 var statusToProto = map[string]krillv1.VideoStatus{
 	"uploading":  krillv1.VideoStatus_VIDEO_STATUS_UPLOADING,
@@ -37,7 +47,7 @@ func splitFromProto(s krillv1.SplitAssignment) (string, bool) {
 	return "", false
 }
 
-func (s *Service) toProto(ctx context.Context, v db.Video, clipCount int32) *krillv1.Video {
+func (s *Presenter) Video(ctx context.Context, v db.Video, clipCount int32) *krillv1.Video {
 	out := &krillv1.Video{
 		Id:             v.ID,
 		Name:           v.Name,
@@ -62,20 +72,20 @@ func (s *Service) toProto(ctx context.Context, v db.Video, clipCount int32) *kri
 	return out
 }
 
-func (s *Service) clipToProto(ctx context.Context, v db.Video, c db.Clip) *krillv1.Clip {
+func (s *Presenter) Clip(ctx context.Context, v db.Video, c db.Clip) *krillv1.Clip {
 	return &krillv1.Clip{
 		Id:           c.ID,
 		VideoId:      c.VideoID,
 		Index:        c.Idx,
 		StartFrame:   c.StartFrame,
 		FrameCount:   c.FrameCount,
-		StartMs:      frameMs(c.StartFrame, v.Fps),
-		DurationMs:   frameMs(c.FrameCount, v.Fps),
+		StartMs:      FrameMs(c.StartFrame, v.Fps),
+		DurationMs:   FrameMs(c.FrameCount, v.Fps),
 		ThumbnailUrl: s.frameURL(ctx, v.ID, c.StartFrame+c.FrameCount/2),
 	}
 }
 
-func frameMs(frames int32, fps float64) int64 {
+func FrameMs(frames int32, fps float64) int64 {
 	if fps <= 0 {
 		return 0
 	}
@@ -84,11 +94,15 @@ func frameMs(frames int32, fps float64) int64 {
 
 // frameURL returns "" on failure. A missing thumbnail should not fail the
 // whole listing.
-func (s *Service) frameURL(ctx context.Context, videoID int64, idx int32) string {
-	u, err := s.store.PresignGet(ctx, storage.FrameKey(videoID, idx), urlExpiry, "")
+func (s *Presenter) frameURL(ctx context.Context, videoID int64, idx int32) string {
+	u, err := s.FrameURL(ctx, videoID, idx)
 	if err != nil {
 		slog.Warn("presign thumbnail", "video_id", videoID, "err", err)
 		return ""
 	}
 	return u
+}
+
+func (s *Presenter) FrameURL(ctx context.Context, videoID int64, idx int32) (string, error) {
+	return s.store.PresignGet(ctx, storage.FrameKey(videoID, idx), URLExpiry, "")
 }

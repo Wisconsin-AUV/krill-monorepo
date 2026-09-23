@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "krill/v1/video.proto";
+
+service ClipService {
+  // GetClip returns everything the labeling view needs for one clip.
+  rpc GetClip(GetClipRequest) returns (GetClipResponse) {}
+}
+
+message Frame {
+  int64 id = 1;
+  // Index within the video, not the clip.
+  int32 index = 2;
+  int64 timestamp_ms = 3;
+  // Presigned MinIO URL, valid for several hours.
+  string url = 4;
+}
+
+message GetClipRequest {
+  int64 id = 1;
+}
+
+message GetClipResponse {
+  Video video = 1;
+  Clip clip = 2;
+  repeated Frame frames = 3;
+  // 0 when there is no neighbouring clip.
+  int64 previous_clip_id = 4;
+  int64 next_clip_id = 5;
+}

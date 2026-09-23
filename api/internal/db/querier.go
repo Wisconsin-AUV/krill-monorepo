@@ -17,8 +17,11 @@ type Querier interface {
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedIngests(ctx context.Context) (int64, error)
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	GetClip(ctx context.Context, id int64) (Clip, error)
+	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
 	ListClips(ctx context.Context, videoID int64) ([]Clip, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
