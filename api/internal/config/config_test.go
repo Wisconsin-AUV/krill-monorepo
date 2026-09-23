@@ -19,3 +19,16 @@ func TestLoadDefaults(t *testing.T) {
 		t.Errorf("Addr = %q, want :8080", cfg.Addr)
 	}
 }
+
+func TestLoadPublicEndpointFallsBack(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	t.Setenv("KRILL_S3_ENDPOINT", "http://minio:9000")
+	t.Setenv("KRILL_S3_PUBLIC_ENDPOINT", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.S3PublicEndpoint != "http://minio:9000" {
+		t.Errorf("S3PublicEndpoint = %q, want http://minio:9000", cfg.S3PublicEndpoint)
+	}
+}

@@ -8,10 +8,12 @@ Install these tools:
 
 | Tool | Used for |
 |---|---|
-| [Go 1.25+](https://go.dev/dl/) | `api/` |
+| [Go 1.26+](https://go.dev/dl/) | `api/` |
 | [Node 22+](https://nodejs.org) and [pnpm](https://pnpm.io/installation) | `web/` |
 | [uv](https://docs.astral.sh/uv/) | `worker/` |
 | [buf](https://buf.build/docs/installation) | `proto/` codegen |
+| [sqlc](https://docs.sqlc.dev/en/latest/overview/install.html) | `api/` query codegen |
+| [ffmpeg](https://ffmpeg.org/download.html) | Frame extraction when running `api/` on the host |
 | [just](https://github.com/casey/just) | task runner |
 | [golangci-lint v2](https://golangci-lint.run/welcome/install/) | Go lint and format |
 | Docker | Postgres, MinIO, images |
@@ -194,7 +196,7 @@ docs: add bins section to labeling guideline
 ### Other commit rules
 
 - One logical change per commit. Do not mix a refactor with a feature.
-- Do not hand-edit generated code. Change the `.proto` and run `just gen`.
+- Do not hand-edit generated code. Change the `.proto` or `.sql` and run `just gen`.
 - Never commit secrets, `.env`, video footage, frames, or model weights. `.gitignore` covers the common cases, but check `git status` before committing.
 
 ## AI policy

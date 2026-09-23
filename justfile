@@ -3,9 +3,10 @@ set dotenv-load
 default:
     @just --list
 
-# generate protobuf code for Go, TS, and Python
+# generate protobuf code for Go, TS, and Python, and sqlc queries for Go
 gen:
     cd proto && buf lint && buf generate
+    cd api && sqlc generate
 
 # install dependencies for every project
 setup:
