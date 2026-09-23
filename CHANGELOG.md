@@ -9,3 +9,4 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - Monorepo layout: proto, Go API, React web app, Python worker, and deploy config.
+- Video upload with frame extraction, perceptual hashing, and 10 to 20 second clips.

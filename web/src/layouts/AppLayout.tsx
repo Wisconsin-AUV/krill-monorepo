@@ -1,6 +1,6 @@
 import { useQuery } from '@connectrpc/connect-query'
-import { ArrowDownTrayIcon, BookOpenIcon, FilmIcon, TagIcon } from '@heroicons/react/20/solid'
-import { Outlet, useLocation } from 'react-router'
+import { BookOpenIcon, FilmIcon } from '@heroicons/react/20/solid'
+import { Link, Outlet, useLocation } from 'react-router'
 import { Logo } from '@/components/Logo'
 import FlashMessageRender from '@/components/ui/FlashMessageRender'
 import {
@@ -21,6 +21,7 @@ import {
   SidebarSection,
 } from '@/components/ui/Sidebar'
 import { StackedLayout } from '@/components/ui/StackedLayout'
+import { UploadTray } from '@/components/UploadTray'
 import { HealthService } from '@/gen/krill/v1/health_pb'
 import { GUIDELINE_URL } from '@/lib/links'
 
@@ -30,13 +31,6 @@ const navItems = [
     to: '/',
     icon: FilmIcon,
     match: (p: string) => p === '/' || p.startsWith('/videos'),
-  },
-  { label: 'Labels', to: '/labels', icon: TagIcon, match: (p: string) => p.startsWith('/labels') },
-  {
-    label: 'Exports',
-    to: '/exports',
-    icon: ArrowDownTrayIcon,
-    match: (p: string) => p.startsWith('/exports'),
   },
 ]
 
@@ -58,12 +52,12 @@ export function AppLayout() {
       <StackedLayout
         navbar={
           <Navbar>
-            <NavbarItem to="/" aria-label="Home" className="max-lg:hidden">
+            <Link to="/" aria-label="Home" className="rounded-lg px-2 py-2.5 max-lg:hidden">
               <Logo />
-            </NavbarItem>
+            </Link>
             <NavbarSection className="max-lg:hidden">
-              {navItems.map(({ label, to, icon: Icon }) => (
-                <NavbarItem key={to} to={to} includeSubPaths={to !== '/'}>
+              {navItems.map(({ label, to, icon: Icon, match }) => (
+                <NavbarItem key={to} to={to} current={match(pathname)}>
                   <Icon data-slot="icon" />
                   <NavbarLabel>{label}</NavbarLabel>
                 </NavbarItem>
@@ -105,6 +99,7 @@ export function AppLayout() {
       >
         <Outlet />
       </StackedLayout>
+      <UploadTray />
     </>
   )
 }

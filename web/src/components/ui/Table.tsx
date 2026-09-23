@@ -36,10 +36,10 @@ export function Table({
       <div className="flow-root">
         <div
           {...props}
-          className={clsx(className, '-mx-[--gutter] overflow-x-auto whitespace-nowrap')}
+          className={clsx(className, '-mx-(--gutter) overflow-x-auto whitespace-nowrap')}
         >
           <div
-            className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-[--gutter]')}
+            className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-(--gutter)')}
           >
             <table className="min-w-full text-left text-sm/6">{children}</table>
           </div>

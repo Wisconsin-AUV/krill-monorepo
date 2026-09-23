@@ -39,12 +39,14 @@ export const NavbarItem = forwardRef(function NavbarItem(
     children,
     includeSubPaths,
     accent,
+    current: currentOverride,
     ...props
   }: {
     className?: string
     children: React.ReactNode
     includeSubPaths?: boolean
     accent?: boolean
+    current?: boolean
   } & (
     | Omit<Headless.ButtonProps, 'as' | 'className'>
     | Omit<React.ComponentPropsWithoutRef<typeof NavLink>, 'className'>
@@ -75,7 +77,9 @@ export const NavbarItem = forwardRef(function NavbarItem(
 
   const cleanLocation = location.pathname.replace(/\/$/, '')
 
-  if ('to' in props && typeof props.to === 'string') {
+  if (currentOverride !== undefined) {
+    current = currentOverride
+  } else if ('to' in props && typeof props.to === 'string') {
     const cleanTo = props.to.replace(/\/$/, '')
     if (includeSubPaths) {
       current = cleanLocation.includes(cleanTo)

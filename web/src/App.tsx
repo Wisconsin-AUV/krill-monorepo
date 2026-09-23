@@ -1,12 +1,9 @@
 import { TransportProvider } from '@connectrpc/connect-query'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router'
+import { queryClient } from '@/lib/queryClient'
 import { transport } from '@/lib/transport'
 import { router } from '@/router'
-
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } },
-})
 
 export default function App() {
   return (
