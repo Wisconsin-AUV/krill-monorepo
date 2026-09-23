@@ -37,6 +37,7 @@ describe('App', () => {
     render(<App transport={transport(Role.LABELER)} />)
     expect(await screen.findAllByText('Videos')).not.toHaveLength(0)
     expect(screen.queryByText('Exports')).not.toBeInTheDocument()
+    expect(screen.queryByText('Upload videos')).not.toBeInTheDocument()
   })
 
   it('shows admins every page', async () => {

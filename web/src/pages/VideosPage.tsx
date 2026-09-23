@@ -21,14 +21,17 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
+import { Role } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
+import { useHasRole } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { formatDuration, formatNumber, formatRelative, plural } from '@/lib/format'
 import { isIngesting, splitLabel } from '@/lib/video'
 
 export function VideosPage() {
   const [uploading, setUploading] = useState(false)
+  const canManage = useHasRole(Role.DEVELOPER)
   const { data, isPending, error } = useQuery(
     VideoService.method.listVideos,
     {},
@@ -47,10 +50,12 @@ export function VideosPage() {
           <Heading>Videos</Heading>
           <Text className="mt-1">Pool footage to label. Each video is split into short clips.</Text>
         </div>
-        <Button color="sky" onClick={() => setUploading(true)}>
-          <ArrowUpTrayIcon data-slot="icon" />
-          Upload videos
-        </Button>
+        {canManage && (
+          <Button color="sky" onClick={() => setUploading(true)}>
+            <ArrowUpTrayIcon data-slot="icon" />
+            Upload videos
+          </Button>
+        )}
       </div>
 
       <div className="mt-8 grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
@@ -78,12 +83,18 @@ export function VideosPage() {
           <EmptyState
             icon={FilmIcon}
             title="No videos yet"
-            description="Upload pool footage to start labeling."
+            description={
+              canManage
+                ? 'Upload pool footage to start labeling.'
+                : 'A developer needs to upload footage before you can label.'
+            }
           >
-            <Button color="sky" onClick={() => setUploading(true)}>
-              <ArrowUpTrayIcon data-slot="icon" />
-              Upload videos
-            </Button>
+            {canManage && (
+              <Button color="sky" onClick={() => setUploading(true)}>
+                <ArrowUpTrayIcon data-slot="icon" />
+                Upload videos
+              </Button>
+            )}
           </EmptyState>
         </div>
       ) : (

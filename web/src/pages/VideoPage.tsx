@@ -32,7 +32,9 @@ import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Text } from '@/components/ui/Text'
+import { Role } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
+import { useHasRole } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
@@ -79,6 +81,7 @@ export function VideoPage() {
   const id = /^\d+$/.test(params.id ?? '') ? BigInt(params.id!) : undefined
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const canManage = useHasRole(Role.DEVELOPER)
 
   const { data, isPending, error } = useQuery(
     VideoService.method.getVideo,
@@ -145,29 +148,31 @@ export function VideoPage() {
           <Heading className="truncate">{video.name}</Heading>
           <VideoStatusBadge video={video} />
         </div>
-        <div className="flex gap-3">
-          <Button outline onClick={() => setEditing(true)}>
-            <PencilSquareIcon data-slot="icon" />
-            Edit
-          </Button>
-          <Dropdown>
-            <DropdownButton plain aria-label="More options">
-              <EllipsisHorizontalIcon data-slot="icon" />
-            </DropdownButton>
-            <DropdownMenu anchor="bottom end">
-              {video.status === VideoStatus.FAILED && (
-                <DropdownItem onClick={() => retry.mutate({ videoId: video.id })}>
-                  <ArrowPathIcon data-slot="icon" />
-                  <DropdownLabel>Retry ingest</DropdownLabel>
+        {canManage && (
+          <div className="flex gap-3">
+            <Button outline onClick={() => setEditing(true)}>
+              <PencilSquareIcon data-slot="icon" />
+              Edit
+            </Button>
+            <Dropdown>
+              <DropdownButton plain aria-label="More options">
+                <EllipsisHorizontalIcon data-slot="icon" />
+              </DropdownButton>
+              <DropdownMenu anchor="bottom end">
+                {video.status === VideoStatus.FAILED && (
+                  <DropdownItem onClick={() => retry.mutate({ videoId: video.id })}>
+                    <ArrowPathIcon data-slot="icon" />
+                    <DropdownLabel>Retry ingest</DropdownLabel>
+                  </DropdownItem>
+                )}
+                <DropdownItem onClick={() => setDeleting(true)}>
+                  <TrashIcon data-slot="icon" />
+                  <DropdownLabel>Delete video</DropdownLabel>
                 </DropdownItem>
-              )}
-              <DropdownItem onClick={() => setDeleting(true)}>
-                <TrashIcon data-slot="icon" />
-                <DropdownLabel>Delete video</DropdownLabel>
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+        )}
       </div>
 
       {video.status === VideoStatus.FAILED && (
@@ -181,13 +186,15 @@ export function VideoPage() {
               {video.error}
             </p>
           </div>
-          <Button
-            color="red"
-            onClick={() => retry.mutate({ videoId: video.id })}
-            disabled={retry.isPending}
-          >
-            Retry
-          </Button>
+          {canManage && (
+            <Button
+              color="red"
+              onClick={() => retry.mutate({ videoId: video.id })}
+              disabled={retry.isPending}
+            >
+              Retry
+            </Button>
+          )}
         </div>
       )}
 

@@ -2,23 +2,28 @@ import { Cog6ToothIcon } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
 import { Link } from 'react-router'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { Role } from '@/gen/krill/v1/user_pb'
+import { useHasRole } from '@/lib/auth'
 import { useLabelStore } from './useLabelStore'
 
 export function TypePanel({ types, counts }: { types: LabelType[]; counts: Map<bigint, number> }) {
   const activeTypeId = useLabelStore((s) => s.activeTypeId)
   const setActiveType = useLabelStore((s) => s.setActiveType)
+  const canManage = useHasRole(Role.DEVELOPER)
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-zinc-950/10 bg-white dark:border-white/10 dark:bg-zinc-900">
       <div className="flex items-center justify-between px-3 pt-3 pb-2">
         <h2 className="text-xs/6 font-medium text-zinc-500 dark:text-zinc-400">Label types</h2>
-        <Link
-          to="/labels"
-          className="rounded p-1 text-zinc-500 hover:bg-zinc-950/5 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-zinc-300"
-          title="Manage label types"
-        >
-          <Cog6ToothIcon className="size-4" />
-        </Link>
+        {canManage && (
+          <Link
+            to="/labels"
+            className="rounded p-1 text-zinc-500 hover:bg-zinc-950/5 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-zinc-300"
+            title="Manage label types"
+          >
+            <Cog6ToothIcon className="size-4" />
+          </Link>
+        )}
       </div>
       <ul className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
         {types.map((t, i) => {
@@ -59,13 +64,19 @@ export function TypePanel({ types, counts }: { types: LabelType[]; counts: Map<b
         {types.length === 0 && (
           <li className="px-2 py-4 text-sm/6 text-zinc-500 dark:text-zinc-400">
             No label types yet.{' '}
-            <Link
-              to="/labels"
-              className="text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
-            >
-              Create some
-            </Link>{' '}
-            to start drawing.
+            {canManage ? (
+              <>
+                <Link
+                  to="/labels"
+                  className="text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
+                >
+                  Create some
+                </Link>{' '}
+                to start drawing.
+              </>
+            ) : (
+              'A developer needs to create some before you can draw.'
+            )}
           </li>
         )}
       </ul>
