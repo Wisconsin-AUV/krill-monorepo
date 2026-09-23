@@ -9,6 +9,7 @@ import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { plural } from '@/lib/format'
 import { missingAttributes } from '@/lib/labels'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import type { TrackInfo } from './AnnotationLayer'
@@ -154,7 +155,10 @@ export function TrackPanel({
                     aria-label={`Missing ${missing.join(', ')}`}
                   />
                 )}
-                <span className="text-xs text-zinc-500 tabular-nums" title={`${count} boxes`}>
+                <span
+                  className="text-xs text-zinc-500 tabular-nums"
+                  title={plural(count, 'box', 'boxes')}
+                >
                   {count}
                 </span>
                 <span

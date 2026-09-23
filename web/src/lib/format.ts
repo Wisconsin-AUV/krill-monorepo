@@ -16,6 +16,10 @@ export function formatNumber(n: bigint | number): string {
   return Number(n).toLocaleString()
 }
 
+export function plural(n: bigint | number, word: string, pluralWord = `${word}s`): string {
+  return `${formatNumber(n)} ${Number(n) === 1 ? word : pluralWord}`
+}
+
 export function formatBytes(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
   let v = bytes

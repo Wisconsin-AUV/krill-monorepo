@@ -12,3 +12,4 @@ All notable changes to this project are documented here. The format follows
 - Video upload with frame extraction, perceptual hashing, and 10 to 20 second clips.
 - Clip viewer with frame stepping, playback, zoom, and a scrubbable timeline.
 - Label types with track attributes, and manual box labeling with tracks, copy forward, and undo.
+- YOLO export with per-video train/val split, frame stride, and perceptual-hash dedup.

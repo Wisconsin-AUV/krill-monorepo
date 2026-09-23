@@ -24,7 +24,7 @@ import { Text } from '@/components/ui/Text'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { errorMessage } from '@/lib/errors'
-import { formatDuration, formatNumber, formatRelative } from '@/lib/format'
+import { formatDuration, formatNumber, formatRelative, plural } from '@/lib/format'
 import { isIngesting, splitLabel } from '@/lib/video'
 
 export function VideosPage() {
@@ -140,7 +140,7 @@ export function VideosPage() {
                         {v.frameCount > 0
                           ? Math.round((v.labeledFrameCount / v.frameCount) * 100)
                           : 0}
-                        % · {formatNumber(v.boxCount)} boxes
+                        % · {plural(v.boxCount, 'box', 'boxes')}
                       </div>
                       <Meter
                         value={v.frameCount > 0 ? v.labeledFrameCount / v.frameCount : 0}

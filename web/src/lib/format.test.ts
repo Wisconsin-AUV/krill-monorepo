@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, formatDuration, formatFrameTime, formatRelative } from './format'
+import { formatBytes, formatDuration, formatFrameTime, formatRelative, plural } from './format'
 
 describe('formatDuration', () => {
   it.each([
@@ -35,5 +35,13 @@ describe('formatFrameTime', () => {
   it('shows tenths without rounding the seconds up', () => {
     expect(formatFrameTime(0)).toBe('0:00.0')
     expect(formatFrameTime(12_960)).toBe('0:12.9')
+  })
+})
+
+describe('plural', () => {
+  it('picks the word form from the count', () => {
+    expect(plural(1, 'image')).toBe('1 image')
+    expect(plural(2, 'image')).toBe('2 images')
+    expect(plural(1200, 'box', 'boxes')).toBe('1,200 boxes')
   })
 })

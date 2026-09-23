@@ -35,7 +35,7 @@ import { Text } from '@/components/ui/Text'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
-import { formatDuration, formatFps, formatNumber, formatRelative } from '@/lib/format'
+import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 import { extractFpsOptions, isIngesting, splitLabel } from '@/lib/video'
 import { NotFound } from './NotFound'
@@ -61,8 +61,8 @@ function ClipCard({ clip }: { clip: Clip }) {
         </span>
       </div>
       <div className="text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
-        {formatNumber(clip.labeledFrameCount)} of {formatNumber(clip.frameCount)} frames done ·{' '}
-        {formatNumber(clip.boxCount)} boxes
+        {formatNumber(clip.labeledFrameCount)} of {plural(clip.frameCount, 'frame')} done ·{' '}
+        {plural(clip.boxCount, 'box', 'boxes')}
       </div>
       <Meter
         value={clip.frameCount > 0 ? clip.labeledFrameCount / clip.frameCount : 0}
@@ -237,8 +237,8 @@ export function VideoPage() {
             </DescriptionDetails>
             <DescriptionTerm>Labeled</DescriptionTerm>
             <DescriptionDetails className="tabular-nums">
-              {formatNumber(video.labeledFrameCount)} frames done · {formatNumber(video.boxCount)}{' '}
-              boxes
+              {plural(video.labeledFrameCount, 'frame')} done ·{' '}
+              {plural(video.boxCount, 'box', 'boxes')}
             </DescriptionDetails>
           </>
         )}
