@@ -34,6 +34,11 @@ services:
       KRILL_S3_PUBLIC_ENDPOINT: ${KRILL_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
       KRILL_S3_ACCESS_KEY: krill
       KRILL_S3_SECRET_KEY: krillkrill
+      KRILL_PUBLIC_URL: ${KRILL_PUBLIC_URL:-http://localhost:8080}
+      KRILL_ALLOW_SIGNUP: ${KRILL_ALLOW_SIGNUP:-true}
+      KRILL_SLACK_CLIENT_ID: ${KRILL_SLACK_CLIENT_ID:-}
+      KRILL_SLACK_CLIENT_SECRET: ${KRILL_SLACK_CLIENT_SECRET:-}
+      KRILL_SLACK_TEAM_ID: ${KRILL_SLACK_TEAM_ID:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }

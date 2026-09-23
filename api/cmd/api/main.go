@@ -118,9 +118,20 @@ func run() error {
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
-		Cookies:     cookies,
-		AllowSignup: cfg.AllowSignup,
+		Cookies:      cookies,
+		AllowSignup:  cfg.AllowSignup,
+		SlackEnabled: cfg.SlackClientID != "",
 	}), rpcOpts))
+	if cfg.SlackClientID != "" {
+		slack := auth.NewSlack(pool, auth.SlackConfig{
+			ClientID:     cfg.SlackClientID,
+			ClientSecret: cfg.SlackClientSecret,
+			TeamID:       cfg.SlackTeamID,
+			PublicURL:    cfg.PublicURL,
+		}, cookies)
+		mux.HandleFunc("GET /auth/slack/login", slack.Login)
+		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
+	}
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))

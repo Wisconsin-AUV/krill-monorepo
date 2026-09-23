@@ -48,3 +48,13 @@ func TestLoadAllowSignup(t *testing.T) {
 		t.Error("expected error for an invalid KRILL_ALLOW_SIGNUP")
 	}
 }
+
+func TestLoadSlackNeedsTeam(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	t.Setenv("KRILL_SLACK_CLIENT_ID", "id")
+	t.Setenv("KRILL_SLACK_CLIENT_SECRET", "secret")
+	t.Setenv("KRILL_SLACK_TEAM_ID", "")
+	if _, err := Load(); err == nil {
+		t.Error("expected error when KRILL_SLACK_TEAM_ID is missing")
+	}
+}

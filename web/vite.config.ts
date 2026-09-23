@@ -12,6 +12,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/krill.v1.': process.env.KRILL_API_URL ?? 'http://localhost:8080',
+      '/auth/': process.env.KRILL_API_URL ?? 'http://localhost:8080',
     },
   },
   test: {
