@@ -10,6 +10,7 @@ import { LabelsPage } from '@/pages/LabelsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFound } from '@/pages/NotFound'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
 
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
                   { path: 'labels', element: <LabelsPage /> },
                   { path: 'exports', element: <ExportsPage /> },
                 ],
+              },
+              {
+                element: <RequireRole role={Role.ADMIN} />,
+                children: [{ path: 'users', element: <UsersPage /> }],
               },
               { path: '*', element: <NotFound /> },
             ],
