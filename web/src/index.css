@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/* Dark follows the OS, and can be forced on a subtree (the labeling workspace) with .dark */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    @slot;
+  }
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+}
+
 @theme {
   --font-sans: InterVariable, ui-sans-serif, system-ui, sans-serif;
   --font-sans--font-feature-settings: 'cv11';

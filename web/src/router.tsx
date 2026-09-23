@@ -1,10 +1,12 @@
 import { createBrowserRouter } from 'react-router'
 import { AppLayout } from '@/layouts/AppLayout'
+import { ClipPage } from '@/pages/ClipPage'
 import { NotFound } from '@/pages/NotFound'
 import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
 
 export const router = createBrowserRouter([
+  { path: 'clips/:id', element: <ClipPage /> },
   {
     element: <AppLayout />,
     children: [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, formatDuration, formatRelative } from './format'
+import { formatBytes, formatDuration, formatFrameTime, formatRelative } from './format'
 
 describe('formatDuration', () => {
   it.each([
@@ -28,5 +28,12 @@ describe('formatRelative', () => {
     expect(formatRelative(new Date('2026-01-10T11:59:30Z'), now)).toBe('just now')
     expect(formatRelative(new Date('2026-01-10T09:00:00Z'), now)).toBe('3 hours ago')
     expect(formatRelative(new Date('2026-01-09T12:00:00Z'), now)).toBe('yesterday')
+  })
+})
+
+describe('formatFrameTime', () => {
+  it('shows tenths without rounding the seconds up', () => {
+    expect(formatFrameTime(0)).toBe('0:00.0')
+    expect(formatFrameTime(12_960)).toBe('0:12.9')
   })
 })

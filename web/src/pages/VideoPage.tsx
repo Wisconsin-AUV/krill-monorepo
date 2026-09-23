@@ -43,8 +43,15 @@ import { NotFound } from './NotFound'
 function ClipCard({ clip }: { clip: Clip }) {
   const start = Number(clip.startMs)
   return (
-    <div className="group">
-      <Thumbnail src={clip.thumbnailUrl} alt="" />
+    <Link
+      to={`/clips/${clip.id}`}
+      className="group rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500"
+    >
+      <Thumbnail
+        src={clip.thumbnailUrl}
+        alt=""
+        className="transition group-hover:opacity-90 group-hover:ring-2 group-hover:ring-sky-500"
+      />
       <div className="mt-2 flex items-baseline justify-between gap-2">
         <span className="text-sm/6 font-medium text-zinc-950 dark:text-white">
           Clip {clip.index + 1}
@@ -56,7 +63,7 @@ function ClipCard({ clip }: { clip: Clip }) {
       <div className="text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
         {formatNumber(clip.frameCount)} frames
       </div>
-    </div>
+    </Link>
   )
 }
 

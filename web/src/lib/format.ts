@@ -7,6 +7,11 @@ export function formatDuration(ms: bigint | number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
 }
 
+export function formatFrameTime(ms: bigint | number): string {
+  const n = Number(ms)
+  return `${formatDuration(Math.floor(n / 1000) * 1000)}.${Math.floor((n % 1000) / 100)}`
+}
+
 export function formatNumber(n: bigint | number): string {
   return Number(n).toLocaleString()
 }
