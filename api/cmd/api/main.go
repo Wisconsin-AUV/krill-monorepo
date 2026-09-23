@@ -27,6 +27,7 @@ import (
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/video"
+	"github.com/wauv/krill/api/internal/web"
 )
 
 // version is set at build time with -ldflags "-X main.version=vX.Y.Z".
@@ -115,6 +116,10 @@ func run() error {
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool)))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool)))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs)))
+	if cfg.WebDir != "" {
+		// No method in the pattern: "GET /" would conflict with the RPC routes.
+		mux.Handle("/", web.Handler(cfg.WebDir))
+	}
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		if err := pool.Ping(r.Context()); err != nil {
 			http.Error(w, "database unreachable", http.StatusServiceUnavailable)

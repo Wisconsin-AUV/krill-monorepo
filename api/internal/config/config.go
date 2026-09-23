@@ -14,6 +14,9 @@ type Config struct {
 	S3Bucket         string
 	S3AccessKey      string
 	S3SecretKey      string
+	// WebDir holds the built web app. Empty means the API serves only RPCs,
+	// which is the case in development where Vite serves the app.
+	WebDir string
 }
 
 func Load() (Config, error) {
@@ -25,6 +28,7 @@ func Load() (Config, error) {
 		S3Bucket:         getenv("KRILL_S3_BUCKET", "krill"),
 		S3AccessKey:      os.Getenv("KRILL_S3_ACCESS_KEY"),
 		S3SecretKey:      os.Getenv("KRILL_S3_SECRET_KEY"),
+		WebDir:           os.Getenv("KRILL_WEB_DIR"),
 	}
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint

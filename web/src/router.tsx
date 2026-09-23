@@ -1,6 +1,5 @@
 import { createBrowserRouter } from 'react-router'
 import { AppLayout } from '@/layouts/AppLayout'
-import { ClipPage } from '@/pages/ClipPage'
 import { ExportsPage } from '@/pages/ExportsPage'
 import { LabelsPage } from '@/pages/LabelsPage'
 import { NotFound } from '@/pages/NotFound'
@@ -8,7 +7,11 @@ import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
 
 export const router = createBrowserRouter([
-  { path: 'clips/:id', element: <ClipPage /> },
+  // Konva only loads with the labeling workspace, which keeps the rest of the app light.
+  {
+    path: 'clips/:id',
+    lazy: () => import('@/pages/ClipPage').then((m) => ({ Component: m.ClipPage })),
+  },
   {
     element: <AppLayout />,
     children: [

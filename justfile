@@ -46,9 +46,8 @@ test:
     cd web && pnpm test
     cd worker && uv run pytest
 
-# build web bundle and api + ROCm worker images
+# build the api image (which bundles the web app) and the ROCm worker image
 build version="dev":
-    cd web && pnpm build
     docker build -f deploy/api.Dockerfile --build-arg VERSION={{version}} -t krill-api:{{version}} .
     docker build -f deploy/worker.Dockerfile -t krill-worker:{{version}}-rocm .
 
