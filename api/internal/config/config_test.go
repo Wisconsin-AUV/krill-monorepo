@@ -32,3 +32,19 @@ func TestLoadPublicEndpointFallsBack(t *testing.T) {
 		t.Errorf("S3PublicEndpoint = %q, want http://minio:9000", cfg.S3PublicEndpoint)
 	}
 }
+
+func TestLoadAllowSignup(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	t.Setenv("KRILL_ALLOW_SIGNUP", "false")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.AllowSignup {
+		t.Error("AllowSignup = true, want false")
+	}
+	t.Setenv("KRILL_ALLOW_SIGNUP", "maybe")
+	if _, err := Load(); err == nil {
+		t.Error("expected error for an invalid KRILL_ALLOW_SIGNUP")
+	}
+}

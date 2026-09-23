@@ -5,6 +5,7 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -63,12 +64,32 @@ type LabelType struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type Session struct {
+	TokenHash []byte             `json:"token_hash"`
+	UserID    uuid.UUID          `json:"user_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
 type Track struct {
 	ID          int64              `json:"id"`
 	ClipID      int64              `json:"clip_id"`
 	LabelTypeID int64              `json:"label_type_id"`
 	Attributes  []byte             `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type User struct {
+	ID           uuid.UUID          `json:"id"`
+	Name         string             `json:"name"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	PasswordHash pgtype.Text        `json:"password_hash"`
+	Role         string             `json:"role"`
+	SlackUserID  pgtype.Text        `json:"slack_user_id"`
+	Disabled     bool               `json:"disabled"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	LastLoginAt  pgtype.Timestamptz `json:"last_login_at"`
 }
 
 type Video struct {

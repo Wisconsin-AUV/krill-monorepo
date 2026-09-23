@@ -2,7 +2,10 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -17,6 +20,12 @@ type Config struct {
 	// WebDir holds the built web app. Empty means the API serves only RPCs,
 	// which is the case in development where Vite serves the app.
 	WebDir string
+	// PublicURL is where browsers reach the app. Cookies are marked Secure
+	// when it is HTTPS.
+	PublicURL string
+	// AllowSignup lets anyone register as a labeler. The first account can
+	// always register and becomes an admin.
+	AllowSignup bool
 }
 
 func Load() (Config, error) {
@@ -29,6 +38,11 @@ func Load() (Config, error) {
 		S3AccessKey:      os.Getenv("KRILL_S3_ACCESS_KEY"),
 		S3SecretKey:      os.Getenv("KRILL_S3_SECRET_KEY"),
 		WebDir:           os.Getenv("KRILL_WEB_DIR"),
+		PublicURL:        strings.TrimRight(getenv("KRILL_PUBLIC_URL", "http://localhost:8080"), "/"),
+	}
+	var err error
+	if cfg.AllowSignup, err = strconv.ParseBool(getenv("KRILL_ALLOW_SIGNUP", "true")); err != nil {
+		return Config{}, fmt.Errorf("KRILL_ALLOW_SIGNUP: %w", err)
 	}
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint

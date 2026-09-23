@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
@@ -109,13 +112,19 @@ func run() error {
 		return fmt.Errorf("start jobs: %w", err)
 	}
 
+	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
+	rpcOpts := connect.WithInterceptors(auth.NewInterceptor(db.New(pool).GetSessionUser))
 	mux := http.NewServeMux()
-	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version)))
-	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs)))
-	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store)))
-	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool)))
-	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool)))
-	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs)))
+	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
+	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
+		Cookies:     cookies,
+		AllowSignup: cfg.AllowSignup,
+	}), rpcOpts))
+	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

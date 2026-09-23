@@ -6,6 +6,9 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -15,16 +18,24 @@ type Querier interface {
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
+	CountUsers(ctx context.Context) (int32, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
+	DeleteExpiredSessions(ctx context.Context) error
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
+	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
+	DeleteSession(ctx context.Context, tokenHash []byte) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
@@ -38,10 +49,16 @@ type Querier interface {
 	GetFrame(ctx context.Context, id int64) (Frame, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
+	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
+	GetUser(ctx context.Context, id uuid.UUID) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByLogin(ctx context.Context, login string) (User, error)
+	GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
@@ -52,20 +69,28 @@ type Querier interface {
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]Frame, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
+	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	LockUsers(ctx context.Context) error
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
+	SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (User, error)
+	SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (int64, error)
+	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
 	StartDataset(ctx context.Context, id int64) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	TouchLogin(ctx context.Context, id uuid.UUID) error
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
+	UsernameExists(ctx context.Context, username string) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)
