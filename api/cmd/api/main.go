@@ -21,6 +21,7 @@ import (
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/export"
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/storage"
@@ -72,6 +73,11 @@ func run() error {
 	} else if n > 0 {
 		slog.Warn("marked interrupted ingests as failed", "count", n)
 	}
+	if n, err := db.New(pool).FailInterruptedDatasets(ctx); err != nil {
+		return fmt.Errorf("fail interrupted exports: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted exports as failed", "count", n)
+	}
 
 	store, err := storage.New(ctx, storage.Config{
 		Endpoint:       cfg.S3Endpoint,
@@ -86,6 +92,7 @@ func run() error {
 
 	workers := river.NewWorkers()
 	river.AddWorker(workers, ingest.NewWorker(pool, store))
+	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
@@ -107,6 +114,7 @@ func run() error {
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store)))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool)))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool)))
+	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs)))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		if err := pool.Ping(r.Context()); err != nil {
 			http.Error(w, "database unreachable", http.StatusServiceUnavailable)

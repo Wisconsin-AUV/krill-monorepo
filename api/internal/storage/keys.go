@@ -17,3 +17,11 @@ func FramesPrefix(videoID int64) string {
 func FrameKey(videoID int64, idx int32) string {
 	return fmt.Sprintf("videos/%d/frames/%06d.jpg", videoID, idx)
 }
+
+func DatasetPrefix(id int64) string {
+	return fmt.Sprintf("datasets/%d/", id)
+}
+
+func DatasetKey(id int64) string {
+	return fmt.Sprintf("datasets/%d/dataset.zip", id)
+}

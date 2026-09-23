@@ -16,19 +16,25 @@ type Querier interface {
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
+	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClips(ctx context.Context, videoID int64) error
+	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
+	FailInterruptedDatasets(ctx context.Context) (int64, error)
 	FailInterruptedIngests(ctx context.Context) (int64, error)
+	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
 	GetClip(ctx context.Context, id int64) (Clip, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
+	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
@@ -36,17 +42,25 @@ type Querier interface {
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
+	ListDatasets(ctx context.Context) ([]Dataset, error)
+	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
+	ListExportFrames(ctx context.Context, videoIds []int64) ([]Frame, error)
+	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
+	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
+	StartDataset(ctx context.Context, id int64) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)

@@ -31,6 +31,19 @@ type Clip struct {
 	FrameCount int32 `json:"frame_count"`
 }
 
+type Dataset struct {
+	ID         int64              `json:"id"`
+	Name       string             `json:"name"`
+	Status     string             `json:"status"`
+	Error      string             `json:"error"`
+	Progress   float32            `json:"progress"`
+	Options    []byte             `json:"options"`
+	Stats      []byte             `json:"stats"`
+	SizeBytes  int64              `json:"size_bytes"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+}
+
 type Frame struct {
 	ID      int64  `json:"id"`
 	VideoID int64  `json:"video_id"`

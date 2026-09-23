@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ExportService builds YOLO datasets. Train and val are split by video,
+// never by frame, and only frames marked labeled or empty are exported.
+service ExportService {
+  // PreviewExport plans an export without writing anything.
+  rpc PreviewExport(PreviewExportRequest) returns (PreviewExportResponse) {}
+  rpc CreateExport(CreateExportRequest) returns (CreateExportResponse) {}
+  rpc ListExports(ListExportsRequest) returns (ListExportsResponse) {}
+  rpc DeleteExport(DeleteExportRequest) returns (DeleteExportResponse) {}
+}
+
+enum ExportStatus {
+  EXPORT_STATUS_UNSPECIFIED = 0;
+  EXPORT_STATUS_QUEUED = 1;
+  EXPORT_STATUS_RUNNING = 2;
+  EXPORT_STATUS_READY = 3;
+  EXPORT_STATUS_FAILED = 4;
+}
+
+message ExportOptions {
+  // Share of images to put in val, from 0 to 0.5. Videos pinned to a split
+  // keep it; the rest are balanced toward this share.
+  float val_fraction = 1;
+  // Keep every Nth exportable frame of each video. 1 keeps all.
+  int32 stride = 2;
+  bool dedup = 3;
+  // Frames whose dHash differs from the last kept frame by at most this
+  // many bits are dropped as near-duplicates.
+  int32 dedup_distance = 4;
+  // Videos to include. Empty means every ready video.
+  repeated int64 video_ids = 5;
+}
+
+message ExportClassStats {
+  int32 id = 1;
+  string name = 2;
+  int32 train_boxes = 3;
+  int32 val_boxes = 4;
+  // Distinct clips and videos with at least one box of this class. Frame
+  // counts overstate variety because tracked frames are near-identical.
+  int32 clips = 5;
+  int32 videos = 6;
+}
+
+message ExportVideoStats {
+  int64 video_id = 1;
+  string name = 2;
+  // "train" or "val".
+  string split = 3;
+  bool pinned = 4;
+  int32 images = 5;
+  int32 boxes = 6;
+}
+
+message ExportStats {
+  int32 train_images = 1;
+  int32 val_images = 2;
+  int32 train_boxes = 3;
+  int32 val_boxes = 4;
+  // Images with no boxes, exported as negatives.
+  int32 negative_images = 5;
+  // Frames not yet marked labeled or empty.
+  int32 unlabeled_frames = 6;
+  // Frames dropped because a track on them is missing an attribute.
+  int32 incomplete_frames = 7;
+  // Frames dropped because they hold unverified proposals.
+  int32 unverified_frames = 8;
+  int32 stride_skipped = 9;
+  int32 duplicate_skipped = 10;
+  repeated ExportClassStats classes = 11;
+  repeated ExportVideoStats videos = 12;
+}
+
+message Export {
+  int64 id = 1;
+  string name = 2;
+  ExportStatus status = 3;
+  string error = 4;
+  // 0 to 1 while running.
+  float progress = 5;
+  ExportOptions options = 6;
+  ExportStats stats = 7;
+  int64 size_bytes = 8;
+  string download_url = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp finished_at = 11;
+}
+
+message PreviewExportRequest {
+  ExportOptions options = 1;
+}
+
+message PreviewExportResponse {
+  ExportStats stats = 1;
+}
+
+message CreateExportRequest {
+  string name = 1;
+  ExportOptions options = 2;
+}
+
+message CreateExportResponse {
+  Export export = 1;
+}
+
+message ListExportsRequest {}
+
+message ListExportsResponse {
+  repeated Export exports = 1;
+}
+
+message DeleteExportRequest {
+  int64 id = 1;
+}
+
+message DeleteExportResponse {}
