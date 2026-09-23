@@ -66,7 +66,7 @@ func (s *Service) CreateVideo(ctx context.Context, req *krillv1.CreateVideoReque
 	if err != nil {
 		return nil, rpc.Internal(err, "presign upload")
 	}
-	return &krillv1.CreateVideoResponse{Video: s.Video(ctx, v, 0), UploadUrl: uploadURL}, nil
+	return &krillv1.CreateVideoResponse{Video: s.Video(ctx, v, Stats{}), UploadUrl: uploadURL}, nil
 }
 
 func (s *Service) StartIngest(ctx context.Context, req *krillv1.StartIngestRequest) (*krillv1.StartIngestResponse, error) {
@@ -98,7 +98,7 @@ func (s *Service) StartIngest(ctx context.Context, req *krillv1.StartIngestReque
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
-	return &krillv1.StartIngestResponse{Video: s.Video(ctx, v, 0)}, nil
+	return &krillv1.StartIngestResponse{Video: s.Video(ctx, v, Stats{})}, nil
 }
 
 func (s *Service) ListVideos(ctx context.Context, _ *krillv1.ListVideosRequest) (*krillv1.ListVideosResponse, error) {
@@ -108,7 +108,7 @@ func (s *Service) ListVideos(ctx context.Context, _ *krillv1.ListVideosRequest) 
 	}
 	out := make([]*krillv1.Video, len(rows))
 	for i, r := range rows {
-		out[i] = s.Video(ctx, r.Video, r.ClipCount)
+		out[i] = s.Video(ctx, r.Video, Stats{Clips: r.ClipCount, LabeledFrames: r.LabeledFrameCount, Boxes: r.BoxCount})
 	}
 	return &krillv1.ListVideosResponse{Videos: out}, nil
 }
@@ -122,11 +122,22 @@ func (s *Service) GetVideo(ctx context.Context, req *krillv1.GetVideoRequest) (*
 	if err != nil {
 		return nil, rpc.Internal(err, "list clips")
 	}
+	stats, err := s.q.GetVideoLabelStats(ctx, v.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "count labels")
+	}
 	out := make([]*krillv1.Clip, len(clips))
 	for i, c := range clips {
-		out[i] = s.Clip(ctx, v, c)
+		out[i] = s.Clip(ctx, v, c.Clip, Stats{LabeledFrames: c.LabeledFrameCount, Boxes: c.BoxCount})
 	}
-	return &krillv1.GetVideoResponse{Video: s.Video(ctx, v, int32(len(clips))), Clips: out}, nil //nolint:gosec // clip counts fit in int32
+	return &krillv1.GetVideoResponse{
+		Video: s.Video(ctx, v, Stats{
+			Clips:         int32(len(clips)), //nolint:gosec // clip counts fit in int32
+			LabeledFrames: stats.LabeledFrameCount,
+			Boxes:         stats.BoxCount,
+		}),
+		Clips: out,
+	}, nil
 }
 
 func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoRequest) (*krillv1.UpdateVideoResponse, error) {
@@ -157,7 +168,13 @@ func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoReque
 	if err != nil {
 		return nil, rpc.Internal(err, "count clips")
 	}
-	return &krillv1.UpdateVideoResponse{Video: s.Video(ctx, v, clipCount)}, nil
+	stats, err := s.q.GetVideoLabelStats(ctx, v.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "count labels")
+	}
+	return &krillv1.UpdateVideoResponse{Video: s.Video(ctx, v, Stats{
+		Clips: clipCount, LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount,
+	})}, nil
 }
 
 func (s *Service) DeleteVideo(ctx context.Context, req *krillv1.DeleteVideoRequest) (*krillv1.DeleteVideoResponse, error) {

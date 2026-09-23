@@ -28,7 +28,8 @@ type Frame struct {
 	Index       int32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
 	TimestampMs int64 `protobuf:"varint,3,opt,name=timestamp_ms,json=timestampMs,proto3" json:"timestamp_ms,omitempty"`
 	// Presigned MinIO URL, valid for several hours.
-	Url           string `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Url           string      `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Status        FrameStatus `protobuf:"varint,5,opt,name=status,proto3,enum=krill.v1.FrameStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -91,6 +92,13 @@ func (x *Frame) GetUrl() string {
 	return ""
 }
 
+func (x *Frame) GetStatus() FrameStatus {
+	if x != nil {
+		return x.Status
+	}
+	return FrameStatus_FRAME_STATUS_UNSPECIFIED
+}
+
 type GetClipRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -141,8 +149,10 @@ type GetClipResponse struct {
 	Clip   *Clip                  `protobuf:"bytes,2,opt,name=clip,proto3" json:"clip,omitempty"`
 	Frames []*Frame               `protobuf:"bytes,3,rep,name=frames,proto3" json:"frames,omitempty"`
 	// 0 when there is no neighbouring clip.
-	PreviousClipId int64 `protobuf:"varint,4,opt,name=previous_clip_id,json=previousClipId,proto3" json:"previous_clip_id,omitempty"`
-	NextClipId     int64 `protobuf:"varint,5,opt,name=next_clip_id,json=nextClipId,proto3" json:"next_clip_id,omitempty"`
+	PreviousClipId int64         `protobuf:"varint,4,opt,name=previous_clip_id,json=previousClipId,proto3" json:"previous_clip_id,omitempty"`
+	NextClipId     int64         `protobuf:"varint,5,opt,name=next_clip_id,json=nextClipId,proto3" json:"next_clip_id,omitempty"`
+	Tracks         []*Track      `protobuf:"bytes,6,rep,name=tracks,proto3" json:"tracks,omitempty"`
+	Annotations    []*Annotation `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -212,25 +222,42 @@ func (x *GetClipResponse) GetNextClipId() int64 {
 	return 0
 }
 
+func (x *GetClipResponse) GetTracks() []*Track {
+	if x != nil {
+		return x.Tracks
+	}
+	return nil
+}
+
+func (x *GetClipResponse) GetAnnotations() []*Annotation {
+	if x != nil {
+		return x.Annotations
+	}
+	return nil
+}
+
 var File_krill_v1_clip_proto protoreflect.FileDescriptor
 
 const file_krill_v1_clip_proto_rawDesc = "" +
 	"\n" +
-	"\x13krill/v1/clip.proto\x12\bkrill.v1\x1a\x14krill/v1/video.proto\"b\n" +
+	"\x13krill/v1/clip.proto\x12\bkrill.v1\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/video.proto\"\x91\x01\n" +
 	"\x05Frame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05index\x18\x02 \x01(\x05R\x05index\x12!\n" +
 	"\ftimestamp_ms\x18\x03 \x01(\x03R\vtimestampMs\x12\x10\n" +
-	"\x03url\x18\x04 \x01(\tR\x03url\" \n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x12-\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\" \n" +
 	"\x0eGetClipRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\xd1\x01\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\xb2\x02\n" +
 	"\x0fGetClipResponse\x12%\n" +
 	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12\"\n" +
 	"\x04clip\x18\x02 \x01(\v2\x0e.krill.v1.ClipR\x04clip\x12'\n" +
 	"\x06frames\x18\x03 \x03(\v2\x0f.krill.v1.FrameR\x06frames\x12(\n" +
 	"\x10previous_clip_id\x18\x04 \x01(\x03R\x0epreviousClipId\x12 \n" +
 	"\fnext_clip_id\x18\x05 \x01(\x03R\n" +
-	"nextClipId2O\n" +
+	"nextClipId\x12'\n" +
+	"\x06tracks\x18\x06 \x03(\v2\x0f.krill.v1.TrackR\x06tracks\x126\n" +
+	"\vannotations\x18\a \x03(\v2\x14.krill.v1.AnnotationR\vannotations2O\n" +
 	"\vClipService\x12@\n" +
 	"\aGetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tClipProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
@@ -252,20 +279,26 @@ var file_krill_v1_clip_proto_goTypes = []any{
 	(*Frame)(nil),           // 0: krill.v1.Frame
 	(*GetClipRequest)(nil),  // 1: krill.v1.GetClipRequest
 	(*GetClipResponse)(nil), // 2: krill.v1.GetClipResponse
-	(*Video)(nil),           // 3: krill.v1.Video
-	(*Clip)(nil),            // 4: krill.v1.Clip
+	(FrameStatus)(0),        // 3: krill.v1.FrameStatus
+	(*Video)(nil),           // 4: krill.v1.Video
+	(*Clip)(nil),            // 5: krill.v1.Clip
+	(*Track)(nil),           // 6: krill.v1.Track
+	(*Annotation)(nil),      // 7: krill.v1.Annotation
 }
 var file_krill_v1_clip_proto_depIdxs = []int32{
-	3, // 0: krill.v1.GetClipResponse.video:type_name -> krill.v1.Video
-	4, // 1: krill.v1.GetClipResponse.clip:type_name -> krill.v1.Clip
-	0, // 2: krill.v1.GetClipResponse.frames:type_name -> krill.v1.Frame
-	1, // 3: krill.v1.ClipService.GetClip:input_type -> krill.v1.GetClipRequest
-	2, // 4: krill.v1.ClipService.GetClip:output_type -> krill.v1.GetClipResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 0: krill.v1.Frame.status:type_name -> krill.v1.FrameStatus
+	4, // 1: krill.v1.GetClipResponse.video:type_name -> krill.v1.Video
+	5, // 2: krill.v1.GetClipResponse.clip:type_name -> krill.v1.Clip
+	0, // 3: krill.v1.GetClipResponse.frames:type_name -> krill.v1.Frame
+	6, // 4: krill.v1.GetClipResponse.tracks:type_name -> krill.v1.Track
+	7, // 5: krill.v1.GetClipResponse.annotations:type_name -> krill.v1.Annotation
+	1, // 6: krill.v1.ClipService.GetClip:input_type -> krill.v1.GetClipRequest
+	2, // 7: krill.v1.ClipService.GetClip:output_type -> krill.v1.GetClipResponse
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_clip_proto_init() }
@@ -273,6 +306,7 @@ func file_krill_v1_clip_proto_init() {
 	if File_krill_v1_clip_proto != nil {
 		return
 	}
+	file_krill_v1_annotation_proto_init()
 	file_krill_v1_video_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

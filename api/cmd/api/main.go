@@ -17,12 +17,14 @@ import (
 	"github.com/riverqueue/river/rivermigrate"
 
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/video"
 )
 
@@ -103,6 +105,8 @@ func run() error {
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version)))
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs)))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store)))
+	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool)))
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool)))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		if err := pool.Ping(r.Context()); err != nil {
 			http.Error(w, "database unreachable", http.StatusServiceUnavailable)

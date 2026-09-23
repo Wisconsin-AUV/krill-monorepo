@@ -9,7 +9,9 @@ SELECT * FROM videos WHERE id = $1;
 -- name: ListVideos :many
 SELECT
     sqlc.embed(v),
-    (SELECT count(*) FROM clips c WHERE c.video_id = v.id)::int AS clip_count
+    (SELECT count(*) FROM clips c WHERE c.video_id = v.id)::int AS clip_count,
+    (SELECT count(*) FROM frames f WHERE f.video_id = v.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = v.id)::int AS box_count
 FROM videos v
 ORDER BY v.created_at DESC, v.id DESC;
 
@@ -63,7 +65,18 @@ VALUES ($1, $2, $3, $4)
 RETURNING id;
 
 -- name: ListClips :many
-SELECT * FROM clips WHERE video_id = $1 ORDER BY idx;
+SELECT
+    sqlc.embed(c),
+    (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
+FROM clips c
+WHERE c.video_id = $1
+ORDER BY c.idx;
+
+-- name: GetVideoLabelStats :one
+SELECT
+    (SELECT count(*) FROM frames f WHERE f.video_id = $1 AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = $1)::int AS box_count;
 
 -- name: InsertFrames :copyfrom
 INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, $3, $4);

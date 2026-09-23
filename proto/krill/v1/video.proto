@@ -54,6 +54,9 @@ message Video {
   int32 clip_count = 15;
   string thumbnail_url = 16;
   google.protobuf.Timestamp created_at = 17;
+  // Frames marked labeled or empty.
+  int32 labeled_frame_count = 18;
+  int32 box_count = 19;
 }
 
 message Clip {
@@ -65,6 +68,8 @@ message Clip {
   int64 start_ms = 6;
   int64 duration_ms = 7;
   string thumbnail_url = 8;
+  int32 labeled_frame_count = 9;
+  int32 box_count = 10;
 }
 
 message CreateVideoRequest {

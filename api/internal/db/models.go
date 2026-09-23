@@ -8,6 +8,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Annotation struct {
+	ID           int64              `json:"id"`
+	TrackID      int64              `json:"track_id"`
+	FrameID      int64              `json:"frame_id"`
+	X            float64            `json:"x"`
+	Y            float64            `json:"y"`
+	Width        float64            `json:"width"`
+	Height       float64            `json:"height"`
+	Source       string             `json:"source"`
+	Status       string             `json:"status"`
+	ModelVersion string             `json:"model_version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Clip struct {
 	ID         int64 `json:"id"`
 	VideoID    int64 `json:"video_id"`
@@ -17,11 +32,30 @@ type Clip struct {
 }
 
 type Frame struct {
-	ID      int64 `json:"id"`
-	VideoID int64 `json:"video_id"`
-	ClipID  int64 `json:"clip_id"`
-	Idx     int32 `json:"idx"`
-	Phash   int64 `json:"phash"`
+	ID      int64  `json:"id"`
+	VideoID int64  `json:"video_id"`
+	ClipID  int64  `json:"clip_id"`
+	Idx     int32  `json:"idx"`
+	Phash   int64  `json:"phash"`
+	Status  string `json:"status"`
+}
+
+type LabelType struct {
+	ID          int64              `json:"id"`
+	Name        string             `json:"name"`
+	Color       string             `json:"color"`
+	Description string             `json:"description"`
+	Position    int32              `json:"position"`
+	Attributes  []byte             `json:"attributes"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type Track struct {
+	ID          int64              `json:"id"`
+	ClipID      int64              `json:"clip_id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	Attributes  []byte             `json:"attributes"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Video struct {

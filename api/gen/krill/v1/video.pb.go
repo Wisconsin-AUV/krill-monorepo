@@ -146,17 +146,20 @@ type Video struct {
 	IngestProgress float32         `protobuf:"fixed32,7,opt,name=ingest_progress,json=ingestProgress,proto3" json:"ingest_progress,omitempty"`
 	Split          SplitAssignment `protobuf:"varint,8,opt,name=split,proto3,enum=krill.v1.SplitAssignment" json:"split,omitempty"`
 	// Frames per second extracted from the source. 0 means native rate.
-	ExtractFps    float64                `protobuf:"fixed64,9,opt,name=extract_fps,json=extractFps,proto3" json:"extract_fps,omitempty"`
-	Width         int32                  `protobuf:"varint,10,opt,name=width,proto3" json:"width,omitempty"`
-	Height        int32                  `protobuf:"varint,11,opt,name=height,proto3" json:"height,omitempty"`
-	Fps           float64                `protobuf:"fixed64,12,opt,name=fps,proto3" json:"fps,omitempty"`
-	DurationMs    int64                  `protobuf:"varint,13,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
-	FrameCount    int32                  `protobuf:"varint,14,opt,name=frame_count,json=frameCount,proto3" json:"frame_count,omitempty"`
-	ClipCount     int32                  `protobuf:"varint,15,opt,name=clip_count,json=clipCount,proto3" json:"clip_count,omitempty"`
-	ThumbnailUrl  string                 `protobuf:"bytes,16,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ExtractFps   float64                `protobuf:"fixed64,9,opt,name=extract_fps,json=extractFps,proto3" json:"extract_fps,omitempty"`
+	Width        int32                  `protobuf:"varint,10,opt,name=width,proto3" json:"width,omitempty"`
+	Height       int32                  `protobuf:"varint,11,opt,name=height,proto3" json:"height,omitempty"`
+	Fps          float64                `protobuf:"fixed64,12,opt,name=fps,proto3" json:"fps,omitempty"`
+	DurationMs   int64                  `protobuf:"varint,13,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	FrameCount   int32                  `protobuf:"varint,14,opt,name=frame_count,json=frameCount,proto3" json:"frame_count,omitempty"`
+	ClipCount    int32                  `protobuf:"varint,15,opt,name=clip_count,json=clipCount,proto3" json:"clip_count,omitempty"`
+	ThumbnailUrl string                 `protobuf:"bytes,16,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
+	CreatedAt    *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// Frames marked labeled or empty.
+	LabeledFrameCount int32 `protobuf:"varint,18,opt,name=labeled_frame_count,json=labeledFrameCount,proto3" json:"labeled_frame_count,omitempty"`
+	BoxCount          int32 `protobuf:"varint,19,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Video) Reset() {
@@ -308,18 +311,34 @@ func (x *Video) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Video) GetLabeledFrameCount() int32 {
+	if x != nil {
+		return x.LabeledFrameCount
+	}
+	return 0
+}
+
+func (x *Video) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
 type Clip struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	VideoId       int64                  `protobuf:"varint,2,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
-	Index         int32                  `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	StartFrame    int32                  `protobuf:"varint,4,opt,name=start_frame,json=startFrame,proto3" json:"start_frame,omitempty"`
-	FrameCount    int32                  `protobuf:"varint,5,opt,name=frame_count,json=frameCount,proto3" json:"frame_count,omitempty"`
-	StartMs       int64                  `protobuf:"varint,6,opt,name=start_ms,json=startMs,proto3" json:"start_ms,omitempty"`
-	DurationMs    int64                  `protobuf:"varint,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
-	ThumbnailUrl  string                 `protobuf:"bytes,8,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	VideoId           int64                  `protobuf:"varint,2,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	Index             int32                  `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	StartFrame        int32                  `protobuf:"varint,4,opt,name=start_frame,json=startFrame,proto3" json:"start_frame,omitempty"`
+	FrameCount        int32                  `protobuf:"varint,5,opt,name=frame_count,json=frameCount,proto3" json:"frame_count,omitempty"`
+	StartMs           int64                  `protobuf:"varint,6,opt,name=start_ms,json=startMs,proto3" json:"start_ms,omitempty"`
+	DurationMs        int64                  `protobuf:"varint,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	ThumbnailUrl      string                 `protobuf:"bytes,8,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
+	LabeledFrameCount int32                  `protobuf:"varint,9,opt,name=labeled_frame_count,json=labeledFrameCount,proto3" json:"labeled_frame_count,omitempty"`
+	BoxCount          int32                  `protobuf:"varint,10,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Clip) Reset() {
@@ -406,6 +425,20 @@ func (x *Clip) GetThumbnailUrl() string {
 		return x.ThumbnailUrl
 	}
 	return ""
+}
+
+func (x *Clip) GetLabeledFrameCount() int32 {
+	if x != nil {
+		return x.LabeledFrameCount
+	}
+	return 0
+}
+
+func (x *Clip) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
 }
 
 type CreateVideoRequest struct {
@@ -980,7 +1013,7 @@ var File_krill_v1_video_proto protoreflect.FileDescriptor
 
 const file_krill_v1_video_proto_rawDesc = "" +
 	"\n" +
-	"\x14krill/v1/video.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x04\n" +
+	"\x14krill/v1/video.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xeb\x04\n" +
 	"\x05Video\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -1004,7 +1037,9 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"clip_count\x18\x0f \x01(\x05R\tclipCount\x12#\n" +
 	"\rthumbnail_url\x18\x10 \x01(\tR\fthumbnailUrl\x129\n" +
 	"\n" +
-	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xea\x01\n" +
+	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n" +
+	"\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
+	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xb7\x02\n" +
 	"\x04Clip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12\x14\n" +
@@ -1016,7 +1051,10 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\bstart_ms\x18\x06 \x01(\x03R\astartMs\x12\x1f\n" +
 	"\vduration_ms\x18\a \x01(\x03R\n" +
 	"durationMs\x12#\n" +
-	"\rthumbnail_url\x18\b \x01(\tR\fthumbnailUrl\"e\n" +
+	"\rthumbnail_url\x18\b \x01(\tR\fthumbnailUrl\x12.\n" +
+	"\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
+	"\tbox_count\x18\n" +
+	" \x01(\x05R\bboxCount\"e\n" +
 	"\x12CreateVideoRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1f\n" +

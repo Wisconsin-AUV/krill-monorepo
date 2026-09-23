@@ -26,6 +26,24 @@ func (q *Queries) GetClip(ctx context.Context, id int64) (Clip, error) {
 	return i, err
 }
 
+const getClipLabelStats = `-- name: GetClipLabelStats :one
+SELECT
+    (SELECT count(*) FROM frames f WHERE f.clip_id = $1 AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = $1)::int AS box_count
+`
+
+type GetClipLabelStatsRow struct {
+	LabeledFrameCount int32 `json:"labeled_frame_count"`
+	BoxCount          int32 `json:"box_count"`
+}
+
+func (q *Queries) GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error) {
+	row := q.db.QueryRow(ctx, getClipLabelStats, clipID)
+	var i GetClipLabelStatsRow
+	err := row.Scan(&i.LabeledFrameCount, &i.BoxCount)
+	return i, err
+}
+
 const getNeighbourClips = `-- name: GetNeighbourClips :one
 SELECT
     coalesce((SELECT p.id FROM clips p WHERE p.video_id = c.video_id AND p.idx = c.idx - 1), 0)::bigint AS previous_id,
@@ -47,7 +65,7 @@ func (q *Queries) GetNeighbourClips(ctx context.Context, id int64) (GetNeighbour
 }
 
 const listClipFrames = `-- name: ListClipFrames :many
-SELECT id, video_id, clip_id, idx, phash FROM frames WHERE clip_id = $1 ORDER BY idx
+SELECT id, video_id, clip_id, idx, phash, status FROM frames WHERE clip_id = $1 ORDER BY idx
 `
 
 func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error) {
@@ -65,6 +83,7 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 			&i.ClipID,
 			&i.Idx,
 			&i.Phash,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}

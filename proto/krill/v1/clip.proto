@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package krill.v1;
 
+import "krill/v1/annotation.proto";
 import "krill/v1/video.proto";
 
 service ClipService {
@@ -16,6 +17,7 @@ message Frame {
   int64 timestamp_ms = 3;
   // Presigned MinIO URL, valid for several hours.
   string url = 4;
+  FrameStatus status = 5;
 }
 
 message GetClipRequest {
@@ -29,4 +31,6 @@ message GetClipResponse {
   // 0 when there is no neighbouring clip.
   int64 previous_clip_id = 4;
   int64 next_clip_id = 5;
+  repeated Track tracks = 6;
+  repeated Annotation annotations = 7;
 }

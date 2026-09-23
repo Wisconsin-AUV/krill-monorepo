@@ -22,10 +22,11 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from krill.v1 import annotation_pb2 as krill_dot_v1_dot_annotation__pb2
 from krill.v1 import video_pb2 as krill_dot_v1_dot_video__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/clip.proto\x12\x08krill.v1\x1a\x14krill/v1/video.proto\"b\n\x05\x46rame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n\x05index\x18\x02 \x01(\x05R\x05index\x12!\n\x0ctimestamp_ms\x18\x03 \x01(\x03R\x0btimestampMs\x12\x10\n\x03url\x18\x04 \x01(\tR\x03url\" \n\x0eGetClipRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\xd1\x01\n\x0fGetClipResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12\"\n\x04\x63lip\x18\x02 \x01(\x0b\x32\x0e.krill.v1.ClipR\x04\x63lip\x12\'\n\x06\x66rames\x18\x03 \x03(\x0b\x32\x0f.krill.v1.FrameR\x06\x66rames\x12(\n\x10previous_clip_id\x18\x04 \x01(\x03R\x0epreviousClipId\x12 \n\x0cnext_clip_id\x18\x05 \x01(\x03R\nnextClipId2O\n\x0b\x43lipService\x12@\n\x07GetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tClipProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/clip.proto\x12\x08krill.v1\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/video.proto\"\x91\x01\n\x05\x46rame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n\x05index\x18\x02 \x01(\x05R\x05index\x12!\n\x0ctimestamp_ms\x18\x03 \x01(\x03R\x0btimestampMs\x12\x10\n\x03url\x18\x04 \x01(\tR\x03url\x12-\n\x06status\x18\x05 \x01(\x0e\x32\x15.krill.v1.FrameStatusR\x06status\" \n\x0eGetClipRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\xb2\x02\n\x0fGetClipResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12\"\n\x04\x63lip\x18\x02 \x01(\x0b\x32\x0e.krill.v1.ClipR\x04\x63lip\x12\'\n\x06\x66rames\x18\x03 \x03(\x0b\x32\x0f.krill.v1.FrameR\x06\x66rames\x12(\n\x10previous_clip_id\x18\x04 \x01(\x03R\x0epreviousClipId\x12 \n\x0cnext_clip_id\x18\x05 \x01(\x03R\nnextClipId\x12\'\n\x06tracks\x18\x06 \x03(\x0b\x32\x0f.krill.v1.TrackR\x06tracks\x12\x36\n\x0b\x61nnotations\x18\x07 \x03(\x0b\x32\x14.krill.v1.AnnotationR\x0b\x61nnotations2O\n\x0b\x43lipService\x12@\n\x07GetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tClipProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,12 +34,12 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'krill.v1.clip_pb2', _global
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.krill.v1B\tClipProtoP\001Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\242\002\003KXX\252\002\010Krill.V1\312\002\010Krill\\V1\342\002\024Krill\\V1\\GPBMetadata\352\002\tKrill::V1'
-  _globals['_FRAME']._serialized_start=55
-  _globals['_FRAME']._serialized_end=153
-  _globals['_GETCLIPREQUEST']._serialized_start=155
-  _globals['_GETCLIPREQUEST']._serialized_end=187
-  _globals['_GETCLIPRESPONSE']._serialized_start=190
-  _globals['_GETCLIPRESPONSE']._serialized_end=399
-  _globals['_CLIPSERVICE']._serialized_start=401
-  _globals['_CLIPSERVICE']._serialized_end=480
+  _globals['_FRAME']._serialized_start=83
+  _globals['_FRAME']._serialized_end=228
+  _globals['_GETCLIPREQUEST']._serialized_start=230
+  _globals['_GETCLIPREQUEST']._serialized_end=262
+  _globals['_GETCLIPRESPONSE']._serialized_start=265
+  _globals['_GETCLIPRESPONSE']._serialized_end=571
+  _globals['_CLIPSERVICE']._serialized_start=573
+  _globals['_CLIPSERVICE']._serialized_end=652
 # @@protoc_insertion_point(module_scope)

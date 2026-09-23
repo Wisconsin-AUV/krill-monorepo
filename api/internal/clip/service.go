@@ -7,6 +7,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -44,6 +45,33 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	if err != nil {
 		return nil, rpc.Internal(err, "list frames")
 	}
+	stats, err := s.q.GetClipLabelStats(ctx, c.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "count labels")
+	}
+	videoStats, err := s.q.GetVideoLabelStats(ctx, v.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "count labels")
+	}
+	trackRows, err := s.q.ListClipTracks(ctx, c.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "list tracks")
+	}
+	annRows, err := s.q.ListClipAnnotations(ctx, c.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "list boxes")
+	}
+
+	tracks := make([]*krillv1.Track, len(trackRows))
+	for i, t := range trackRows {
+		if tracks[i], err = annotation.Track(t); err != nil {
+			return nil, rpc.Internal(err, "decode track")
+		}
+	}
+	annotations := make([]*krillv1.Annotation, len(annRows))
+	for i, a := range annRows {
+		annotations[i] = annotation.Annotation(a)
+	}
 
 	frames := make([]*krillv1.Frame, len(rows))
 	for i, f := range rows {
@@ -56,12 +84,17 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 			Index:       f.Idx,
 			TimestampMs: video.FrameMs(f.Idx, v.Fps),
 			Url:         url,
+			Status:      annotation.FrameStatus(f.Status),
 		}
 	}
 
 	return &krillv1.GetClipResponse{
-		Video:          s.present.Video(ctx, v, clipCount),
-		Clip:           s.present.Clip(ctx, v, c),
+		Video: s.present.Video(ctx, v, video.Stats{
+			Clips: clipCount, LabeledFrames: videoStats.LabeledFrameCount, Boxes: videoStats.BoxCount,
+		}),
+		Clip:           s.present.Clip(ctx, v, c, video.Stats{LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount}),
+		Tracks:         tracks,
+		Annotations:    annotations,
 		Frames:         frames,
 		PreviousClipId: neighbours.PreviousID,
 		NextClipId:     neighbours.NextID,

@@ -172,6 +172,24 @@ func (q *Queries) GetVideo(ctx context.Context, id int64) (Video, error) {
 	return i, err
 }
 
+const getVideoLabelStats = `-- name: GetVideoLabelStats :one
+SELECT
+    (SELECT count(*) FROM frames f WHERE f.video_id = $1 AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = $1)::int AS box_count
+`
+
+type GetVideoLabelStatsRow struct {
+	LabeledFrameCount int32 `json:"labeled_frame_count"`
+	BoxCount          int32 `json:"box_count"`
+}
+
+func (q *Queries) GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error) {
+	row := q.db.QueryRow(ctx, getVideoLabelStats, videoID)
+	var i GetVideoLabelStatsRow
+	err := row.Scan(&i.LabeledFrameCount, &i.BoxCount)
+	return i, err
+}
+
 type InsertFramesParams struct {
 	VideoID int64 `json:"video_id"`
 	ClipID  int64 `json:"clip_id"`
@@ -180,24 +198,38 @@ type InsertFramesParams struct {
 }
 
 const listClips = `-- name: ListClips :many
-SELECT id, video_id, idx, start_frame, frame_count FROM clips WHERE video_id = $1 ORDER BY idx
+SELECT
+    c.id, c.video_id, c.idx, c.start_frame, c.frame_count,
+    (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
+FROM clips c
+WHERE c.video_id = $1
+ORDER BY c.idx
 `
 
-func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]Clip, error) {
+type ListClipsRow struct {
+	Clip              Clip  `json:"clip"`
+	LabeledFrameCount int32 `json:"labeled_frame_count"`
+	BoxCount          int32 `json:"box_count"`
+}
+
+func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error) {
 	rows, err := q.db.Query(ctx, listClips, videoID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Clip
+	var items []ListClipsRow
 	for rows.Next() {
-		var i Clip
+		var i ListClipsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.VideoID,
-			&i.Idx,
-			&i.StartFrame,
-			&i.FrameCount,
+			&i.Clip.ID,
+			&i.Clip.VideoID,
+			&i.Clip.Idx,
+			&i.Clip.StartFrame,
+			&i.Clip.FrameCount,
+			&i.LabeledFrameCount,
+			&i.BoxCount,
 		); err != nil {
 			return nil, err
 		}
@@ -212,14 +244,18 @@ func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]Clip, error) 
 const listVideos = `-- name: ListVideos :many
 SELECT
     v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at,
-    (SELECT count(*) FROM clips c WHERE c.video_id = v.id)::int AS clip_count
+    (SELECT count(*) FROM clips c WHERE c.video_id = v.id)::int AS clip_count,
+    (SELECT count(*) FROM frames f WHERE f.video_id = v.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = v.id)::int AS box_count
 FROM videos v
 ORDER BY v.created_at DESC, v.id DESC
 `
 
 type ListVideosRow struct {
-	Video     Video `json:"video"`
-	ClipCount int32 `json:"clip_count"`
+	Video             Video `json:"video"`
+	ClipCount         int32 `json:"clip_count"`
+	LabeledFrameCount int32 `json:"labeled_frame_count"`
+	BoxCount          int32 `json:"box_count"`
 }
 
 func (q *Queries) ListVideos(ctx context.Context) ([]ListVideosRow, error) {
@@ -248,6 +284,8 @@ func (q *Queries) ListVideos(ctx context.Context) ([]ListVideosRow, error) {
 			&i.Video.FrameCount,
 			&i.Video.CreatedAt,
 			&i.ClipCount,
+			&i.LabeledFrameCount,
+			&i.BoxCount,
 		); err != nil {
 			return nil, err
 		}

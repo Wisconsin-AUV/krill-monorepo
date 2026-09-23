@@ -4,6 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Annotation, FrameStatus, Track } from "./annotation_pb";
+import { file_krill_v1_annotation } from "./annotation_pb";
 import type { Clip, Video } from "./video_pb";
 import { file_krill_v1_video } from "./video_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/clip.proto.
  */
 export const file_krill_v1_clip: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSJFCgVGcmFtZRIKCgJpZBgBIAEoAxINCgVpbmRleBgCIAEoBRIUCgx0aW1lc3RhbXBfbXMYAyABKAMSCwoDdXJsGAQgASgJIhwKDkdldENsaXBSZXF1ZXN0EgoKAmlkGAEgASgDIqABCg9HZXRDbGlwUmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbxIcCgRjbGlwGAIgASgLMg4ua3JpbGwudjEuQ2xpcBIfCgZmcmFtZXMYAyADKAsyDy5rcmlsbC52MS5GcmFtZRIYChBwcmV2aW91c19jbGlwX2lkGAQgASgDEhQKDG5leHRfY2xpcF9pZBgFIAEoAzJPCgtDbGlwU2VydmljZRJACgdHZXRDbGlwEhgua3JpbGwudjEuR2V0Q2xpcFJlcXVlc3QaGS5rcmlsbC52MS5HZXRDbGlwUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglDbGlwUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_video]);
+  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSJsCgVGcmFtZRIKCgJpZBgBIAEoAxINCgVpbmRleBgCIAEoBRIUCgx0aW1lc3RhbXBfbXMYAyABKAMSCwoDdXJsGAQgASgJEiUKBnN0YXR1cxgFIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzIhwKDkdldENsaXBSZXF1ZXN0EgoKAmlkGAEgASgDIuwBCg9HZXRDbGlwUmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbxIcCgRjbGlwGAIgASgLMg4ua3JpbGwudjEuQ2xpcBIfCgZmcmFtZXMYAyADKAsyDy5rcmlsbC52MS5GcmFtZRIYChBwcmV2aW91c19jbGlwX2lkGAQgASgDEhQKDG5leHRfY2xpcF9pZBgFIAEoAxIfCgZ0cmFja3MYBiADKAsyDy5rcmlsbC52MS5UcmFjaxIpCgthbm5vdGF0aW9ucxgHIAMoCzIULmtyaWxsLnYxLkFubm90YXRpb24yTwoLQ2xpcFNlcnZpY2USQAoHR2V0Q2xpcBIYLmtyaWxsLnYxLkdldENsaXBSZXF1ZXN0Ghkua3JpbGwudjEuR2V0Q2xpcFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJQ2xpcFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation, file_krill_v1_video]);
 
 /**
  * @generated from message krill.v1.Frame
@@ -41,6 +43,11 @@ export type Frame = Message<"krill.v1.Frame"> & {
    * @generated from field: string url = 4;
    */
   url: string;
+
+  /**
+   * @generated from field: krill.v1.FrameStatus status = 5;
+   */
+  status: FrameStatus;
 };
 
 /**
@@ -97,6 +104,16 @@ export type GetClipResponse = Message<"krill.v1.GetClipResponse"> & {
    * @generated from field: int64 next_clip_id = 5;
    */
   nextClipId: bigint;
+
+  /**
+   * @generated from field: repeated krill.v1.Track tracks = 6;
+   */
+  tracks: Track[];
+
+  /**
+   * @generated from field: repeated krill.v1.Annotation annotations = 7;
+   */
+  annotations: Annotation[];
 };
 
 /**

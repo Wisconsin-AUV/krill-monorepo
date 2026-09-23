@@ -9,26 +9,49 @@ import (
 )
 
 type Querier interface {
+	ClearEmptyFrame(ctx context.Context, id int64) error
+	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
+	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
+	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
+	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
+	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
+	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClips(ctx context.Context, videoID int64) error
+	DeleteLabelType(ctx context.Context, id int64) (int64, error)
+	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedIngests(ctx context.Context) (int64, error)
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
 	GetClip(ctx context.Context, id int64) (Clip, error)
+	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
+	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
+	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
+	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
-	ListClips(ctx context.Context, videoID int64) ([]Clip, error)
+	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
+	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
+	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
+	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
+	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
 	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
+	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
 }
 
 var _ Querier = (*Queries)(nil)

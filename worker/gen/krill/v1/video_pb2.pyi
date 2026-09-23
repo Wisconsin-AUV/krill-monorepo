@@ -37,7 +37,7 @@ SPLIT_ASSIGNMENT_TRAIN: SplitAssignment
 SPLIT_ASSIGNMENT_VAL: SplitAssignment
 
 class Video(_message.Message):
-    __slots__ = ("id", "name", "filename", "notes", "status", "error", "ingest_progress", "split", "extract_fps", "width", "height", "fps", "duration_ms", "frame_count", "clip_count", "thumbnail_url", "created_at")
+    __slots__ = ("id", "name", "filename", "notes", "status", "error", "ingest_progress", "split", "extract_fps", "width", "height", "fps", "duration_ms", "frame_count", "clip_count", "thumbnail_url", "created_at", "labeled_frame_count", "box_count")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     FILENAME_FIELD_NUMBER: _ClassVar[int]
@@ -55,6 +55,8 @@ class Video(_message.Message):
     CLIP_COUNT_FIELD_NUMBER: _ClassVar[int]
     THUMBNAIL_URL_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    LABELED_FRAME_COUNT_FIELD_NUMBER: _ClassVar[int]
+    BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
     id: int
     name: str
     filename: str
@@ -72,10 +74,12 @@ class Video(_message.Message):
     clip_count: int
     thumbnail_url: str
     created_at: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., filename: _Optional[str] = ..., notes: _Optional[str] = ..., status: _Optional[_Union[VideoStatus, str]] = ..., error: _Optional[str] = ..., ingest_progress: _Optional[float] = ..., split: _Optional[_Union[SplitAssignment, str]] = ..., extract_fps: _Optional[float] = ..., width: _Optional[int] = ..., height: _Optional[int] = ..., fps: _Optional[float] = ..., duration_ms: _Optional[int] = ..., frame_count: _Optional[int] = ..., clip_count: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    labeled_frame_count: int
+    box_count: int
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., filename: _Optional[str] = ..., notes: _Optional[str] = ..., status: _Optional[_Union[VideoStatus, str]] = ..., error: _Optional[str] = ..., ingest_progress: _Optional[float] = ..., split: _Optional[_Union[SplitAssignment, str]] = ..., extract_fps: _Optional[float] = ..., width: _Optional[int] = ..., height: _Optional[int] = ..., fps: _Optional[float] = ..., duration_ms: _Optional[int] = ..., frame_count: _Optional[int] = ..., clip_count: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., labeled_frame_count: _Optional[int] = ..., box_count: _Optional[int] = ...) -> None: ...
 
 class Clip(_message.Message):
-    __slots__ = ("id", "video_id", "index", "start_frame", "frame_count", "start_ms", "duration_ms", "thumbnail_url")
+    __slots__ = ("id", "video_id", "index", "start_frame", "frame_count", "start_ms", "duration_ms", "thumbnail_url", "labeled_frame_count", "box_count")
     ID_FIELD_NUMBER: _ClassVar[int]
     VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
     INDEX_FIELD_NUMBER: _ClassVar[int]
@@ -84,6 +88,8 @@ class Clip(_message.Message):
     START_MS_FIELD_NUMBER: _ClassVar[int]
     DURATION_MS_FIELD_NUMBER: _ClassVar[int]
     THUMBNAIL_URL_FIELD_NUMBER: _ClassVar[int]
+    LABELED_FRAME_COUNT_FIELD_NUMBER: _ClassVar[int]
+    BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
     id: int
     video_id: int
     index: int
@@ -92,7 +98,9 @@ class Clip(_message.Message):
     start_ms: int
     duration_ms: int
     thumbnail_url: str
-    def __init__(self, id: _Optional[int] = ..., video_id: _Optional[int] = ..., index: _Optional[int] = ..., start_frame: _Optional[int] = ..., frame_count: _Optional[int] = ..., start_ms: _Optional[int] = ..., duration_ms: _Optional[int] = ..., thumbnail_url: _Optional[str] = ...) -> None: ...
+    labeled_frame_count: int
+    box_count: int
+    def __init__(self, id: _Optional[int] = ..., video_id: _Optional[int] = ..., index: _Optional[int] = ..., start_frame: _Optional[int] = ..., frame_count: _Optional[int] = ..., start_ms: _Optional[int] = ..., duration_ms: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., labeled_frame_count: _Optional[int] = ..., box_count: _Optional[int] = ...) -> None: ...
 
 class CreateVideoRequest(_message.Message):
     __slots__ = ("name", "filename", "extract_fps")

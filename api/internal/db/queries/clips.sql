@@ -1,6 +1,11 @@
 -- name: GetClip :one
 SELECT * FROM clips WHERE id = $1;
 
+-- name: GetClipLabelStats :one
+SELECT
+    (SELECT count(*) FROM frames f WHERE f.clip_id = $1 AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = $1)::int AS box_count;
+
 -- name: ListClipFrames :many
 SELECT * FROM frames WHERE clip_id = $1 ORDER BY idx;
 
