@@ -1,0 +1,58 @@
+name: krill
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: krill
+      POSTGRES_PASSWORD: krill
+      POSTGRES_DB: krill
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krill"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: krill
+      MINIO_ROOT_PASSWORD: krillkrill
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  api:
+    profiles: [app]
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    environment:
+      KRILL_DATABASE_URL: postgres://krill:krill@postgres:5432/krill?sslmode=disable
+      KRILL_S3_ENDPOINT: http://minio:9000
+      KRILL_S3_ACCESS_KEY: krill
+      KRILL_S3_SECRET_KEY: krillkrill
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_started }
+
+  worker:
+    profiles: [gpu]
+    build:
+      context: ..
+      dockerfile: deploy/worker.Dockerfile
+    environment:
+      # RX 6600 is gfx1032; ROCm treats it as gfx1030 with this override.
+      HSA_OVERRIDE_GFX_VERSION: "10.3.0"
+      KRILL_API_URL: http://api:8080
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add: [video, render]
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  miniodata:

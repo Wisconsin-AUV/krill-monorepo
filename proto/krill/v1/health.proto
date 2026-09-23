@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package krill.v1;
+
+service HealthService {
+  rpc Check(CheckRequest) returns (CheckResponse) {}
+}
+
+message CheckRequest {}
+
+message CheckResponse {
+  string version = 1;
+}

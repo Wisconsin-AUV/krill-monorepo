@@ -1,0 +1,55 @@
+[project]
+name = "krill-worker"
+version = "0.1.0"
+description = "GPU worker for the Krill labeling tool: SAM, YOLO, and classic CV pre-labelers."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=2.0",
+    "opencv-python-headless>=4.10",
+    "protobuf>=5.28",
+]
+
+[project.optional-dependencies]
+ml = [
+    "transformers>=4.56",
+    "ultralytics>=8.3",
+]
+
+[project.scripts]
+krill-worker = "krill_worker.main:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/krill_worker", "gen/krill"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["gen"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
+mypy_path = "src:gen"
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["cv2.*", "ultralytics.*", "transformers.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

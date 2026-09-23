@@ -1,0 +1,4 @@
+* text=auto eol=lf
+api/gen/** linguist-generated
+web/src/gen/** linguist-generated
+worker/gen/** linguist-generated

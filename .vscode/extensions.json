@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "golang.go",
+    "oxc.oxc-vscode",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "charliermarsh.ruff",
+    "bufbuild.vscode-buf",
+    "editorconfig.editorconfig"
+  ]
+}
