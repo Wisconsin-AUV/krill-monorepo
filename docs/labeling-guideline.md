@@ -6,6 +6,9 @@ Each section needs example images of correct and incorrect labels.
 ## General rules
 
 - Boxes are tight around the visible part of the object.
+- One object is one track. Keep drawing the same track on later frames instead of starting a new one.
+- Set track attributes (size, color, role) once. Tracks with unset attributes are left out of exports.
+- Press Space only when every object in the frame has a box. Only frames marked done are exported.
 - Press E for frames with no objects. Empty frames are exported as negative examples.
 
 ## Gate

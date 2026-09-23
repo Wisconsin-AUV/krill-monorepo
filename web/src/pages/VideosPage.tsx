@@ -58,9 +58,9 @@ export function VideosPage() {
         <Stat title="Footage" value={formatDuration(totalMs)} detail="Total ready duration" />
         <Stat title="Clips" value={formatNumber(totalClips)} detail="10 to 20 seconds each" />
         <Stat
-          title="Frames"
-          value={formatNumber(totalFrames)}
-          detail="Extracted and ready to label"
+          title="Frames labeled"
+          value={formatNumber(ready.reduce((n, v) => n + v.labeledFrameCount, 0))}
+          detail={`of ${formatNumber(totalFrames)} extracted`}
         />
       </div>
 
@@ -95,6 +95,7 @@ export function VideosPage() {
               <TableHeader className="text-right">Duration</TableHeader>
               <TableHeader className="text-right">Frames</TableHeader>
               <TableHeader className="text-right">Clips</TableHeader>
+              <TableHeader>Labeled</TableHeader>
               <TableHeader>Split</TableHeader>
               <TableHeader className="text-right">Added</TableHeader>
             </TableRow>
@@ -131,6 +132,25 @@ export function VideosPage() {
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {v.status === VideoStatus.READY ? formatNumber(v.clipCount) : '—'}
+                </TableCell>
+                <TableCell>
+                  {v.status === VideoStatus.READY ? (
+                    <div className="w-28">
+                      <div className="text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
+                        {v.frameCount > 0
+                          ? Math.round((v.labeledFrameCount / v.frameCount) * 100)
+                          : 0}
+                        % · {formatNumber(v.boxCount)} boxes
+                      </div>
+                      <Meter
+                        value={v.frameCount > 0 ? v.labeledFrameCount / v.frameCount : 0}
+                        label={`${v.name} labeling progress`}
+                        className="mt-1"
+                      />
+                    </div>
+                  ) : (
+                    '—'
+                  )}
                 </TableCell>
                 <TableCell className="text-zinc-500 dark:text-zinc-400">
                   {splitLabel(v.split)}

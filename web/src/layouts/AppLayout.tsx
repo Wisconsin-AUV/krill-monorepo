@@ -1,5 +1,5 @@
 import { useQuery } from '@connectrpc/connect-query'
-import { BookOpenIcon, FilmIcon } from '@heroicons/react/20/solid'
+import { BookOpenIcon, FilmIcon, TagIcon } from '@heroicons/react/20/solid'
 import { Link, Outlet, useLocation } from 'react-router'
 import { Logo } from '@/components/Logo'
 import FlashMessageRender from '@/components/ui/FlashMessageRender'
@@ -32,6 +32,7 @@ const navItems = [
     icon: FilmIcon,
     match: (p: string) => p === '/' || p.startsWith('/videos'),
   },
+  { label: 'Labels', to: '/labels', icon: TagIcon, match: (p: string) => p.startsWith('/labels') },
 ]
 
 function Version() {

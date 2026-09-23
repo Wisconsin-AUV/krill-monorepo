@@ -11,10 +11,12 @@ const PRELOAD_BEHIND = 4
 export function FrameCanvas({
   children,
   onStageMouseDown,
+  onPointerMove,
   cursor,
 }: {
   children?: ReactNode
   onStageMouseDown?: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onPointerMove?: (point: { x: number; y: number } | null) => void
   cursor?: string
 }) {
   const container = useRef<HTMLDivElement>(null)
@@ -86,7 +88,10 @@ export function FrameCanvas({
   }
 
   function onMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
-    if (!pan.current) return
+    if (!pan.current) {
+      onPointerMove?.(e.target.getStage()?.getPointerPosition() ?? null)
+      return
+    }
     const { x, y } = useWorkspaceStore.getState().view
     setView({
       scale: view.scale,
@@ -111,7 +116,10 @@ export function FrameCanvas({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={() => (pan.current = null)}
-          onMouseLeave={() => (pan.current = null)}
+          onMouseLeave={() => {
+            pan.current = null
+            onPointerMove?.(null)
+          }}
         >
           <Layer listening={false}>
             <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>

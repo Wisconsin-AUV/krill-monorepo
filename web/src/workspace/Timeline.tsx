@@ -5,8 +5,10 @@ import { useWorkspaceStore } from './useWorkspaceStore'
 
 export function Timeline({
   frameClass,
+  trackClass,
 }: {
   frameClass?: (position: number) => string | undefined
+  trackClass?: (position: number) => string | undefined
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -64,6 +66,13 @@ export function Timeline({
               <div key={String(f.id)} className={clsx('h-full flex-1', frameClass(i))} />
             ))}
         </div>
+        {trackClass && (
+          <div className="absolute bottom-0 left-0 flex h-1 w-full overflow-hidden rounded-full">
+            {frames.map((f, i) => (
+              <div key={String(f.id)} className={clsx('h-full flex-1', trackClass(i))} />
+            ))}
+          </div>
+        )}
         {hover !== null && hover !== index && (
           <div
             className="pointer-events-none absolute inset-y-1 w-px bg-white/30"

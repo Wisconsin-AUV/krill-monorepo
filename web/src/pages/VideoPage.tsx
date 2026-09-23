@@ -61,8 +61,14 @@ function ClipCard({ clip }: { clip: Clip }) {
         </span>
       </div>
       <div className="text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
-        {formatNumber(clip.frameCount)} frames
+        {formatNumber(clip.labeledFrameCount)} of {formatNumber(clip.frameCount)} frames done ·{' '}
+        {formatNumber(clip.boxCount)} boxes
       </div>
+      <Meter
+        value={clip.frameCount > 0 ? clip.labeledFrameCount / clip.frameCount : 0}
+        label={`Clip ${clip.index + 1} progress`}
+        className="mt-2"
+      />
     </Link>
   )
 }
@@ -228,6 +234,11 @@ export function VideoPage() {
             <DescriptionTerm>Frames</DescriptionTerm>
             <DescriptionDetails className="tabular-nums">
               {formatNumber(video.frameCount)} at {formatFps(video.fps)}
+            </DescriptionDetails>
+            <DescriptionTerm>Labeled</DescriptionTerm>
+            <DescriptionDetails className="tabular-nums">
+              {formatNumber(video.labeledFrameCount)} frames done · {formatNumber(video.boxCount)}{' '}
+              boxes
             </DescriptionDetails>
           </>
         )}

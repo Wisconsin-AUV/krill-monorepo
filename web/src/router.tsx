@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { AppLayout } from '@/layouts/AppLayout'
 import { ClipPage } from '@/pages/ClipPage'
+import { LabelsPage } from '@/pages/LabelsPage'
 import { NotFound } from '@/pages/NotFound'
 import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
@@ -12,6 +13,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <VideosPage /> },
       { path: 'videos/:id', element: <VideoPage /> },
+      { path: 'labels', element: <LabelsPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
