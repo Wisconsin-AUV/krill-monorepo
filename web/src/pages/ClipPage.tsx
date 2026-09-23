@@ -1,4 +1,5 @@
 import { useQuery } from '@connectrpc/connect-query'
+import { keepPreviousData } from '@tanstack/react-query'
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -11,10 +12,26 @@ import {
   QuestionMarkCircleIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import {
+  Navbar,
+  NavbarDivider,
+  NavbarItem,
+  NavbarLabel,
+  NavbarSection,
+  NavbarSpacer,
+} from '@/components/ui/Navbar'
+import {
+  Sidebar,
+  SidebarBody,
+  SidebarItem,
+  SidebarLabel,
+  SidebarSection,
+} from '@/components/ui/Sidebar'
+import { StackedLayout } from '@/components/ui/StackedLayout'
 import { FrameStatus } from '@/gen/krill/v1/annotation_pb'
 import { ClipService, type GetClipResponse } from '@/gen/krill/v1/clip_pb'
 import { LabelService } from '@/gen/krill/v1/label_pb'
@@ -32,16 +49,16 @@ import { idKey, useLabelStore } from '@/labeling/useLabelStore'
 import { ShortcutsDialog } from '@/workspace/ShortcutsDialog'
 import { Timeline } from '@/workspace/Timeline'
 import { navigationShortcuts, viewShortcuts } from '@/workspace/shortcuts'
-import { useDarkDocument } from '@/workspace/useDarkDocument'
 import { useHotkeys } from '@/workspace/useHotkeys'
 import { usePlayback } from '@/workspace/usePlayback'
+import { usePrefetchNeighbours } from '@/workspace/usePrefetchNeighbours'
 import { fitView, useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 
 function parseId(raw: string | undefined): bigint | undefined {
   return raw && /^\d+$/.test(raw) ? BigInt(raw) : undefined
 }
 
-function useClipState(data: GetClipResponse | undefined) {
+function useClipState(data: GetClipResponse | undefined, switching: boolean) {
   const [params, setParams] = useSearchParams()
   const index = useWorkspaceStore((s) => s.index)
   const frames = useWorkspaceStore((s) => s.frames)
@@ -60,10 +77,10 @@ function useClipState(data: GetClipResponse | undefined) {
 
   const current = frames[index]?.index
   useEffect(() => {
-    if (current === undefined || params.get('frame') === String(current)) return
+    if (switching || current === undefined || params.get('frame') === String(current)) return
     const t = setTimeout(() => setParams({ frame: String(current) }, { replace: true }), 250)
     return () => clearTimeout(t)
-  }, [current, params, setParams])
+  }, [current, params, setParams, switching])
 
   useEffect(
     () => () => {
@@ -74,10 +91,37 @@ function useClipState(data: GetClipResponse | undefined) {
   )
 }
 
+function BackItem({ to, label }: { to: string; label: string }) {
+  return (
+    <NavbarItem to={to} current={false} className="max-lg:hidden">
+      <ChevronLeftIcon data-slot="icon" />
+      <NavbarLabel className="max-w-48">{label}</NavbarLabel>
+    </NavbarItem>
+  )
+}
+
+// The tagger replaces the app navigation with its own toolbar, so it has a
+// layout of its own instead of living under AppLayout.
+function ClipShell({
+  navbar,
+  sidebar,
+  children,
+}: {
+  navbar: React.ReactNode
+  sidebar?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <StackedLayout fill navbar={navbar} sidebar={sidebar ?? <Sidebar />}>
+      {children}
+    </StackedLayout>
+  )
+}
+
 function SaveIndicator() {
   const pending = useLabelStore((s) => s.pending)
   return (
-    <span className="w-14 text-xs text-zinc-500" aria-live="polite">
+    <span className="w-14 text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
       {pending > 0 ? 'Saving…' : 'Saved'}
     </span>
   )
@@ -87,15 +131,25 @@ export function ClipPage() {
   const id = parseId(useParams().id)
   const navigate = useNavigate()
   const [showHelp, setShowHelp] = useState(false)
-  useDarkDocument()
 
-  const { data, error, isPending } = useQuery(
+  // Labels live in the store while a clip is open, so the query must not
+  // refetch underneath it. gcTime 0 drops a clip once it is left, so coming
+  // back always loads fresh labels. The previous clip stays on screen while
+  // the next one loads so the layout never flashes a spinner.
+  const { data, error, isPending, isPlaceholderData } = useQuery(
     ClipService.method.getClip,
     { id },
-    { enabled: id !== undefined, staleTime: Infinity },
+    {
+      enabled: id !== undefined,
+      staleTime: Infinity,
+      gcTime: 0,
+      placeholderData: keepPreviousData,
+    },
   )
+  const switching = isPlaceholderData
+  usePrefetchNeighbours(switching ? undefined : data)
   const { data: typeData } = useQuery(LabelService.method.listLabelTypes, {})
-  useClipState(data)
+  useClipState(data, switching)
   usePlayback(data?.video?.fps ?? 0)
 
   const types = useMemo(() => typeData?.labelTypes ?? [], [typeData])
@@ -179,44 +233,50 @@ export function ClipPage() {
     types.slice(0, 9).map((t, i) => [String(i + 1), () => labels().setActiveType(t.id)]),
   )
 
-  useHotkeys({
-    j: () => step(-1),
-    k: () => step(1),
-    ArrowLeft: () => step(-1),
-    ArrowRight: () => step(1),
-    J: () => step(-10),
-    K: () => step(10),
-    'shift+ArrowLeft': () => step(-10),
-    'shift+ArrowRight': () => step(10),
-    Home: () => seek(0),
-    End: () => seek(frames.length - 1),
-    p: () => setPlaying(!playing),
-    f: fit,
-    '[': () => goClip(data?.previousClipId),
-    ']': () => goClip(data?.nextClipId),
-    '?': () => setShowHelp(true),
-    ...typeKeys,
-    Escape: () => labels().select(null),
-    Tab: () => cycleSelection(1),
-    'shift+Tab': () => cycleSelection(-1),
-    Delete: () =>
-      frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
-    Backspace: () =>
-      frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
-    'shift+Delete': () => selectedTrackId !== null && void labels().deleteTrack(selectedTrackId),
-    'shift+Backspace': () => selectedTrackId !== null && void labels().deleteTrack(selectedTrackId),
-    c: async () => {
-      if (!frame || index === 0) return
-      const n = await labels().copyBoxes(frames[index - 1].id, frame.id)
-      if (n === 0)
-        flash.error('Nothing to copy', 'Every box on the previous frame is already here.')
-    },
-    h: () => labels().toggleHidden(),
-    ' ': () => void mark(FrameStatus.LABELED, true),
-    e: () => void mark(FrameStatus.EMPTY, true),
-    u: () => void mark(FrameStatus.UNLABELED, false),
-    'mod+z': () => void labels().undo(),
-  })
+  useHotkeys(
+    switching
+      ? {}
+      : {
+          j: () => step(-1),
+          k: () => step(1),
+          ArrowLeft: () => step(-1),
+          ArrowRight: () => step(1),
+          J: () => step(-10),
+          K: () => step(10),
+          'shift+ArrowLeft': () => step(-10),
+          'shift+ArrowRight': () => step(10),
+          Home: () => seek(0),
+          End: () => seek(frames.length - 1),
+          p: () => setPlaying(!playing),
+          f: fit,
+          '[': () => goClip(data?.previousClipId),
+          ']': () => goClip(data?.nextClipId),
+          '?': () => setShowHelp(true),
+          ...typeKeys,
+          Escape: () => labels().select(null),
+          Tab: () => cycleSelection(1),
+          'shift+Tab': () => cycleSelection(-1),
+          Delete: () =>
+            frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
+          Backspace: () =>
+            frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
+          'shift+Delete': () =>
+            selectedTrackId !== null && void labels().deleteTrack(selectedTrackId),
+          'shift+Backspace': () =>
+            selectedTrackId !== null && void labels().deleteTrack(selectedTrackId),
+          c: async () => {
+            if (!frame || index === 0) return
+            const n = await labels().copyBoxes(frames[index - 1].id, frame.id)
+            if (n === 0)
+              flash.error('Nothing to copy', 'Every box on the previous frame is already here.')
+          },
+          h: () => labels().toggleHidden(),
+          ' ': () => void mark(FrameStatus.LABELED, true),
+          e: () => void mark(FrameStatus.EMPTY, true),
+          u: () => void mark(FrameStatus.UNLABELED, false),
+          'mod+z': () => void labels().undo(),
+        },
+  )
 
   useEffect(() => {
     if (data?.video)
@@ -225,19 +285,23 @@ export function ClipPage() {
 
   if (id === undefined || error) {
     return (
-      <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-zinc-950 text-zinc-300">
-        <p>{error ? `Could not load clip: ${errorMessage(error)}` : 'Clip not found.'}</p>
-        <Button to="/" outline>
-          Back to videos
-        </Button>
-      </div>
+      <ClipShell navbar={<BackItem to="/" label="Videos" />}>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 py-24 text-zinc-700 dark:text-zinc-300">
+          <p>{error ? `Could not load clip: ${errorMessage(error)}` : 'Clip not found.'}</p>
+          <Button to="/" outline>
+            Back to videos
+          </Button>
+        </div>
+      </ClipShell>
     )
   }
   if (isPending || !data.video || !data.clip) {
     return (
-      <div className="flex h-dvh items-center justify-center bg-zinc-950">
-        <LoadingSpinner />
-      </div>
+      <ClipShell navbar={<BackItem to="/" label="Videos" />}>
+        <div className="flex flex-1 items-center justify-center py-24">
+          <LoadingSpinner />
+        </div>
+      </ClipShell>
     )
   }
 
@@ -245,50 +309,41 @@ export function ClipPage() {
   const zoomPct = fitScale > 0 ? Math.round((view.scale / fitScale) * 100) : 100
   const selectedKey = selectedTrackId !== null ? idKey(selectedTrackId) : null
 
-  return (
-    <div className="flex h-dvh flex-col bg-zinc-950 text-zinc-100">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-white/10 bg-zinc-900 px-2">
-        <Link
-          to={`/videos/${video.id}`}
-          className="flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-sm/6 text-zinc-400 hover:bg-white/5 hover:text-white"
+  const navbar = (
+    <Navbar>
+      <BackItem to={`/videos/${video.id}`} label={video.name} />
+      <NavbarDivider className="max-lg:hidden" />
+      <NavbarSection>
+        <NavbarItem
+          aria-label="Previous clip"
+          disabled={!data.previousClipId}
+          onClick={() => goClip(data.previousClipId)}
         >
-          <ChevronLeftIcon className="size-4 shrink-0" />
-          <span className="max-w-48 truncate">{video.name}</span>
-        </Link>
-        <div className="mx-1 h-5 w-px bg-white/10" />
-        <div className="flex items-center">
-          <Button
-            plain
-            aria-label="Previous clip"
-            disabled={!data.previousClipId}
-            onClick={() => goClip(data.previousClipId)}
-          >
-            <ChevronLeftIcon data-slot="icon" />
-          </Button>
-          <span className="px-1 text-sm/6 font-medium whitespace-nowrap tabular-nums">
-            Clip {clip.index + 1} <span className="text-zinc-500">of {video.clipCount}</span>
-          </span>
-          <Button
-            plain
-            aria-label="Next clip"
-            disabled={!data.nextClipId}
-            onClick={() => goClip(data.nextClipId)}
-          >
-            <ChevronRightIcon data-slot="icon" />
-          </Button>
-        </div>
-        <span className="ml-2 text-xs text-zinc-500 tabular-nums">
+          <ChevronLeftIcon data-slot="icon" />
+        </NavbarItem>
+        <span className="text-sm/6 font-medium whitespace-nowrap tabular-nums">
+          Clip {clip.index + 1}{' '}
+          <span className="text-zinc-500 dark:text-zinc-400">of {video.clipCount}</span>
+        </span>
+        <NavbarItem
+          aria-label="Next clip"
+          disabled={!data.nextClipId}
+          onClick={() => goClip(data.nextClipId)}
+        >
+          <ChevronRightIcon data-slot="icon" />
+        </NavbarItem>
+        <span className="text-xs text-zinc-500 tabular-nums max-md:hidden dark:text-zinc-400">
           {doneCount}/{frames.length} done
         </span>
-
-        <div className="flex-1" />
-
+      </NavbarSection>
+      <NavbarSpacer />
+      <NavbarSection>
         <SaveIndicator />
         <Badge color={state.color}>{state.label}</Badge>
         <Button
           plain
           title="Mark empty (E)"
-          disabled={frameBoxes.length > 0 || status === FrameStatus.EMPTY}
+          disabled={switching || frameBoxes.length > 0 || status === FrameStatus.EMPTY}
           onClick={() => void mark(FrameStatus.EMPTY, true)}
         >
           <NoSymbolIcon data-slot="icon" />
@@ -296,60 +351,100 @@ export function ClipPage() {
         </Button>
         <Button
           color="emerald"
+          disabled={switching}
           title="Mark labeled and continue (Space)"
           onClick={() => void mark(FrameStatus.LABELED, true)}
         >
           <CheckIcon data-slot="icon" />
           Done
         </Button>
-        <div className="mx-1 h-5 w-px bg-white/10" />
-        <span className="px-1 text-sm/6 text-zinc-400 tabular-nums">
-          Frame <span className="text-zinc-100">{index + 1}</span> / {frames.length}
+      </NavbarSection>
+      <NavbarDivider className="max-lg:hidden" />
+      <NavbarSection className="max-lg:hidden">
+        <span className="text-sm/6 text-zinc-500 tabular-nums dark:text-zinc-400">
+          Frame <span className="text-zinc-950 dark:text-white">{index + 1}</span> / {frames.length}
         </span>
-        <Button plain aria-label={playing ? 'Pause' : 'Play'} onClick={() => setPlaying(!playing)}>
+        <NavbarItem aria-label={playing ? 'Pause' : 'Play'} onClick={() => setPlaying(!playing)}>
           {playing ? <PauseIcon data-slot="icon" /> : <PlayIcon data-slot="icon" />}
-        </Button>
-        <Button
-          plain
+        </NavbarItem>
+        <NavbarItem
           aria-label={hideBoxes ? 'Show boxes' : 'Hide boxes'}
           title="Hide boxes (H)"
           onClick={() => labels().toggleHidden()}
         >
           {hideBoxes ? <EyeSlashIcon data-slot="icon" /> : <EyeIcon data-slot="icon" />}
-        </Button>
-        <Button plain aria-label="Fit to screen" title="Fit to screen (F)" onClick={fit}>
-          <span className="w-9 text-center text-xs/6 tabular-nums">{zoomPct}%</span>
-        </Button>
-        <Button plain aria-label="Keyboard shortcuts" onClick={() => setShowHelp(true)}>
+        </NavbarItem>
+        <NavbarItem aria-label="Fit to screen" title="Fit to screen (F)" onClick={fit}>
+          <span className="min-w-10 text-center tabular-nums">{zoomPct}%</span>
+        </NavbarItem>
+        <NavbarItem aria-label="Keyboard shortcuts" onClick={() => setShowHelp(true)}>
           <QuestionMarkCircleIcon data-slot="icon" />
-        </Button>
-      </header>
+        </NavbarItem>
+      </NavbarSection>
+    </Navbar>
+  )
 
-      <div className="flex min-h-0 flex-1">
-        <TypePanel types={types} counts={typeCounts} />
-        <main className="relative min-w-0 flex-1 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]">
-          <LabelCanvas tracks={tracks} types={types} />
-        </main>
-        <TrackPanel tracks={tracks} types={types} />
+  const sidebar = (
+    <Sidebar>
+      <SidebarBody>
+        <SidebarSection>
+          <SidebarItem to={`/videos/${video.id}`}>
+            <ChevronLeftIcon data-slot="icon" />
+            <SidebarLabel>{video.name}</SidebarLabel>
+          </SidebarItem>
+          <SidebarItem disabled={!data.previousClipId} onClick={() => goClip(data.previousClipId)}>
+            <SidebarLabel>Previous clip</SidebarLabel>
+          </SidebarItem>
+          <SidebarItem disabled={!data.nextClipId} onClick={() => goClip(data.nextClipId)}>
+            <SidebarLabel>Next clip</SidebarLabel>
+          </SidebarItem>
+          <SidebarItem onClick={() => setShowHelp(true)}>
+            <QuestionMarkCircleIcon data-slot="icon" />
+            <SidebarLabel>Keyboard shortcuts</SidebarLabel>
+          </SidebarItem>
+        </SidebarSection>
+      </SidebarBody>
+    </Sidebar>
+  )
+
+  return (
+    <ClipShell navbar={navbar} sidebar={sidebar}>
+      <div className="flex min-h-0 flex-1 flex-col text-zinc-950 dark:text-zinc-100">
+        <div className="flex min-h-0 flex-1">
+          <TypePanel types={types} counts={typeCounts} />
+          <main className="relative min-w-0 flex-1 bg-zinc-950 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]">
+            <LabelCanvas tracks={tracks} types={types} />
+            {switching && (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/40">
+                <LoadingSpinner />
+              </div>
+            )}
+          </main>
+          <TrackPanel tracks={tracks} types={types} />
+        </div>
+
+        <Timeline
+          frameClass={(i) => {
+            const f = frames[i]
+            const byTrack = boxes[idKey(f.id)]
+            return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0)
+              .bar
+          }}
+          trackClass={
+            selectedKey
+              ? (i) =>
+                  boxes[idKey(frames[i].id)]?.[selectedKey]
+                    ? 'bg-sky-500 dark:bg-sky-400'
+                    : undefined
+              : undefined
+          }
+        />
+        <ShortcutsDialog
+          open={showHelp}
+          onClose={() => setShowHelp(false)}
+          groups={[labelingShortcuts, frameShortcuts, navigationShortcuts, viewShortcuts]}
+        />
       </div>
-
-      <Timeline
-        frameClass={(i) => {
-          const f = frames[i]
-          const byTrack = boxes[idKey(f.id)]
-          return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0).bar
-        }}
-        trackClass={
-          selectedKey
-            ? (i) => (boxes[idKey(frames[i].id)]?.[selectedKey] ? 'bg-sky-400' : undefined)
-            : undefined
-        }
-      />
-      <ShortcutsDialog
-        open={showHelp}
-        onClose={() => setShowHelp(false)}
-        groups={[labelingShortcuts, frameShortcuts, navigationShortcuts, viewShortcuts]}
-      />
-    </div>
+    </ClipShell>
   )
 }

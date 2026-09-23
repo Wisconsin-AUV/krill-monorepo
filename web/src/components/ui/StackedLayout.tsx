@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import * as Headless from '@headlessui/react'
 import React, { useState } from 'react'
 import { NavbarItem } from './Navbar'
@@ -49,12 +50,24 @@ function MobileSidebar({
 export function StackedLayout({
   navbar,
   sidebar,
+  fill = false,
   children,
-}: React.PropsWithChildren<{ navbar: React.ReactNode; sidebar: React.ReactNode }>) {
+}: React.PropsWithChildren<{
+  navbar: React.ReactNode
+  sidebar: React.ReactNode
+  // Pins the layout to the viewport so the content can size itself to the
+  // remaining height instead of scrolling the page.
+  fill?: boolean
+}>) {
   const [showSidebar, setShowSidebar] = useState(false)
 
   return (
-    <div className="relative isolate flex min-h-svh w-full flex-col bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
+    <div
+      className={clsx(
+        'relative isolate flex w-full flex-col bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950',
+        fill ? 'h-svh' : 'min-h-svh',
+      )}
+    >
       {/* Sidebar on mobile */}
       <MobileSidebar open={showSidebar} close={() => setShowSidebar(false)}>
         {sidebar}
@@ -71,9 +84,14 @@ export function StackedLayout({
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-col pb-2 lg:px-2">
-        <div className="grow bg-white lg:rounded-lg lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
-          <div>{children}</div>
+      <main className={clsx('flex flex-1 flex-col pb-2 lg:px-2', fill && 'min-h-0')}>
+        <div
+          className={clsx(
+            'grow bg-white lg:rounded-lg lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10',
+            fill && 'flex min-h-0 flex-col overflow-hidden',
+          )}
+        >
+          <div className={clsx(fill && 'flex min-h-0 flex-1 flex-col')}>{children}</div>
         </div>
       </main>
     </div>

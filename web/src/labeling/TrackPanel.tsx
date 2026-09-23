@@ -30,9 +30,9 @@ function TrackEditor({
   const { track, type } = info
 
   return (
-    <div className="space-y-3 border-t border-white/5 px-3 pt-3 pb-3">
+    <div className="space-y-3 border-t border-zinc-950/5 px-3 pt-3 pb-3 dark:border-white/5">
       <label className="block">
-        <span className="text-xs/6 text-zinc-400">Type</span>
+        <span className="text-xs/6 text-zinc-500 dark:text-zinc-400">Type</span>
         <Select
           value={String(track.labelTypeId)}
           onChange={(e) => void updateTrack(track.id, { labelTypeId: BigInt(e.target.value) })}
@@ -46,7 +46,7 @@ function TrackEditor({
       </label>
       {type?.attributes.map((a) => (
         <label key={a.name} className="block">
-          <span className="text-xs/6 text-zinc-400">{a.name}</span>
+          <span className="text-xs/6 text-zinc-500 dark:text-zinc-400">{a.name}</span>
           <Select
             value={track.attributes[a.name] ?? ''}
             onChange={(e) => {
@@ -121,9 +121,9 @@ export function TrackPanel({
   const list = [...tracks.values()]
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-l border-white/10 bg-zinc-900">
+    <aside className="flex w-72 shrink-0 flex-col border-l border-zinc-950/10 bg-white dark:border-white/10 dark:bg-zinc-900">
       <div className="flex items-baseline justify-between px-3 pt-3 pb-2">
-        <h2 className="text-xs/6 font-medium text-zinc-400">Tracks in clip</h2>
+        <h2 className="text-xs/6 font-medium text-zinc-500 dark:text-zinc-400">Tracks in clip</h2>
         <span className="text-xs text-zinc-500 tabular-nums">{list.length}</span>
       </div>
       <ul className="flex-1 overflow-y-auto pb-3">
@@ -133,18 +133,18 @@ export function TrackPanel({
           const missing = missingAttributes(info.type, info.track.attributes)
           const count = positions.get(k)?.length ?? 0
           return (
-            <li key={k} className={clsx(selected && 'bg-white/5')}>
+            <li key={k} className={clsx(selected && 'bg-zinc-950/[2.5%] dark:bg-white/5')}>
               <button
                 type="button"
                 onClick={() => select(selected ? null : info.track.id)}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm/5 hover:bg-white/5"
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm/5 hover:bg-zinc-950/5 dark:hover:bg-white/5"
               >
                 <span
                   className="size-2.5 shrink-0 rounded-sm"
                   style={{ backgroundColor: info.type?.color ?? '#a1a1aa' }}
                 />
                 <span className="min-w-0 flex-1 truncate">
-                  <span className="font-mono text-[13px] text-zinc-100">
+                  <span className="font-mono text-[13px] text-zinc-950 dark:text-zinc-100">
                     {info.type?.name ?? 'unknown'}
                   </span>
                   <span className="text-zinc-500"> #{info.number}</span>
@@ -164,7 +164,7 @@ export function TrackPanel({
                 <span
                   className={clsx(
                     'size-1.5 shrink-0 rounded-full',
-                    here[k] ? 'bg-sky-400' : 'bg-transparent',
+                    here[k] ? 'bg-sky-500 dark:bg-sky-400' : 'bg-transparent',
                   )}
                   title={here[k] ? 'Has a box on this frame' : undefined}
                 />
@@ -176,7 +176,7 @@ export function TrackPanel({
           )
         })}
         {list.length === 0 && (
-          <li className="px-3 py-4 text-sm/6 text-zinc-400">
+          <li className="px-3 py-4 text-sm/6 text-zinc-500 dark:text-zinc-400">
             Pick a type and drag on the frame to draw a box. Each object becomes a track you carry
             across frames.
           </li>

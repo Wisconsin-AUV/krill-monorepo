@@ -1,10 +1,10 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { ArrowDownTrayIcon, BookOpenIcon, FilmIcon, TagIcon } from '@heroicons/react/20/solid'
-import { Link, Outlet, useLocation } from 'react-router'
-import { Logo } from '@/components/Logo'
+import { Outlet, useLocation } from 'react-router'
 import FlashMessageRender from '@/components/ui/FlashMessageRender'
 import {
   Navbar,
+  NavbarDivider,
   NavbarItem,
   NavbarLabel,
   NavbarSection,
@@ -49,19 +49,31 @@ function Version() {
   )
 }
 
+// Toasts, the progress bar, and uploads live above every layout so they
+// survive moving between the app and the tagger.
+export function AppChrome() {
+  return (
+    <>
+      <ProgressBar />
+      <FlashMessageRender byKey="global" />
+      <Outlet />
+      <UploadTray />
+    </>
+  )
+}
+
 export function AppLayout() {
   const { pathname } = useLocation()
 
   return (
     <>
-      <ProgressBar />
-      <FlashMessageRender byKey="global" />
       <StackedLayout
         navbar={
           <Navbar>
-            <Link to="/" aria-label="Home" className="rounded-lg px-2 py-2.5 max-lg:hidden">
-              <Logo />
-            </Link>
+            <NavbarItem to="/" current={false} className="max-lg:hidden">
+              <NavbarLabel className="font-semibold">Krill</NavbarLabel>
+            </NavbarItem>
+            <NavbarDivider className="max-lg:hidden" />
             <NavbarSection className="max-lg:hidden">
               {navItems.map(({ label, to, icon: Icon, match }) => (
                 <NavbarItem key={to} to={to} current={match(pathname)}>
@@ -83,7 +95,9 @@ export function AppLayout() {
         sidebar={
           <Sidebar>
             <SidebarHeader>
-              <Logo className="px-2" />
+              <SidebarItem to="/">
+                <SidebarLabel className="font-semibold">Krill</SidebarLabel>
+              </SidebarItem>
             </SidebarHeader>
             <SidebarBody>
               <SidebarSection>
@@ -106,7 +120,6 @@ export function AppLayout() {
       >
         <Outlet />
       </StackedLayout>
-      <UploadTray />
     </>
   )
 }
