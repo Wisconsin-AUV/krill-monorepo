@@ -16,7 +16,9 @@ plugins:
       - simple
   - remote: buf.build/bufbuild/es
     out: ../web/src/gen
-    opt: target=ts
+    opt:
+      - target=ts
+      - erasable_syntax=true
   - remote: buf.build/protocolbuffers/python
     out: ../worker/gen
   - remote: buf.build/protocolbuffers/pyi
