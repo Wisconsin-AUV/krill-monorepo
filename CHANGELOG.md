@@ -13,3 +13,4 @@ All notable changes to this project are documented here. The format follows
 - Clip viewer with frame stepping, playback, zoom, and a scrubbable timeline.
 - Label types with track attributes, and manual box labeling with tracks, copy forward, and undo.
 - YOLO export with per-video train/val split, frame stride, and perceptual-hash dedup.
+- Accounts with password or Slack sign-in, and labeler, developer, and admin roles.

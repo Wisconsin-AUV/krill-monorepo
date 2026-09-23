@@ -22,6 +22,18 @@ Build the worker for CUDA Nvidia with `just build-worker-cuda`.
 
 The API image bundles the web app, so the full stack is served from `:8080`. Set `KRILL_S3_PUBLIC_ENDPOINT` to a MinIO address browsers can reach when it is not `localhost:9000`.
 
+## Accounts
+
+The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
+
+| Role | Can |
+|---|---|
+| Labeler | Label clips |
+| Developer | Also manage videos, label types, and exports |
+| Admin | Also manage users |
+
+Create a Slack app with the redirect URL `$KRILL_PUBLIC_URL/auth/slack/callback` and the `openid`, `profile`, and `email` scopes, then set `KRILL_SLACK_CLIENT_ID`, `KRILL_SLACK_CLIENT_SECRET`, and `KRILL_SLACK_TEAM_ID`. Slack requires an HTTPS redirect URL.
+
 ## Labeling workflow
 
 1. **Labels**: create label types, or add the starter set. Attributes such as size or color are set once per track.
