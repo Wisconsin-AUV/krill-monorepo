@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// UserService is for admins managing accounts.
+service UserService {
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+  // UpdateUser fails when an admin changes their own role or disables
+  // themselves, so there is always at least one admin.
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  // SetUserPassword signs the user out everywhere.
+  rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+}
+
+// Role is ordered: each role can do everything the roles below it can.
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  // Labels clips.
+  ROLE_LABELER = 1;
+  // Also manages videos, label types, and exports.
+  ROLE_DEVELOPER = 2;
+  // Also manages users.
+  ROLE_ADMIN = 3;
+}
+
+message User {
+  // UUID.
+  string id = 1;
+  string name = 2;
+  string username = 3;
+  string email = 4;
+  Role role = 5;
+  bool disabled = 6;
+  bool has_password = 7;
+  bool slack_linked = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp last_login_at = 10;
+}
+
+message ListUsersRequest {}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  optional Role role = 2;
+  // Disabling a user signs them out everywhere.
+  optional bool disabled = 3;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message SetUserPasswordRequest {
+  string id = 1;
+  string password = 2;
+}
+
+message SetUserPasswordResponse {}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {}

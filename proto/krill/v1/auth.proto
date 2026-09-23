@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "krill/v1/user.proto";
+
+// AuthService signs users in with a session cookie. Slack sign-in is a
+// browser redirect to /auth/slack/login, not an RPC.
+service AuthService {
+  // GetSession returns the signed-in user, or no user when signed out.
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
+  // Login accepts a username or an email.
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  // Register creates a labeler and signs them in. The first account is an
+  // admin.
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}
+  // ChangePassword signs out every other session.
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
+}
+
+message GetSessionRequest {}
+
+message GetSessionResponse {
+  User user = 1;
+  bool slack_enabled = 2;
+  bool signup_enabled = 3;
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  User user = 1;
+}
+
+message RegisterRequest {
+  string name = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message RegisterResponse {
+  User user = 1;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message UpdateProfileRequest {
+  string name = 1;
+  string username = 2;
+  string email = 3;
+}
+
+message UpdateProfileResponse {
+  User user = 1;
+}
+
+message ChangePasswordRequest {
+  // Required when the account already has a password.
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message ChangePasswordResponse {}
