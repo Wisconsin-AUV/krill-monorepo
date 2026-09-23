@@ -29,6 +29,7 @@ import (
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
+	"github.com/wauv/krill/api/internal/user"
 	"github.com/wauv/krill/api/internal/video"
 	"github.com/wauv/krill/api/internal/web"
 )
@@ -125,6 +126,7 @@ func run() error {
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))
