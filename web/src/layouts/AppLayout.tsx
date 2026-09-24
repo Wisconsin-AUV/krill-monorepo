@@ -5,6 +5,7 @@ import {
   BookOpenIcon,
   FilmIcon,
   TagIcon,
+  TrophyIcon,
   UserCircleIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
@@ -55,6 +56,13 @@ const navItems = [
     icon: FilmIcon,
     permission: Permission.LABEL,
     match: (p: string) => p === '/' || p.startsWith('/videos'),
+  },
+  {
+    label: 'Leaderboard',
+    to: '/leaderboard',
+    icon: TrophyIcon,
+    permission: Permission.LABEL,
+    match: (p: string) => p.startsWith('/leaderboard'),
   },
   {
     label: 'Labels',
