@@ -15,15 +15,35 @@ service UserService {
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
 }
 
-// Role is ordered: each role can do everything the roles below it can.
+// Role is ordered: each role has every permission of the roles below it.
 enum Role {
   ROLE_UNSPECIFIED = 0;
-  // Labels clips.
   ROLE_LABELER = 1;
-  // Also manages videos, label types, and exports.
   ROLE_DEVELOPER = 2;
-  // Also manages users.
   ROLE_ADMIN = 3;
+}
+
+// Permission is something a user can do. Which role grants each one is
+// defined once in the API and sent to the web app in GetSession.
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_LABEL = 1;
+  PERMISSION_MANAGE_VIDEOS = 2;
+  PERMISSION_MANAGE_LABEL_TYPES = 3;
+  PERMISSION_MANAGE_EXPORTS = 4;
+  PERMISSION_MANAGE_USERS = 5;
+}
+
+message RoleInfo {
+  Role role = 1;
+  string label = 2;
+}
+
+message PermissionInfo {
+  Permission permission = 1;
+  string description = 2;
+  // The lowest role that has it.
+  Role role = 3;
 }
 
 message User {
@@ -38,6 +58,8 @@ message User {
   bool slack_linked = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp last_login_at = 10;
+  // Granted by the role.
+  repeated Permission permissions = 11;
 }
 
 message ListUsersRequest {}

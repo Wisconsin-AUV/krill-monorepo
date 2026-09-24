@@ -121,6 +121,7 @@ func run() error {
 		Cookies:      cookies,
 		AllowSignup:  cfg.AllowSignup,
 		SlackEnabled: cfg.SlackClientID != "",
+		TeamName:     cfg.TeamName,
 	}), rpcOpts))
 	if cfg.SlackClientID != "" {
 		slack := auth.NewSlack(pool, auth.SlackConfig{

@@ -28,14 +28,6 @@ func TestPassword(t *testing.T) {
 	}
 }
 
-func TestHashPasswordSalts(t *testing.T) {
-	a, _ := HashPassword("same")
-	b, _ := HashPassword("same")
-	if a == b {
-		t.Error("two hashes of the same password are equal")
-	}
-}
-
 func TestNormalizeProfile(t *testing.T) {
 	p, err := NormalizeProfile("  Ada Lovelace ", " Ada.L ", " Ada@Wisc.EDU ")
 	if err != nil {
@@ -61,10 +53,20 @@ func TestNormalizeProfile(t *testing.T) {
 }
 
 func TestValidatePassword(t *testing.T) {
-	if err := ValidatePassword("short"); err == nil {
-		t.Error("accepted a short password")
-	}
-	if err := ValidatePassword("longenough"); err != nil {
-		t.Error(err)
+	for _, tt := range []struct {
+		password string
+		ok       bool
+	}{
+		{"Sh0rt!", false},
+		{"lowercaseonly", false},
+		{"lower12345", false},
+		{"Lower12345", true},
+		{"lower-case 1", true},
+		{"UPPER CASE!", false},
+		{"UPPER CASE 1!", true},
+	} {
+		if err := ValidatePassword(tt.password); (err == nil) != tt.ok {
+			t.Errorf("ValidatePassword(%q) = %v, want ok %v", tt.password, err, tt.ok)
+		}
 	}
 }

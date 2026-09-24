@@ -21,17 +21,17 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
-import { Role } from '@/gen/krill/v1/user_pb'
+import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
-import { useHasRole } from '@/lib/auth'
+import { useCan } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { formatDuration, formatNumber, formatRelative, plural } from '@/lib/format'
 import { isIngesting, splitLabel } from '@/lib/video'
 
 export function VideosPage() {
   const [uploading, setUploading] = useState(false)
-  const canManage = useHasRole(Role.DEVELOPER)
+  const canManage = useCan(Permission.MANAGE_VIDEOS)
   const { data, isPending, error } = useQuery(
     VideoService.method.listVideos,
     {},

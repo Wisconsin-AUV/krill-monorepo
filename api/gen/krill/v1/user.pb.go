@@ -22,17 +22,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Role is ordered: each role can do everything the roles below it can.
+// Role is ordered: each role has every permission of the roles below it.
 type Role int32
 
 const (
 	Role_ROLE_UNSPECIFIED Role = 0
-	// Labels clips.
-	Role_ROLE_LABELER Role = 1
-	// Also manages videos, label types, and exports.
-	Role_ROLE_DEVELOPER Role = 2
-	// Also manages users.
-	Role_ROLE_ADMIN Role = 3
+	Role_ROLE_LABELER     Role = 1
+	Role_ROLE_DEVELOPER   Role = 2
+	Role_ROLE_ADMIN       Role = 3
 )
 
 // Enum value maps for Role.
@@ -78,26 +75,201 @@ func (Role) EnumDescriptor() ([]byte, []int) {
 	return file_krill_v1_user_proto_rawDescGZIP(), []int{0}
 }
 
+// Permission is something a user can do. Which role grants each one is
+// defined once in the API and sent to the web app in GetSession.
+type Permission int32
+
+const (
+	Permission_PERMISSION_UNSPECIFIED        Permission = 0
+	Permission_PERMISSION_LABEL              Permission = 1
+	Permission_PERMISSION_MANAGE_VIDEOS      Permission = 2
+	Permission_PERMISSION_MANAGE_LABEL_TYPES Permission = 3
+	Permission_PERMISSION_MANAGE_EXPORTS     Permission = 4
+	Permission_PERMISSION_MANAGE_USERS       Permission = 5
+)
+
+// Enum value maps for Permission.
+var (
+	Permission_name = map[int32]string{
+		0: "PERMISSION_UNSPECIFIED",
+		1: "PERMISSION_LABEL",
+		2: "PERMISSION_MANAGE_VIDEOS",
+		3: "PERMISSION_MANAGE_LABEL_TYPES",
+		4: "PERMISSION_MANAGE_EXPORTS",
+		5: "PERMISSION_MANAGE_USERS",
+	}
+	Permission_value = map[string]int32{
+		"PERMISSION_UNSPECIFIED":        0,
+		"PERMISSION_LABEL":              1,
+		"PERMISSION_MANAGE_VIDEOS":      2,
+		"PERMISSION_MANAGE_LABEL_TYPES": 3,
+		"PERMISSION_MANAGE_EXPORTS":     4,
+		"PERMISSION_MANAGE_USERS":       5,
+	}
+)
+
+func (x Permission) Enum() *Permission {
+	p := new(Permission)
+	*p = x
+	return p
+}
+
+func (x Permission) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Permission) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_user_proto_enumTypes[1].Descriptor()
+}
+
+func (Permission) Type() protoreflect.EnumType {
+	return &file_krill_v1_user_proto_enumTypes[1]
+}
+
+func (x Permission) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Permission.Descriptor instead.
+func (Permission) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
+type RoleInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          Role                   `protobuf:"varint,1,opt,name=role,proto3,enum=krill.v1.Role" json:"role,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoleInfo) Reset() {
+	*x = RoleInfo{}
+	mi := &file_krill_v1_user_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleInfo) ProtoMessage() {}
+
+func (x *RoleInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleInfo.ProtoReflect.Descriptor instead.
+func (*RoleInfo) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *RoleInfo) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+func (x *RoleInfo) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+type PermissionInfo struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Permission  Permission             `protobuf:"varint,1,opt,name=permission,proto3,enum=krill.v1.Permission" json:"permission,omitempty"`
+	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// The lowest role that has it.
+	Role          Role `protobuf:"varint,3,opt,name=role,proto3,enum=krill.v1.Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PermissionInfo) Reset() {
+	*x = PermissionInfo{}
+	mi := &file_krill_v1_user_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PermissionInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PermissionInfo) ProtoMessage() {}
+
+func (x *PermissionInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PermissionInfo.ProtoReflect.Descriptor instead.
+func (*PermissionInfo) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PermissionInfo) GetPermission() Permission {
+	if x != nil {
+		return x.Permission
+	}
+	return Permission_PERMISSION_UNSPECIFIED
+}
+
+func (x *PermissionInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *PermissionInfo) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
 type User struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// UUID.
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	Role          Role                   `protobuf:"varint,5,opt,name=role,proto3,enum=krill.v1.Role" json:"role,omitempty"`
-	Disabled      bool                   `protobuf:"varint,6,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	HasPassword   bool                   `protobuf:"varint,7,opt,name=has_password,json=hasPassword,proto3" json:"has_password,omitempty"`
-	SlackLinked   bool                   `protobuf:"varint,8,opt,name=slack_linked,json=slackLinked,proto3" json:"slack_linked,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastLoginAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Username    string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	Email       string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Role        Role                   `protobuf:"varint,5,opt,name=role,proto3,enum=krill.v1.Role" json:"role,omitempty"`
+	Disabled    bool                   `protobuf:"varint,6,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	HasPassword bool                   `protobuf:"varint,7,opt,name=has_password,json=hasPassword,proto3" json:"has_password,omitempty"`
+	SlackLinked bool                   `protobuf:"varint,8,opt,name=slack_linked,json=slackLinked,proto3" json:"slack_linked,omitempty"`
+	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastLoginAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
+	// Granted by the role.
+	Permissions   []Permission `protobuf:"varint,11,rep,packed,name=permissions,proto3,enum=krill.v1.Permission" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_krill_v1_user_proto_msgTypes[0]
+	mi := &file_krill_v1_user_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +281,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[0]
+	mi := &file_krill_v1_user_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +294,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{0}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *User) GetId() string {
@@ -195,6 +367,13 @@ func (x *User) GetLastLoginAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *User) GetPermissions() []Permission {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
 type ListUsersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -203,7 +382,7 @@ type ListUsersRequest struct {
 
 func (x *ListUsersRequest) Reset() {
 	*x = ListUsersRequest{}
-	mi := &file_krill_v1_user_proto_msgTypes[1]
+	mi := &file_krill_v1_user_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +394,7 @@ func (x *ListUsersRequest) String() string {
 func (*ListUsersRequest) ProtoMessage() {}
 
 func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[1]
+	mi := &file_krill_v1_user_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +407,7 @@ func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
 func (*ListUsersRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{1}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{3}
 }
 
 type ListUsersResponse struct {
@@ -240,7 +419,7 @@ type ListUsersResponse struct {
 
 func (x *ListUsersResponse) Reset() {
 	*x = ListUsersResponse{}
-	mi := &file_krill_v1_user_proto_msgTypes[2]
+	mi := &file_krill_v1_user_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +431,7 @@ func (x *ListUsersResponse) String() string {
 func (*ListUsersResponse) ProtoMessage() {}
 
 func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[2]
+	mi := &file_krill_v1_user_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +444,7 @@ func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
 func (*ListUsersResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{2}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListUsersResponse) GetUsers() []*User {
@@ -287,7 +466,7 @@ type UpdateUserRequest struct {
 
 func (x *UpdateUserRequest) Reset() {
 	*x = UpdateUserRequest{}
-	mi := &file_krill_v1_user_proto_msgTypes[3]
+	mi := &file_krill_v1_user_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +478,7 @@ func (x *UpdateUserRequest) String() string {
 func (*UpdateUserRequest) ProtoMessage() {}
 
 func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[3]
+	mi := &file_krill_v1_user_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +491,7 @@ func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{3}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateUserRequest) GetId() string {
@@ -345,7 +524,7 @@ type UpdateUserResponse struct {
 
 func (x *UpdateUserResponse) Reset() {
 	*x = UpdateUserResponse{}
-	mi := &file_krill_v1_user_proto_msgTypes[4]
+	mi := &file_krill_v1_user_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -357,7 +536,7 @@ func (x *UpdateUserResponse) String() string {
 func (*UpdateUserResponse) ProtoMessage() {}
 
 func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[4]
+	mi := &file_krill_v1_user_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -370,7 +549,7 @@ func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{4}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateUserResponse) GetUser() *User {
@@ -390,7 +569,7 @@ type SetUserPasswordRequest struct {
 
 func (x *SetUserPasswordRequest) Reset() {
 	*x = SetUserPasswordRequest{}
-	mi := &file_krill_v1_user_proto_msgTypes[5]
+	mi := &file_krill_v1_user_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -402,7 +581,7 @@ func (x *SetUserPasswordRequest) String() string {
 func (*SetUserPasswordRequest) ProtoMessage() {}
 
 func (x *SetUserPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[5]
+	mi := &file_krill_v1_user_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -415,7 +594,7 @@ func (x *SetUserPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserPasswordRequest.ProtoReflect.Descriptor instead.
 func (*SetUserPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SetUserPasswordRequest) GetId() string {
@@ -440,7 +619,7 @@ type SetUserPasswordResponse struct {
 
 func (x *SetUserPasswordResponse) Reset() {
 	*x = SetUserPasswordResponse{}
-	mi := &file_krill_v1_user_proto_msgTypes[6]
+	mi := &file_krill_v1_user_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -452,7 +631,7 @@ func (x *SetUserPasswordResponse) String() string {
 func (*SetUserPasswordResponse) ProtoMessage() {}
 
 func (x *SetUserPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[6]
+	mi := &file_krill_v1_user_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -465,7 +644,7 @@ func (x *SetUserPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserPasswordResponse.ProtoReflect.Descriptor instead.
 func (*SetUserPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{8}
 }
 
 type DeleteUserRequest struct {
@@ -477,7 +656,7 @@ type DeleteUserRequest struct {
 
 func (x *DeleteUserRequest) Reset() {
 	*x = DeleteUserRequest{}
-	mi := &file_krill_v1_user_proto_msgTypes[7]
+	mi := &file_krill_v1_user_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -489,7 +668,7 @@ func (x *DeleteUserRequest) String() string {
 func (*DeleteUserRequest) ProtoMessage() {}
 
 func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[7]
+	mi := &file_krill_v1_user_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -502,7 +681,7 @@ func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteUserRequest) GetId() string {
@@ -520,7 +699,7 @@ type DeleteUserResponse struct {
 
 func (x *DeleteUserResponse) Reset() {
 	*x = DeleteUserResponse{}
-	mi := &file_krill_v1_user_proto_msgTypes[8]
+	mi := &file_krill_v1_user_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +711,7 @@ func (x *DeleteUserResponse) String() string {
 func (*DeleteUserResponse) ProtoMessage() {}
 
 func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_user_proto_msgTypes[8]
+	mi := &file_krill_v1_user_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,14 +724,23 @@ func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_user_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{10}
 }
 
 var File_krill_v1_user_proto protoreflect.FileDescriptor
 
 const file_krill_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x13krill/v1/user.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\x02\n" +
+	"\x13krill/v1/user.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"D\n" +
+	"\bRoleInfo\x12\"\n" +
+	"\x04role\x18\x01 \x01(\x0e2\x0e.krill.v1.RoleR\x04role\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\x8c\x01\n" +
+	"\x0ePermissionInfo\x124\n" +
+	"\n" +
+	"permission\x18\x01 \x01(\x0e2\x14.krill.v1.PermissionR\n" +
+	"permission\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\"\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x0e.krill.v1.RoleR\x04role\"\x95\x03\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -565,7 +753,8 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
 	"\rlast_login_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\x12\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\x126\n" +
+	"\vpermissions\x18\v \x03(\x0e2\x14.krill.v1.PermissionR\vpermissions\"\x12\n" +
 	"\x10ListUsersRequest\"9\n" +
 	"\x11ListUsersResponse\x12$\n" +
 	"\x05users\x18\x01 \x03(\v2\x0e.krill.v1.UserR\x05users\"\x83\x01\n" +
@@ -589,7 +778,15 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\fROLE_LABELER\x10\x01\x12\x12\n" +
 	"\x0eROLE_DEVELOPER\x10\x02\x12\x0e\n" +
 	"\n" +
-	"ROLE_ADMIN\x10\x032\xc5\x02\n" +
+	"ROLE_ADMIN\x10\x03*\xbb\x01\n" +
+	"\n" +
+	"Permission\x12\x1a\n" +
+	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10PERMISSION_LABEL\x10\x01\x12\x1c\n" +
+	"\x18PERMISSION_MANAGE_VIDEOS\x10\x02\x12!\n" +
+	"\x1dPERMISSION_MANAGE_LABEL_TYPES\x10\x03\x12\x1d\n" +
+	"\x19PERMISSION_MANAGE_EXPORTS\x10\x04\x12\x1b\n" +
+	"\x17PERMISSION_MANAGE_USERS\x10\x052\xc5\x02\n" +
 	"\vUserService\x12F\n" +
 	"\tListUsers\x12\x1a.krill.v1.ListUsersRequest\x1a\x1b.krill.v1.ListUsersResponse\"\x00\x12I\n" +
 	"\n" +
@@ -611,41 +808,48 @@ func file_krill_v1_user_proto_rawDescGZIP() []byte {
 	return file_krill_v1_user_proto_rawDescData
 }
 
-var file_krill_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_krill_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_krill_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_krill_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_krill_v1_user_proto_goTypes = []any{
 	(Role)(0),                       // 0: krill.v1.Role
-	(*User)(nil),                    // 1: krill.v1.User
-	(*ListUsersRequest)(nil),        // 2: krill.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),       // 3: krill.v1.ListUsersResponse
-	(*UpdateUserRequest)(nil),       // 4: krill.v1.UpdateUserRequest
-	(*UpdateUserResponse)(nil),      // 5: krill.v1.UpdateUserResponse
-	(*SetUserPasswordRequest)(nil),  // 6: krill.v1.SetUserPasswordRequest
-	(*SetUserPasswordResponse)(nil), // 7: krill.v1.SetUserPasswordResponse
-	(*DeleteUserRequest)(nil),       // 8: krill.v1.DeleteUserRequest
-	(*DeleteUserResponse)(nil),      // 9: krill.v1.DeleteUserResponse
-	(*timestamppb.Timestamp)(nil),   // 10: google.protobuf.Timestamp
+	(Permission)(0),                 // 1: krill.v1.Permission
+	(*RoleInfo)(nil),                // 2: krill.v1.RoleInfo
+	(*PermissionInfo)(nil),          // 3: krill.v1.PermissionInfo
+	(*User)(nil),                    // 4: krill.v1.User
+	(*ListUsersRequest)(nil),        // 5: krill.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),       // 6: krill.v1.ListUsersResponse
+	(*UpdateUserRequest)(nil),       // 7: krill.v1.UpdateUserRequest
+	(*UpdateUserResponse)(nil),      // 8: krill.v1.UpdateUserResponse
+	(*SetUserPasswordRequest)(nil),  // 9: krill.v1.SetUserPasswordRequest
+	(*SetUserPasswordResponse)(nil), // 10: krill.v1.SetUserPasswordResponse
+	(*DeleteUserRequest)(nil),       // 11: krill.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),      // 12: krill.v1.DeleteUserResponse
+	(*timestamppb.Timestamp)(nil),   // 13: google.protobuf.Timestamp
 }
 var file_krill_v1_user_proto_depIdxs = []int32{
-	0,  // 0: krill.v1.User.role:type_name -> krill.v1.Role
-	10, // 1: krill.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	10, // 2: krill.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
-	1,  // 3: krill.v1.ListUsersResponse.users:type_name -> krill.v1.User
-	0,  // 4: krill.v1.UpdateUserRequest.role:type_name -> krill.v1.Role
-	1,  // 5: krill.v1.UpdateUserResponse.user:type_name -> krill.v1.User
-	2,  // 6: krill.v1.UserService.ListUsers:input_type -> krill.v1.ListUsersRequest
-	4,  // 7: krill.v1.UserService.UpdateUser:input_type -> krill.v1.UpdateUserRequest
-	6,  // 8: krill.v1.UserService.SetUserPassword:input_type -> krill.v1.SetUserPasswordRequest
-	8,  // 9: krill.v1.UserService.DeleteUser:input_type -> krill.v1.DeleteUserRequest
-	3,  // 10: krill.v1.UserService.ListUsers:output_type -> krill.v1.ListUsersResponse
-	5,  // 11: krill.v1.UserService.UpdateUser:output_type -> krill.v1.UpdateUserResponse
-	7,  // 12: krill.v1.UserService.SetUserPassword:output_type -> krill.v1.SetUserPasswordResponse
-	9,  // 13: krill.v1.UserService.DeleteUser:output_type -> krill.v1.DeleteUserResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 0: krill.v1.RoleInfo.role:type_name -> krill.v1.Role
+	1,  // 1: krill.v1.PermissionInfo.permission:type_name -> krill.v1.Permission
+	0,  // 2: krill.v1.PermissionInfo.role:type_name -> krill.v1.Role
+	0,  // 3: krill.v1.User.role:type_name -> krill.v1.Role
+	13, // 4: krill.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	13, // 5: krill.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
+	1,  // 6: krill.v1.User.permissions:type_name -> krill.v1.Permission
+	4,  // 7: krill.v1.ListUsersResponse.users:type_name -> krill.v1.User
+	0,  // 8: krill.v1.UpdateUserRequest.role:type_name -> krill.v1.Role
+	4,  // 9: krill.v1.UpdateUserResponse.user:type_name -> krill.v1.User
+	5,  // 10: krill.v1.UserService.ListUsers:input_type -> krill.v1.ListUsersRequest
+	7,  // 11: krill.v1.UserService.UpdateUser:input_type -> krill.v1.UpdateUserRequest
+	9,  // 12: krill.v1.UserService.SetUserPassword:input_type -> krill.v1.SetUserPasswordRequest
+	11, // 13: krill.v1.UserService.DeleteUser:input_type -> krill.v1.DeleteUserRequest
+	6,  // 14: krill.v1.UserService.ListUsers:output_type -> krill.v1.ListUsersResponse
+	8,  // 15: krill.v1.UserService.UpdateUser:output_type -> krill.v1.UpdateUserResponse
+	10, // 16: krill.v1.UserService.SetUserPassword:output_type -> krill.v1.SetUserPasswordResponse
+	12, // 17: krill.v1.UserService.DeleteUser:output_type -> krill.v1.DeleteUserResponse
+	14, // [14:18] is the sub-list for method output_type
+	10, // [10:14] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_user_proto_init() }
@@ -653,14 +857,14 @@ func file_krill_v1_user_proto_init() {
 	if File_krill_v1_user_proto != nil {
 		return
 	}
-	file_krill_v1_user_proto_msgTypes[3].OneofWrappers = []any{}
+	file_krill_v1_user_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_user_proto_rawDesc), len(file_krill_v1_user_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   9,
+			NumEnums:      2,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -70,6 +70,23 @@ export function Label({
   )
 }
 
+// A label with a small action on the right, such as "Change". Marked as the
+// label so Field spaces the control below it like a plain Label.
+export function LabelRow({
+  children,
+  action,
+}: {
+  children: React.ReactNode
+  action?: React.ReactNode
+}) {
+  return (
+    <div data-slot="label" className="flex items-baseline justify-between gap-4">
+      <Label>{children}</Label>
+      {action}
+    </div>
+  )
+}
+
 export function Description({
   className,
   ...props

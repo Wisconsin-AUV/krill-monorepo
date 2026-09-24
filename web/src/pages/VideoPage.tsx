@@ -32,9 +32,9 @@ import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Text } from '@/components/ui/Text'
-import { Role } from '@/gen/krill/v1/user_pb'
+import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
-import { useHasRole } from '@/lib/auth'
+import { useCan } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
@@ -81,7 +81,7 @@ export function VideoPage() {
   const id = /^\d+$/.test(params.id ?? '') ? BigInt(params.id!) : undefined
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const canManage = useHasRole(Role.DEVELOPER)
+  const canManage = useCan(Permission.MANAGE_VIDEOS)
 
   const { data, isPending, error } = useQuery(
     VideoService.method.getVideo,

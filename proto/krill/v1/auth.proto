@@ -26,6 +26,12 @@ message GetSessionResponse {
   User user = 1;
   bool slack_enabled = 2;
   bool signup_enabled = 3;
+  // The team running this instance, shown on the sign-in pages.
+  string team_name = 4;
+  // Every permission, for showing what each role can do.
+  repeated PermissionInfo all_permissions = 5;
+  // Every role, lowest first.
+  repeated RoleInfo roles = 6;
 }
 
 message LoginRequest {

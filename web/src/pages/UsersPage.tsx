@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 import { ConfirmAlert } from '@/components/ConfirmAlert'
+import { PasswordInput } from '@/components/PasswordInput'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/Dropdown'
 import { Description, Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
-import { Input } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Select } from '@/components/ui/Select'
@@ -36,14 +36,16 @@ import {
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
-import { initials, roleOptions, useUser } from '@/lib/auth'
+import { initials, useRoles, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatRelative } from '@/lib/format'
+import { usePasswordCheck } from '@/lib/password'
 import { invalidateService } from '@/lib/queryClient'
 
 function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => void }) {
   const [password, setPassword] = useState('')
+  const check = usePasswordCheck(password, user ? [user.name, user.username, user.email] : [])
   const set = useMutation(UserService.method.setUserPassword, {
     onSuccess: () => {
       flash.success('Password set', `${user?.name} was signed out everywhere.`)
@@ -61,26 +63,27 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
           if (user) set.mutate({ id: user.id, password })
         }}
       >
+        <input
+          type="text"
+          name="username"
+          autoComplete="username"
+          value={user?.username ?? ''}
+          readOnly
+          hidden
+        />
         <DialogTitle>Set password for {user?.name}</DialogTitle>
         <DialogBody>
           <Field>
             <Label>New password</Label>
             <Description>Share it with them directly. They can change it later.</Description>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-            />
+            <PasswordInput value={password} onChange={setPassword} check={check} />
           </Field>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" color="sky" disabled={set.isPending || password.length < 8}>
+          <Button type="submit" color="sky" disabled={set.isPending || !check.ok}>
             Set password
           </Button>
         </DialogActions>
@@ -91,6 +94,7 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
 
 export function UsersPage() {
   const me = useUser()
+  const roles = useRoles()
   const { data, isPending, error } = useQuery(UserService.method.listUsers, {})
   const [settingPassword, setSettingPassword] = useState<User | null>(null)
   const [deleting, setDeleting] = useState<User | null>(null)
@@ -115,8 +119,8 @@ export function UsersPage() {
     <PageContentBlock title="Users · Krill">
       <Heading>Users</Heading>
       <Text className="mt-1">
-        Labelers label clips. Developers also manage videos, label types, and exports. Admins also
-        manage users.
+        Each role has everything the role below it has. Everyone can see what their role allows on
+        their Account page.
       </Text>
 
       {isPending ? (
@@ -177,9 +181,9 @@ export function UsersPage() {
                         update.mutate({ id: u.id, role: Number(e.target.value) as Role })
                       }
                     >
-                      {roleOptions.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
+                      {roles.map((r) => (
+                        <option key={r.role} value={r.role}>
+                          {r.label}
                         </option>
                       ))}
                     </Select>

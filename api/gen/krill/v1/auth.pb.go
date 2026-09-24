@@ -62,6 +62,12 @@ type GetSessionResponse struct {
 	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	SlackEnabled  bool                   `protobuf:"varint,2,opt,name=slack_enabled,json=slackEnabled,proto3" json:"slack_enabled,omitempty"`
 	SignupEnabled bool                   `protobuf:"varint,3,opt,name=signup_enabled,json=signupEnabled,proto3" json:"signup_enabled,omitempty"`
+	// The team running this instance, shown on the sign-in pages.
+	TeamName string `protobuf:"bytes,4,opt,name=team_name,json=teamName,proto3" json:"team_name,omitempty"`
+	// Every permission, for showing what each role can do.
+	AllPermissions []*PermissionInfo `protobuf:"bytes,5,rep,name=all_permissions,json=allPermissions,proto3" json:"all_permissions,omitempty"`
+	// Every role, lowest first.
+	Roles         []*RoleInfo `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -115,6 +121,27 @@ func (x *GetSessionResponse) GetSignupEnabled() bool {
 		return x.SignupEnabled
 	}
 	return false
+}
+
+func (x *GetSessionResponse) GetTeamName() string {
+	if x != nil {
+		return x.TeamName
+	}
+	return ""
+}
+
+func (x *GetSessionResponse) GetAllPermissions() []*PermissionInfo {
+	if x != nil {
+		return x.AllPermissions
+	}
+	return nil
+}
+
+func (x *GetSessionResponse) GetRoles() []*RoleInfo {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
 }
 
 type LoginRequest struct {
@@ -595,11 +622,14 @@ var File_krill_v1_auth_proto protoreflect.FileDescriptor
 const file_krill_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x13krill/v1/auth.proto\x12\bkrill.v1\x1a\x13krill/v1/user.proto\"\x13\n" +
-	"\x11GetSessionRequest\"\x84\x01\n" +
+	"\x11GetSessionRequest\"\x8e\x02\n" +
 	"\x12GetSessionResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\x12#\n" +
 	"\rslack_enabled\x18\x02 \x01(\bR\fslackEnabled\x12%\n" +
-	"\x0esignup_enabled\x18\x03 \x01(\bR\rsignupEnabled\"@\n" +
+	"\x0esignup_enabled\x18\x03 \x01(\bR\rsignupEnabled\x12\x1b\n" +
+	"\tteam_name\x18\x04 \x01(\tR\bteamName\x12A\n" +
+	"\x0fall_permissions\x18\x05 \x03(\v2\x18.krill.v1.PermissionInfoR\x0eallPermissions\x12(\n" +
+	"\x05roles\x18\x06 \x03(\v2\x12.krill.v1.RoleInfoR\x05roles\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"3\n" +
@@ -661,29 +691,33 @@ var file_krill_v1_auth_proto_goTypes = []any{
 	(*ChangePasswordRequest)(nil),  // 10: krill.v1.ChangePasswordRequest
 	(*ChangePasswordResponse)(nil), // 11: krill.v1.ChangePasswordResponse
 	(*User)(nil),                   // 12: krill.v1.User
+	(*PermissionInfo)(nil),         // 13: krill.v1.PermissionInfo
+	(*RoleInfo)(nil),               // 14: krill.v1.RoleInfo
 }
 var file_krill_v1_auth_proto_depIdxs = []int32{
 	12, // 0: krill.v1.GetSessionResponse.user:type_name -> krill.v1.User
-	12, // 1: krill.v1.LoginResponse.user:type_name -> krill.v1.User
-	12, // 2: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
-	12, // 3: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
-	0,  // 4: krill.v1.AuthService.GetSession:input_type -> krill.v1.GetSessionRequest
-	2,  // 5: krill.v1.AuthService.Login:input_type -> krill.v1.LoginRequest
-	4,  // 6: krill.v1.AuthService.Register:input_type -> krill.v1.RegisterRequest
-	6,  // 7: krill.v1.AuthService.Logout:input_type -> krill.v1.LogoutRequest
-	8,  // 8: krill.v1.AuthService.UpdateProfile:input_type -> krill.v1.UpdateProfileRequest
-	10, // 9: krill.v1.AuthService.ChangePassword:input_type -> krill.v1.ChangePasswordRequest
-	1,  // 10: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
-	3,  // 11: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
-	5,  // 12: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
-	7,  // 13: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
-	9,  // 14: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
-	11, // 15: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	13, // 1: krill.v1.GetSessionResponse.all_permissions:type_name -> krill.v1.PermissionInfo
+	14, // 2: krill.v1.GetSessionResponse.roles:type_name -> krill.v1.RoleInfo
+	12, // 3: krill.v1.LoginResponse.user:type_name -> krill.v1.User
+	12, // 4: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
+	12, // 5: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
+	0,  // 6: krill.v1.AuthService.GetSession:input_type -> krill.v1.GetSessionRequest
+	2,  // 7: krill.v1.AuthService.Login:input_type -> krill.v1.LoginRequest
+	4,  // 8: krill.v1.AuthService.Register:input_type -> krill.v1.RegisterRequest
+	6,  // 9: krill.v1.AuthService.Logout:input_type -> krill.v1.LogoutRequest
+	8,  // 10: krill.v1.AuthService.UpdateProfile:input_type -> krill.v1.UpdateProfileRequest
+	10, // 11: krill.v1.AuthService.ChangePassword:input_type -> krill.v1.ChangePasswordRequest
+	1,  // 12: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
+	3,  // 13: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
+	5,  // 14: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
+	7,  // 15: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
+	9,  // 16: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
+	11, // 17: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_auth_proto_init() }

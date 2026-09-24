@@ -26,11 +26,7 @@ The API image bundles the web app, so the full stack is served from `:8080`. Set
 
 The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
 
-| Role | Can |
-|---|---|
-| Labeler | Label clips |
-| Developer | Also manage videos, label types, and exports |
-| Admin | Also manage users |
+Roles and what each can do are defined in [`api/internal/auth/access.go`](api/internal/auth/access.go).
 
 Create a Slack app with the redirect URL `$KRILL_PUBLIC_URL/auth/slack/callback` and the `openid`, `profile`, and `email` scopes, then set `KRILL_SLACK_CLIENT_ID`, `KRILL_SLACK_CLIENT_SECRET`, and `KRILL_SLACK_TEAM_ID`. Slack requires an HTTPS redirect URL.
 

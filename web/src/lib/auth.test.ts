@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { initials, safeNext } from './auth'
-
-describe('initials', () => {
-  it('uses the first and last names', () => {
-    expect(initials('Ada King Lovelace')).toBe('AL')
-    expect(initials('  grace ')).toBe('GR')
-    expect(initials('')).toBe('?')
-  })
-})
+import { safeNext } from './auth'
 
 describe('safeNext', () => {
   it('keeps same-origin paths only', () => {

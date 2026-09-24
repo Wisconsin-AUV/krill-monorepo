@@ -120,6 +120,7 @@ func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, cookie)
+	http.SetCookie(w, s.cookies.LastLogin("slack"))
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 

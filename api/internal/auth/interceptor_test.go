@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -112,4 +113,16 @@ func withCookie(token string) connect.ClientOption {
 			return next(ctx, req)
 		}
 	}))
+}
+
+func TestEveryPermissionIsDefined(t *testing.T) {
+	for v, name := range krillv1.Permission_name {
+		p := krillv1.Permission(v)
+		if p == krillv1.Permission_PERMISSION_UNSPECIFIED {
+			continue
+		}
+		if !slices.ContainsFunc(Permissions, func(d PermissionDef) bool { return d.Permission == p }) {
+			t.Errorf("%s has no entry in Permissions", name)
+		}
+	}
 }

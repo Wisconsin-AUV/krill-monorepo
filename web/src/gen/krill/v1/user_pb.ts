@@ -12,7 +12,58 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/user.proto.
  */
 export const file_krill_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSKAAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiEgoQTGlzdFVzZXJzUmVxdWVzdCIyChFMaXN0VXNlcnNSZXNwb25zZRIdCgV1c2VycxgBIAMoCzIOLmtyaWxsLnYxLlVzZXIibwoRVXBkYXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkSIQoEcm9sZRgCIAEoDjIOLmtyaWxsLnYxLlJvbGVIAIgBARIVCghkaXNhYmxlZBgDIAEoCEgBiAEBQgcKBV9yb2xlQgsKCV9kaXNhYmxlZCIyChJVcGRhdGVVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiNgoWU2V0VXNlclBhc3N3b3JkUmVxdWVzdBIKCgJpZBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSIZChdTZXRVc2VyUGFzc3dvcmRSZXNwb25zZSIfChFEZWxldGVVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVVc2VyUmVzcG9uc2UqUgoEUm9sZRIUChBST0xFX1VOU1BFQ0lGSUVEEAASEAoMUk9MRV9MQUJFTEVSEAESEgoOUk9MRV9ERVZFTE9QRVIQAhIOCgpST0xFX0FETUlOEAMyxQIKC1VzZXJTZXJ2aWNlEkYKCUxpc3RVc2VycxIaLmtyaWxsLnYxLkxpc3RVc2Vyc1JlcXVlc3QaGy5rcmlsbC52MS5MaXN0VXNlcnNSZXNwb25zZSIAEkkKClVwZGF0ZVVzZXISGy5rcmlsbC52MS5VcGRhdGVVc2VyUmVxdWVzdBocLmtyaWxsLnYxLlVwZGF0ZVVzZXJSZXNwb25zZSIAElgKD1NldFVzZXJQYXNzd29yZBIgLmtyaWxsLnYxLlNldFVzZXJQYXNzd29yZFJlcXVlc3QaIS5rcmlsbC52MS5TZXRVc2VyUGFzc3dvcmRSZXNwb25zZSIAEkkKCkRlbGV0ZVVzZXISGy5rcmlsbC52MS5EZWxldGVVc2VyUmVxdWVzdBocLmtyaWxsLnYxLkRlbGV0ZVVzZXJSZXNwb25zZSIAQooBCgxjb20ua3JpbGwudjFCCVVzZXJQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSI3CghSb2xlSW5mbxIcCgRyb2xlGAEgASgOMg4ua3JpbGwudjEuUm9sZRINCgVsYWJlbBgCIAEoCSJtCg5QZXJtaXNzaW9uSW5mbxIoCgpwZXJtaXNzaW9uGAEgASgOMhQua3JpbGwudjEuUGVybWlzc2lvbhITCgtkZXNjcmlwdGlvbhgCIAEoCRIcCgRyb2xlGAMgASgOMg4ua3JpbGwudjEuUm9sZSKrAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKQoLcGVybWlzc2lvbnMYCyADKA4yFC5rcmlsbC52MS5QZXJtaXNzaW9uIhIKEExpc3RVc2Vyc1JlcXVlc3QiMgoRTGlzdFVzZXJzUmVzcG9uc2USHQoFdXNlcnMYASADKAsyDi5rcmlsbC52MS5Vc2VyIm8KEVVwZGF0ZVVzZXJSZXF1ZXN0EgoKAmlkGAEgASgJEiEKBHJvbGUYAiABKA4yDi5rcmlsbC52MS5Sb2xlSACIAQESFQoIZGlzYWJsZWQYAyABKAhIAYgBAUIHCgVfcm9sZUILCglfZGlzYWJsZWQiMgoSVXBkYXRlVXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIjYKFlNldFVzZXJQYXNzd29yZFJlcXVlc3QSCgoCaWQYASABKAkSEAoIcGFzc3dvcmQYAiABKAkiGQoXU2V0VXNlclBhc3N3b3JkUmVzcG9uc2UiHwoRRGVsZXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlVXNlclJlc3BvbnNlKlIKBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEhAKDFJPTEVfTEFCRUxFUhABEhIKDlJPTEVfREVWRUxPUEVSEAISDgoKUk9MRV9BRE1JThADKrsBCgpQZXJtaXNzaW9uEhoKFlBFUk1JU1NJT05fVU5TUEVDSUZJRUQQABIUChBQRVJNSVNTSU9OX0xBQkVMEAESHAoYUEVSTUlTU0lPTl9NQU5BR0VfVklERU9TEAISIQodUEVSTUlTU0lPTl9NQU5BR0VfTEFCRUxfVFlQRVMQAxIdChlQRVJNSVNTSU9OX01BTkFHRV9FWFBPUlRTEAQSGwoXUEVSTUlTU0lPTl9NQU5BR0VfVVNFUlMQBTLFAgoLVXNlclNlcnZpY2USRgoJTGlzdFVzZXJzEhoua3JpbGwudjEuTGlzdFVzZXJzUmVxdWVzdBobLmtyaWxsLnYxLkxpc3RVc2Vyc1Jlc3BvbnNlIgASSQoKVXBkYXRlVXNlchIbLmtyaWxsLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuVXBkYXRlVXNlclJlc3BvbnNlIgASWAoPU2V0VXNlclBhc3N3b3JkEiAua3JpbGwudjEuU2V0VXNlclBhc3N3b3JkUmVxdWVzdBohLmtyaWxsLnYxLlNldFVzZXJQYXNzd29yZFJlc3BvbnNlIgASSQoKRGVsZXRlVXNlchIbLmtyaWxsLnYxLkRlbGV0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuRGVsZXRlVXNlclJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJVXNlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message krill.v1.RoleInfo
+ */
+export type RoleInfo = Message<"krill.v1.RoleInfo"> & {
+  /**
+   * @generated from field: krill.v1.Role role = 1;
+   */
+  role: Role;
+
+  /**
+   * @generated from field: string label = 2;
+   */
+  label: string;
+};
+
+/**
+ * Describes the message krill.v1.RoleInfo.
+ * Use `create(RoleInfoSchema)` to create a new message.
+ */
+export const RoleInfoSchema: GenMessage<RoleInfo> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 0);
+
+/**
+ * @generated from message krill.v1.PermissionInfo
+ */
+export type PermissionInfo = Message<"krill.v1.PermissionInfo"> & {
+  /**
+   * @generated from field: krill.v1.Permission permission = 1;
+   */
+  permission: Permission;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * The lowest role that has it.
+   *
+   * @generated from field: krill.v1.Role role = 3;
+   */
+  role: Role;
+};
+
+/**
+ * Describes the message krill.v1.PermissionInfo.
+ * Use `create(PermissionInfoSchema)` to create a new message.
+ */
+export const PermissionInfoSchema: GenMessage<PermissionInfo> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 1);
 
 /**
  * @generated from message krill.v1.User
@@ -69,6 +120,13 @@ export type User = Message<"krill.v1.User"> & {
    * @generated from field: google.protobuf.Timestamp last_login_at = 10;
    */
   lastLoginAt?: Timestamp | undefined;
+
+  /**
+   * Granted by the role.
+   *
+   * @generated from field: repeated krill.v1.Permission permissions = 11;
+   */
+  permissions: Permission[];
 };
 
 /**
@@ -76,7 +134,7 @@ export type User = Message<"krill.v1.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 0);
+  messageDesc(file_krill_v1_user, 2);
 
 /**
  * @generated from message krill.v1.ListUsersRequest
@@ -89,7 +147,7 @@ export type ListUsersRequest = Message<"krill.v1.ListUsersRequest"> & {
  * Use `create(ListUsersRequestSchema)` to create a new message.
  */
 export const ListUsersRequestSchema: GenMessage<ListUsersRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 1);
+  messageDesc(file_krill_v1_user, 3);
 
 /**
  * @generated from message krill.v1.ListUsersResponse
@@ -106,7 +164,7 @@ export type ListUsersResponse = Message<"krill.v1.ListUsersResponse"> & {
  * Use `create(ListUsersResponseSchema)` to create a new message.
  */
 export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 2);
+  messageDesc(file_krill_v1_user, 4);
 
 /**
  * @generated from message krill.v1.UpdateUserRequest
@@ -135,7 +193,7 @@ export type UpdateUserRequest = Message<"krill.v1.UpdateUserRequest"> & {
  * Use `create(UpdateUserRequestSchema)` to create a new message.
  */
 export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 3);
+  messageDesc(file_krill_v1_user, 5);
 
 /**
  * @generated from message krill.v1.UpdateUserResponse
@@ -152,7 +210,7 @@ export type UpdateUserResponse = Message<"krill.v1.UpdateUserResponse"> & {
  * Use `create(UpdateUserResponseSchema)` to create a new message.
  */
 export const UpdateUserResponseSchema: GenMessage<UpdateUserResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 4);
+  messageDesc(file_krill_v1_user, 6);
 
 /**
  * @generated from message krill.v1.SetUserPasswordRequest
@@ -174,7 +232,7 @@ export type SetUserPasswordRequest = Message<"krill.v1.SetUserPasswordRequest"> 
  * Use `create(SetUserPasswordRequestSchema)` to create a new message.
  */
 export const SetUserPasswordRequestSchema: GenMessage<SetUserPasswordRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 5);
+  messageDesc(file_krill_v1_user, 7);
 
 /**
  * @generated from message krill.v1.SetUserPasswordResponse
@@ -187,7 +245,7 @@ export type SetUserPasswordResponse = Message<"krill.v1.SetUserPasswordResponse"
  * Use `create(SetUserPasswordResponseSchema)` to create a new message.
  */
 export const SetUserPasswordResponseSchema: GenMessage<SetUserPasswordResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 6);
+  messageDesc(file_krill_v1_user, 8);
 
 /**
  * @generated from message krill.v1.DeleteUserRequest
@@ -204,7 +262,7 @@ export type DeleteUserRequest = Message<"krill.v1.DeleteUserRequest"> & {
  * Use `create(DeleteUserRequestSchema)` to create a new message.
  */
 export const DeleteUserRequestSchema: GenMessage<DeleteUserRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 7);
+  messageDesc(file_krill_v1_user, 9);
 
 /**
  * @generated from message krill.v1.DeleteUserResponse
@@ -217,10 +275,10 @@ export type DeleteUserResponse = Message<"krill.v1.DeleteUserResponse"> & {
  * Use `create(DeleteUserResponseSchema)` to create a new message.
  */
 export const DeleteUserResponseSchema: GenMessage<DeleteUserResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_user, 8);
+  messageDesc(file_krill_v1_user, 10);
 
 /**
- * Role is ordered: each role can do everything the roles below it can.
+ * Role is ordered: each role has every permission of the roles below it.
  *
  * @generated from enum krill.v1.Role
  */
@@ -231,29 +289,23 @@ export const Role = {
   UNSPECIFIED: 0,
 
   /**
-   * Labels clips.
-   *
    * @generated from enum value: ROLE_LABELER = 1;
    */
   LABELER: 1,
 
   /**
-   * Also manages videos, label types, and exports.
-   *
    * @generated from enum value: ROLE_DEVELOPER = 2;
    */
   DEVELOPER: 2,
 
   /**
-   * Also manages users.
-   *
    * @generated from enum value: ROLE_ADMIN = 3;
    */
   ADMIN: 3,
 } as const;
 
 /**
- * Role is ordered: each role can do everything the roles below it can.
+ * Role is ordered: each role has every permission of the roles below it.
  *
  * @generated from enum krill.v1.Role
  */
@@ -264,6 +316,58 @@ export type Role = (typeof Role)[keyof typeof Role] | UnknownEnum;
  */
 export const RoleSchema: GenEnum<Role> = /*@__PURE__*/
   enumDesc(file_krill_v1_user, 0);
+
+/**
+ * Permission is something a user can do. Which role grants each one is
+ * defined once in the API and sent to the web app in GetSession.
+ *
+ * @generated from enum krill.v1.Permission
+ */
+export const Permission = {
+  /**
+   * @generated from enum value: PERMISSION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * @generated from enum value: PERMISSION_LABEL = 1;
+   */
+  LABEL: 1,
+
+  /**
+   * @generated from enum value: PERMISSION_MANAGE_VIDEOS = 2;
+   */
+  MANAGE_VIDEOS: 2,
+
+  /**
+   * @generated from enum value: PERMISSION_MANAGE_LABEL_TYPES = 3;
+   */
+  MANAGE_LABEL_TYPES: 3,
+
+  /**
+   * @generated from enum value: PERMISSION_MANAGE_EXPORTS = 4;
+   */
+  MANAGE_EXPORTS: 4,
+
+  /**
+   * @generated from enum value: PERMISSION_MANAGE_USERS = 5;
+   */
+  MANAGE_USERS: 5,
+} as const;
+
+/**
+ * Permission is something a user can do. Which role grants each one is
+ * defined once in the API and sent to the web app in GetSession.
+ *
+ * @generated from enum krill.v1.Permission
+ */
+export type Permission = (typeof Permission)[keyof typeof Permission] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.Permission.
+ */
+export const PermissionSchema: GenEnum<Permission> = /*@__PURE__*/
+  enumDesc(file_krill_v1_user, 1);
 
 /**
  * UserService is for admins managing accounts.

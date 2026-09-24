@@ -1,9 +1,9 @@
 import { createBrowserRouter } from 'react-router'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { Role } from '@/gen/krill/v1/user_pb'
+import { Permission } from '@/gen/krill/v1/user_pb'
 import { AppChrome, AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
-import { RequireAuth, RequireRole } from '@/layouts/RequireAuth'
+import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
 import { ExportsPage } from '@/pages/ExportsPage'
 import { LabelsPage } from '@/pages/LabelsPage'
@@ -45,14 +45,15 @@ export const router = createBrowserRouter([
               { path: 'videos/:id', element: <VideoPage /> },
               { path: 'account', element: <AccountPage /> },
               {
-                element: <RequireRole role={Role.DEVELOPER} />,
-                children: [
-                  { path: 'labels', element: <LabelsPage /> },
-                  { path: 'exports', element: <ExportsPage /> },
-                ],
+                element: <RequirePermission permission={Permission.MANAGE_LABEL_TYPES} />,
+                children: [{ path: 'labels', element: <LabelsPage /> }],
               },
               {
-                element: <RequireRole role={Role.ADMIN} />,
+                element: <RequirePermission permission={Permission.MANAGE_EXPORTS} />,
+                children: [{ path: 'exports', element: <ExportsPage /> }],
+              },
+              {
+                element: <RequirePermission permission={Permission.MANAGE_USERS} />,
                 children: [{ path: 'users', element: <UsersPage /> }],
               },
               { path: '*', element: <NotFound /> },

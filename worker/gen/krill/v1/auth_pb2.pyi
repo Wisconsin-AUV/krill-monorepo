@@ -1,7 +1,8 @@
 from krill.v1 import user_pb2 as _user_pb2
+from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Mapping as _Mapping
+from collections.abc import Iterable as _Iterable, Mapping as _Mapping
 from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
@@ -11,14 +12,20 @@ class GetSessionRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class GetSessionResponse(_message.Message):
-    __slots__ = ("user", "slack_enabled", "signup_enabled")
+    __slots__ = ("user", "slack_enabled", "signup_enabled", "team_name", "all_permissions", "roles")
     USER_FIELD_NUMBER: _ClassVar[int]
     SLACK_ENABLED_FIELD_NUMBER: _ClassVar[int]
     SIGNUP_ENABLED_FIELD_NUMBER: _ClassVar[int]
+    TEAM_NAME_FIELD_NUMBER: _ClassVar[int]
+    ALL_PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
+    ROLES_FIELD_NUMBER: _ClassVar[int]
     user: _user_pb2.User
     slack_enabled: bool
     signup_enabled: bool
-    def __init__(self, user: _Optional[_Union[_user_pb2.User, _Mapping]] = ..., slack_enabled: _Optional[bool] = ..., signup_enabled: _Optional[bool] = ...) -> None: ...
+    team_name: str
+    all_permissions: _containers.RepeatedCompositeFieldContainer[_user_pb2.PermissionInfo]
+    roles: _containers.RepeatedCompositeFieldContainer[_user_pb2.RoleInfo]
+    def __init__(self, user: _Optional[_Union[_user_pb2.User, _Mapping]] = ..., slack_enabled: _Optional[bool] = ..., signup_enabled: _Optional[bool] = ..., team_name: _Optional[str] = ..., all_permissions: _Optional[_Iterable[_Union[_user_pb2.PermissionInfo, _Mapping]]] = ..., roles: _Optional[_Iterable[_Union[_user_pb2.RoleInfo, _Mapping]]] = ...) -> None: ...
 
 class LoginRequest(_message.Message):
     __slots__ = ("login", "password")

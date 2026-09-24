@@ -73,9 +73,8 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	if !ok {
 		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("sign in to continue"))
 	}
-	if ParseRole(s.User.Role) < need {
-		name, _ := RoleName(need)
-		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("this needs the %s role", name))
+	if need != signedIn && !Can(ParseRole(s.User.Role), need) {
+		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have permission to do this (%s)", describe(need)))
 	}
 	return ctx, nil
 }

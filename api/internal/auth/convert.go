@@ -25,6 +25,7 @@ func ToProto(u db.User) *krillv1.User {
 		SlackLinked: u.SlackUserID.Valid,
 		CreatedAt:   timestamp(u.CreatedAt),
 		LastLoginAt: timestamp(u.LastLoginAt),
+		Permissions: Granted(ParseRole(u.Role)),
 	}
 }
 

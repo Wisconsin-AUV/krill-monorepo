@@ -26,6 +26,7 @@ type Config struct {
 	// AllowSignup lets anyone register as a labeler. The first account can
 	// always register and becomes an admin.
 	AllowSignup bool
+	TeamName    string
 	// Slack sign-in is enabled when SlackClientID is set.
 	SlackClientID     string
 	SlackClientSecret string
@@ -46,6 +47,9 @@ func Load() (Config, error) {
 		SlackClientID:     os.Getenv("KRILL_SLACK_CLIENT_ID"),
 		SlackClientSecret: os.Getenv("KRILL_SLACK_CLIENT_SECRET"),
 		SlackTeamID:       os.Getenv("KRILL_SLACK_TEAM_ID"),
+	}
+	if cfg.TeamName = strings.TrimSpace(os.Getenv("KRILL_TEAM_NAME")); cfg.TeamName == "" {
+		cfg.TeamName = "Wisconsin Autonomous Underwater Vehicles"
 	}
 	var err error
 	if cfg.AllowSignup, err = strconv.ParseBool(getenv("KRILL_ALLOW_SIGNUP", "true")); err != nil {

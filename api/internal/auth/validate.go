@@ -5,6 +5,7 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -54,6 +55,8 @@ func validateEmail(email string) error {
 	return nil
 }
 
+// ValidatePassword enforces the rules the web app can check without its
+// strength estimator
 func ValidatePassword(password string) error {
 	n := utf8.RuneCountInString(password)
 	if n < minPasswordLen {
@@ -61,6 +64,28 @@ func ValidatePassword(password string) error {
 	}
 	if n > maxPasswordLen {
 		return errors.New("password must be at most 256 characters")
+	}
+	var upper, lower, digit, symbol bool
+	for _, r := range password {
+		switch {
+		case unicode.IsUpper(r):
+			upper = true
+		case unicode.IsLower(r):
+			lower = true
+		case unicode.IsNumber(r):
+			digit = true
+		case !unicode.IsLetter(r):
+			symbol = true
+		}
+	}
+	types := 0
+	for _, has := range []bool{upper, lower, digit, symbol} {
+		if has {
+			types++
+		}
+	}
+	if types < 3 {
+		return errors.New("password needs at least 3 of: uppercase letter, lowercase letter, number, symbol")
 	}
 	return nil
 }

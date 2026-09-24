@@ -24,6 +24,19 @@ export function TextLink({ className, ...props }: React.ComponentPropsWithoutRef
   )
 }
 
+export function TextButton({ className, ...props }: React.ComponentPropsWithoutRef<'button'>) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={clsx(
+        className,
+        'text-sm/6 font-normal text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white',
+      )}
+    />
+  )
+}
+
 export function Strong({ className, ...props }: React.ComponentPropsWithoutRef<'strong'>) {
   return (
     <strong {...props} className={clsx(className, 'font-medium text-zinc-950 dark:text-white')} />

@@ -17,6 +17,10 @@ import (
 const (
 	CookieName = "krill_session"
 	sessionTTL = 30 * 24 * time.Hour
+	// LastLoginCookie names the sign-in method last used on this browser, so
+	// the login page can point it out.
+	LastLoginCookie = "krill_last_login"
+	lastLoginTTL    = 365 * 24 * time.Hour
 )
 
 type Session struct {
@@ -76,6 +80,18 @@ func (c Cookies) StartSession(ctx context.Context, q *db.Queries, userID uuid.UU
 		return nil, fmt.Errorf("record login: %w", err)
 	}
 	return c.cookie(token, expires), nil
+}
+
+func (c Cookies) LastLogin(method string) *http.Cookie {
+	//nolint:gosec // the login page reads it, and it only names a sign-in method
+	return &http.Cookie{
+		Name:     LastLoginCookie,
+		Value:    method,
+		Path:     "/",
+		Expires:  time.Now().Add(lastLoginTTL),
+		Secure:   c.Secure,
+		SameSite: http.SameSiteLaxMode,
+	}
 }
 
 func (c Cookies) Clear() *http.Cookie {

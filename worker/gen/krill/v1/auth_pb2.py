@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from krill.v1 import user_pb2 as krill_dot_v1_dot_user__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/auth.proto\x12\x08krill.v1\x1a\x13krill/v1/user.proto\"\x13\n\x11GetSessionRequest\"\x84\x01\n\x12GetSessionResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\x12#\n\rslack_enabled\x18\x02 \x01(\x08R\x0cslackEnabled\x12%\n\x0esignup_enabled\x18\x03 \x01(\x08R\rsignupEnabled\"@\n\x0cLoginRequest\x12\x14\n\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"3\n\rLoginResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"s\n\x0fRegisterRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x03 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x04 \x01(\tR\x08password\"6\n\x10RegisterResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"\x0f\n\rLogoutRequest\"\x10\n\x0eLogoutResponse\"\\\n\x14UpdateProfileRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x03 \x01(\tR\x05\x65mail\";\n\x15UpdateProfileResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"e\n\x15\x43hangePasswordRequest\x12)\n\x10\x63urrent_password\x18\x01 \x01(\tR\x0f\x63urrentPassword\x12!\n\x0cnew_password\x18\x02 \x01(\tR\x0bnewPassword\"\x18\n\x16\x43hangePasswordResponse2\xc3\x03\n\x0b\x41uthService\x12I\n\nGetSession\x12\x1b.krill.v1.GetSessionRequest\x1a\x1c.krill.v1.GetSessionResponse\"\x00\x12:\n\x05Login\x12\x16.krill.v1.LoginRequest\x1a\x17.krill.v1.LoginResponse\"\x00\x12\x43\n\x08Register\x12\x19.krill.v1.RegisterRequest\x1a\x1a.krill.v1.RegisterResponse\"\x00\x12=\n\x06Logout\x12\x17.krill.v1.LogoutRequest\x1a\x18.krill.v1.LogoutResponse\"\x00\x12R\n\rUpdateProfile\x12\x1e.krill.v1.UpdateProfileRequest\x1a\x1f.krill.v1.UpdateProfileResponse\"\x00\x12U\n\x0e\x43hangePassword\x12\x1f.krill.v1.ChangePasswordRequest\x1a .krill.v1.ChangePasswordResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tAuthProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/auth.proto\x12\x08krill.v1\x1a\x13krill/v1/user.proto\"\x13\n\x11GetSessionRequest\"\x8e\x02\n\x12GetSessionResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\x12#\n\rslack_enabled\x18\x02 \x01(\x08R\x0cslackEnabled\x12%\n\x0esignup_enabled\x18\x03 \x01(\x08R\rsignupEnabled\x12\x1b\n\tteam_name\x18\x04 \x01(\tR\x08teamName\x12\x41\n\x0f\x61ll_permissions\x18\x05 \x03(\x0b\x32\x18.krill.v1.PermissionInfoR\x0e\x61llPermissions\x12(\n\x05roles\x18\x06 \x03(\x0b\x32\x12.krill.v1.RoleInfoR\x05roles\"@\n\x0cLoginRequest\x12\x14\n\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"3\n\rLoginResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"s\n\x0fRegisterRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x03 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x04 \x01(\tR\x08password\"6\n\x10RegisterResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"\x0f\n\rLogoutRequest\"\x10\n\x0eLogoutResponse\"\\\n\x14UpdateProfileRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x03 \x01(\tR\x05\x65mail\";\n\x15UpdateProfileResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"e\n\x15\x43hangePasswordRequest\x12)\n\x10\x63urrent_password\x18\x01 \x01(\tR\x0f\x63urrentPassword\x12!\n\x0cnew_password\x18\x02 \x01(\tR\x0bnewPassword\"\x18\n\x16\x43hangePasswordResponse2\xc3\x03\n\x0b\x41uthService\x12I\n\nGetSession\x12\x1b.krill.v1.GetSessionRequest\x1a\x1c.krill.v1.GetSessionResponse\"\x00\x12:\n\x05Login\x12\x16.krill.v1.LoginRequest\x1a\x17.krill.v1.LoginResponse\"\x00\x12\x43\n\x08Register\x12\x19.krill.v1.RegisterRequest\x1a\x1a.krill.v1.RegisterResponse\"\x00\x12=\n\x06Logout\x12\x17.krill.v1.LogoutRequest\x1a\x18.krill.v1.LogoutResponse\"\x00\x12R\n\rUpdateProfile\x12\x1e.krill.v1.UpdateProfileRequest\x1a\x1f.krill.v1.UpdateProfileResponse\"\x00\x12U\n\x0e\x43hangePassword\x12\x1f.krill.v1.ChangePasswordRequest\x1a .krill.v1.ChangePasswordResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tAuthProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,27 +36,27 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETSESSIONREQUEST']._serialized_start=54
   _globals['_GETSESSIONREQUEST']._serialized_end=73
   _globals['_GETSESSIONRESPONSE']._serialized_start=76
-  _globals['_GETSESSIONRESPONSE']._serialized_end=208
-  _globals['_LOGINREQUEST']._serialized_start=210
-  _globals['_LOGINREQUEST']._serialized_end=274
-  _globals['_LOGINRESPONSE']._serialized_start=276
-  _globals['_LOGINRESPONSE']._serialized_end=327
-  _globals['_REGISTERREQUEST']._serialized_start=329
-  _globals['_REGISTERREQUEST']._serialized_end=444
-  _globals['_REGISTERRESPONSE']._serialized_start=446
-  _globals['_REGISTERRESPONSE']._serialized_end=500
-  _globals['_LOGOUTREQUEST']._serialized_start=502
-  _globals['_LOGOUTREQUEST']._serialized_end=517
-  _globals['_LOGOUTRESPONSE']._serialized_start=519
-  _globals['_LOGOUTRESPONSE']._serialized_end=535
-  _globals['_UPDATEPROFILEREQUEST']._serialized_start=537
-  _globals['_UPDATEPROFILEREQUEST']._serialized_end=629
-  _globals['_UPDATEPROFILERESPONSE']._serialized_start=631
-  _globals['_UPDATEPROFILERESPONSE']._serialized_end=690
-  _globals['_CHANGEPASSWORDREQUEST']._serialized_start=692
-  _globals['_CHANGEPASSWORDREQUEST']._serialized_end=793
-  _globals['_CHANGEPASSWORDRESPONSE']._serialized_start=795
-  _globals['_CHANGEPASSWORDRESPONSE']._serialized_end=819
-  _globals['_AUTHSERVICE']._serialized_start=822
-  _globals['_AUTHSERVICE']._serialized_end=1273
+  _globals['_GETSESSIONRESPONSE']._serialized_end=346
+  _globals['_LOGINREQUEST']._serialized_start=348
+  _globals['_LOGINREQUEST']._serialized_end=412
+  _globals['_LOGINRESPONSE']._serialized_start=414
+  _globals['_LOGINRESPONSE']._serialized_end=465
+  _globals['_REGISTERREQUEST']._serialized_start=467
+  _globals['_REGISTERREQUEST']._serialized_end=582
+  _globals['_REGISTERRESPONSE']._serialized_start=584
+  _globals['_REGISTERRESPONSE']._serialized_end=638
+  _globals['_LOGOUTREQUEST']._serialized_start=640
+  _globals['_LOGOUTREQUEST']._serialized_end=655
+  _globals['_LOGOUTRESPONSE']._serialized_start=657
+  _globals['_LOGOUTRESPONSE']._serialized_end=673
+  _globals['_UPDATEPROFILEREQUEST']._serialized_start=675
+  _globals['_UPDATEPROFILEREQUEST']._serialized_end=767
+  _globals['_UPDATEPROFILERESPONSE']._serialized_start=769
+  _globals['_UPDATEPROFILERESPONSE']._serialized_end=828
+  _globals['_CHANGEPASSWORDREQUEST']._serialized_start=830
+  _globals['_CHANGEPASSWORDREQUEST']._serialized_end=931
+  _globals['_CHANGEPASSWORDRESPONSE']._serialized_start=933
+  _globals['_CHANGEPASSWORDRESPONSE']._serialized_end=957
+  _globals['_AUTHSERVICE']._serialized_start=960
+  _globals['_AUTHSERVICE']._serialized_end=1411
 # @@protoc_insertion_point(module_scope)

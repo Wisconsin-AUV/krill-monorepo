@@ -3,8 +3,12 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
@@ -21,6 +25,7 @@ var errBadLogin = connect.NewError(connect.CodeUnauthenticated, errors.New("inco
 type Options struct {
 	Cookies      Cookies
 	AllowSignup  bool
+	TeamName     string
 	SlackEnabled bool
 }
 
@@ -29,10 +34,20 @@ type Service struct {
 	pool *pgxpool.Pool
 	q    *db.Queries
 	opts Options
+	// A per-account limit stops guessing one password; the looser per-IP
+	// limit stops one client trying a few passwords across many accounts.
+	accountLimit *failureLimiter
+	ipLimit      *failureLimiter
 }
 
 func NewService(pool *pgxpool.Pool, opts Options) *Service {
-	return &Service{pool: pool, q: db.New(pool), opts: opts}
+	return &Service{
+		pool:         pool,
+		q:            db.New(pool),
+		opts:         opts,
+		accountLimit: newFailureLimiter(5, 15*time.Minute),
+		ipLimit:      newFailureLimiter(30, 15*time.Minute),
+	}
 }
 
 func setCookie(ctx context.Context, c *http.Cookie) {
@@ -42,7 +57,13 @@ func setCookie(ctx context.Context, c *http.Cookie) {
 }
 
 func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) (*krillv1.GetSessionResponse, error) {
-	out := &krillv1.GetSessionResponse{SlackEnabled: s.opts.SlackEnabled, SignupEnabled: s.opts.AllowSignup}
+	out := &krillv1.GetSessionResponse{
+		SlackEnabled:   s.opts.SlackEnabled,
+		SignupEnabled:  s.opts.AllowSignup,
+		TeamName:       s.opts.TeamName,
+		AllPermissions: PermissionInfos(),
+		Roles:          RoleInfos(),
+	}
 	if sess, ok := SessionFrom(ctx); ok {
 		out.User = ToProto(sess.User)
 	}
@@ -57,25 +78,43 @@ func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) 
 }
 
 func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv1.LoginResponse, error) {
-	user, err := s.q.GetUserByLogin(ctx, strings.ToLower(strings.TrimSpace(req.GetLogin())))
+	login := strings.ToLower(strings.TrimSpace(req.GetLogin()))
+	ip := clientIP(ctx)
+	for _, l := range []struct {
+		limiter *failureLimiter
+		key     string
+	}{{s.accountLimit, login}, {s.ipLimit, ip}} {
+		if blocked, wait := l.limiter.blocked(l.key); blocked {
+			return nil, connect.NewError(connect.CodeResourceExhausted,
+				fmt.Errorf("too many failed sign-ins; try again in %d minutes", int(math.Ceil(wait.Minutes()))))
+		}
+	}
+	fail := func() error {
+		s.accountLimit.fail(login)
+		s.ipLimit.fail(ip)
+		return errBadLogin
+	}
+
+	user, err := s.q.GetUserByLogin(ctx, login)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return nil, rpc.Internal(err, "load user")
 		}
 		_, _ = CheckPassword(dummyHash, req.GetPassword())
-		return nil, errBadLogin
+		return nil, fail()
 	}
 	if !user.PasswordHash.Valid {
 		_, _ = CheckPassword(dummyHash, req.GetPassword())
-		return nil, errBadLogin
+		return nil, fail()
 	}
 	ok, err := CheckPassword(user.PasswordHash.String, req.GetPassword())
 	if err != nil {
 		return nil, rpc.Internal(err, "check password")
 	}
 	if !ok {
-		return nil, errBadLogin
+		return nil, fail()
 	}
+	s.accountLimit.clear(login)
 	if user.Disabled {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("this account is disabled"))
 	}
@@ -84,7 +123,20 @@ func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv
 		return nil, rpc.Internal(err, "start session")
 	}
 	setCookie(ctx, cookie)
+	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
 	return &krillv1.LoginResponse{User: ToProto(user)}, nil
+}
+
+func clientIP(ctx context.Context) string {
+	info, ok := connect.CallInfoForHandlerContext(ctx)
+	if !ok {
+		return ""
+	}
+	host, _, err := net.SplitHostPort(info.Peer().Addr)
+	if err != nil {
+		return info.Peer().Addr
+	}
+	return host
 }
 
 func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*krillv1.RegisterResponse, error) {
@@ -127,6 +179,7 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 		return nil, rpc.Internal(err, "commit")
 	}
 	setCookie(ctx, cookie)
+	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
 	return &krillv1.RegisterResponse{User: ToProto(user)}, nil
 }
 

@@ -42,8 +42,8 @@ import { StackedLayout } from '@/components/ui/StackedLayout'
 import { UploadTray } from '@/components/UploadTray'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { HealthService } from '@/gen/krill/v1/health_pb'
-import { Role, type User } from '@/gen/krill/v1/user_pb'
-import { hasRole, initials, roleLabel, useUser } from '@/lib/auth'
+import { Permission, type User } from '@/gen/krill/v1/user_pb'
+import { can, initials, useRoleLabel, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { GUIDELINE_URL } from '@/lib/links'
 import { queryClient } from '@/lib/queryClient'
@@ -53,28 +53,28 @@ const navItems = [
     label: 'Videos',
     to: '/',
     icon: FilmIcon,
-    role: Role.LABELER,
+    permission: Permission.LABEL,
     match: (p: string) => p === '/' || p.startsWith('/videos'),
   },
   {
     label: 'Labels',
     to: '/labels',
     icon: TagIcon,
-    role: Role.DEVELOPER,
+    permission: Permission.MANAGE_LABEL_TYPES,
     match: (p: string) => p.startsWith('/labels'),
   },
   {
     label: 'Exports',
     to: '/exports',
     icon: ArrowDownTrayIcon,
-    role: Role.DEVELOPER,
+    permission: Permission.MANAGE_EXPORTS,
     match: (p: string) => p.startsWith('/exports'),
   },
   {
     label: 'Users',
     to: '/users',
     icon: UsersIcon,
-    role: Role.ADMIN,
+    permission: Permission.MANAGE_USERS,
     match: (p: string) => p.startsWith('/users'),
   },
 ]
@@ -84,6 +84,7 @@ function UserAvatar({ user }: { user: User }) {
 }
 
 function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top start' }) {
+  const roleLabel = useRoleLabel()
   const navigate = useNavigate()
   const logout = useMutation(AuthService.method.logout, {
     onSuccess: () => {
@@ -138,7 +139,7 @@ export function AppChrome() {
 export function AppLayout() {
   const { pathname } = useLocation()
   const user = useUser()
-  const items = navItems.filter((i) => hasRole(user, i.role))
+  const items = navItems.filter((i) => can(user, i.permission))
 
   return (
     <>
