@@ -2,7 +2,7 @@ import { useQuery } from '@connectrpc/connect-query'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { TrophyIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { PeriodTabs } from '@/components/PeriodTabs'
 import { Stat } from '@/components/Stat'
@@ -24,7 +24,7 @@ import { StatsService, type LeaderboardEntry } from '@/gen/krill/v1/stats_pb'
 import { initials, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { formatNumber, plural } from '@/lib/format'
-import { ordinal, periodFromKey, timeZone } from '@/lib/stats'
+import { ordinal, periodFromKey, profilePath, timeZone } from '@/lib/stats'
 
 const medals = [
   'bg-amber-400 text-amber-950',
@@ -49,9 +49,10 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   return (
     <div className="mt-8 grid gap-4 sm:grid-cols-3">
       {entries.slice(0, 3).map((e) => (
-        <div
+        <Link
           key={e.user?.id}
-          className="flex items-center gap-4 rounded-xl border border-zinc-950/10 p-4 dark:border-white/10"
+          to={profilePath(e.user?.username ?? '')}
+          className="flex items-center gap-4 rounded-xl border border-zinc-950/10 p-4 hover:bg-zinc-950/[2.5%] dark:border-white/10 dark:hover:bg-white/[2.5%]"
         >
           <Avatar
             initials={initials(e.user?.name ?? '')}
@@ -68,7 +69,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
               {formatNumber(e.contributions?.total ?? 0)}
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   )
@@ -155,6 +156,8 @@ export function LeaderboardPage() {
                   {entries.map((e) => (
                     <TableRow
                       key={e.user?.id}
+                      href={profilePath(e.user?.username ?? '')}
+                      title={`${e.user?.name}'s profile`}
                       className={clsx(e.user?.id === me?.id && 'bg-sky-500/5')}
                     >
                       <TableCell>

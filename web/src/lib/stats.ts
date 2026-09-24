@@ -9,6 +9,10 @@ export const periods = [
   { period: Period.ALL_TIME, key: 'all', label: 'All time' },
 ] as const
 
+export function profilePath(username: string): string {
+  return `/people/${encodeURIComponent(username)}`
+}
+
 export function periodFromKey(key: string | null) {
   return periods.find((p) => p.key === key) ?? periods[1]
 }
