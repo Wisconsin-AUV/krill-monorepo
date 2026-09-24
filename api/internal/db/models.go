@@ -34,6 +34,12 @@ type Clip struct {
 	FrameCount int32 `json:"frame_count"`
 }
 
+type ClipClaim struct {
+	ClipID   int64              `json:"clip_id"`
+	UserID   uuid.UUID          `json:"user_id"`
+	ActiveAt pgtype.Timestamptz `json:"active_at"`
+}
+
 type Dataset struct {
 	ID         int64              `json:"id"`
 	Name       string             `json:"name"`

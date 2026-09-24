@@ -73,7 +73,7 @@ UPDATE frames SET
         ELSE now()
     END
 WHERE id = sqlc.arg('id')
-RETURNING status;
+RETURNING status, clip_id;
 
 -- name: CountFrameAnnotations :one
 SELECT count(*)::int FROM annotations WHERE frame_id = $1 AND status <> 'rejected';

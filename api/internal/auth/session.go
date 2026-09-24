@@ -41,6 +41,13 @@ func SessionFrom(ctx context.Context) (Session, bool) {
 	return s, ok
 }
 
+// CallerID is the ID of the signed-in user, or the zero UUID on a public
+// procedure.
+func CallerID(ctx context.Context) uuid.UUID {
+	s, _ := SessionFrom(ctx)
+	return s.User.ID
+}
+
 func hashToken(token string) []byte {
 	sum := sha256.Sum256([]byte(token))
 	return sum[:]

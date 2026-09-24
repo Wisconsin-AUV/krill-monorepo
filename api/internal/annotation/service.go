@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
+	"time"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
@@ -15,6 +16,7 @@ import (
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/taxonomy"
+	"github.com/wauv/krill/api/internal/video"
 )
 
 type Service struct {
@@ -27,9 +29,15 @@ func NewService(pool *pgxpool.Pool) *Service {
 	return &Service{pool: pool, q: db.New(pool)}
 }
 
-func callerID(ctx context.Context) uuid.UUID {
-	sess, _ := auth.SessionFrom(ctx)
-	return sess.User.ID
+// claim marks the caller as working on the clip. A failed claim should not
+// fail the edit that triggered it.
+func (s *Service) claim(ctx context.Context, clipID int64) {
+	_, err := s.q.ClaimClip(ctx, db.ClaimClipParams{
+		ClipID: clipID, UserID: auth.CallerID(ctx), StaleBefore: video.StaleBefore(time.Now()),
+	})
+	if err != nil {
+		slog.Warn("claim clip", "clip_id", clipID, "err", err)
+	}
 }
 
 var errWrongClip = connect.NewError(connect.CodeInvalidArgument, errors.New("frame is not in the track's clip"))
@@ -86,7 +94,7 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 		return nil, rpc.Internal(err, "create track")
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, UserID: callerID(ctx),
+		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create box")
@@ -97,6 +105,7 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
+	s.claim(ctx, frame.ClipID)
 
 	out, err := Track(track)
 	if err != nil {
@@ -161,19 +170,20 @@ func (s *Service) DeleteTrack(ctx context.Context, req *krillv1.DeleteTrackReque
 	return &krillv1.DeleteTrackResponse{}, nil
 }
 
-func (s *Service) checkSameClip(ctx context.Context, trackID, frameID int64) error {
+// sameClip returns the clip that both the track and the frame belong to.
+func (s *Service) sameClip(ctx context.Context, trackID, frameID int64) (int64, error) {
 	track, err := s.q.GetTrack(ctx, trackID)
 	if err != nil {
-		return rpc.DBError(err, "track")
+		return 0, rpc.DBError(err, "track")
 	}
 	frame, err := s.q.GetFrame(ctx, frameID)
 	if err != nil {
-		return rpc.DBError(err, "frame")
+		return 0, rpc.DBError(err, "frame")
 	}
 	if frame.ClipID != track.ClipID {
-		return errWrongClip
+		return 0, errWrongClip
 	}
-	return nil
+	return track.ClipID, nil
 }
 
 func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*krillv1.SetBoxResponse, error) {
@@ -181,12 +191,13 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
-	if err := s.checkSameClip(ctx, req.GetTrackId(), req.GetFrameId()); err != nil {
+	clipID, err := s.sameClip(ctx, req.GetTrackId(), req.GetFrameId())
+	if err != nil {
 		return nil, err
 	}
 	ann, err := s.q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 		TrackID: req.GetTrackId(), FrameID: req.GetFrameId(), X: x, Y: y, Width: w, Height: h,
-		UserID: callerID(ctx),
+		UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "save box")
@@ -195,6 +206,7 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	if err := s.q.ClearEmptyFrame(ctx, req.GetFrameId()); err != nil {
 		return nil, rpc.Internal(err, "update frame status")
 	}
+	s.claim(ctx, clipID)
 	return &krillv1.SetBoxResponse{Annotation: Annotation(ann)}, nil
 }
 
@@ -245,7 +257,7 @@ func (s *Service) CopyBoxes(ctx context.Context, req *krillv1.CopyBoxesRequest) 
 		trackIDs = []int64{}
 	}
 	rows, err := s.q.CopyAnnotations(ctx, db.CopyAnnotationsParams{
-		FromFrameID: from.ID, ToFrameID: to.ID, TrackIds: trackIDs, UserID: callerID(ctx),
+		FromFrameID: from.ID, ToFrameID: to.ID, TrackIds: trackIDs, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "copy boxes")
@@ -255,6 +267,7 @@ func (s *Service) CopyBoxes(ctx context.Context, req *krillv1.CopyBoxesRequest) 
 			return nil, rpc.Internal(err, "update frame status")
 		}
 	}
+	s.claim(ctx, to.ClipID)
 	out := make([]*krillv1.Annotation, len(rows))
 	for i, a := range rows {
 		out[i] = Annotation(a)
@@ -278,10 +291,11 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 		}
 	}
 	saved, err := s.q.SetFrameStatus(ctx, db.SetFrameStatusParams{
-		ID: req.GetFrameId(), Status: status, UserID: callerID(ctx),
+		ID: req.GetFrameId(), Status: status, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.DBError(err, "frame")
 	}
-	return &krillv1.SetFrameStatusResponse{Status: FrameStatus(saved)}, nil
+	s.claim(ctx, saved.ClipID)
+	return &krillv1.SetFrameStatusResponse{Status: FrameStatus(saved.Status)}, nil
 }

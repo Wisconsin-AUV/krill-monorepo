@@ -2,6 +2,7 @@ package clip
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -61,6 +62,10 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	if err != nil {
 		return nil, rpc.Internal(err, "list boxes")
 	}
+	claimRows, err := s.q.ListClipClaims(ctx, []int64{c.ID})
+	if err != nil {
+		return nil, rpc.Internal(err, "load claim")
+	}
 
 	tracks := make([]*krillv1.Track, len(trackRows))
 	for i, t := range trackRows {
@@ -88,11 +93,14 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 		}
 	}
 
+	out := s.present.Clip(ctx, v, c, video.Stats{LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount})
+	out.Claim = video.Claims(claimRows, time.Now())[c.ID]
+
 	return &krillv1.GetClipResponse{
 		Video: s.present.Video(ctx, v, video.Stats{
 			Clips: clipCount, LabeledFrames: videoStats.LabeledFrameCount, Boxes: videoStats.BoxCount,
 		}),
-		Clip:           s.present.Clip(ctx, v, c, video.Stats{LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount}),
+		Clip:           out,
 		Tracks:         tracks,
 		Annotations:    annotations,
 		Frames:         frames,

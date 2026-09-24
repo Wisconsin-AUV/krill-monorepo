@@ -126,9 +126,19 @@ func (s *Service) GetVideo(ctx context.Context, req *krillv1.GetVideoRequest) (*
 	if err != nil {
 		return nil, rpc.Internal(err, "count labels")
 	}
+	ids := make([]int64, len(clips))
+	for i, c := range clips {
+		ids[i] = c.Clip.ID
+	}
+	claimRows, err := s.q.ListClipClaims(ctx, ids)
+	if err != nil {
+		return nil, rpc.Internal(err, "list claims")
+	}
+	claims := Claims(claimRows, time.Now())
 	out := make([]*krillv1.Clip, len(clips))
 	for i, c := range clips {
 		out[i] = s.Clip(ctx, v, c.Clip, Stats{LabeledFrames: c.LabeledFrameCount, Boxes: c.BoxCount})
+		out[i].Claim = claims[c.Clip.ID]
 	}
 	return &krillv1.GetVideoResponse{
 		Video: s.Video(ctx, v, Stats{
