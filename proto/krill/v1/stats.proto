@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/user.proto";
+
+// StatsService counts contributions: boxes a user drew and frames they
+// marked labeled or empty. Only work that still exists counts, so deleted
+// boxes and reopened frames drop out.
+service StatsService {
+  rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse) {}
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {}
+}
+
+enum Period {
+  PERIOD_UNSPECIFIED = 0;
+  PERIOD_DAY = 1;
+  // Weeks start on Monday.
+  PERIOD_WEEK = 2;
+  PERIOD_MONTH = 3;
+  PERIOD_ALL_TIME = 4;
+}
+
+// Profile is the part of a user everyone can see.
+message Profile {
+  string id = 1;
+  string name = 2;
+  string username = 3;
+  Role role = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message Contributions {
+  int64 boxes = 1;
+  int64 frames = 2;
+  // boxes + frames.
+  int64 total = 3;
+}
+
+message LeaderboardEntry {
+  // Users with the same total share a rank.
+  int32 rank = 1;
+  Profile user = 2;
+  Contributions contributions = 3;
+}
+
+message GetLeaderboardRequest {
+  Period period = 1;
+  // IANA name, like "America/Chicago", that decides when days, weeks, and
+  // months start. Empty means UTC.
+  string time_zone = 2;
+}
+
+message GetLeaderboardResponse {
+  // Only users with at least one contribution in the period.
+  repeated LeaderboardEntry entries = 1;
+  // Unset for PERIOD_ALL_TIME.
+  google.protobuf.Timestamp since = 2;
+  Contributions team = 3;
+}
+
+message GetProfileRequest {
+  string username = 1;
+  // See GetLeaderboardRequest.time_zone.
+  string time_zone = 2;
+}
+
+message PeriodStats {
+  Period period = 1;
+  Contributions contributions = 2;
+  // Zero when the user has no contributions in the period.
+  int32 rank = 3;
+  int32 contributors = 4;
+}
+
+message ContributionDay {
+  // YYYY-MM-DD in the requested time zone.
+  string date = 1;
+  int64 count = 2;
+}
+
+message LabelTypeCount {
+  int64 label_type_id = 1;
+  string name = 2;
+  string color = 3;
+  int64 boxes = 4;
+}
+
+message GetProfileResponse {
+  Profile user = 1;
+  // One per period, shortest first.
+  repeated PeriodStats periods = 2;
+  // Days with at least one contribution, oldest first, starting on the
+  // Monday 52 weeks before the current week's.
+  repeated ContributionDay days = 3;
+  // Consecutive days with a contribution, ending today or yesterday.
+  int32 current_streak = 4;
+  int32 longest_streak = 5;
+  int32 active_days = 6;
+  // Unset when the user has no contributions.
+  ContributionDay best_day = 7;
+  int64 clips = 8;
+  // Boxes by label type, most first.
+  repeated LabelTypeCount label_types = 9;
+}
