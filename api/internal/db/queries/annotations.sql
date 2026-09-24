@@ -28,8 +28,8 @@ WHERE t.clip_id = $1
 ORDER BY a.frame_id, a.track_id;
 
 -- name: UpsertAnnotation :one
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status)
-VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified')
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid)
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
     y = excluded.y,
@@ -38,6 +38,7 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    updated_by = excluded.updated_by,
     updated_at = now()
 RETURNING *;
 
@@ -48,8 +49,8 @@ DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2;
 SELECT count(*)::int FROM annotations WHERE track_id = $1;
 
 -- name: CopyAnnotations :many
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status)
-SELECT a.track_id, sqlc.arg('to_frame_id'), a.x, a.y, a.width, a.height, 'human', 'verified'
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
+SELECT a.track_id, sqlc.arg('to_frame_id'), a.x, a.y, a.width, a.height, 'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid
 FROM annotations a
 WHERE a.frame_id = sqlc.arg('from_frame_id')
     AND a.status <> 'rejected'
@@ -58,10 +59,25 @@ ON CONFLICT (track_id, frame_id) DO NOTHING
 RETURNING *;
 
 -- name: SetFrameStatus :one
-UPDATE frames SET status = $2 WHERE id = $1 RETURNING status;
+-- Credit stays with whoever first set the current status.
+UPDATE frames SET
+    status = sqlc.arg('status'),
+    status_by = CASE
+        WHEN sqlc.arg('status') = 'unlabeled' THEN NULL
+        WHEN status = sqlc.arg('status') THEN status_by
+        ELSE sqlc.arg('user_id')::uuid
+    END,
+    status_at = CASE
+        WHEN sqlc.arg('status') = 'unlabeled' THEN NULL
+        WHEN status = sqlc.arg('status') THEN status_at
+        ELSE now()
+    END
+WHERE id = sqlc.arg('id')
+RETURNING status;
 
 -- name: CountFrameAnnotations :one
 SELECT count(*)::int FROM annotations WHERE frame_id = $1 AND status <> 'rejected';
 
 -- name: ClearEmptyFrame :exec
-UPDATE frames SET status = 'unlabeled' WHERE id = $1 AND status = 'empty';
+UPDATE frames SET status = 'unlabeled', status_by = NULL, status_at = NULL
+WHERE id = $1 AND status = 'empty';

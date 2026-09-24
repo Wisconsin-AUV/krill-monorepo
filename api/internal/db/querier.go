@@ -66,7 +66,7 @@ type Querier interface {
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
-	ListExportFrames(ctx context.Context, videoIds []int64) ([]Frame, error)
+	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
@@ -75,6 +75,7 @@ type Querier interface {
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
+	// Credit stays with whoever first set the current status.
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error

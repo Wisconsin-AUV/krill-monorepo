@@ -7,10 +7,13 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const clearEmptyFrame = `-- name: ClearEmptyFrame :exec
-UPDATE frames SET status = 'unlabeled' WHERE id = $1 AND status = 'empty'
+UPDATE frames SET status = 'unlabeled', status_by = NULL, status_at = NULL
+WHERE id = $1 AND status = 'empty'
 `
 
 func (q *Queries) ClearEmptyFrame(ctx context.Context, id int64) error {
@@ -19,24 +22,30 @@ func (q *Queries) ClearEmptyFrame(ctx context.Context, id int64) error {
 }
 
 const copyAnnotations = `-- name: CopyAnnotations :many
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status)
-SELECT a.track_id, $1, a.x, a.y, a.width, a.height, 'human', 'verified'
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
+SELECT a.track_id, $1, a.x, a.y, a.width, a.height, 'human', 'verified', $2::uuid, $2::uuid
 FROM annotations a
-WHERE a.frame_id = $2
+WHERE a.frame_id = $3
     AND a.status <> 'rejected'
-    AND (cardinality($3::bigint[]) = 0 OR a.track_id = ANY($3::bigint[]))
+    AND (cardinality($4::bigint[]) = 0 OR a.track_id = ANY($4::bigint[]))
 ON CONFLICT (track_id, frame_id) DO NOTHING
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by
 `
 
 type CopyAnnotationsParams struct {
-	ToFrameID   int64   `json:"to_frame_id"`
-	FromFrameID int64   `json:"from_frame_id"`
-	TrackIds    []int64 `json:"track_ids"`
+	ToFrameID   int64     `json:"to_frame_id"`
+	UserID      uuid.UUID `json:"user_id"`
+	FromFrameID int64     `json:"from_frame_id"`
+	TrackIds    []int64   `json:"track_ids"`
 }
 
 func (q *Queries) CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error) {
-	rows, err := q.db.Query(ctx, copyAnnotations, arg.ToFrameID, arg.FromFrameID, arg.TrackIds)
+	rows, err := q.db.Query(ctx, copyAnnotations,
+		arg.ToFrameID,
+		arg.UserID,
+		arg.FromFrameID,
+		arg.TrackIds,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +66,8 @@ func (q *Queries) CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams
 			&i.ModelVersion,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -145,7 +156,7 @@ func (q *Queries) DeleteTrack(ctx context.Context, id int64) (int64, error) {
 }
 
 const getFrame = `-- name: GetFrame :one
-SELECT id, video_id, clip_id, idx, phash, status FROM frames WHERE id = $1
+SELECT id, video_id, clip_id, idx, phash, status, status_by, status_at FROM frames WHERE id = $1
 `
 
 func (q *Queries) GetFrame(ctx context.Context, id int64) (Frame, error) {
@@ -158,6 +169,8 @@ func (q *Queries) GetFrame(ctx context.Context, id int64) (Frame, error) {
 		&i.Idx,
 		&i.Phash,
 		&i.Status,
+		&i.StatusBy,
+		&i.StatusAt,
 	)
 	return i, err
 }
@@ -180,7 +193,7 @@ func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
 }
 
 const listClipAnnotations = `-- name: ListClipAnnotations :many
-SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at
+SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE t.clip_id = $1
@@ -209,6 +222,8 @@ func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Anno
 			&i.ModelVersion,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -251,16 +266,31 @@ func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, er
 }
 
 const setFrameStatus = `-- name: SetFrameStatus :one
-UPDATE frames SET status = $2 WHERE id = $1 RETURNING status
+UPDATE frames SET
+    status = $1,
+    status_by = CASE
+        WHEN $1 = 'unlabeled' THEN NULL
+        WHEN status = $1 THEN status_by
+        ELSE $2::uuid
+    END,
+    status_at = CASE
+        WHEN $1 = 'unlabeled' THEN NULL
+        WHEN status = $1 THEN status_at
+        ELSE now()
+    END
+WHERE id = $3
+RETURNING status
 `
 
 type SetFrameStatusParams struct {
-	ID     int64  `json:"id"`
-	Status string `json:"status"`
+	Status string    `json:"status"`
+	UserID uuid.UUID `json:"user_id"`
+	ID     int64     `json:"id"`
 }
 
+// Credit stays with whoever first set the current status.
 func (q *Queries) SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error) {
-	row := q.db.QueryRow(ctx, setFrameStatus, arg.ID, arg.Status)
+	row := q.db.QueryRow(ctx, setFrameStatus, arg.Status, arg.UserID, arg.ID)
 	var status string
 	err := row.Scan(&status)
 	return status, err
@@ -292,8 +322,8 @@ func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track
 }
 
 const upsertAnnotation = `-- name: UpsertAnnotation :one
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status)
-VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified')
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified', $7::uuid, $7::uuid)
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
     y = excluded.y,
@@ -302,17 +332,19 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    updated_by = excluded.updated_by,
     updated_at = now()
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by
 `
 
 type UpsertAnnotationParams struct {
-	TrackID int64   `json:"track_id"`
-	FrameID int64   `json:"frame_id"`
-	X       float64 `json:"x"`
-	Y       float64 `json:"y"`
-	Width   float64 `json:"width"`
-	Height  float64 `json:"height"`
+	TrackID int64     `json:"track_id"`
+	FrameID int64     `json:"frame_id"`
+	X       float64   `json:"x"`
+	Y       float64   `json:"y"`
+	Width   float64   `json:"width"`
+	Height  float64   `json:"height"`
+	UserID  uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error) {
@@ -323,6 +355,7 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		arg.Y,
 		arg.Width,
 		arg.Height,
+		arg.UserID,
 	)
 	var i Annotation
 	err := row.Scan(
@@ -338,6 +371,8 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		&i.ModelVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }

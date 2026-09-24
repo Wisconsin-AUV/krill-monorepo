@@ -6,10 +6,12 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -23,6 +25,11 @@ type Service struct {
 
 func NewService(pool *pgxpool.Pool) *Service {
 	return &Service{pool: pool, q: db.New(pool)}
+}
+
+func callerID(ctx context.Context) uuid.UUID {
+	sess, _ := auth.SessionFrom(ctx)
+	return sess.User.ID
 }
 
 var errWrongClip = connect.NewError(connect.CodeInvalidArgument, errors.New("frame is not in the track's clip"))
@@ -79,7 +86,7 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 		return nil, rpc.Internal(err, "create track")
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h,
+		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, UserID: callerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create box")
@@ -179,6 +186,7 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	}
 	ann, err := s.q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 		TrackID: req.GetTrackId(), FrameID: req.GetFrameId(), X: x, Y: y, Width: w, Height: h,
+		UserID: callerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "save box")
@@ -237,7 +245,7 @@ func (s *Service) CopyBoxes(ctx context.Context, req *krillv1.CopyBoxesRequest) 
 		trackIDs = []int64{}
 	}
 	rows, err := s.q.CopyAnnotations(ctx, db.CopyAnnotationsParams{
-		FromFrameID: from.ID, ToFrameID: to.ID, TrackIds: trackIDs,
+		FromFrameID: from.ID, ToFrameID: to.ID, TrackIds: trackIDs, UserID: callerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "copy boxes")
@@ -269,7 +277,9 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 				errors.New("frame has boxes; delete them before marking it empty"))
 		}
 	}
-	saved, err := s.q.SetFrameStatus(ctx, db.SetFrameStatusParams{ID: req.GetFrameId(), Status: status})
+	saved, err := s.q.SetFrameStatus(ctx, db.SetFrameStatusParams{
+		ID: req.GetFrameId(), Status: status, UserID: callerID(ctx),
+	})
 	if err != nil {
 		return nil, rpc.DBError(err, "frame")
 	}

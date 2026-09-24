@@ -22,6 +22,8 @@ type Annotation struct {
 	ModelVersion string             `json:"model_version"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	UpdatedBy    pgtype.UUID        `json:"updated_by"`
 }
 
 type Clip struct {
@@ -46,12 +48,14 @@ type Dataset struct {
 }
 
 type Frame struct {
-	ID      int64  `json:"id"`
-	VideoID int64  `json:"video_id"`
-	ClipID  int64  `json:"clip_id"`
-	Idx     int32  `json:"idx"`
-	Phash   int64  `json:"phash"`
-	Status  string `json:"status"`
+	ID       int64              `json:"id"`
+	VideoID  int64              `json:"video_id"`
+	ClipID   int64              `json:"clip_id"`
+	Idx      int32              `json:"idx"`
+	Phash    int64              `json:"phash"`
+	Status   string             `json:"status"`
+	StatusBy pgtype.UUID        `json:"status_by"`
+	StatusAt pgtype.Timestamptz `json:"status_at"`
 }
 
 type LabelType struct {

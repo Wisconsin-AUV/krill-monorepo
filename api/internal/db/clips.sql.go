@@ -65,7 +65,7 @@ func (q *Queries) GetNeighbourClips(ctx context.Context, id int64) (GetNeighbour
 }
 
 const listClipFrames = `-- name: ListClipFrames :many
-SELECT id, video_id, clip_id, idx, phash, status FROM frames WHERE clip_id = $1 ORDER BY idx
+SELECT id, video_id, clip_id, idx, phash, status, status_by, status_at FROM frames WHERE clip_id = $1 ORDER BY idx
 `
 
 func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error) {
@@ -84,6 +84,8 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 			&i.Idx,
 			&i.Phash,
 			&i.Status,
+			&i.StatusBy,
+			&i.StatusAt,
 		); err != nil {
 			return nil, err
 		}
