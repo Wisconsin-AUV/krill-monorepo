@@ -8,7 +8,6 @@ import (
 	// The API image has no system time zone database.
 	_ "time/tzdata"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -33,16 +32,6 @@ func contributions(boxes, frames int64) *krillv1.Contributions {
 	return &krillv1.Contributions{Boxes: boxes, Frames: frames, Total: boxes + frames}
 }
 
-func profile(id uuid.UUID, name, username, role string, createdAt pgtype.Timestamptz) *krillv1.Profile {
-	return &krillv1.Profile{
-		Id:        id.String(),
-		Name:      name,
-		Username:  username,
-		Role:      auth.ParseRole(role),
-		CreatedAt: timestamppb.New(createdAt.Time),
-	}
-}
-
 func (s *Service) leaderboard(ctx context.Context, p krillv1.Period, loc *time.Location) (*krillv1.GetLeaderboardResponse, error) {
 	start, bounded, err := since(p, time.Now().In(loc))
 	if err != nil {
@@ -64,7 +53,7 @@ func (s *Service) leaderboard(ctx context.Context, p krillv1.Period, loc *time.L
 		if i == 0 || c.Total != out.Entries[i-1].Contributions.Total {
 			rank = int32(i + 1) //nolint:gosec // bounded by the number of users
 		}
-		out.Entries[i] = &krillv1.LeaderboardEntry{Rank: rank, User: profile(r.ID, r.Name, r.Username, r.Role, r.CreatedAt), Contributions: c}
+		out.Entries[i] = &krillv1.LeaderboardEntry{Rank: rank, User: auth.PublicProfile(r.ID, r.Name, r.Username, r.Role, r.CreatedAt), Contributions: c}
 		boxes += r.Boxes
 		frames += r.Frames
 	}
@@ -89,7 +78,7 @@ func (s *Service) GetProfile(ctx context.Context, req *krillv1.GetProfileRequest
 	if err != nil {
 		return nil, rpc.DBError(err, "user")
 	}
-	out := &krillv1.GetProfileResponse{User: profile(u.ID, u.Name, u.Username, u.Role, u.CreatedAt)}
+	out := &krillv1.GetProfileResponse{User: auth.PublicProfile(u.ID, u.Name, u.Username, u.Role, u.CreatedAt)}
 
 	for _, p := range periods {
 		board, err := s.leaderboard(ctx, p, loc)
