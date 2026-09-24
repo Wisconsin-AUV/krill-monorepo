@@ -16,7 +16,8 @@ export const navigationShortcuts: ShortcutGroup = {
     { keys: ['Shift', 'J / K'], label: 'Jump 10 frames' },
     { keys: ['Home', 'End'], label: 'First or last frame' },
     { keys: ['P'], label: 'Play or pause' },
-    { keys: ['[', ']'], label: 'Previous or next clip' },
+    { keys: ['[', ']'], label: 'Previous or next clip in the video' },
+    { keys: ['N'], label: 'Next clip to label, once every frame is done' },
   ],
 }
 

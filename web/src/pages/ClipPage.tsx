@@ -4,6 +4,7 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ForwardIcon,
   EyeIcon,
   EyeSlashIcon,
   NoSymbolIcon,
@@ -12,7 +13,7 @@ import {
   QuestionMarkCircleIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -35,10 +36,13 @@ import { StackedLayout } from '@/components/ui/StackedLayout'
 import { FrameStatus } from '@/gen/krill/v1/annotation_pb'
 import { ClipService, type GetClipResponse } from '@/gen/krill/v1/clip_pb'
 import { LabelService } from '@/gen/krill/v1/label_pb'
+import { QueueService } from '@/gen/krill/v1/queue_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
+import { useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { invalidateService } from '@/lib/queryClient'
+import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
@@ -86,6 +90,7 @@ function useClipState(data: GetClipResponse | undefined, switching: boolean) {
     () => () => {
       void invalidateService(VideoService)
       void invalidateService(LabelService)
+      void invalidateService(QueueService)
     },
     [],
   )
@@ -130,6 +135,8 @@ function SaveIndicator() {
 export function ClipPage() {
   const id = parseId(useParams().id)
   const navigate = useNavigate()
+  const me = useUser()
+  const claimNext = useClaimNextClip()
   const [showHelp, setShowHelp] = useState(false)
 
   // Labels live in the store while a clip is open, so the query must not
@@ -203,6 +210,13 @@ export function ClipPage() {
     const st = frameStatus[idKey(f.id)]
     return st === FrameStatus.LABELED || st === FrameStatus.EMPTY
   }).length
+  const finished = frames.length > 0 && doneCount === frames.length
+
+  // Releasing the finished clip keeps it out of the caller's open clips.
+  const nextFromQueue = () => {
+    if (finished && data?.clip && !claimNext.isPending)
+      claimNext.mutate({ releaseClipId: data.clip.id })
+  }
 
   const goClip = (clipId: bigint | undefined) => {
     if (clipId) navigate(`/clips/${clipId}`)
@@ -217,8 +231,7 @@ export function ClipPage() {
     const ok = await labels().setFrameStatus(frame.id, next)
     if (ok && advance) {
       if (index < frames.length - 1) step(1)
-      else if (data?.nextClipId)
-        flash.success('Last frame of the clip', 'Press ] to go to the next clip.')
+      else flash.success('Last frame of the clip')
     }
   }
 
@@ -251,6 +264,7 @@ export function ClipPage() {
           f: fit,
           '[': () => goClip(data?.previousClipId),
           ']': () => goClip(data?.nextClipId),
+          n: nextFromQueue,
           '?': () => setShowHelp(true),
           ...typeKeys,
           Escape: () => labels().select(null),
@@ -308,10 +322,11 @@ export function ClipPage() {
   const { video, clip } = data
   const zoomPct = fitScale > 0 ? Math.round((view.scale / fitScale) * 100) : 100
   const selectedKey = selectedTrackId !== null ? idKey(selectedTrackId) : null
+  const otherLabeler = takenByOther(clip.claim, me?.id) ? clip.claim?.user?.name : undefined
 
   const navbar = (
     <Navbar>
-      <BackItem to={`/videos/${video.id}`} label={video.name} />
+      <BackItem to="/" label="Home" />
       <NavbarDivider className="max-lg:hidden" />
       <NavbarSection>
         <NavbarItem
@@ -322,6 +337,12 @@ export function ClipPage() {
           <ChevronLeftIcon data-slot="icon" />
         </NavbarItem>
         <span className="text-sm/6 font-medium whitespace-nowrap tabular-nums">
+          <Link
+            to={`/videos/${video.id}`}
+            className="text-zinc-500 hover:text-zinc-950 max-md:hidden dark:text-zinc-400 dark:hover:text-white"
+          >
+            {video.name} ·{' '}
+          </Link>
           Clip {clip.index + 1}{' '}
           <span className="text-zinc-500 dark:text-zinc-400">of {video.clipCount}</span>
         </span>
@@ -338,6 +359,7 @@ export function ClipPage() {
       </NavbarSection>
       <NavbarSpacer />
       <NavbarSection>
+        {otherLabeler && <Badge color="amber">{otherLabeler} is labeling this</Badge>}
         <SaveIndicator />
         <Badge color={state.color}>{state.label}</Badge>
         <Button
@@ -358,6 +380,17 @@ export function ClipPage() {
           <CheckIcon data-slot="icon" />
           Done
         </Button>
+        {finished && (
+          <Button
+            color="sky"
+            disabled={switching || claimNext.isPending}
+            title="Next clip (N)"
+            onClick={nextFromQueue}
+          >
+            <ForwardIcon data-slot="icon" />
+            Next clip
+          </Button>
+        )}
       </NavbarSection>
       <NavbarDivider className="max-lg:hidden" />
       <NavbarSection className="max-lg:hidden">
