@@ -11,7 +11,7 @@ export function NotFound() {
         <Heading className="mt-2">Page not found</Heading>
         <Text className="mt-2">That page does not exist or was deleted.</Text>
         <Button to="/" className="mt-8">
-          Back to videos
+          Back home
         </Button>
       </div>
     </PageContentBlock>

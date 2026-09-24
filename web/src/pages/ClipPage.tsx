@@ -285,11 +285,11 @@ export function ClipPage() {
 
   if (id === undefined || error) {
     return (
-      <ClipShell navbar={<BackItem to="/" label="Videos" />}>
+      <ClipShell navbar={<BackItem to="/" label="Home" />}>
         <div className="flex flex-1 flex-col items-center justify-center gap-4 py-24 text-zinc-700 dark:text-zinc-300">
           <p>{error ? `Could not load clip: ${errorMessage(error)}` : 'Clip not found.'}</p>
           <Button to="/" outline>
-            Back to videos
+            Back home
           </Button>
         </div>
       </ClipShell>
@@ -297,7 +297,7 @@ export function ClipPage() {
   }
   if (isPending || !data.video || !data.clip) {
     return (
-      <ClipShell navbar={<BackItem to="/" label="Videos" />}>
+      <ClipShell navbar={<BackItem to="/" label="Home" />}>
         <div className="flex flex-1 items-center justify-center py-24">
           <LoadingSpinner />
         </div>

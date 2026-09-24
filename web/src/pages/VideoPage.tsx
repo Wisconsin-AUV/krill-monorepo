@@ -100,7 +100,7 @@ export function VideoPage() {
     onSuccess: async () => {
       await invalidateService(VideoService)
       flash.success('Video deleted')
-      navigate('/')
+      navigate('/videos')
     },
     onError: (err) => flash.error('Could not delete video', err),
   })
@@ -136,11 +136,11 @@ export function VideoPage() {
   return (
     <PageContentBlock title={`${video.name} · Krill`}>
       <Link
-        to="/"
+        to={canManage ? '/videos' : '/'}
         className="inline-flex items-center gap-2 text-sm/6 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       >
         <ChevronLeftIcon className="size-4 fill-zinc-400 dark:fill-zinc-500" />
-        Videos
+        {canManage ? 'Videos' : 'Home'}
       </Link>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
