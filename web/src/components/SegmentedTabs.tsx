@@ -1,12 +1,13 @@
 import { clsx } from 'clsx'
 import { LayoutGroup, motion } from 'motion/react'
 import { useId } from 'react'
-import { periods } from '@/lib/stats'
 
-export function PeriodTabs({
+export function SegmentedTabs({
+  options,
   value,
   onChange,
 }: {
+  options: readonly { key: string; label: string }[]
   value: string
   onChange: (key: string) => void
 }) {
@@ -14,7 +15,7 @@ export function PeriodTabs({
   return (
     <LayoutGroup id={id}>
       <div className="inline-flex rounded-lg bg-zinc-950/5 p-0.5 dark:bg-white/5">
-        {periods.map((p) => (
+        {options.map((p) => (
           <button
             key={p.key}
             type="button"
@@ -29,7 +30,7 @@ export function PeriodTabs({
           >
             {p.key === value && (
               <motion.span
-                layoutId="period-indicator"
+                layoutId="segment-indicator"
                 transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
                 className="absolute inset-0 rounded-md bg-white shadow-sm dark:bg-zinc-700"
               />

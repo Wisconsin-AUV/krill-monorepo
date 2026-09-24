@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -26,6 +27,17 @@ func ToProto(u db.User) *krillv1.User {
 		CreatedAt:   timestamp(u.CreatedAt),
 		LastLoginAt: timestamp(u.LastLoginAt),
 		Permissions: Granted(ParseRole(u.Role)),
+	}
+}
+
+// PublicProfile is the part of a user everyone can see.
+func PublicProfile(id uuid.UUID, name, username, role string, createdAt pgtype.Timestamptz) *krillv1.Profile {
+	return &krillv1.Profile{
+		Id:        id.String(),
+		Name:      name,
+		Username:  username,
+		Role:      ParseRole(role),
+		CreatedAt: timestamppb.New(createdAt.Time),
 	}
 }
 

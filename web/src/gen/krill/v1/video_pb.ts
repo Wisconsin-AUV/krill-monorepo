@@ -6,13 +6,15 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Profile } from "./stats_pb";
+import { file_krill_v1_stats } from "./stats_pb";
 import type { Message, UnknownEnum } from "@bufbuild/protobuf";
 
 /**
  * Describes the file krill/v1/video.proto.
  */
 export const file_krill_v1_video: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS92aWRlby5wcm90bxIIa3JpbGwudjEisQMKBVZpZGVvEgoKAmlkGAEgASgDEgwKBG5hbWUYAiABKAkSEAoIZmlsZW5hbWUYAyABKAkSDQoFbm90ZXMYBCABKAkSJQoGc3RhdHVzGAUgASgOMhUua3JpbGwudjEuVmlkZW9TdGF0dXMSDQoFZXJyb3IYBiABKAkSFwoPaW5nZXN0X3Byb2dyZXNzGAcgASgCEigKBXNwbGl0GAggASgOMhkua3JpbGwudjEuU3BsaXRBc3NpZ25tZW50EhMKC2V4dHJhY3RfZnBzGAkgASgBEg0KBXdpZHRoGAogASgFEg4KBmhlaWdodBgLIAEoBRILCgNmcHMYDCABKAESEwoLZHVyYXRpb25fbXMYDSABKAMSEwoLZnJhbWVfY291bnQYDiABKAUSEgoKY2xpcF9jb3VudBgPIAEoBRIVCg10aHVtYm5haWxfdXJsGBAgASgJEi4KCmNyZWF0ZWRfYXQYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhsKE2xhYmVsZWRfZnJhbWVfY291bnQYEiABKAUSEQoJYm94X2NvdW50GBMgASgFIssBCgRDbGlwEgoKAmlkGAEgASgDEhAKCHZpZGVvX2lkGAIgASgDEg0KBWluZGV4GAMgASgFEhMKC3N0YXJ0X2ZyYW1lGAQgASgFEhMKC2ZyYW1lX2NvdW50GAUgASgFEhAKCHN0YXJ0X21zGAYgASgDEhMKC2R1cmF0aW9uX21zGAcgASgDEhUKDXRodW1ibmFpbF91cmwYCCABKAkSGwoTbGFiZWxlZF9mcmFtZV9jb3VudBgJIAEoBRIRCglib3hfY291bnQYCiABKAUiSQoSQ3JlYXRlVmlkZW9SZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSEwoLZXh0cmFjdF9mcHMYAyABKAEiSQoTQ3JlYXRlVmlkZW9SZXNwb25zZRIeCgV2aWRlbxgBIAEoCzIPLmtyaWxsLnYxLlZpZGVvEhIKCnVwbG9hZF91cmwYAiABKAkiJgoSU3RhcnRJbmdlc3RSZXF1ZXN0EhAKCHZpZGVvX2lkGAEgASgDIjUKE1N0YXJ0SW5nZXN0UmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbyITChFMaXN0VmlkZW9zUmVxdWVzdCI1ChJMaXN0VmlkZW9zUmVzcG9uc2USHwoGdmlkZW9zGAEgAygLMg8ua3JpbGwudjEuVmlkZW8iHQoPR2V0VmlkZW9SZXF1ZXN0EgoKAmlkGAEgASgDIlEKEEdldFZpZGVvUmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbxIdCgVjbGlwcxgCIAMoCzIOLmtyaWxsLnYxLkNsaXAikwEKElVwZGF0ZVZpZGVvUmVxdWVzdBIKCgJpZBgBIAEoAxIRCgRuYW1lGAIgASgJSACIAQESEgoFbm90ZXMYAyABKAlIAYgBARItCgVzcGxpdBgEIAEoDjIZLmtyaWxsLnYxLlNwbGl0QXNzaWdubWVudEgCiAEBQgcKBV9uYW1lQggKBl9ub3Rlc0IICgZfc3BsaXQiNQoTVXBkYXRlVmlkZW9SZXNwb25zZRIeCgV2aWRlbxgBIAEoCzIPLmtyaWxsLnYxLlZpZGVvIiAKEkRlbGV0ZVZpZGVvUmVxdWVzdBIKCgJpZBgBIAEoAyIVChNEZWxldGVWaWRlb1Jlc3BvbnNlKq4BCgtWaWRlb1N0YXR1cxIcChhWSURFT19TVEFUVVNfVU5TUEVDSUZJRUQQABIaChZWSURFT19TVEFUVVNfVVBMT0FESU5HEAESFwoTVklERU9fU1RBVFVTX1FVRVVFRBACEhsKF1ZJREVPX1NUQVRVU19QUk9DRVNTSU5HEAMSFgoSVklERU9fU1RBVFVTX1JFQURZEAQSFwoTVklERU9fU1RBVFVTX0ZBSUxFRBAFKoQBCg9TcGxpdEFzc2lnbm1lbnQSIAocU1BMSVRfQVNTSUdOTUVOVF9VTlNQRUNJRklFRBAAEhkKFVNQTElUX0FTU0lHTk1FTlRfQVVUTxABEhoKFlNQTElUX0FTU0lHTk1FTlRfVFJBSU4QAhIYChRTUExJVF9BU1NJR05NRU5UX1ZBTBADMtYDCgxWaWRlb1NlcnZpY2USTAoLQ3JlYXRlVmlkZW8SHC5rcmlsbC52MS5DcmVhdGVWaWRlb1JlcXVlc3QaHS5rcmlsbC52MS5DcmVhdGVWaWRlb1Jlc3BvbnNlIgASTAoLU3RhcnRJbmdlc3QSHC5rcmlsbC52MS5TdGFydEluZ2VzdFJlcXVlc3QaHS5rcmlsbC52MS5TdGFydEluZ2VzdFJlc3BvbnNlIgASSQoKTGlzdFZpZGVvcxIbLmtyaWxsLnYxLkxpc3RWaWRlb3NSZXF1ZXN0Ghwua3JpbGwudjEuTGlzdFZpZGVvc1Jlc3BvbnNlIgASQwoIR2V0VmlkZW8SGS5rcmlsbC52MS5HZXRWaWRlb1JlcXVlc3QaGi5rcmlsbC52MS5HZXRWaWRlb1Jlc3BvbnNlIgASTAoLVXBkYXRlVmlkZW8SHC5rcmlsbC52MS5VcGRhdGVWaWRlb1JlcXVlc3QaHS5rcmlsbC52MS5VcGRhdGVWaWRlb1Jlc3BvbnNlIgASTAoLRGVsZXRlVmlkZW8SHC5rcmlsbC52MS5EZWxldGVWaWRlb1JlcXVlc3QaHS5rcmlsbC52MS5EZWxldGVWaWRlb1Jlc3BvbnNlIgBCiwEKDGNvbS5rcmlsbC52MUIKVmlkZW9Qcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChRrcmlsbC92MS92aWRlby5wcm90bxIIa3JpbGwudjEisQMKBVZpZGVvEgoKAmlkGAEgASgDEgwKBG5hbWUYAiABKAkSEAoIZmlsZW5hbWUYAyABKAkSDQoFbm90ZXMYBCABKAkSJQoGc3RhdHVzGAUgASgOMhUua3JpbGwudjEuVmlkZW9TdGF0dXMSDQoFZXJyb3IYBiABKAkSFwoPaW5nZXN0X3Byb2dyZXNzGAcgASgCEigKBXNwbGl0GAggASgOMhkua3JpbGwudjEuU3BsaXRBc3NpZ25tZW50EhMKC2V4dHJhY3RfZnBzGAkgASgBEg0KBXdpZHRoGAogASgFEg4KBmhlaWdodBgLIAEoBRILCgNmcHMYDCABKAESEwoLZHVyYXRpb25fbXMYDSABKAMSEwoLZnJhbWVfY291bnQYDiABKAUSEgoKY2xpcF9jb3VudBgPIAEoBRIVCg10aHVtYm5haWxfdXJsGBAgASgJEi4KCmNyZWF0ZWRfYXQYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhsKE2xhYmVsZWRfZnJhbWVfY291bnQYEiABKAUSEQoJYm94X2NvdW50GBMgASgFIu8BCgRDbGlwEgoKAmlkGAEgASgDEhAKCHZpZGVvX2lkGAIgASgDEg0KBWluZGV4GAMgASgFEhMKC3N0YXJ0X2ZyYW1lGAQgASgFEhMKC2ZyYW1lX2NvdW50GAUgASgFEhAKCHN0YXJ0X21zGAYgASgDEhMKC2R1cmF0aW9uX21zGAcgASgDEhUKDXRodW1ibmFpbF91cmwYCCABKAkSGwoTbGFiZWxlZF9mcmFtZV9jb3VudBgJIAEoBRIRCglib3hfY291bnQYCiABKAUSIgoFY2xhaW0YCyABKAsyEy5rcmlsbC52MS5DbGlwQ2xhaW0iawoJQ2xpcENsYWltEh8KBHVzZXIYASABKAsyES5rcmlsbC52MS5Qcm9maWxlEi0KCWFjdGl2ZV9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGYWN0aXZlGAMgASgIIkkKEkNyZWF0ZVZpZGVvUmVxdWVzdBIMCgRuYW1lGAEgASgJEhAKCGZpbGVuYW1lGAIgASgJEhMKC2V4dHJhY3RfZnBzGAMgASgBIkkKE0NyZWF0ZVZpZGVvUmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbxISCgp1cGxvYWRfdXJsGAIgASgJIiYKElN0YXJ0SW5nZXN0UmVxdWVzdBIQCgh2aWRlb19pZBgBIAEoAyI1ChNTdGFydEluZ2VzdFJlc3BvbnNlEh4KBXZpZGVvGAEgASgLMg8ua3JpbGwudjEuVmlkZW8iEwoRTGlzdFZpZGVvc1JlcXVlc3QiNQoSTGlzdFZpZGVvc1Jlc3BvbnNlEh8KBnZpZGVvcxgBIAMoCzIPLmtyaWxsLnYxLlZpZGVvIh0KD0dldFZpZGVvUmVxdWVzdBIKCgJpZBgBIAEoAyJRChBHZXRWaWRlb1Jlc3BvbnNlEh4KBXZpZGVvGAEgASgLMg8ua3JpbGwudjEuVmlkZW8SHQoFY2xpcHMYAiADKAsyDi5rcmlsbC52MS5DbGlwIpMBChJVcGRhdGVWaWRlb1JlcXVlc3QSCgoCaWQYASABKAMSEQoEbmFtZRgCIAEoCUgAiAEBEhIKBW5vdGVzGAMgASgJSAGIAQESLQoFc3BsaXQYBCABKA4yGS5rcmlsbC52MS5TcGxpdEFzc2lnbm1lbnRIAogBAUIHCgVfbmFtZUIICgZfbm90ZXNCCAoGX3NwbGl0IjUKE1VwZGF0ZVZpZGVvUmVzcG9uc2USHgoFdmlkZW8YASABKAsyDy5rcmlsbC52MS5WaWRlbyIgChJEZWxldGVWaWRlb1JlcXVlc3QSCgoCaWQYASABKAMiFQoTRGVsZXRlVmlkZW9SZXNwb25zZSquAQoLVmlkZW9TdGF0dXMSHAoYVklERU9fU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWVklERU9fU1RBVFVTX1VQTE9BRElORxABEhcKE1ZJREVPX1NUQVRVU19RVUVVRUQQAhIbChdWSURFT19TVEFUVVNfUFJPQ0VTU0lORxADEhYKElZJREVPX1NUQVRVU19SRUFEWRAEEhcKE1ZJREVPX1NUQVRVU19GQUlMRUQQBSqEAQoPU3BsaXRBc3NpZ25tZW50EiAKHFNQTElUX0FTU0lHTk1FTlRfVU5TUEVDSUZJRUQQABIZChVTUExJVF9BU1NJR05NRU5UX0FVVE8QARIaChZTUExJVF9BU1NJR05NRU5UX1RSQUlOEAISGAoUU1BMSVRfQVNTSUdOTUVOVF9WQUwQAzLWAwoMVmlkZW9TZXJ2aWNlEkwKC0NyZWF0ZVZpZGVvEhwua3JpbGwudjEuQ3JlYXRlVmlkZW9SZXF1ZXN0Gh0ua3JpbGwudjEuQ3JlYXRlVmlkZW9SZXNwb25zZSIAEkwKC1N0YXJ0SW5nZXN0Ehwua3JpbGwudjEuU3RhcnRJbmdlc3RSZXF1ZXN0Gh0ua3JpbGwudjEuU3RhcnRJbmdlc3RSZXNwb25zZSIAEkkKCkxpc3RWaWRlb3MSGy5rcmlsbC52MS5MaXN0VmlkZW9zUmVxdWVzdBocLmtyaWxsLnYxLkxpc3RWaWRlb3NSZXNwb25zZSIAEkMKCEdldFZpZGVvEhkua3JpbGwudjEuR2V0VmlkZW9SZXF1ZXN0Ghoua3JpbGwudjEuR2V0VmlkZW9SZXNwb25zZSIAEkwKC1VwZGF0ZVZpZGVvEhwua3JpbGwudjEuVXBkYXRlVmlkZW9SZXF1ZXN0Gh0ua3JpbGwudjEuVXBkYXRlVmlkZW9SZXNwb25zZSIAEkwKC0RlbGV0ZVZpZGVvEhwua3JpbGwudjEuRGVsZXRlVmlkZW9SZXF1ZXN0Gh0ua3JpbGwudjEuRGVsZXRlVmlkZW9SZXNwb25zZSIAQosBCgxjb20ua3JpbGwudjFCClZpZGVvUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_krill_v1_stats]);
 
 /**
  * @generated from message krill.v1.Video
@@ -180,6 +182,13 @@ export type Clip = Message<"krill.v1.Clip"> & {
    * @generated from field: int32 box_count = 10;
    */
   boxCount: number;
+
+  /**
+   * Unset when nobody has claimed the clip.
+   *
+   * @generated from field: krill.v1.ClipClaim claim = 11;
+   */
+  claim?: ClipClaim | undefined;
 };
 
 /**
@@ -188,6 +197,39 @@ export type Clip = Message<"krill.v1.Clip"> & {
  */
 export const ClipSchema: GenMessage<Clip> = /*@__PURE__*/
   messageDesc(file_krill_v1_video, 1);
+
+/**
+ * ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
+ * and edit a claimed clip, but the queue does not hand it out.
+ *
+ * @generated from message krill.v1.ClipClaim
+ */
+export type ClipClaim = Message<"krill.v1.ClipClaim"> & {
+  /**
+   * @generated from field: krill.v1.Profile user = 1;
+   */
+  user?: Profile | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp active_at = 2;
+   */
+  activeAt?: Timestamp | undefined;
+
+  /**
+   * False once the claimant has been idle long enough that the queue can
+   * give the clip to someone else.
+   *
+   * @generated from field: bool active = 3;
+   */
+  active: boolean;
+};
+
+/**
+ * Describes the message krill.v1.ClipClaim.
+ * Use `create(ClipClaimSchema)` to create a new message.
+ */
+export const ClipClaimSchema: GenMessage<ClipClaim> = /*@__PURE__*/
+  messageDesc(file_krill_v1_video, 2);
 
 /**
  * @generated from message krill.v1.CreateVideoRequest
@@ -214,7 +256,7 @@ export type CreateVideoRequest = Message<"krill.v1.CreateVideoRequest"> & {
  * Use `create(CreateVideoRequestSchema)` to create a new message.
  */
 export const CreateVideoRequestSchema: GenMessage<CreateVideoRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 2);
+  messageDesc(file_krill_v1_video, 3);
 
 /**
  * @generated from message krill.v1.CreateVideoResponse
@@ -236,7 +278,7 @@ export type CreateVideoResponse = Message<"krill.v1.CreateVideoResponse"> & {
  * Use `create(CreateVideoResponseSchema)` to create a new message.
  */
 export const CreateVideoResponseSchema: GenMessage<CreateVideoResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 3);
+  messageDesc(file_krill_v1_video, 4);
 
 /**
  * @generated from message krill.v1.StartIngestRequest
@@ -253,7 +295,7 @@ export type StartIngestRequest = Message<"krill.v1.StartIngestRequest"> & {
  * Use `create(StartIngestRequestSchema)` to create a new message.
  */
 export const StartIngestRequestSchema: GenMessage<StartIngestRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 4);
+  messageDesc(file_krill_v1_video, 5);
 
 /**
  * @generated from message krill.v1.StartIngestResponse
@@ -270,7 +312,7 @@ export type StartIngestResponse = Message<"krill.v1.StartIngestResponse"> & {
  * Use `create(StartIngestResponseSchema)` to create a new message.
  */
 export const StartIngestResponseSchema: GenMessage<StartIngestResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 5);
+  messageDesc(file_krill_v1_video, 6);
 
 /**
  * @generated from message krill.v1.ListVideosRequest
@@ -283,7 +325,7 @@ export type ListVideosRequest = Message<"krill.v1.ListVideosRequest"> & {
  * Use `create(ListVideosRequestSchema)` to create a new message.
  */
 export const ListVideosRequestSchema: GenMessage<ListVideosRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 6);
+  messageDesc(file_krill_v1_video, 7);
 
 /**
  * @generated from message krill.v1.ListVideosResponse
@@ -300,7 +342,7 @@ export type ListVideosResponse = Message<"krill.v1.ListVideosResponse"> & {
  * Use `create(ListVideosResponseSchema)` to create a new message.
  */
 export const ListVideosResponseSchema: GenMessage<ListVideosResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 7);
+  messageDesc(file_krill_v1_video, 8);
 
 /**
  * @generated from message krill.v1.GetVideoRequest
@@ -317,7 +359,7 @@ export type GetVideoRequest = Message<"krill.v1.GetVideoRequest"> & {
  * Use `create(GetVideoRequestSchema)` to create a new message.
  */
 export const GetVideoRequestSchema: GenMessage<GetVideoRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 8);
+  messageDesc(file_krill_v1_video, 9);
 
 /**
  * @generated from message krill.v1.GetVideoResponse
@@ -339,7 +381,7 @@ export type GetVideoResponse = Message<"krill.v1.GetVideoResponse"> & {
  * Use `create(GetVideoResponseSchema)` to create a new message.
  */
 export const GetVideoResponseSchema: GenMessage<GetVideoResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 9);
+  messageDesc(file_krill_v1_video, 10);
 
 /**
  * @generated from message krill.v1.UpdateVideoRequest
@@ -371,7 +413,7 @@ export type UpdateVideoRequest = Message<"krill.v1.UpdateVideoRequest"> & {
  * Use `create(UpdateVideoRequestSchema)` to create a new message.
  */
 export const UpdateVideoRequestSchema: GenMessage<UpdateVideoRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 10);
+  messageDesc(file_krill_v1_video, 11);
 
 /**
  * @generated from message krill.v1.UpdateVideoResponse
@@ -388,7 +430,7 @@ export type UpdateVideoResponse = Message<"krill.v1.UpdateVideoResponse"> & {
  * Use `create(UpdateVideoResponseSchema)` to create a new message.
  */
 export const UpdateVideoResponseSchema: GenMessage<UpdateVideoResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 11);
+  messageDesc(file_krill_v1_video, 12);
 
 /**
  * @generated from message krill.v1.DeleteVideoRequest
@@ -405,7 +447,7 @@ export type DeleteVideoRequest = Message<"krill.v1.DeleteVideoRequest"> & {
  * Use `create(DeleteVideoRequestSchema)` to create a new message.
  */
 export const DeleteVideoRequestSchema: GenMessage<DeleteVideoRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 12);
+  messageDesc(file_krill_v1_video, 13);
 
 /**
  * @generated from message krill.v1.DeleteVideoResponse
@@ -418,7 +460,7 @@ export type DeleteVideoResponse = Message<"krill.v1.DeleteVideoResponse"> & {
  * Use `create(DeleteVideoResponseSchema)` to create a new message.
  */
 export const DeleteVideoResponseSchema: GenMessage<DeleteVideoResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_video, 13);
+  messageDesc(file_krill_v1_video, 14);
 
 /**
  * @generated from enum krill.v1.VideoStatus

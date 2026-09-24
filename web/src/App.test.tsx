@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { HealthService } from '@/gen/krill/v1/health_pb'
+import { QueueService } from '@/gen/krill/v1/queue_pb'
 import { Permission, Role } from '@/gen/krill/v1/user_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
 import { queryClient } from '@/lib/queryClient'
@@ -30,6 +31,7 @@ function transport(role?: Role) {
     })
     service(HealthService, { check: () => ({ version: 'test' }) })
     service(VideoService, { listVideos: () => ({ videos: [] }) })
+    service(QueueService, { getQueue: () => ({}) })
   })
 }
 
@@ -47,7 +49,8 @@ describe('App', () => {
 
   it('shows labelers only the pages they can use', async () => {
     render(<App transport={transport(Role.LABELER)} />)
-    expect(await screen.findAllByText('Videos')).not.toHaveLength(0)
+    expect(await screen.findAllByText('Home')).not.toHaveLength(0)
+    expect(screen.queryByText('Videos')).not.toBeInTheDocument()
     expect(screen.queryByText('Exports')).not.toBeInTheDocument()
     expect(screen.queryByText('Upload videos')).not.toBeInTheDocument()
   })

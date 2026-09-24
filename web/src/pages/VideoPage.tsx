@@ -9,10 +9,11 @@ import {
   TrashIcon,
 } from '@heroicons/react/20/solid'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { ConfirmAlert } from '@/components/ConfirmAlert'
 import { EditVideoDialog } from '@/components/EditVideoDialog'
 import { Meter } from '@/components/Meter'
+import { SegmentedTabs } from '@/components/SegmentedTabs'
 import { Thumbnail } from '@/components/Thumbnail'
 import { VideoStatusBadge } from '@/components/VideoStatusBadge'
 import { Button } from '@/components/ui/Button'
@@ -34,16 +35,37 @@ import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Text } from '@/components/ui/Text'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
-import { useCan } from '@/lib/auth'
+import { useCan, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
+import { clipState } from '@/lib/queue'
 import { extractFpsOptions, isIngesting, splitLabel } from '@/lib/video'
 import { NotFound } from './NotFound'
 
-function ClipCard({ clip }: { clip: Clip }) {
+const filters = [
+  { key: 'all', label: 'All' },
+  { key: 'todo', label: 'Not started' },
+  { key: 'progress', label: 'In progress' },
+  { key: 'done', label: 'Done' },
+  { key: 'mine', label: 'Mine' },
+] as const
+
+function matches(filter: string, clip: Clip, userId: string | undefined) {
+  if (filter === 'mine') return clip.claim?.user?.id === userId
+  if (filter === 'all') return true
+  return clipState(clip.labeledFrameCount, clip.frameCount) === filter
+}
+
+function ClipCard({ clip, userId }: { clip: Clip; userId: string | undefined }) {
   const start = Number(clip.startMs)
+  const labeler =
+    clip.claim?.active && clip.labeledFrameCount < clip.frameCount
+      ? clip.claim.user?.id === userId
+        ? 'You are labeling'
+        : `${clip.claim.user?.name} is labeling`
+      : undefined
   return (
     <Link
       to={`/clips/${clip.id}`}
@@ -71,6 +93,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         label={`Clip ${clip.index + 1} progress`}
         className="mt-2"
       />
+      {labeler && <div className="mt-2 text-xs/5 text-sky-600 dark:text-sky-400">{labeler}</div>}
     </Link>
   )
 }
@@ -82,6 +105,9 @@ export function VideoPage() {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const canManage = useCan(Permission.MANAGE_VIDEOS)
+  const userId = useUser()?.id
+  const [search, setSearch] = useSearchParams()
+  const filter = filters.find((f) => f.key === search.get('show'))?.key ?? 'all'
 
   const { data, isPending, error } = useQuery(
     VideoService.method.getVideo,
@@ -100,7 +126,7 @@ export function VideoPage() {
     onSuccess: async () => {
       await invalidateService(VideoService)
       flash.success('Video deleted')
-      navigate('/')
+      navigate('/videos')
     },
     onError: (err) => flash.error('Could not delete video', err),
   })
@@ -126,7 +152,7 @@ export function VideoPage() {
   }
 
   const video = data.video
-  const clips = data.clips
+  const clips = data.clips.filter((c) => matches(filter, c, userId))
   const extractLabel =
     video.extractFps > 0
       ? (extractFpsOptions.find((o) => o.value === video.extractFps)?.label ??
@@ -136,11 +162,11 @@ export function VideoPage() {
   return (
     <PageContentBlock title={`${video.name} · Krill`}>
       <Link
-        to="/"
+        to={canManage ? '/videos' : '/'}
         className="inline-flex items-center gap-2 text-sm/6 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       >
         <ChevronLeftIcon className="size-4 fill-zinc-400 dark:fill-zinc-500" />
-        Videos
+        {canManage ? 'Videos' : 'Home'}
       </Link>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
@@ -249,27 +275,42 @@ export function VideoPage() {
             </DescriptionDetails>
           </>
         )}
-        <DescriptionTerm>Extraction rate</DescriptionTerm>
-        <DescriptionDetails>{extractLabel}</DescriptionDetails>
-        <DescriptionTerm>Dataset split</DescriptionTerm>
-        <DescriptionDetails>{splitLabel(video.split)}</DescriptionDetails>
+        {canManage && (
+          <>
+            <DescriptionTerm>Extraction rate</DescriptionTerm>
+            <DescriptionDetails>{extractLabel}</DescriptionDetails>
+            <DescriptionTerm>Dataset split</DescriptionTerm>
+            <DescriptionDetails>{splitLabel(video.split)}</DescriptionDetails>
+          </>
+        )}
         <DescriptionTerm>Notes</DescriptionTerm>
         <DescriptionDetails className="whitespace-pre-line">
           {video.notes || <span className="text-zinc-400 dark:text-zinc-500">None</span>}
         </DescriptionDetails>
       </DescriptionList>
 
-      {clips.length > 0 && (
+      {data.clips.length > 0 && (
         <>
-          <Subheading className="mt-12">
-            Clips{' '}
-            <span className="font-normal text-zinc-500 dark:text-zinc-400">{clips.length}</span>
-          </Subheading>
-          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-            {clips.map((c) => (
-              <ClipCard key={String(c.id)} clip={c} />
-            ))}
+          <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
+            <Subheading>
+              Clips{' '}
+              <span className="font-normal text-zinc-500 dark:text-zinc-400">{clips.length}</span>
+            </Subheading>
+            <SegmentedTabs
+              options={filters}
+              value={filter}
+              onChange={(key) => setSearch(key === 'all' ? {} : { show: key }, { replace: true })}
+            />
           </div>
+          {clips.length === 0 ? (
+            <Text className="mt-6">No clips.</Text>
+          ) : (
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+              {clips.map((c) => (
+                <ClipCard key={String(c.id)} clip={c} userId={userId} />
+              ))}
+            </div>
+          )}
         </>
       )}
 

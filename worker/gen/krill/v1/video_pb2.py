@@ -23,9 +23,10 @@ _sym_db = _symbol_database.Default()
 
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
+from krill.v1 import stats_pb2 as krill_dot_v1_dot_stats__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14krill/v1/video.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xeb\x04\n\x05Video\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n\x08\x66ilename\x18\x03 \x01(\tR\x08\x66ilename\x12\x14\n\x05notes\x18\x04 \x01(\tR\x05notes\x12-\n\x06status\x18\x05 \x01(\x0e\x32\x15.krill.v1.VideoStatusR\x06status\x12\x14\n\x05\x65rror\x18\x06 \x01(\tR\x05\x65rror\x12\'\n\x0fingest_progress\x18\x07 \x01(\x02R\x0eingestProgress\x12/\n\x05split\x18\x08 \x01(\x0e\x32\x19.krill.v1.SplitAssignmentR\x05split\x12\x1f\n\x0b\x65xtract_fps\x18\t \x01(\x01R\nextractFps\x12\x14\n\x05width\x18\n \x01(\x05R\x05width\x12\x16\n\x06height\x18\x0b \x01(\x05R\x06height\x12\x10\n\x03\x66ps\x18\x0c \x01(\x01R\x03\x66ps\x12\x1f\n\x0b\x64uration_ms\x18\r \x01(\x03R\ndurationMs\x12\x1f\n\x0b\x66rame_count\x18\x0e \x01(\x05R\nframeCount\x12\x1d\n\nclip_count\x18\x0f \x01(\x05R\tclipCount\x12#\n\rthumbnail_url\x18\x10 \x01(\tR\x0cthumbnailUrl\x12\x39\n\ncreated_at\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n\tbox_count\x18\x13 \x01(\x05R\x08\x62oxCount\"\xb7\x02\n\x04\x43lip\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n\x08video_id\x18\x02 \x01(\x03R\x07videoId\x12\x14\n\x05index\x18\x03 \x01(\x05R\x05index\x12\x1f\n\x0bstart_frame\x18\x04 \x01(\x05R\nstartFrame\x12\x1f\n\x0b\x66rame_count\x18\x05 \x01(\x05R\nframeCount\x12\x19\n\x08start_ms\x18\x06 \x01(\x03R\x07startMs\x12\x1f\n\x0b\x64uration_ms\x18\x07 \x01(\x03R\ndurationMs\x12#\n\rthumbnail_url\x18\x08 \x01(\tR\x0cthumbnailUrl\x12.\n\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n\tbox_count\x18\n \x01(\x05R\x08\x62oxCount\"e\n\x12\x43reateVideoRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08\x66ilename\x18\x02 \x01(\tR\x08\x66ilename\x12\x1f\n\x0b\x65xtract_fps\x18\x03 \x01(\x01R\nextractFps\"[\n\x13\x43reateVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12\x1d\n\nupload_url\x18\x02 \x01(\tR\tuploadUrl\"/\n\x12StartIngestRequest\x12\x19\n\x08video_id\x18\x01 \x01(\x03R\x07videoId\"<\n\x13StartIngestResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\"\x13\n\x11ListVideosRequest\"=\n\x12ListVideosResponse\x12\'\n\x06videos\x18\x01 \x03(\x0b\x32\x0f.krill.v1.VideoR\x06videos\"!\n\x0fGetVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"_\n\x10GetVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12$\n\x05\x63lips\x18\x02 \x03(\x0b\x32\x0e.krill.v1.ClipR\x05\x63lips\"\xab\x01\n\x12UpdateVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n\x05notes\x18\x03 \x01(\tH\x01R\x05notes\x88\x01\x01\x12\x34\n\x05split\x18\x04 \x01(\x0e\x32\x19.krill.v1.SplitAssignmentH\x02R\x05split\x88\x01\x01\x42\x07\n\x05_nameB\x08\n\x06_notesB\x08\n\x06_split\"<\n\x13UpdateVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\"$\n\x12\x44\x65leteVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x15\n\x13\x44\x65leteVideoResponse*\xae\x01\n\x0bVideoStatus\x12\x1c\n\x18VIDEO_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n\x16VIDEO_STATUS_UPLOADING\x10\x01\x12\x17\n\x13VIDEO_STATUS_QUEUED\x10\x02\x12\x1b\n\x17VIDEO_STATUS_PROCESSING\x10\x03\x12\x16\n\x12VIDEO_STATUS_READY\x10\x04\x12\x17\n\x13VIDEO_STATUS_FAILED\x10\x05*\x84\x01\n\x0fSplitAssignment\x12 \n\x1cSPLIT_ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x19\n\x15SPLIT_ASSIGNMENT_AUTO\x10\x01\x12\x1a\n\x16SPLIT_ASSIGNMENT_TRAIN\x10\x02\x12\x18\n\x14SPLIT_ASSIGNMENT_VAL\x10\x03\x32\xd6\x03\n\x0cVideoService\x12L\n\x0b\x43reateVideo\x12\x1c.krill.v1.CreateVideoRequest\x1a\x1d.krill.v1.CreateVideoResponse\"\x00\x12L\n\x0bStartIngest\x12\x1c.krill.v1.StartIngestRequest\x1a\x1d.krill.v1.StartIngestResponse\"\x00\x12I\n\nListVideos\x12\x1b.krill.v1.ListVideosRequest\x1a\x1c.krill.v1.ListVideosResponse\"\x00\x12\x43\n\x08GetVideo\x12\x19.krill.v1.GetVideoRequest\x1a\x1a.krill.v1.GetVideoResponse\"\x00\x12L\n\x0bUpdateVideo\x12\x1c.krill.v1.UpdateVideoRequest\x1a\x1d.krill.v1.UpdateVideoResponse\"\x00\x12L\n\x0b\x44\x65leteVideo\x12\x1c.krill.v1.DeleteVideoRequest\x1a\x1d.krill.v1.DeleteVideoResponse\"\x00\x42\x8b\x01\n\x0c\x63om.krill.v1B\nVideoProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14krill/v1/video.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14krill/v1/stats.proto\"\xeb\x04\n\x05Video\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n\x08\x66ilename\x18\x03 \x01(\tR\x08\x66ilename\x12\x14\n\x05notes\x18\x04 \x01(\tR\x05notes\x12-\n\x06status\x18\x05 \x01(\x0e\x32\x15.krill.v1.VideoStatusR\x06status\x12\x14\n\x05\x65rror\x18\x06 \x01(\tR\x05\x65rror\x12\'\n\x0fingest_progress\x18\x07 \x01(\x02R\x0eingestProgress\x12/\n\x05split\x18\x08 \x01(\x0e\x32\x19.krill.v1.SplitAssignmentR\x05split\x12\x1f\n\x0b\x65xtract_fps\x18\t \x01(\x01R\nextractFps\x12\x14\n\x05width\x18\n \x01(\x05R\x05width\x12\x16\n\x06height\x18\x0b \x01(\x05R\x06height\x12\x10\n\x03\x66ps\x18\x0c \x01(\x01R\x03\x66ps\x12\x1f\n\x0b\x64uration_ms\x18\r \x01(\x03R\ndurationMs\x12\x1f\n\x0b\x66rame_count\x18\x0e \x01(\x05R\nframeCount\x12\x1d\n\nclip_count\x18\x0f \x01(\x05R\tclipCount\x12#\n\rthumbnail_url\x18\x10 \x01(\tR\x0cthumbnailUrl\x12\x39\n\ncreated_at\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n\tbox_count\x18\x13 \x01(\x05R\x08\x62oxCount\"\xe2\x02\n\x04\x43lip\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n\x08video_id\x18\x02 \x01(\x03R\x07videoId\x12\x14\n\x05index\x18\x03 \x01(\x05R\x05index\x12\x1f\n\x0bstart_frame\x18\x04 \x01(\x05R\nstartFrame\x12\x1f\n\x0b\x66rame_count\x18\x05 \x01(\x05R\nframeCount\x12\x19\n\x08start_ms\x18\x06 \x01(\x03R\x07startMs\x12\x1f\n\x0b\x64uration_ms\x18\x07 \x01(\x03R\ndurationMs\x12#\n\rthumbnail_url\x18\x08 \x01(\tR\x0cthumbnailUrl\x12.\n\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n\tbox_count\x18\n \x01(\x05R\x08\x62oxCount\x12)\n\x05\x63laim\x18\x0b \x01(\x0b\x32\x13.krill.v1.ClipClaimR\x05\x63laim\"\x83\x01\n\tClipClaim\x12%\n\x04user\x18\x01 \x01(\x0b\x32\x11.krill.v1.ProfileR\x04user\x12\x37\n\tactive_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\x08\x61\x63tiveAt\x12\x16\n\x06\x61\x63tive\x18\x03 \x01(\x08R\x06\x61\x63tive\"e\n\x12\x43reateVideoRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n\x08\x66ilename\x18\x02 \x01(\tR\x08\x66ilename\x12\x1f\n\x0b\x65xtract_fps\x18\x03 \x01(\x01R\nextractFps\"[\n\x13\x43reateVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12\x1d\n\nupload_url\x18\x02 \x01(\tR\tuploadUrl\"/\n\x12StartIngestRequest\x12\x19\n\x08video_id\x18\x01 \x01(\x03R\x07videoId\"<\n\x13StartIngestResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\"\x13\n\x11ListVideosRequest\"=\n\x12ListVideosResponse\x12\'\n\x06videos\x18\x01 \x03(\x0b\x32\x0f.krill.v1.VideoR\x06videos\"!\n\x0fGetVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"_\n\x10GetVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\x12$\n\x05\x63lips\x18\x02 \x03(\x0b\x32\x0e.krill.v1.ClipR\x05\x63lips\"\xab\x01\n\x12UpdateVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n\x05notes\x18\x03 \x01(\tH\x01R\x05notes\x88\x01\x01\x12\x34\n\x05split\x18\x04 \x01(\x0e\x32\x19.krill.v1.SplitAssignmentH\x02R\x05split\x88\x01\x01\x42\x07\n\x05_nameB\x08\n\x06_notesB\x08\n\x06_split\"<\n\x13UpdateVideoResponse\x12%\n\x05video\x18\x01 \x01(\x0b\x32\x0f.krill.v1.VideoR\x05video\"$\n\x12\x44\x65leteVideoRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x15\n\x13\x44\x65leteVideoResponse*\xae\x01\n\x0bVideoStatus\x12\x1c\n\x18VIDEO_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n\x16VIDEO_STATUS_UPLOADING\x10\x01\x12\x17\n\x13VIDEO_STATUS_QUEUED\x10\x02\x12\x1b\n\x17VIDEO_STATUS_PROCESSING\x10\x03\x12\x16\n\x12VIDEO_STATUS_READY\x10\x04\x12\x17\n\x13VIDEO_STATUS_FAILED\x10\x05*\x84\x01\n\x0fSplitAssignment\x12 \n\x1cSPLIT_ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x19\n\x15SPLIT_ASSIGNMENT_AUTO\x10\x01\x12\x1a\n\x16SPLIT_ASSIGNMENT_TRAIN\x10\x02\x12\x18\n\x14SPLIT_ASSIGNMENT_VAL\x10\x03\x32\xd6\x03\n\x0cVideoService\x12L\n\x0b\x43reateVideo\x12\x1c.krill.v1.CreateVideoRequest\x1a\x1d.krill.v1.CreateVideoResponse\"\x00\x12L\n\x0bStartIngest\x12\x1c.krill.v1.StartIngestRequest\x1a\x1d.krill.v1.StartIngestResponse\"\x00\x12I\n\nListVideos\x12\x1b.krill.v1.ListVideosRequest\x1a\x1c.krill.v1.ListVideosResponse\"\x00\x12\x43\n\x08GetVideo\x12\x19.krill.v1.GetVideoRequest\x1a\x1a.krill.v1.GetVideoResponse\"\x00\x12L\n\x0bUpdateVideo\x12\x1c.krill.v1.UpdateVideoRequest\x1a\x1d.krill.v1.UpdateVideoResponse\"\x00\x12L\n\x0b\x44\x65leteVideo\x12\x1c.krill.v1.DeleteVideoRequest\x1a\x1d.krill.v1.DeleteVideoResponse\"\x00\x42\x8b\x01\n\x0c\x63om.krill.v1B\nVideoProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,38 +34,40 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'krill.v1.video_pb2', _globa
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.krill.v1B\nVideoProtoP\001Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\242\002\003KXX\252\002\010Krill.V1\312\002\010Krill\\V1\342\002\024Krill\\V1\\GPBMetadata\352\002\tKrill::V1'
-  _globals['_VIDEOSTATUS']._serialized_start=1824
-  _globals['_VIDEOSTATUS']._serialized_end=1998
-  _globals['_SPLITASSIGNMENT']._serialized_start=2001
-  _globals['_SPLITASSIGNMENT']._serialized_end=2133
-  _globals['_VIDEO']._serialized_start=68
-  _globals['_VIDEO']._serialized_end=687
-  _globals['_CLIP']._serialized_start=690
-  _globals['_CLIP']._serialized_end=1001
-  _globals['_CREATEVIDEOREQUEST']._serialized_start=1003
-  _globals['_CREATEVIDEOREQUEST']._serialized_end=1104
-  _globals['_CREATEVIDEORESPONSE']._serialized_start=1106
-  _globals['_CREATEVIDEORESPONSE']._serialized_end=1197
-  _globals['_STARTINGESTREQUEST']._serialized_start=1199
-  _globals['_STARTINGESTREQUEST']._serialized_end=1246
-  _globals['_STARTINGESTRESPONSE']._serialized_start=1248
-  _globals['_STARTINGESTRESPONSE']._serialized_end=1308
-  _globals['_LISTVIDEOSREQUEST']._serialized_start=1310
-  _globals['_LISTVIDEOSREQUEST']._serialized_end=1329
-  _globals['_LISTVIDEOSRESPONSE']._serialized_start=1331
-  _globals['_LISTVIDEOSRESPONSE']._serialized_end=1392
-  _globals['_GETVIDEOREQUEST']._serialized_start=1394
-  _globals['_GETVIDEOREQUEST']._serialized_end=1427
-  _globals['_GETVIDEORESPONSE']._serialized_start=1429
-  _globals['_GETVIDEORESPONSE']._serialized_end=1524
-  _globals['_UPDATEVIDEOREQUEST']._serialized_start=1527
-  _globals['_UPDATEVIDEOREQUEST']._serialized_end=1698
-  _globals['_UPDATEVIDEORESPONSE']._serialized_start=1700
-  _globals['_UPDATEVIDEORESPONSE']._serialized_end=1760
-  _globals['_DELETEVIDEOREQUEST']._serialized_start=1762
-  _globals['_DELETEVIDEOREQUEST']._serialized_end=1798
-  _globals['_DELETEVIDEORESPONSE']._serialized_start=1800
-  _globals['_DELETEVIDEORESPONSE']._serialized_end=1821
-  _globals['_VIDEOSERVICE']._serialized_start=2136
-  _globals['_VIDEOSERVICE']._serialized_end=2606
+  _globals['_VIDEOSTATUS']._serialized_start=2023
+  _globals['_VIDEOSTATUS']._serialized_end=2197
+  _globals['_SPLITASSIGNMENT']._serialized_start=2200
+  _globals['_SPLITASSIGNMENT']._serialized_end=2332
+  _globals['_VIDEO']._serialized_start=90
+  _globals['_VIDEO']._serialized_end=709
+  _globals['_CLIP']._serialized_start=712
+  _globals['_CLIP']._serialized_end=1066
+  _globals['_CLIPCLAIM']._serialized_start=1069
+  _globals['_CLIPCLAIM']._serialized_end=1200
+  _globals['_CREATEVIDEOREQUEST']._serialized_start=1202
+  _globals['_CREATEVIDEOREQUEST']._serialized_end=1303
+  _globals['_CREATEVIDEORESPONSE']._serialized_start=1305
+  _globals['_CREATEVIDEORESPONSE']._serialized_end=1396
+  _globals['_STARTINGESTREQUEST']._serialized_start=1398
+  _globals['_STARTINGESTREQUEST']._serialized_end=1445
+  _globals['_STARTINGESTRESPONSE']._serialized_start=1447
+  _globals['_STARTINGESTRESPONSE']._serialized_end=1507
+  _globals['_LISTVIDEOSREQUEST']._serialized_start=1509
+  _globals['_LISTVIDEOSREQUEST']._serialized_end=1528
+  _globals['_LISTVIDEOSRESPONSE']._serialized_start=1530
+  _globals['_LISTVIDEOSRESPONSE']._serialized_end=1591
+  _globals['_GETVIDEOREQUEST']._serialized_start=1593
+  _globals['_GETVIDEOREQUEST']._serialized_end=1626
+  _globals['_GETVIDEORESPONSE']._serialized_start=1628
+  _globals['_GETVIDEORESPONSE']._serialized_end=1723
+  _globals['_UPDATEVIDEOREQUEST']._serialized_start=1726
+  _globals['_UPDATEVIDEOREQUEST']._serialized_end=1897
+  _globals['_UPDATEVIDEORESPONSE']._serialized_start=1899
+  _globals['_UPDATEVIDEORESPONSE']._serialized_end=1959
+  _globals['_DELETEVIDEOREQUEST']._serialized_start=1961
+  _globals['_DELETEVIDEOREQUEST']._serialized_end=1997
+  _globals['_DELETEVIDEORESPONSE']._serialized_start=1999
+  _globals['_DELETEVIDEORESPONSE']._serialized_end=2020
+  _globals['_VIDEOSERVICE']._serialized_start=2335
+  _globals['_VIDEOSERVICE']._serialized_end=2805
 # @@protoc_insertion_point(module_scope)

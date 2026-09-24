@@ -279,7 +279,7 @@ UPDATE frames SET
         ELSE now()
     END
 WHERE id = $3
-RETURNING status
+RETURNING status, clip_id
 `
 
 type SetFrameStatusParams struct {
@@ -288,12 +288,17 @@ type SetFrameStatusParams struct {
 	ID     int64     `json:"id"`
 }
 
+type SetFrameStatusRow struct {
+	Status string `json:"status"`
+	ClipID int64  `json:"clip_id"`
+}
+
 // Credit stays with whoever first set the current status.
-func (q *Queries) SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error) {
+func (q *Queries) SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error) {
 	row := q.db.QueryRow(ctx, setFrameStatus, arg.Status, arg.UserID, arg.ID)
-	var status string
-	err := row.Scan(&status)
-	return status, err
+	var i SetFrameStatusRow
+	err := row.Scan(&i.Status, &i.ClipID)
+	return i, err
 }
 
 const updateTrack = `-- name: UpdateTrack :one

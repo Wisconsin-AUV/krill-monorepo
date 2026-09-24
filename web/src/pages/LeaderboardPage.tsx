@@ -4,7 +4,7 @@ import { TrophyIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
 import { Link, useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
-import { PeriodTabs } from '@/components/PeriodTabs'
+import { SegmentedTabs } from '@/components/SegmentedTabs'
 import { Stat } from '@/components/Stat'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
@@ -24,7 +24,7 @@ import { StatsService, type LeaderboardEntry } from '@/gen/krill/v1/stats_pb'
 import { initials, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { formatNumber, plural } from '@/lib/format'
-import { ordinal, periodFromKey, profilePath, timeZone } from '@/lib/stats'
+import { ordinal, periodFromKey, periods, profilePath, timeZone } from '@/lib/stats'
 
 const medals = [
   'bg-amber-400 text-amber-950',
@@ -96,7 +96,8 @@ export function LeaderboardPage() {
             don't count.
           </Text>
         </div>
-        <PeriodTabs
+        <SegmentedTabs
+          options={periods}
           value={period.key}
           onChange={(key) => setParams({ period: key }, { replace: true })}
         />

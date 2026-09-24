@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "krill/v1/video.proto";
+
+// QueueService decides what each labeler works on. Editing a clip also claims
+// it, so clips picked by hand show up here too.
+service QueueService {
+  rpc GetQueue(GetQueueRequest) returns (GetQueueResponse) {}
+  // ClaimNextClip returns the caller's most recently active unfinished clip,
+  // or claims a new one. New clips are spread across videos so labels cover
+  // as much footage as possible.
+  rpc ClaimNextClip(ClaimNextClipRequest) returns (ClaimNextClipResponse) {}
+}
+
+message GetQueueRequest {}
+
+message OpenClip {
+  Clip clip = 1;
+  string video_name = 2;
+}
+
+message ClipProgress {
+  int64 id = 1;
+  int32 index = 2;
+  int32 frame_count = 3;
+  int32 labeled_frame_count = 4;
+  ClipClaim claim = 5;
+}
+
+message VideoProgress {
+  int64 id = 1;
+  string name = 2;
+  repeated ClipProgress clips = 3;
+}
+
+message GetQueueResponse {
+  // The caller's claimed clips that still have unlabeled frames, most
+  // recently active first.
+  repeated OpenClip open_clips = 1;
+  // Ready videos, newest first.
+  repeated VideoProgress videos = 2;
+  // Unfinished clips nobody is actively labeling.
+  int32 available_clips = 3;
+}
+
+message ClaimNextClipRequest {
+  // Releases the caller's claim on this clip first so it is not handed back.
+  int64 release_clip_id = 1;
+}
+
+message ClaimNextClipResponse {
+  // 0 when every clip is finished or being labeled.
+  int64 clip_id = 1;
+}

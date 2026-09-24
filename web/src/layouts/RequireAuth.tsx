@@ -51,7 +51,7 @@ export function RequirePermission({ permission }: { permission: Permission }) {
           need it.
         </Text>
         <Button to="/" className="mt-8">
-          Back to videos
+          Back home
         </Button>
       </div>
     </PageContentBlock>

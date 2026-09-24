@@ -15,3 +15,4 @@ All notable changes to this project are documented here. The format follows
 - YOLO export with per-video train/val split, frame stride, and perceptual-hash dedup.
 - Accounts with password or Slack sign-in, and labeler, developer, and admin roles.
 - Leaderboards for today, this week, this month, and all time, and profiles with a contribution graph, streaks, and stats.
+- Home page for labelers with a clip queue, soft clip claims, personal stats, and per-clip progress for every video.

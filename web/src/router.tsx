@@ -6,6 +6,7 @@ import { AuthLayout } from '@/layouts/AuthLayout'
 import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
 import { ExportsPage } from '@/pages/ExportsPage'
+import { HomePage } from '@/pages/HomePage'
 import { LabelsPage } from '@/pages/LabelsPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -43,7 +44,8 @@ export const router = createBrowserRouter([
           {
             element: <AppLayout />,
             children: [
-              { index: true, element: <VideosPage /> },
+              { index: true, element: <HomePage /> },
+              { path: 'videos', element: <VideosPage /> },
               { path: 'videos/:id', element: <VideoPage /> },
               { path: 'account', element: <AccountPage /> },
               { path: 'leaderboard', element: <LeaderboardPage /> },

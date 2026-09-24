@@ -27,6 +27,7 @@ import (
 	"github.com/wauv/krill/api/internal/export"
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
+	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -136,6 +137,7 @@ func run() error {
 	}
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))

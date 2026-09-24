@@ -12,6 +12,8 @@ import (
 )
 
 type Querier interface {
+	// Takes the clip unless someone else claimed it and is still active.
+	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
@@ -63,7 +65,9 @@ type Querier interface {
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
+	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
+	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
@@ -71,14 +75,20 @@ type Querier interface {
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
+	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	LockUsers(ctx context.Context) error
+	// Started clips that were abandoned come first so they get finished. After
+	// that, clips come from the video with the fewest clips worked on, so labels
+	// spread across as much footage as possible.
+	NextClip(ctx context.Context, arg NextClipParams) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	// Credit stays with whoever first set the current status.
-	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (string, error)
+	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
 	SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (User, error)

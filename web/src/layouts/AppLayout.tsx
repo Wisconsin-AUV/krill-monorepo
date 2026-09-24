@@ -5,6 +5,7 @@ import {
   BookOpenIcon,
   ChartBarIcon,
   FilmIcon,
+  HomeIcon,
   TagIcon,
   TrophyIcon,
   UserCircleIcon,
@@ -53,11 +54,18 @@ import { profilePath } from '@/lib/stats'
 
 const navItems = [
   {
-    label: 'Videos',
+    label: 'Home',
     to: '/',
-    icon: FilmIcon,
+    icon: HomeIcon,
     permission: Permission.LABEL,
-    match: (p: string) => p === '/' || p.startsWith('/videos'),
+    match: (p: string) => p === '/',
+  },
+  {
+    label: 'Videos',
+    to: '/videos',
+    icon: FilmIcon,
+    permission: Permission.MANAGE_VIDEOS,
+    match: (p: string) => p.startsWith('/videos'),
   },
   {
     label: 'Leaderboard',

@@ -38,6 +38,9 @@ var policy = map[string]krillv1.Permission{
 
 	krillv1connect.ClipServiceGetClipProcedure: label,
 
+	krillv1connect.QueueServiceGetQueueProcedure:      label,
+	krillv1connect.QueueServiceClaimNextClipProcedure: label,
+
 	krillv1connect.LabelServiceListLabelTypesProcedure:    label,
 	krillv1connect.LabelServiceCreateLabelTypeProcedure:   manageLabelTypes,
 	krillv1connect.LabelServiceUpdateLabelTypeProcedure:   manageLabelTypes,

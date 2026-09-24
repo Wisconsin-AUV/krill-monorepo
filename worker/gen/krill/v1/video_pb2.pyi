@@ -1,6 +1,7 @@
 import datetime
 
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
+from krill.v1 import stats_pb2 as _stats_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -79,7 +80,7 @@ class Video(_message.Message):
     def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., filename: _Optional[str] = ..., notes: _Optional[str] = ..., status: _Optional[_Union[VideoStatus, str]] = ..., error: _Optional[str] = ..., ingest_progress: _Optional[float] = ..., split: _Optional[_Union[SplitAssignment, str]] = ..., extract_fps: _Optional[float] = ..., width: _Optional[int] = ..., height: _Optional[int] = ..., fps: _Optional[float] = ..., duration_ms: _Optional[int] = ..., frame_count: _Optional[int] = ..., clip_count: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., labeled_frame_count: _Optional[int] = ..., box_count: _Optional[int] = ...) -> None: ...
 
 class Clip(_message.Message):
-    __slots__ = ("id", "video_id", "index", "start_frame", "frame_count", "start_ms", "duration_ms", "thumbnail_url", "labeled_frame_count", "box_count")
+    __slots__ = ("id", "video_id", "index", "start_frame", "frame_count", "start_ms", "duration_ms", "thumbnail_url", "labeled_frame_count", "box_count", "claim")
     ID_FIELD_NUMBER: _ClassVar[int]
     VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
     INDEX_FIELD_NUMBER: _ClassVar[int]
@@ -90,6 +91,7 @@ class Clip(_message.Message):
     THUMBNAIL_URL_FIELD_NUMBER: _ClassVar[int]
     LABELED_FRAME_COUNT_FIELD_NUMBER: _ClassVar[int]
     BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
+    CLAIM_FIELD_NUMBER: _ClassVar[int]
     id: int
     video_id: int
     index: int
@@ -100,7 +102,18 @@ class Clip(_message.Message):
     thumbnail_url: str
     labeled_frame_count: int
     box_count: int
-    def __init__(self, id: _Optional[int] = ..., video_id: _Optional[int] = ..., index: _Optional[int] = ..., start_frame: _Optional[int] = ..., frame_count: _Optional[int] = ..., start_ms: _Optional[int] = ..., duration_ms: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., labeled_frame_count: _Optional[int] = ..., box_count: _Optional[int] = ...) -> None: ...
+    claim: ClipClaim
+    def __init__(self, id: _Optional[int] = ..., video_id: _Optional[int] = ..., index: _Optional[int] = ..., start_frame: _Optional[int] = ..., frame_count: _Optional[int] = ..., start_ms: _Optional[int] = ..., duration_ms: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., labeled_frame_count: _Optional[int] = ..., box_count: _Optional[int] = ..., claim: _Optional[_Union[ClipClaim, _Mapping]] = ...) -> None: ...
+
+class ClipClaim(_message.Message):
+    __slots__ = ("user", "active_at", "active")
+    USER_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_AT_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_FIELD_NUMBER: _ClassVar[int]
+    user: _stats_pb2.Profile
+    active_at: _timestamp_pb2.Timestamp
+    active: bool
+    def __init__(self, user: _Optional[_Union[_stats_pb2.Profile, _Mapping]] = ..., active_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., active: _Optional[bool] = ...) -> None: ...
 
 class CreateVideoRequest(_message.Message):
     __slots__ = ("name", "filename", "extract_fps")
