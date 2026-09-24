@@ -55,9 +55,11 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByLogin(ctx context.Context, login string) (User, error)
 	GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text) (User, error)
+	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
@@ -91,6 +93,9 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
+	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
+	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
+	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)
 }
 
