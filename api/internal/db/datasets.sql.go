@@ -241,15 +241,24 @@ WHERE v.status = 'ready'
 ORDER BY f.video_id, f.idx
 `
 
-func (q *Queries) ListExportFrames(ctx context.Context, videoIds []int64) ([]Frame, error) {
+type ListExportFramesRow struct {
+	ID      int64  `json:"id"`
+	VideoID int64  `json:"video_id"`
+	ClipID  int64  `json:"clip_id"`
+	Idx     int32  `json:"idx"`
+	Phash   int64  `json:"phash"`
+	Status  string `json:"status"`
+}
+
+func (q *Queries) ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error) {
 	rows, err := q.db.Query(ctx, listExportFrames, videoIds)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Frame
+	var items []ListExportFramesRow
 	for rows.Next() {
-		var i Frame
+		var i ListExportFramesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.VideoID,

@@ -52,6 +52,9 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AnnotationServiceCopyBoxesProcedure:      label,
 	krillv1connect.AnnotationServiceSetFrameStatusProcedure: label,
 
+	krillv1connect.StatsServiceGetLeaderboardProcedure: label,
+	krillv1connect.StatsServiceGetProfileProcedure:     label,
+
 	krillv1connect.ExportServicePreviewExportProcedure: manageExports,
 	krillv1connect.ExportServiceCreateExportProcedure:  manageExports,
 	krillv1connect.ExportServiceListExportsProcedure:   manageExports,

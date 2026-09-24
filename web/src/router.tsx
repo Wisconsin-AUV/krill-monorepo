@@ -7,8 +7,10 @@ import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
 import { ExportsPage } from '@/pages/ExportsPage'
 import { LabelsPage } from '@/pages/LabelsPage'
+import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFound } from '@/pages/NotFound'
+import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
@@ -44,6 +46,8 @@ export const router = createBrowserRouter([
               { index: true, element: <VideosPage /> },
               { path: 'videos/:id', element: <VideoPage /> },
               { path: 'account', element: <AccountPage /> },
+              { path: 'leaderboard', element: <LeaderboardPage /> },
+              { path: 'people/:username', element: <ProfilePage /> },
               {
                 element: <RequirePermission permission={Permission.MANAGE_LABEL_TYPES} />,
                 children: [{ path: 'labels', element: <LabelsPage /> }],

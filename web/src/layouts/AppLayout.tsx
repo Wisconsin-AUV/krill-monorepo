@@ -3,8 +3,10 @@ import {
   ArrowDownTrayIcon,
   ArrowRightStartOnRectangleIcon,
   BookOpenIcon,
+  ChartBarIcon,
   FilmIcon,
   TagIcon,
+  TrophyIcon,
   UserCircleIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
@@ -47,6 +49,7 @@ import { can, initials, useRoleLabel, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { GUIDELINE_URL } from '@/lib/links'
 import { queryClient } from '@/lib/queryClient'
+import { profilePath } from '@/lib/stats'
 
 const navItems = [
   {
@@ -55,6 +58,13 @@ const navItems = [
     icon: FilmIcon,
     permission: Permission.LABEL,
     match: (p: string) => p === '/' || p.startsWith('/videos'),
+  },
+  {
+    label: 'Leaderboard',
+    to: '/leaderboard',
+    icon: TrophyIcon,
+    permission: Permission.LABEL,
+    match: (p: string) => p.startsWith('/leaderboard'),
   },
   {
     label: 'Labels',
@@ -103,6 +113,10 @@ function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top st
         </div>
       </DropdownHeader>
       <DropdownDivider />
+      <DropdownItem to={profilePath(user.username)}>
+        <ChartBarIcon data-slot="icon" />
+        <DropdownLabel>Profile</DropdownLabel>
+      </DropdownItem>
       <DropdownItem to="/account">
         <UserCircleIcon data-slot="icon" />
         <DropdownLabel>Account</DropdownLabel>
