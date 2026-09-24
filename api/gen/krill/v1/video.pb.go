@@ -337,8 +337,10 @@ type Clip struct {
 	ThumbnailUrl      string                 `protobuf:"bytes,8,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
 	LabeledFrameCount int32                  `protobuf:"varint,9,opt,name=labeled_frame_count,json=labeledFrameCount,proto3" json:"labeled_frame_count,omitempty"`
 	BoxCount          int32                  `protobuf:"varint,10,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// Unset when nobody has claimed the clip.
+	Claim         *ClipClaim `protobuf:"bytes,11,opt,name=claim,proto3" json:"claim,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Clip) Reset() {
@@ -441,6 +443,77 @@ func (x *Clip) GetBoxCount() int32 {
 	return 0
 }
 
+func (x *Clip) GetClaim() *ClipClaim {
+	if x != nil {
+		return x.Claim
+	}
+	return nil
+}
+
+// ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
+// and edit a claimed clip, but the queue does not hand it out.
+type ClipClaim struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	User     *Profile               `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	ActiveAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=active_at,json=activeAt,proto3" json:"active_at,omitempty"`
+	// False once the claimant has been idle long enough that the queue can
+	// give the clip to someone else.
+	Active        bool `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClipClaim) Reset() {
+	*x = ClipClaim{}
+	mi := &file_krill_v1_video_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClipClaim) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClipClaim) ProtoMessage() {}
+
+func (x *ClipClaim) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_video_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClipClaim.ProtoReflect.Descriptor instead.
+func (*ClipClaim) Descriptor() ([]byte, []int) {
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ClipClaim) GetUser() *Profile {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *ClipClaim) GetActiveAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ActiveAt
+	}
+	return nil
+}
+
+func (x *ClipClaim) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
 type CreateVideoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -452,7 +525,7 @@ type CreateVideoRequest struct {
 
 func (x *CreateVideoRequest) Reset() {
 	*x = CreateVideoRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[2]
+	mi := &file_krill_v1_video_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -464,7 +537,7 @@ func (x *CreateVideoRequest) String() string {
 func (*CreateVideoRequest) ProtoMessage() {}
 
 func (x *CreateVideoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[2]
+	mi := &file_krill_v1_video_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -477,7 +550,7 @@ func (x *CreateVideoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateVideoRequest.ProtoReflect.Descriptor instead.
 func (*CreateVideoRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{2}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateVideoRequest) GetName() string {
@@ -511,7 +584,7 @@ type CreateVideoResponse struct {
 
 func (x *CreateVideoResponse) Reset() {
 	*x = CreateVideoResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[3]
+	mi := &file_krill_v1_video_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +596,7 @@ func (x *CreateVideoResponse) String() string {
 func (*CreateVideoResponse) ProtoMessage() {}
 
 func (x *CreateVideoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[3]
+	mi := &file_krill_v1_video_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +609,7 @@ func (x *CreateVideoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateVideoResponse.ProtoReflect.Descriptor instead.
 func (*CreateVideoResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{3}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateVideoResponse) GetVideo() *Video {
@@ -562,7 +635,7 @@ type StartIngestRequest struct {
 
 func (x *StartIngestRequest) Reset() {
 	*x = StartIngestRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[4]
+	mi := &file_krill_v1_video_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -574,7 +647,7 @@ func (x *StartIngestRequest) String() string {
 func (*StartIngestRequest) ProtoMessage() {}
 
 func (x *StartIngestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[4]
+	mi := &file_krill_v1_video_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -587,7 +660,7 @@ func (x *StartIngestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartIngestRequest.ProtoReflect.Descriptor instead.
 func (*StartIngestRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{4}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StartIngestRequest) GetVideoId() int64 {
@@ -606,7 +679,7 @@ type StartIngestResponse struct {
 
 func (x *StartIngestResponse) Reset() {
 	*x = StartIngestResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[5]
+	mi := &file_krill_v1_video_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -618,7 +691,7 @@ func (x *StartIngestResponse) String() string {
 func (*StartIngestResponse) ProtoMessage() {}
 
 func (x *StartIngestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[5]
+	mi := &file_krill_v1_video_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +704,7 @@ func (x *StartIngestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartIngestResponse.ProtoReflect.Descriptor instead.
 func (*StartIngestResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *StartIngestResponse) GetVideo() *Video {
@@ -649,7 +722,7 @@ type ListVideosRequest struct {
 
 func (x *ListVideosRequest) Reset() {
 	*x = ListVideosRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[6]
+	mi := &file_krill_v1_video_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -661,7 +734,7 @@ func (x *ListVideosRequest) String() string {
 func (*ListVideosRequest) ProtoMessage() {}
 
 func (x *ListVideosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[6]
+	mi := &file_krill_v1_video_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +747,7 @@ func (x *ListVideosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVideosRequest.ProtoReflect.Descriptor instead.
 func (*ListVideosRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{7}
 }
 
 type ListVideosResponse struct {
@@ -686,7 +759,7 @@ type ListVideosResponse struct {
 
 func (x *ListVideosResponse) Reset() {
 	*x = ListVideosResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[7]
+	mi := &file_krill_v1_video_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -698,7 +771,7 @@ func (x *ListVideosResponse) String() string {
 func (*ListVideosResponse) ProtoMessage() {}
 
 func (x *ListVideosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[7]
+	mi := &file_krill_v1_video_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -711,7 +784,7 @@ func (x *ListVideosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListVideosResponse.ProtoReflect.Descriptor instead.
 func (*ListVideosResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListVideosResponse) GetVideos() []*Video {
@@ -730,7 +803,7 @@ type GetVideoRequest struct {
 
 func (x *GetVideoRequest) Reset() {
 	*x = GetVideoRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[8]
+	mi := &file_krill_v1_video_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -742,7 +815,7 @@ func (x *GetVideoRequest) String() string {
 func (*GetVideoRequest) ProtoMessage() {}
 
 func (x *GetVideoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[8]
+	mi := &file_krill_v1_video_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -755,7 +828,7 @@ func (x *GetVideoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVideoRequest.ProtoReflect.Descriptor instead.
 func (*GetVideoRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetVideoRequest) GetId() int64 {
@@ -775,7 +848,7 @@ type GetVideoResponse struct {
 
 func (x *GetVideoResponse) Reset() {
 	*x = GetVideoResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[9]
+	mi := &file_krill_v1_video_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -787,7 +860,7 @@ func (x *GetVideoResponse) String() string {
 func (*GetVideoResponse) ProtoMessage() {}
 
 func (x *GetVideoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[9]
+	mi := &file_krill_v1_video_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -800,7 +873,7 @@ func (x *GetVideoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetVideoResponse.ProtoReflect.Descriptor instead.
 func (*GetVideoResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{9}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetVideoResponse) GetVideo() *Video {
@@ -829,7 +902,7 @@ type UpdateVideoRequest struct {
 
 func (x *UpdateVideoRequest) Reset() {
 	*x = UpdateVideoRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[10]
+	mi := &file_krill_v1_video_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -841,7 +914,7 @@ func (x *UpdateVideoRequest) String() string {
 func (*UpdateVideoRequest) ProtoMessage() {}
 
 func (x *UpdateVideoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[10]
+	mi := &file_krill_v1_video_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -854,7 +927,7 @@ func (x *UpdateVideoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoRequest.ProtoReflect.Descriptor instead.
 func (*UpdateVideoRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{10}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateVideoRequest) GetId() int64 {
@@ -894,7 +967,7 @@ type UpdateVideoResponse struct {
 
 func (x *UpdateVideoResponse) Reset() {
 	*x = UpdateVideoResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[11]
+	mi := &file_krill_v1_video_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -906,7 +979,7 @@ func (x *UpdateVideoResponse) String() string {
 func (*UpdateVideoResponse) ProtoMessage() {}
 
 func (x *UpdateVideoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[11]
+	mi := &file_krill_v1_video_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -919,7 +992,7 @@ func (x *UpdateVideoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoResponse.ProtoReflect.Descriptor instead.
 func (*UpdateVideoResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{11}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdateVideoResponse) GetVideo() *Video {
@@ -938,7 +1011,7 @@ type DeleteVideoRequest struct {
 
 func (x *DeleteVideoRequest) Reset() {
 	*x = DeleteVideoRequest{}
-	mi := &file_krill_v1_video_proto_msgTypes[12]
+	mi := &file_krill_v1_video_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -950,7 +1023,7 @@ func (x *DeleteVideoRequest) String() string {
 func (*DeleteVideoRequest) ProtoMessage() {}
 
 func (x *DeleteVideoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[12]
+	mi := &file_krill_v1_video_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -963,7 +1036,7 @@ func (x *DeleteVideoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteVideoRequest.ProtoReflect.Descriptor instead.
 func (*DeleteVideoRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{12}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteVideoRequest) GetId() int64 {
@@ -981,7 +1054,7 @@ type DeleteVideoResponse struct {
 
 func (x *DeleteVideoResponse) Reset() {
 	*x = DeleteVideoResponse{}
-	mi := &file_krill_v1_video_proto_msgTypes[13]
+	mi := &file_krill_v1_video_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1066,7 @@ func (x *DeleteVideoResponse) String() string {
 func (*DeleteVideoResponse) ProtoMessage() {}
 
 func (x *DeleteVideoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_video_proto_msgTypes[13]
+	mi := &file_krill_v1_video_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,14 +1079,14 @@ func (x *DeleteVideoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteVideoResponse.ProtoReflect.Descriptor instead.
 func (*DeleteVideoResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_video_proto_rawDescGZIP(), []int{13}
+	return file_krill_v1_video_proto_rawDescGZIP(), []int{14}
 }
 
 var File_krill_v1_video_proto protoreflect.FileDescriptor
 
 const file_krill_v1_video_proto_rawDesc = "" +
 	"\n" +
-	"\x14krill/v1/video.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xeb\x04\n" +
+	"\x14krill/v1/video.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14krill/v1/stats.proto\"\xeb\x04\n" +
 	"\x05Video\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -1039,7 +1112,7 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n" +
 	"\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
-	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xb7\x02\n" +
+	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xe2\x02\n" +
 	"\x04Clip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12\x14\n" +
@@ -1054,7 +1127,12 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\rthumbnail_url\x18\b \x01(\tR\fthumbnailUrl\x12.\n" +
 	"\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
 	"\tbox_count\x18\n" +
-	" \x01(\x05R\bboxCount\"e\n" +
+	" \x01(\x05R\bboxCount\x12)\n" +
+	"\x05claim\x18\v \x01(\v2\x13.krill.v1.ClipClaimR\x05claim\"\x83\x01\n" +
+	"\tClipClaim\x12%\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.krill.v1.ProfileR\x04user\x127\n" +
+	"\tactive_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bactiveAt\x12\x16\n" +
+	"\x06active\x18\x03 \x01(\bR\x06active\"e\n" +
 	"\x12CreateVideoRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1f\n" +
@@ -1125,54 +1203,59 @@ func file_krill_v1_video_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_video_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_krill_v1_video_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_krill_v1_video_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_krill_v1_video_proto_goTypes = []any{
 	(VideoStatus)(0),              // 0: krill.v1.VideoStatus
 	(SplitAssignment)(0),          // 1: krill.v1.SplitAssignment
 	(*Video)(nil),                 // 2: krill.v1.Video
 	(*Clip)(nil),                  // 3: krill.v1.Clip
-	(*CreateVideoRequest)(nil),    // 4: krill.v1.CreateVideoRequest
-	(*CreateVideoResponse)(nil),   // 5: krill.v1.CreateVideoResponse
-	(*StartIngestRequest)(nil),    // 6: krill.v1.StartIngestRequest
-	(*StartIngestResponse)(nil),   // 7: krill.v1.StartIngestResponse
-	(*ListVideosRequest)(nil),     // 8: krill.v1.ListVideosRequest
-	(*ListVideosResponse)(nil),    // 9: krill.v1.ListVideosResponse
-	(*GetVideoRequest)(nil),       // 10: krill.v1.GetVideoRequest
-	(*GetVideoResponse)(nil),      // 11: krill.v1.GetVideoResponse
-	(*UpdateVideoRequest)(nil),    // 12: krill.v1.UpdateVideoRequest
-	(*UpdateVideoResponse)(nil),   // 13: krill.v1.UpdateVideoResponse
-	(*DeleteVideoRequest)(nil),    // 14: krill.v1.DeleteVideoRequest
-	(*DeleteVideoResponse)(nil),   // 15: krill.v1.DeleteVideoResponse
-	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
+	(*ClipClaim)(nil),             // 4: krill.v1.ClipClaim
+	(*CreateVideoRequest)(nil),    // 5: krill.v1.CreateVideoRequest
+	(*CreateVideoResponse)(nil),   // 6: krill.v1.CreateVideoResponse
+	(*StartIngestRequest)(nil),    // 7: krill.v1.StartIngestRequest
+	(*StartIngestResponse)(nil),   // 8: krill.v1.StartIngestResponse
+	(*ListVideosRequest)(nil),     // 9: krill.v1.ListVideosRequest
+	(*ListVideosResponse)(nil),    // 10: krill.v1.ListVideosResponse
+	(*GetVideoRequest)(nil),       // 11: krill.v1.GetVideoRequest
+	(*GetVideoResponse)(nil),      // 12: krill.v1.GetVideoResponse
+	(*UpdateVideoRequest)(nil),    // 13: krill.v1.UpdateVideoRequest
+	(*UpdateVideoResponse)(nil),   // 14: krill.v1.UpdateVideoResponse
+	(*DeleteVideoRequest)(nil),    // 15: krill.v1.DeleteVideoRequest
+	(*DeleteVideoResponse)(nil),   // 16: krill.v1.DeleteVideoResponse
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(*Profile)(nil),               // 18: krill.v1.Profile
 }
 var file_krill_v1_video_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.Video.status:type_name -> krill.v1.VideoStatus
 	1,  // 1: krill.v1.Video.split:type_name -> krill.v1.SplitAssignment
-	16, // 2: krill.v1.Video.created_at:type_name -> google.protobuf.Timestamp
-	2,  // 3: krill.v1.CreateVideoResponse.video:type_name -> krill.v1.Video
-	2,  // 4: krill.v1.StartIngestResponse.video:type_name -> krill.v1.Video
-	2,  // 5: krill.v1.ListVideosResponse.videos:type_name -> krill.v1.Video
-	2,  // 6: krill.v1.GetVideoResponse.video:type_name -> krill.v1.Video
-	3,  // 7: krill.v1.GetVideoResponse.clips:type_name -> krill.v1.Clip
-	1,  // 8: krill.v1.UpdateVideoRequest.split:type_name -> krill.v1.SplitAssignment
-	2,  // 9: krill.v1.UpdateVideoResponse.video:type_name -> krill.v1.Video
-	4,  // 10: krill.v1.VideoService.CreateVideo:input_type -> krill.v1.CreateVideoRequest
-	6,  // 11: krill.v1.VideoService.StartIngest:input_type -> krill.v1.StartIngestRequest
-	8,  // 12: krill.v1.VideoService.ListVideos:input_type -> krill.v1.ListVideosRequest
-	10, // 13: krill.v1.VideoService.GetVideo:input_type -> krill.v1.GetVideoRequest
-	12, // 14: krill.v1.VideoService.UpdateVideo:input_type -> krill.v1.UpdateVideoRequest
-	14, // 15: krill.v1.VideoService.DeleteVideo:input_type -> krill.v1.DeleteVideoRequest
-	5,  // 16: krill.v1.VideoService.CreateVideo:output_type -> krill.v1.CreateVideoResponse
-	7,  // 17: krill.v1.VideoService.StartIngest:output_type -> krill.v1.StartIngestResponse
-	9,  // 18: krill.v1.VideoService.ListVideos:output_type -> krill.v1.ListVideosResponse
-	11, // 19: krill.v1.VideoService.GetVideo:output_type -> krill.v1.GetVideoResponse
-	13, // 20: krill.v1.VideoService.UpdateVideo:output_type -> krill.v1.UpdateVideoResponse
-	15, // 21: krill.v1.VideoService.DeleteVideo:output_type -> krill.v1.DeleteVideoResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	17, // 2: krill.v1.Video.created_at:type_name -> google.protobuf.Timestamp
+	4,  // 3: krill.v1.Clip.claim:type_name -> krill.v1.ClipClaim
+	18, // 4: krill.v1.ClipClaim.user:type_name -> krill.v1.Profile
+	17, // 5: krill.v1.ClipClaim.active_at:type_name -> google.protobuf.Timestamp
+	2,  // 6: krill.v1.CreateVideoResponse.video:type_name -> krill.v1.Video
+	2,  // 7: krill.v1.StartIngestResponse.video:type_name -> krill.v1.Video
+	2,  // 8: krill.v1.ListVideosResponse.videos:type_name -> krill.v1.Video
+	2,  // 9: krill.v1.GetVideoResponse.video:type_name -> krill.v1.Video
+	3,  // 10: krill.v1.GetVideoResponse.clips:type_name -> krill.v1.Clip
+	1,  // 11: krill.v1.UpdateVideoRequest.split:type_name -> krill.v1.SplitAssignment
+	2,  // 12: krill.v1.UpdateVideoResponse.video:type_name -> krill.v1.Video
+	5,  // 13: krill.v1.VideoService.CreateVideo:input_type -> krill.v1.CreateVideoRequest
+	7,  // 14: krill.v1.VideoService.StartIngest:input_type -> krill.v1.StartIngestRequest
+	9,  // 15: krill.v1.VideoService.ListVideos:input_type -> krill.v1.ListVideosRequest
+	11, // 16: krill.v1.VideoService.GetVideo:input_type -> krill.v1.GetVideoRequest
+	13, // 17: krill.v1.VideoService.UpdateVideo:input_type -> krill.v1.UpdateVideoRequest
+	15, // 18: krill.v1.VideoService.DeleteVideo:input_type -> krill.v1.DeleteVideoRequest
+	6,  // 19: krill.v1.VideoService.CreateVideo:output_type -> krill.v1.CreateVideoResponse
+	8,  // 20: krill.v1.VideoService.StartIngest:output_type -> krill.v1.StartIngestResponse
+	10, // 21: krill.v1.VideoService.ListVideos:output_type -> krill.v1.ListVideosResponse
+	12, // 22: krill.v1.VideoService.GetVideo:output_type -> krill.v1.GetVideoResponse
+	14, // 23: krill.v1.VideoService.UpdateVideo:output_type -> krill.v1.UpdateVideoResponse
+	16, // 24: krill.v1.VideoService.DeleteVideo:output_type -> krill.v1.DeleteVideoResponse
+	19, // [19:25] is the sub-list for method output_type
+	13, // [13:19] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_video_proto_init() }
@@ -1180,14 +1263,15 @@ func file_krill_v1_video_proto_init() {
 	if File_krill_v1_video_proto != nil {
 		return
 	}
-	file_krill_v1_video_proto_msgTypes[10].OneofWrappers = []any{}
+	file_krill_v1_stats_proto_init()
+	file_krill_v1_video_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_video_proto_rawDesc), len(file_krill_v1_video_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

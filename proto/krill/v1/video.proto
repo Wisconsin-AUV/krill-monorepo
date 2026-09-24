@@ -3,6 +3,7 @@ syntax = "proto3";
 package krill.v1;
 
 import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
 
 service VideoService {
   // CreateVideo registers a video and returns a presigned URL the browser
@@ -70,6 +71,18 @@ message Clip {
   string thumbnail_url = 8;
   int32 labeled_frame_count = 9;
   int32 box_count = 10;
+  // Unset when nobody has claimed the clip.
+  ClipClaim claim = 11;
+}
+
+// ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
+// and edit a claimed clip, but the queue does not hand it out.
+message ClipClaim {
+  Profile user = 1;
+  google.protobuf.Timestamp active_at = 2;
+  // False once the claimant has been idle long enough that the queue can
+  // give the clip to someone else.
+  bool active = 3;
 }
 
 message CreateVideoRequest {
