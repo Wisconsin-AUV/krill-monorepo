@@ -54,6 +54,14 @@ class Box(_message.Message):
     height: float
     def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ...) -> None: ...
 
+class Point(_message.Message):
+    __slots__ = ("x", "y")
+    X_FIELD_NUMBER: _ClassVar[int]
+    Y_FIELD_NUMBER: _ClassVar[int]
+    x: float
+    y: float
+    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ...) -> None: ...
+
 class Track(_message.Message):
     __slots__ = ("id", "clip_id", "label_type_id", "attributes")
     class AttributesEntry(_message.Message):
@@ -212,3 +220,32 @@ class SetFrameStatusResponse(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     status: FrameStatus
     def __init__(self, status: _Optional[_Union[FrameStatus, str]] = ...) -> None: ...
+
+class TrackObjectRequest(_message.Message):
+    __slots__ = ("frame_id", "track_id", "label_type_id", "attributes", "point", "box")
+    class AttributesEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    TRACK_ID_FIELD_NUMBER: _ClassVar[int]
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    POINT_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    frame_id: int
+    track_id: int
+    label_type_id: int
+    attributes: _containers.ScalarMap[str, str]
+    point: Point
+    box: Box
+    def __init__(self, frame_id: _Optional[int] = ..., track_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., point: _Optional[_Union[Point, _Mapping]] = ..., box: _Optional[_Union[Box, _Mapping]] = ...) -> None: ...
+
+class TrackObjectResponse(_message.Message):
+    __slots__ = ("track",)
+    TRACK_FIELD_NUMBER: _ClassVar[int]
+    track: Track
+    def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ...) -> None: ...

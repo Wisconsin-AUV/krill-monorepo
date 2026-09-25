@@ -251,6 +251,59 @@ func (x *Box) GetHeight() float64 {
 	return 0
 }
 
+// Point is normalized to the frame size, with the origin at the top left.
+type Point struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	X             float64                `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y             float64                `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Point) Reset() {
+	*x = Point{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Point) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Point) ProtoMessage() {}
+
+func (x *Point) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Point.ProtoReflect.Descriptor instead.
+func (*Point) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Point) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *Point) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
 type Track struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -264,7 +317,7 @@ type Track struct {
 
 func (x *Track) Reset() {
 	*x = Track{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[1]
+	mi := &file_krill_v1_annotation_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +329,7 @@ func (x *Track) String() string {
 func (*Track) ProtoMessage() {}
 
 func (x *Track) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[1]
+	mi := &file_krill_v1_annotation_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +342,7 @@ func (x *Track) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Track.ProtoReflect.Descriptor instead.
 func (*Track) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{1}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Track) GetId() int64 {
@@ -334,7 +387,7 @@ type Annotation struct {
 
 func (x *Annotation) Reset() {
 	*x = Annotation{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[2]
+	mi := &file_krill_v1_annotation_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +399,7 @@ func (x *Annotation) String() string {
 func (*Annotation) ProtoMessage() {}
 
 func (x *Annotation) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[2]
+	mi := &file_krill_v1_annotation_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +412,7 @@ func (x *Annotation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Annotation.ProtoReflect.Descriptor instead.
 func (*Annotation) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{2}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Annotation) GetId() int64 {
@@ -417,7 +470,7 @@ type CreateTrackRequest struct {
 
 func (x *CreateTrackRequest) Reset() {
 	*x = CreateTrackRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[3]
+	mi := &file_krill_v1_annotation_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +482,7 @@ func (x *CreateTrackRequest) String() string {
 func (*CreateTrackRequest) ProtoMessage() {}
 
 func (x *CreateTrackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[3]
+	mi := &file_krill_v1_annotation_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +495,7 @@ func (x *CreateTrackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTrackRequest.ProtoReflect.Descriptor instead.
 func (*CreateTrackRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{3}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateTrackRequest) GetClipId() int64 {
@@ -490,7 +543,7 @@ type CreateTrackResponse struct {
 
 func (x *CreateTrackResponse) Reset() {
 	*x = CreateTrackResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[4]
+	mi := &file_krill_v1_annotation_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -502,7 +555,7 @@ func (x *CreateTrackResponse) String() string {
 func (*CreateTrackResponse) ProtoMessage() {}
 
 func (x *CreateTrackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[4]
+	mi := &file_krill_v1_annotation_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -515,7 +568,7 @@ func (x *CreateTrackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTrackResponse.ProtoReflect.Descriptor instead.
 func (*CreateTrackResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{4}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateTrackResponse) GetTrack() *Track {
@@ -546,7 +599,7 @@ type UpdateTrackRequest struct {
 
 func (x *UpdateTrackRequest) Reset() {
 	*x = UpdateTrackRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[5]
+	mi := &file_krill_v1_annotation_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -558,7 +611,7 @@ func (x *UpdateTrackRequest) String() string {
 func (*UpdateTrackRequest) ProtoMessage() {}
 
 func (x *UpdateTrackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[5]
+	mi := &file_krill_v1_annotation_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +624,7 @@ func (x *UpdateTrackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTrackRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTrackRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateTrackRequest) GetId() int64 {
@@ -611,7 +664,7 @@ type UpdateTrackResponse struct {
 
 func (x *UpdateTrackResponse) Reset() {
 	*x = UpdateTrackResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[6]
+	mi := &file_krill_v1_annotation_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -623,7 +676,7 @@ func (x *UpdateTrackResponse) String() string {
 func (*UpdateTrackResponse) ProtoMessage() {}
 
 func (x *UpdateTrackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[6]
+	mi := &file_krill_v1_annotation_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +689,7 @@ func (x *UpdateTrackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTrackResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTrackResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateTrackResponse) GetTrack() *Track {
@@ -655,7 +708,7 @@ type DeleteTrackRequest struct {
 
 func (x *DeleteTrackRequest) Reset() {
 	*x = DeleteTrackRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[7]
+	mi := &file_krill_v1_annotation_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -667,7 +720,7 @@ func (x *DeleteTrackRequest) String() string {
 func (*DeleteTrackRequest) ProtoMessage() {}
 
 func (x *DeleteTrackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[7]
+	mi := &file_krill_v1_annotation_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,7 +733,7 @@ func (x *DeleteTrackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTrackRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTrackRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteTrackRequest) GetId() int64 {
@@ -698,7 +751,7 @@ type DeleteTrackResponse struct {
 
 func (x *DeleteTrackResponse) Reset() {
 	*x = DeleteTrackResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[8]
+	mi := &file_krill_v1_annotation_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -710,7 +763,7 @@ func (x *DeleteTrackResponse) String() string {
 func (*DeleteTrackResponse) ProtoMessage() {}
 
 func (x *DeleteTrackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[8]
+	mi := &file_krill_v1_annotation_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -723,7 +776,7 @@ func (x *DeleteTrackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTrackResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTrackResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{9}
 }
 
 type SetBoxRequest struct {
@@ -737,7 +790,7 @@ type SetBoxRequest struct {
 
 func (x *SetBoxRequest) Reset() {
 	*x = SetBoxRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[9]
+	mi := &file_krill_v1_annotation_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +802,7 @@ func (x *SetBoxRequest) String() string {
 func (*SetBoxRequest) ProtoMessage() {}
 
 func (x *SetBoxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[9]
+	mi := &file_krill_v1_annotation_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +815,7 @@ func (x *SetBoxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetBoxRequest.ProtoReflect.Descriptor instead.
 func (*SetBoxRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{9}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SetBoxRequest) GetTrackId() int64 {
@@ -795,7 +848,7 @@ type SetBoxResponse struct {
 
 func (x *SetBoxResponse) Reset() {
 	*x = SetBoxResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[10]
+	mi := &file_krill_v1_annotation_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +860,7 @@ func (x *SetBoxResponse) String() string {
 func (*SetBoxResponse) ProtoMessage() {}
 
 func (x *SetBoxResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[10]
+	mi := &file_krill_v1_annotation_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +873,7 @@ func (x *SetBoxResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetBoxResponse.ProtoReflect.Descriptor instead.
 func (*SetBoxResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{10}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SetBoxResponse) GetAnnotation() *Annotation {
@@ -840,7 +893,7 @@ type DeleteBoxRequest struct {
 
 func (x *DeleteBoxRequest) Reset() {
 	*x = DeleteBoxRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[11]
+	mi := &file_krill_v1_annotation_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +905,7 @@ func (x *DeleteBoxRequest) String() string {
 func (*DeleteBoxRequest) ProtoMessage() {}
 
 func (x *DeleteBoxRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[11]
+	mi := &file_krill_v1_annotation_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +918,7 @@ func (x *DeleteBoxRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteBoxRequest.ProtoReflect.Descriptor instead.
 func (*DeleteBoxRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{11}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteBoxRequest) GetTrackId() int64 {
@@ -891,7 +944,7 @@ type DeleteBoxResponse struct {
 
 func (x *DeleteBoxResponse) Reset() {
 	*x = DeleteBoxResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[12]
+	mi := &file_krill_v1_annotation_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -903,7 +956,7 @@ func (x *DeleteBoxResponse) String() string {
 func (*DeleteBoxResponse) ProtoMessage() {}
 
 func (x *DeleteBoxResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[12]
+	mi := &file_krill_v1_annotation_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -916,7 +969,7 @@ func (x *DeleteBoxResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteBoxResponse.ProtoReflect.Descriptor instead.
 func (*DeleteBoxResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{12}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteBoxResponse) GetTrackDeleted() bool {
@@ -938,7 +991,7 @@ type CopyBoxesRequest struct {
 
 func (x *CopyBoxesRequest) Reset() {
 	*x = CopyBoxesRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[13]
+	mi := &file_krill_v1_annotation_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -950,7 +1003,7 @@ func (x *CopyBoxesRequest) String() string {
 func (*CopyBoxesRequest) ProtoMessage() {}
 
 func (x *CopyBoxesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[13]
+	mi := &file_krill_v1_annotation_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -963,7 +1016,7 @@ func (x *CopyBoxesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CopyBoxesRequest.ProtoReflect.Descriptor instead.
 func (*CopyBoxesRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{13}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CopyBoxesRequest) GetFromFrameId() int64 {
@@ -996,7 +1049,7 @@ type CopyBoxesResponse struct {
 
 func (x *CopyBoxesResponse) Reset() {
 	*x = CopyBoxesResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[14]
+	mi := &file_krill_v1_annotation_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1008,7 +1061,7 @@ func (x *CopyBoxesResponse) String() string {
 func (*CopyBoxesResponse) ProtoMessage() {}
 
 func (x *CopyBoxesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[14]
+	mi := &file_krill_v1_annotation_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1021,7 +1074,7 @@ func (x *CopyBoxesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CopyBoxesResponse.ProtoReflect.Descriptor instead.
 func (*CopyBoxesResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{14}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CopyBoxesResponse) GetAnnotations() []*Annotation {
@@ -1041,7 +1094,7 @@ type SetFrameStatusRequest struct {
 
 func (x *SetFrameStatusRequest) Reset() {
 	*x = SetFrameStatusRequest{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[15]
+	mi := &file_krill_v1_annotation_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1053,7 +1106,7 @@ func (x *SetFrameStatusRequest) String() string {
 func (*SetFrameStatusRequest) ProtoMessage() {}
 
 func (x *SetFrameStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[15]
+	mi := &file_krill_v1_annotation_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1066,7 +1119,7 @@ func (x *SetFrameStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetFrameStatusRequest.ProtoReflect.Descriptor instead.
 func (*SetFrameStatusRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{15}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetFrameStatusRequest) GetFrameId() int64 {
@@ -1092,7 +1145,7 @@ type SetFrameStatusResponse struct {
 
 func (x *SetFrameStatusResponse) Reset() {
 	*x = SetFrameStatusResponse{}
-	mi := &file_krill_v1_annotation_proto_msgTypes[16]
+	mi := &file_krill_v1_annotation_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1104,7 +1157,7 @@ func (x *SetFrameStatusResponse) String() string {
 func (*SetFrameStatusResponse) ProtoMessage() {}
 
 func (x *SetFrameStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_annotation_proto_msgTypes[16]
+	mi := &file_krill_v1_annotation_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1117,7 +1170,7 @@ func (x *SetFrameStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetFrameStatusResponse.ProtoReflect.Descriptor instead.
 func (*SetFrameStatusResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{16}
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SetFrameStatusResponse) GetStatus() FrameStatus {
@@ -1125,6 +1178,167 @@ func (x *SetFrameStatusResponse) GetStatus() FrameStatus {
 		return x.Status
 	}
 	return FrameStatus_FRAME_STATUS_UNSPECIFIED
+}
+
+type TrackObjectRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	FrameId int64                  `protobuf:"varint,1,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	// Track to retrack from this frame. When 0, a new track of label_type_id is
+	// created.
+	TrackId     int64             `protobuf:"varint,2,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	LabelTypeId int64             `protobuf:"varint,3,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	Attributes  map[string]string `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Types that are valid to be assigned to Prompt:
+	//
+	//	*TrackObjectRequest_Point
+	//	*TrackObjectRequest_Box
+	Prompt        isTrackObjectRequest_Prompt `protobuf_oneof:"prompt"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrackObjectRequest) Reset() {
+	*x = TrackObjectRequest{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrackObjectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrackObjectRequest) ProtoMessage() {}
+
+func (x *TrackObjectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrackObjectRequest.ProtoReflect.Descriptor instead.
+func (*TrackObjectRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *TrackObjectRequest) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+func (x *TrackObjectRequest) GetTrackId() int64 {
+	if x != nil {
+		return x.TrackId
+	}
+	return 0
+}
+
+func (x *TrackObjectRequest) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+func (x *TrackObjectRequest) GetAttributes() map[string]string {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
+func (x *TrackObjectRequest) GetPrompt() isTrackObjectRequest_Prompt {
+	if x != nil {
+		return x.Prompt
+	}
+	return nil
+}
+
+func (x *TrackObjectRequest) GetPoint() *Point {
+	if x != nil {
+		if x, ok := x.Prompt.(*TrackObjectRequest_Point); ok {
+			return x.Point
+		}
+	}
+	return nil
+}
+
+func (x *TrackObjectRequest) GetBox() *Box {
+	if x != nil {
+		if x, ok := x.Prompt.(*TrackObjectRequest_Box); ok {
+			return x.Box
+		}
+	}
+	return nil
+}
+
+type isTrackObjectRequest_Prompt interface {
+	isTrackObjectRequest_Prompt()
+}
+
+type TrackObjectRequest_Point struct {
+	Point *Point `protobuf:"bytes,5,opt,name=point,proto3,oneof"`
+}
+
+type TrackObjectRequest_Box struct {
+	// Saved as the track's box on this frame before tracking.
+	Box *Box `protobuf:"bytes,6,opt,name=box,proto3,oneof"`
+}
+
+func (*TrackObjectRequest_Point) isTrackObjectRequest_Prompt() {}
+
+func (*TrackObjectRequest_Box) isTrackObjectRequest_Prompt() {}
+
+type TrackObjectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Track         *Track                 `protobuf:"bytes,1,opt,name=track,proto3" json:"track,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrackObjectResponse) Reset() {
+	*x = TrackObjectResponse{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrackObjectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrackObjectResponse) ProtoMessage() {}
+
+func (x *TrackObjectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrackObjectResponse.ProtoReflect.Descriptor instead.
+func (*TrackObjectResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *TrackObjectResponse) GetTrack() *Track {
+	if x != nil {
+		return x.Track
+	}
+	return nil
 }
 
 var File_krill_v1_annotation_proto protoreflect.FileDescriptor
@@ -1136,7 +1350,10 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\xd4\x01\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"#\n" +
+	"\x05Point\x12\f\n" +
+	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
+	"\x01y\x18\x02 \x01(\x01R\x01y\"\xd4\x01\n" +
 	"\x05Track\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\aclip_id\x18\x02 \x01(\x03R\x06clipId\x12\"\n" +
@@ -1210,7 +1427,22 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\bframe_id\x18\x01 \x01(\x03R\aframeId\x12-\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\"G\n" +
 	"\x16SetFrameStatusResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status*y\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\"\xd1\x02\n" +
+	"\x12TrackObjectRequest\x12\x19\n" +
+	"\bframe_id\x18\x01 \x01(\x03R\aframeId\x12\x19\n" +
+	"\btrack_id\x18\x02 \x01(\x03R\atrackId\x12\"\n" +
+	"\rlabel_type_id\x18\x03 \x01(\x03R\vlabelTypeId\x12L\n" +
+	"\n" +
+	"attributes\x18\x04 \x03(\v2,.krill.v1.TrackObjectRequest.AttributesEntryR\n" +
+	"attributes\x12'\n" +
+	"\x05point\x18\x05 \x01(\v2\x0f.krill.v1.PointH\x00R\x05point\x12!\n" +
+	"\x03box\x18\x06 \x01(\v2\r.krill.v1.BoxH\x00R\x03box\x1a=\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
+	"\x06prompt\"<\n" +
+	"\x13TrackObjectResponse\x12%\n" +
+	"\x05track\x18\x01 \x01(\v2\x0f.krill.v1.TrackR\x05track*y\n" +
 	"\vFrameStatus\x12\x1c\n" +
 	"\x18FRAME_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16FRAME_STATUS_UNLABELED\x10\x01\x12\x18\n" +
@@ -1226,7 +1458,7 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x1dANNOTATION_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aANNOTATION_STATUS_PROPOSED\x10\x01\x12\x1e\n" +
 	"\x1aANNOTATION_STATUS_VERIFIED\x10\x02\x12\x1e\n" +
-	"\x1aANNOTATION_STATUS_REJECTED\x10\x032\xa3\x04\n" +
+	"\x1aANNOTATION_STATUS_REJECTED\x10\x032\xf1\x04\n" +
 	"\x11AnnotationService\x12L\n" +
 	"\vCreateTrack\x12\x1c.krill.v1.CreateTrackRequest\x1a\x1d.krill.v1.CreateTrackResponse\"\x00\x12L\n" +
 	"\vUpdateTrack\x12\x1c.krill.v1.UpdateTrackRequest\x1a\x1d.krill.v1.UpdateTrackResponse\"\x00\x12L\n" +
@@ -1234,7 +1466,8 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x06SetBox\x12\x17.krill.v1.SetBoxRequest\x1a\x18.krill.v1.SetBoxResponse\"\x00\x12F\n" +
 	"\tDeleteBox\x12\x1a.krill.v1.DeleteBoxRequest\x1a\x1b.krill.v1.DeleteBoxResponse\"\x00\x12F\n" +
 	"\tCopyBoxes\x12\x1a.krill.v1.CopyBoxesRequest\x1a\x1b.krill.v1.CopyBoxesResponse\"\x00\x12U\n" +
-	"\x0eSetFrameStatus\x12\x1f.krill.v1.SetFrameStatusRequest\x1a .krill.v1.SetFrameStatusResponse\"\x00B\x90\x01\n" +
+	"\x0eSetFrameStatus\x12\x1f.krill.v1.SetFrameStatusRequest\x1a .krill.v1.SetFrameStatusResponse\"\x00\x12L\n" +
+	"\vTrackObject\x12\x1c.krill.v1.TrackObjectRequest\x1a\x1d.krill.v1.TrackObjectResponse\"\x00B\x90\x01\n" +
 	"\fcom.krill.v1B\x0fAnnotationProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -1250,67 +1483,77 @@ func file_krill_v1_annotation_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_annotation_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_krill_v1_annotation_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_krill_v1_annotation_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_krill_v1_annotation_proto_goTypes = []any{
 	(FrameStatus)(0),               // 0: krill.v1.FrameStatus
 	(AnnotationSource)(0),          // 1: krill.v1.AnnotationSource
 	(AnnotationStatus)(0),          // 2: krill.v1.AnnotationStatus
 	(*Box)(nil),                    // 3: krill.v1.Box
-	(*Track)(nil),                  // 4: krill.v1.Track
-	(*Annotation)(nil),             // 5: krill.v1.Annotation
-	(*CreateTrackRequest)(nil),     // 6: krill.v1.CreateTrackRequest
-	(*CreateTrackResponse)(nil),    // 7: krill.v1.CreateTrackResponse
-	(*UpdateTrackRequest)(nil),     // 8: krill.v1.UpdateTrackRequest
-	(*UpdateTrackResponse)(nil),    // 9: krill.v1.UpdateTrackResponse
-	(*DeleteTrackRequest)(nil),     // 10: krill.v1.DeleteTrackRequest
-	(*DeleteTrackResponse)(nil),    // 11: krill.v1.DeleteTrackResponse
-	(*SetBoxRequest)(nil),          // 12: krill.v1.SetBoxRequest
-	(*SetBoxResponse)(nil),         // 13: krill.v1.SetBoxResponse
-	(*DeleteBoxRequest)(nil),       // 14: krill.v1.DeleteBoxRequest
-	(*DeleteBoxResponse)(nil),      // 15: krill.v1.DeleteBoxResponse
-	(*CopyBoxesRequest)(nil),       // 16: krill.v1.CopyBoxesRequest
-	(*CopyBoxesResponse)(nil),      // 17: krill.v1.CopyBoxesResponse
-	(*SetFrameStatusRequest)(nil),  // 18: krill.v1.SetFrameStatusRequest
-	(*SetFrameStatusResponse)(nil), // 19: krill.v1.SetFrameStatusResponse
-	nil,                            // 20: krill.v1.Track.AttributesEntry
-	nil,                            // 21: krill.v1.CreateTrackRequest.AttributesEntry
-	nil,                            // 22: krill.v1.UpdateTrackRequest.AttributesEntry
+	(*Point)(nil),                  // 4: krill.v1.Point
+	(*Track)(nil),                  // 5: krill.v1.Track
+	(*Annotation)(nil),             // 6: krill.v1.Annotation
+	(*CreateTrackRequest)(nil),     // 7: krill.v1.CreateTrackRequest
+	(*CreateTrackResponse)(nil),    // 8: krill.v1.CreateTrackResponse
+	(*UpdateTrackRequest)(nil),     // 9: krill.v1.UpdateTrackRequest
+	(*UpdateTrackResponse)(nil),    // 10: krill.v1.UpdateTrackResponse
+	(*DeleteTrackRequest)(nil),     // 11: krill.v1.DeleteTrackRequest
+	(*DeleteTrackResponse)(nil),    // 12: krill.v1.DeleteTrackResponse
+	(*SetBoxRequest)(nil),          // 13: krill.v1.SetBoxRequest
+	(*SetBoxResponse)(nil),         // 14: krill.v1.SetBoxResponse
+	(*DeleteBoxRequest)(nil),       // 15: krill.v1.DeleteBoxRequest
+	(*DeleteBoxResponse)(nil),      // 16: krill.v1.DeleteBoxResponse
+	(*CopyBoxesRequest)(nil),       // 17: krill.v1.CopyBoxesRequest
+	(*CopyBoxesResponse)(nil),      // 18: krill.v1.CopyBoxesResponse
+	(*SetFrameStatusRequest)(nil),  // 19: krill.v1.SetFrameStatusRequest
+	(*SetFrameStatusResponse)(nil), // 20: krill.v1.SetFrameStatusResponse
+	(*TrackObjectRequest)(nil),     // 21: krill.v1.TrackObjectRequest
+	(*TrackObjectResponse)(nil),    // 22: krill.v1.TrackObjectResponse
+	nil,                            // 23: krill.v1.Track.AttributesEntry
+	nil,                            // 24: krill.v1.CreateTrackRequest.AttributesEntry
+	nil,                            // 25: krill.v1.UpdateTrackRequest.AttributesEntry
+	nil,                            // 26: krill.v1.TrackObjectRequest.AttributesEntry
 }
 var file_krill_v1_annotation_proto_depIdxs = []int32{
-	20, // 0: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
+	23, // 0: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
 	3,  // 1: krill.v1.Annotation.box:type_name -> krill.v1.Box
 	1,  // 2: krill.v1.Annotation.source:type_name -> krill.v1.AnnotationSource
 	2,  // 3: krill.v1.Annotation.status:type_name -> krill.v1.AnnotationStatus
-	21, // 4: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
+	24, // 4: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
 	3,  // 5: krill.v1.CreateTrackRequest.box:type_name -> krill.v1.Box
-	4,  // 6: krill.v1.CreateTrackResponse.track:type_name -> krill.v1.Track
-	5,  // 7: krill.v1.CreateTrackResponse.annotation:type_name -> krill.v1.Annotation
-	22, // 8: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
-	4,  // 9: krill.v1.UpdateTrackResponse.track:type_name -> krill.v1.Track
+	5,  // 6: krill.v1.CreateTrackResponse.track:type_name -> krill.v1.Track
+	6,  // 7: krill.v1.CreateTrackResponse.annotation:type_name -> krill.v1.Annotation
+	25, // 8: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
+	5,  // 9: krill.v1.UpdateTrackResponse.track:type_name -> krill.v1.Track
 	3,  // 10: krill.v1.SetBoxRequest.box:type_name -> krill.v1.Box
-	5,  // 11: krill.v1.SetBoxResponse.annotation:type_name -> krill.v1.Annotation
-	5,  // 12: krill.v1.CopyBoxesResponse.annotations:type_name -> krill.v1.Annotation
+	6,  // 11: krill.v1.SetBoxResponse.annotation:type_name -> krill.v1.Annotation
+	6,  // 12: krill.v1.CopyBoxesResponse.annotations:type_name -> krill.v1.Annotation
 	0,  // 13: krill.v1.SetFrameStatusRequest.status:type_name -> krill.v1.FrameStatus
 	0,  // 14: krill.v1.SetFrameStatusResponse.status:type_name -> krill.v1.FrameStatus
-	6,  // 15: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
-	8,  // 16: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
-	10, // 17: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
-	12, // 18: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
-	14, // 19: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
-	16, // 20: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
-	18, // 21: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
-	7,  // 22: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
-	9,  // 23: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
-	11, // 24: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
-	13, // 25: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
-	15, // 26: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
-	17, // 27: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
-	19, // 28: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
-	22, // [22:29] is the sub-list for method output_type
-	15, // [15:22] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	26, // 15: krill.v1.TrackObjectRequest.attributes:type_name -> krill.v1.TrackObjectRequest.AttributesEntry
+	4,  // 16: krill.v1.TrackObjectRequest.point:type_name -> krill.v1.Point
+	3,  // 17: krill.v1.TrackObjectRequest.box:type_name -> krill.v1.Box
+	5,  // 18: krill.v1.TrackObjectResponse.track:type_name -> krill.v1.Track
+	7,  // 19: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
+	9,  // 20: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
+	11, // 21: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
+	13, // 22: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
+	15, // 23: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
+	17, // 24: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
+	19, // 25: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
+	21, // 26: krill.v1.AnnotationService.TrackObject:input_type -> krill.v1.TrackObjectRequest
+	8,  // 27: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
+	10, // 28: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
+	12, // 29: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
+	14, // 30: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
+	16, // 31: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
+	18, // 32: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
+	20, // 33: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
+	22, // 34: krill.v1.AnnotationService.TrackObject:output_type -> krill.v1.TrackObjectResponse
+	27, // [27:35] is the sub-list for method output_type
+	19, // [19:27] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_annotation_proto_init() }
@@ -1318,14 +1561,18 @@ func file_krill_v1_annotation_proto_init() {
 	if File_krill_v1_annotation_proto != nil {
 		return
 	}
-	file_krill_v1_annotation_proto_msgTypes[5].OneofWrappers = []any{}
+	file_krill_v1_annotation_proto_msgTypes[6].OneofWrappers = []any{}
+	file_krill_v1_annotation_proto_msgTypes[18].OneofWrappers = []any{
+		(*TrackObjectRequest_Point)(nil),
+		(*TrackObjectRequest_Box)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_annotation_proto_rawDesc), len(file_krill_v1_annotation_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   20,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

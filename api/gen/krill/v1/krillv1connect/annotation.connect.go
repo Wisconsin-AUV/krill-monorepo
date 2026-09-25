@@ -54,6 +54,9 @@ const (
 	// AnnotationServiceSetFrameStatusProcedure is the fully-qualified name of the AnnotationService's
 	// SetFrameStatus RPC.
 	AnnotationServiceSetFrameStatusProcedure = "/krill.v1.AnnotationService/SetFrameStatus"
+	// AnnotationServiceTrackObjectProcedure is the fully-qualified name of the AnnotationService's
+	// TrackObject RPC.
+	AnnotationServiceTrackObjectProcedure = "/krill.v1.AnnotationService/TrackObject"
 )
 
 // AnnotationServiceClient is a client for the krill.v1.AnnotationService service.
@@ -71,6 +74,10 @@ type AnnotationServiceClient interface {
 	// skipping tracks that already have a box on the target frame.
 	CopyBoxes(context.Context, *v1.CopyBoxesRequest) (*v1.CopyBoxesResponse, error)
 	SetFrameStatus(context.Context, *v1.SetFrameStatusRequest) (*v1.SetFrameStatusResponse, error)
+	// TrackObject segments an object from a point or box on one frame, then
+	// tracks it through the rest of the clip on the GPU worker. Boxes are added
+	// to the track as proposals while tracking runs.
+	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
 }
 
 // NewAnnotationServiceClient constructs a client for the krill.v1.AnnotationService service. By
@@ -126,6 +133,12 @@ func NewAnnotationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(annotationServiceMethods.ByName("SetFrameStatus")),
 			connect.WithClientOptions(opts...),
 		),
+		trackObject: connect.NewClient[v1.TrackObjectRequest, v1.TrackObjectResponse](
+			httpClient,
+			baseURL+AnnotationServiceTrackObjectProcedure,
+			connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -138,6 +151,7 @@ type annotationServiceClient struct {
 	deleteBox      *connect.Client[v1.DeleteBoxRequest, v1.DeleteBoxResponse]
 	copyBoxes      *connect.Client[v1.CopyBoxesRequest, v1.CopyBoxesResponse]
 	setFrameStatus *connect.Client[v1.SetFrameStatusRequest, v1.SetFrameStatusResponse]
+	trackObject    *connect.Client[v1.TrackObjectRequest, v1.TrackObjectResponse]
 }
 
 // CreateTrack calls krill.v1.AnnotationService.CreateTrack.
@@ -203,6 +217,15 @@ func (c *annotationServiceClient) SetFrameStatus(ctx context.Context, req *v1.Se
 	return nil, err
 }
 
+// TrackObject calls krill.v1.AnnotationService.TrackObject.
+func (c *annotationServiceClient) TrackObject(ctx context.Context, req *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error) {
+	response, err := c.trackObject.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AnnotationServiceHandler is an implementation of the krill.v1.AnnotationService service.
 type AnnotationServiceHandler interface {
 	// CreateTrack starts a track with its first box.
@@ -218,6 +241,10 @@ type AnnotationServiceHandler interface {
 	// skipping tracks that already have a box on the target frame.
 	CopyBoxes(context.Context, *v1.CopyBoxesRequest) (*v1.CopyBoxesResponse, error)
 	SetFrameStatus(context.Context, *v1.SetFrameStatusRequest) (*v1.SetFrameStatusResponse, error)
+	// TrackObject segments an object from a point or box on one frame, then
+	// tracks it through the rest of the clip on the GPU worker. Boxes are added
+	// to the track as proposals while tracking runs.
+	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
 }
 
 // NewAnnotationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -269,6 +296,12 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 		connect.WithSchema(annotationServiceMethods.ByName("SetFrameStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
+	annotationServiceTrackObjectHandler := connect.NewUnaryHandlerSimple(
+		AnnotationServiceTrackObjectProcedure,
+		svc.TrackObject,
+		connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.AnnotationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AnnotationServiceCreateTrackProcedure:
@@ -285,6 +318,8 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 			annotationServiceCopyBoxesHandler.ServeHTTP(w, r)
 		case AnnotationServiceSetFrameStatusProcedure:
 			annotationServiceSetFrameStatusHandler.ServeHTTP(w, r)
+		case AnnotationServiceTrackObjectProcedure:
+			annotationServiceTrackObjectHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -320,4 +355,8 @@ func (UnimplementedAnnotationServiceHandler) CopyBoxes(context.Context, *v1.Copy
 
 func (UnimplementedAnnotationServiceHandler) SetFrameStatus(context.Context, *v1.SetFrameStatusRequest) (*v1.SetFrameStatusResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.SetFrameStatus is not implemented"))
+}
+
+func (UnimplementedAnnotationServiceHandler) TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.TrackObject is not implemented"))
 }
