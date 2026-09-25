@@ -21,10 +21,12 @@ function TrackEditor({
   info,
   types,
   positions,
+  canTrack,
 }: {
   info: TrackInfo
   types: LabelType[]
   positions: number[]
+  canTrack: boolean
 }) {
   const updateTrack = useLabelStore((s) => s.updateTrack)
   const deleteTrack = useLabelStore((s) => s.deleteTrack)
@@ -85,16 +87,18 @@ function TrackEditor({
           <ChevronDoubleRightIcon data-slot="icon" />
         </Button>
         <div className="flex-1" />
-        <Button
-          plain
-          title="Track from this frame (R)"
-          disabled={!here?.box || !frame || tracking}
-          onClick={() =>
-            frame && here?.box && void trackObject(frame.id, { box: here.box }, track.id)
-          }
-        >
-          <ArrowPathIcon data-slot="icon" />
-        </Button>
+        {canTrack && (
+          <Button
+            plain
+            title="Track from this frame (R)"
+            disabled={!here?.box || !frame || tracking}
+            onClick={() =>
+              frame && here?.box && void trackObject(frame.id, { box: here.box }, track.id)
+            }
+          >
+            <ArrowPathIcon data-slot="icon" />
+          </Button>
+        )}
         <Button
           plain
           title="Delete track (Shift+Delete)"
@@ -112,10 +116,12 @@ export function TrackPanel({
   tracks,
   types,
   unconfirmed,
+  canTrack = true,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
   unconfirmed: Set<string>
+  canTrack?: boolean
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -203,12 +209,17 @@ export function TrackPanel({
                 />
               </button>
               {selected && (
-                <TrackEditor info={info} types={types} positions={positions.get(k) ?? []} />
+                <TrackEditor
+                  info={info}
+                  types={types}
+                  positions={positions.get(k) ?? []}
+                  canTrack={canTrack}
+                />
               )}
             </li>
           )
         })}
-        {list.length === 0 && (
+        {list.length === 0 && canTrack && (
           <li className="px-3 py-4 text-sm/6 text-zinc-500 dark:text-zinc-400">
             Pick a type and drag on the frame to draw a box, or Shift+click an object to track it
             through the clip. Each object becomes a track you carry across frames.

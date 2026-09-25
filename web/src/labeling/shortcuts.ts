@@ -27,3 +27,5 @@ export const frameShortcuts: ShortcutGroup = {
     { keys: ['D'], label: 'Next frame with a drifted box' },
   ],
 }
+
+export const goldShortcut = { keys: ['G'], label: 'Make frame gold or remove it' }

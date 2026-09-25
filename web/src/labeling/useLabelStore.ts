@@ -1,8 +1,10 @@
+import type { Client } from '@connectrpc/connect'
 import { create } from 'zustand'
 import {
   AnnotationStatus,
   FrameStatus,
   type Annotation,
+  type AnnotationService,
   type Box,
   type Track,
 } from '@/gen/krill/v1/annotation_pb'
@@ -21,6 +23,20 @@ export interface TrackRun {
   prompt: TrackPrompt
   trackId?: bigint
 }
+
+// Where edits are saved. Gold checks swap in a local one so nothing reaches
+// the clip.
+export type AnnotationBackend = Pick<
+  Client<typeof AnnotationService>,
+  | 'createTrack'
+  | 'updateTrack'
+  | 'deleteTrack'
+  | 'setBox'
+  | 'deleteBox'
+  | 'copyBoxes'
+  | 'setFrameStatus'
+  | 'trackObject'
+>
 
 type Key = string
 const key = (id: bigint): Key => String(id)
@@ -44,8 +60,9 @@ interface LabelState {
   hideBoxes: boolean
   pending: number
   undoStack: UndoEntry[]
+  backend: AnnotationBackend
 
-  load: (clip: GetClipResponse) => void
+  load: (clip: GetClipResponse, backend?: AnnotationBackend) => void
   refreshTracking: (clip: GetClipResponse) => void
   select: (trackId: bigint | null) => void
   setActiveType: (id: bigint | null) => void
@@ -175,7 +192,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
   async function recreateTrack(track: Track, boxes: Annotation[]): Promise<bigint | undefined> {
     const [first, ...rest] = boxes
     if (!first) return undefined
-    const created = await annotationClient.createTrack({
+    const created = await get().backend.createTrack({
       clipId: track.clipId,
       labelTypeId: track.labelTypeId,
       attributes: track.attributes,
@@ -189,7 +206,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
     putBox(created.annotation)
     clearEmpty(first.frameId)
     for (const b of rest) {
-      const res = await annotationClient.setBox({
+      const res = await get().backend.setBox({
         trackId: newTrack.id,
         frameId: b.frameId,
         box: rect(b.box),
@@ -212,8 +229,9 @@ export const useLabelStore = create<LabelState>((set, get) => {
     hideBoxes: false,
     pending: 0,
     undoStack: [],
+    backend: annotationClient,
 
-    load: (clip) => {
+    load: (clip, backend = annotationClient) => {
       const tracks: LabelState['tracks'] = {}
       for (const t of clip.tracks) tracks[key(t.id)] = t
       const boxes: LabelState['boxes'] = {}
@@ -233,6 +251,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
         trackRuns: [],
         selectedTrackId: null,
         undoStack: [],
+        backend,
       })
     },
 
@@ -290,7 +309,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
         return
       }
       await withPending('Could not create box', async () => {
-        const res = await annotationClient.createTrack({
+        const res = await get().backend.createTrack({
           clipId,
           labelTypeId: activeTypeId,
           frameId,
@@ -306,7 +325,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
           run: () =>
             enqueue(async () => {
               const id = resolve(track.id)
-              await annotationClient.deleteTrack({ id })
+              await get().backend.deleteTrack({ id })
               removeTrack(id)
             }),
         })
@@ -323,7 +342,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       putBox(optimistic)
       await withPending('Could not save box', async () => {
         try {
-          const res = await annotationClient.setBox({ trackId, frameId, box })
+          const res = await get().backend.setBox({ trackId, frameId, box })
           if (res.annotation) putBox(res.annotation)
           clearEmpty(frameId)
         } catch (err) {
@@ -337,14 +356,14 @@ export const useLabelStore = create<LabelState>((set, get) => {
             enqueue(async () => {
               const id = resolve(trackId)
               if (prev) {
-                const res = await annotationClient.setBox({
+                const res = await get().backend.setBox({
                   trackId: id,
                   frameId,
                   box: rect(prev.box),
                 })
                 if (res.annotation) putBox(res.annotation)
               } else {
-                const res = await annotationClient.deleteBox({ trackId: id, frameId })
+                const res = await get().backend.deleteBox({ trackId: id, frameId })
                 if (res.trackDeleted) removeTrack(id)
                 else removeBox(id, frameId)
               }
@@ -359,7 +378,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       const track = get().tracks[key(trackId)]
       if (!prev || !track) return
       await withPending('Could not delete box', async () => {
-        const res = await annotationClient.deleteBox({ trackId, frameId })
+        const res = await get().backend.deleteBox({ trackId, frameId })
         if (res.trackDeleted) removeTrack(trackId)
         else removeBox(trackId, frameId)
         pushUndo({
@@ -371,7 +390,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
                 return
               }
               const id = resolve(trackId)
-              const restored = await annotationClient.setBox({
+              const restored = await get().backend.setBox({
                 trackId: id,
                 frameId,
                 box: rect(prev.box),
@@ -390,7 +409,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
         .map((byTrack) => byTrack[key(trackId)])
         .filter((a): a is Annotation => !!a)
       await withPending('Could not delete track', async () => {
-        await annotationClient.deleteTrack({ id: trackId })
+        await get().backend.deleteTrack({ id: trackId })
         removeTrack(trackId)
         pushUndo({
           label: 'Undo delete track',
@@ -407,7 +426,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       const prev = get().tracks[key(trackId)]
       if (!prev) return
       await withPending('Could not update track', async () => {
-        const res = await annotationClient.updateTrack({
+        const res = await get().backend.updateTrack({
           id: trackId,
           labelTypeId: patch.labelTypeId,
           attributes: patch.attributes ?? {},
@@ -420,7 +439,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
           label: 'Undo track change',
           run: () =>
             enqueue(async () => {
-              const restored = await annotationClient.updateTrack({
+              const restored = await get().backend.updateTrack({
                 id: resolve(trackId),
                 labelTypeId: prev.labelTypeId,
                 attributes: prev.attributes,
@@ -435,7 +454,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
 
     copyBoxes: async (fromFrameId, toFrameId) => {
       const copied = await withPending('Could not copy boxes', async () => {
-        const res = await annotationClient.copyBoxes({ fromFrameId, toFrameId })
+        const res = await get().backend.copyBoxes({ fromFrameId, toFrameId })
         res.annotations.forEach(putBox)
         if (res.annotations.length > 0) clearEmpty(toFrameId)
         const made = res.annotations.map((a) => a.trackId)
@@ -446,7 +465,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
               enqueue(async () => {
                 for (const t of made) {
                   const id = resolve(t)
-                  const r = await annotationClient.deleteBox({ trackId: id, frameId: toFrameId })
+                  const r = await get().backend.deleteBox({ trackId: id, frameId: toFrameId })
                   if (r.trackDeleted) removeTrack(id)
                   else removeBox(id, toFrameId)
                 }
@@ -461,7 +480,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
     setFrameStatus: async (frameId, status) => {
       const prev = get().frameStatus[key(frameId)] ?? FrameStatus.UNLABELED
       const ok = await withPending('Could not update frame', async () => {
-        const res = await annotationClient.setFrameStatus({ frameId, status })
+        const res = await get().backend.setFrameStatus({ frameId, status })
         set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: res.status } }))
         if (res.status === FrameStatus.LABELED) acceptProposals(frameId)
         if (prev !== res.status) {
@@ -469,7 +488,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
             label: 'Undo frame status',
             run: () =>
               enqueue(async () => {
-                const r = await annotationClient.setFrameStatus({ frameId, status: prev })
+                const r = await get().backend.setFrameStatus({ frameId, status: prev })
                 set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: r.status } }))
               }),
           })
@@ -490,7 +509,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       set((s) => ({ trackRuns: [...s.trackRuns, run] }))
       let started = false
       await withPending('Could not start tracking', async () => {
-        const res = await annotationClient.trackObject({
+        const res = await get().backend.trackObject({
           frameId,
           trackId: trackId ?? 0n,
           labelTypeId: activeTypeId ?? 0n,
@@ -526,7 +545,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
             run: () =>
               enqueue(async () => {
                 const id = resolve(track.id)
-                await annotationClient.deleteTrack({ id })
+                await get().backend.deleteTrack({ id })
                 removeTrack(id)
               }),
           })

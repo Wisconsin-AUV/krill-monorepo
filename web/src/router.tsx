@@ -6,6 +6,7 @@ import { AuthLayout } from '@/layouts/AuthLayout'
 import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
 import { ExportsPage } from '@/pages/ExportsPage'
+import { GoldPage } from '@/pages/GoldPage'
 import { HomePage } from '@/pages/HomePage'
 import { LabelsPage } from '@/pages/LabelsPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
@@ -42,6 +43,11 @@ export const router = createBrowserRouter([
             lazy: () => import('@/pages/ClipPage').then((m) => ({ Component: m.ClipPage })),
           },
           {
+            path: 'check/:id',
+            lazy: () =>
+              import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldCheckPage })),
+          },
+          {
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },
@@ -57,6 +63,10 @@ export const router = createBrowserRouter([
               {
                 element: <RequirePermission permission={Permission.MANAGE_EXPORTS} />,
                 children: [{ path: 'exports', element: <ExportsPage /> }],
+              },
+              {
+                element: <RequirePermission permission={Permission.REVIEW_LABELS} />,
+                children: [{ path: 'gold', element: <GoldPage /> }],
               },
               {
                 element: <RequirePermission permission={Permission.MANAGE_USERS} />,
