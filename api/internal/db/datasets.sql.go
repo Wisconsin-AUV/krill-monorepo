@@ -113,7 +113,7 @@ func (q *Queries) GetDataset(ctx context.Context, id int64) (Dataset, error) {
 }
 
 const listAllLabelTypes = `-- name: ListAllLabelTypes :many
-SELECT id, name, color, description, position, attributes, created_at FROM label_types ORDER BY position, id
+SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types ORDER BY position, id
 `
 
 func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
@@ -133,6 +133,8 @@ func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
 			&i.Position,
 			&i.Attributes,
 			&i.CreatedAt,
+			&i.Title,
+			&i.Guideline,
 		); err != nil {
 			return nil, err
 		}

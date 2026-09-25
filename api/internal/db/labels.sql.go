@@ -20,24 +20,53 @@ func (q *Queries) CountTracksForLabelType(ctx context.Context, labelTypeID int64
 	return column_1, err
 }
 
+const createLabelExample = `-- name: CreateLabelExample :one
+INSERT INTO label_examples (label_type_id, object_key, caption)
+VALUES ($1, $2, $3)
+RETURNING id, label_type_id, object_key, caption, created_at
+`
+
+type CreateLabelExampleParams struct {
+	LabelTypeID int64  `json:"label_type_id"`
+	ObjectKey   string `json:"object_key"`
+	Caption     string `json:"caption"`
+}
+
+func (q *Queries) CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error) {
+	row := q.db.QueryRow(ctx, createLabelExample, arg.LabelTypeID, arg.ObjectKey, arg.Caption)
+	var i LabelExample
+	err := row.Scan(
+		&i.ID,
+		&i.LabelTypeID,
+		&i.ObjectKey,
+		&i.Caption,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createLabelType = `-- name: CreateLabelType :one
-INSERT INTO label_types (name, color, description, attributes, position)
-VALUES ($1, $2, $3, $4, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
-RETURNING id, name, color, description, position, attributes, created_at
+INSERT INTO label_types (name, title, color, description, guideline, attributes, position)
+VALUES ($1, $2, $3, $4, $5, $6, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
+RETURNING id, name, color, description, position, attributes, created_at, title, guideline
 `
 
 type CreateLabelTypeParams struct {
 	Name        string `json:"name"`
+	Title       string `json:"title"`
 	Color       string `json:"color"`
 	Description string `json:"description"`
+	Guideline   string `json:"guideline"`
 	Attributes  []byte `json:"attributes"`
 }
 
 func (q *Queries) CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error) {
 	row := q.db.QueryRow(ctx, createLabelType,
 		arg.Name,
+		arg.Title,
 		arg.Color,
 		arg.Description,
+		arg.Guideline,
 		arg.Attributes,
 	)
 	var i LabelType
@@ -48,6 +77,26 @@ func (q *Queries) CreateLabelType(ctx context.Context, arg CreateLabelTypeParams
 		&i.Description,
 		&i.Position,
 		&i.Attributes,
+		&i.CreatedAt,
+		&i.Title,
+		&i.Guideline,
+	)
+	return i, err
+}
+
+const deleteLabelExample = `-- name: DeleteLabelExample :one
+DELETE FROM label_examples WHERE id = $1
+RETURNING id, label_type_id, object_key, caption, created_at
+`
+
+func (q *Queries) DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error) {
+	row := q.db.QueryRow(ctx, deleteLabelExample, id)
+	var i LabelExample
+	err := row.Scan(
+		&i.ID,
+		&i.LabelTypeID,
+		&i.ObjectKey,
+		&i.Caption,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -66,7 +115,7 @@ func (q *Queries) DeleteLabelType(ctx context.Context, id int64) (int64, error) 
 }
 
 const getLabelType = `-- name: GetLabelType :one
-SELECT id, name, color, description, position, attributes, created_at FROM label_types WHERE id = $1
+SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types WHERE id = $1
 `
 
 func (q *Queries) GetLabelType(ctx context.Context, id int64) (LabelType, error) {
@@ -80,13 +129,45 @@ func (q *Queries) GetLabelType(ctx context.Context, id int64) (LabelType, error)
 		&i.Position,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.Title,
+		&i.Guideline,
 	)
 	return i, err
 }
 
+const listLabelExamples = `-- name: ListLabelExamples :many
+SELECT id, label_type_id, object_key, caption, created_at FROM label_examples ORDER BY label_type_id, id
+`
+
+func (q *Queries) ListLabelExamples(ctx context.Context) ([]LabelExample, error) {
+	rows, err := q.db.Query(ctx, listLabelExamples)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LabelExample
+	for rows.Next() {
+		var i LabelExample
+		if err := rows.Scan(
+			&i.ID,
+			&i.LabelTypeID,
+			&i.ObjectKey,
+			&i.Caption,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLabelTypes = `-- name: ListLabelTypes :many
 SELECT
-    lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at,
+    lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at, lt.title, lt.guideline,
     (SELECT count(*) FROM tracks t WHERE t.label_type_id = lt.id)::int AS track_count,
     (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.label_type_id = lt.id)::int AS box_count
 FROM label_types lt
@@ -116,6 +197,8 @@ func (q *Queries) ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, erro
 			&i.LabelType.Position,
 			&i.LabelType.Attributes,
 			&i.LabelType.CreatedAt,
+			&i.LabelType.Title,
+			&i.LabelType.Guideline,
 			&i.TrackCount,
 			&i.BoxCount,
 		); err != nil {
@@ -144,16 +227,19 @@ func (q *Queries) SetLabelTypePosition(ctx context.Context, arg SetLabelTypePosi
 }
 
 const updateLabelType = `-- name: UpdateLabelType :one
-UPDATE label_types SET name = $2, color = $3, description = $4, attributes = $5
+UPDATE label_types
+SET name = $2, title = $3, color = $4, description = $5, guideline = $6, attributes = $7
 WHERE id = $1
-RETURNING id, name, color, description, position, attributes, created_at
+RETURNING id, name, color, description, position, attributes, created_at, title, guideline
 `
 
 type UpdateLabelTypeParams struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
+	Title       string `json:"title"`
 	Color       string `json:"color"`
 	Description string `json:"description"`
+	Guideline   string `json:"guideline"`
 	Attributes  []byte `json:"attributes"`
 }
 
@@ -161,8 +247,10 @@ func (q *Queries) UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams
 	row := q.db.QueryRow(ctx, updateLabelType,
 		arg.ID,
 		arg.Name,
+		arg.Title,
 		arg.Color,
 		arg.Description,
+		arg.Guideline,
 		arg.Attributes,
 	)
 	var i LabelType
@@ -174,6 +262,8 @@ func (q *Queries) UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams
 		&i.Position,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.Title,
+		&i.Guideline,
 	)
 	return i, err
 }

@@ -154,3 +154,10 @@ func (s *Store) RemovePrefix(ctx context.Context, prefix string) error {
 	}
 	return errors.Join(errs...)
 }
+
+func (s *Store) Remove(ctx context.Context, key string) error {
+	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
+		return fmt.Errorf("remove %s: %w", key, err)
+	}
+	return nil
+}

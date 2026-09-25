@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14krill/v1/label.proto\x12\x08krill.v1\">\n\x0eLabelAttribute\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n\x07options\x18\x02 \x03(\tR\x07options\"\xfb\x01\n\tLabelType\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x03 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x04 \x01(\tR\x0b\x64\x65scription\x12\x1a\n\x08position\x18\x05 \x01(\x05R\x08position\x12\x38\n\nattributes\x18\x06 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\x12\x1f\n\x0btrack_count\x18\x07 \x01(\x05R\ntrackCount\x12\x1b\n\tbox_count\x18\x08 \x01(\x05R\x08\x62oxCount\"\x17\n\x15ListLabelTypesRequest\"N\n\x16ListLabelTypesResponse\x12\x34\n\x0blabel_types\x18\x01 \x03(\x0b\x32\x13.krill.v1.LabelTypeR\nlabelTypes\"\x9e\x01\n\x16\x43reateLabelTypeRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x02 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x03 \x01(\tR\x0b\x64\x65scription\x12\x38\n\nattributes\x18\x04 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\"M\n\x17\x43reateLabelTypeResponse\x12\x32\n\nlabel_type\x18\x01 \x01(\x0b\x32\x13.krill.v1.LabelTypeR\tlabelType\"\xae\x01\n\x16UpdateLabelTypeRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x03 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x04 \x01(\tR\x0b\x64\x65scription\x12\x38\n\nattributes\x18\x05 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\"M\n\x17UpdateLabelTypeResponse\x12\x32\n\nlabel_type\x18\x01 \x01(\x0b\x32\x13.krill.v1.LabelTypeR\tlabelType\"(\n\x16\x44\x65leteLabelTypeRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x19\n\x17\x44\x65leteLabelTypeResponse\",\n\x18ReorderLabelTypesRequest\x12\x10\n\x03ids\x18\x01 \x03(\x03R\x03ids\"Q\n\x19ReorderLabelTypesResponse\x12\x34\n\x0blabel_types\x18\x01 \x03(\x0b\x32\x13.krill.v1.LabelTypeR\nlabelTypes2\xd3\x03\n\x0cLabelService\x12U\n\x0eListLabelTypes\x12\x1f.krill.v1.ListLabelTypesRequest\x1a .krill.v1.ListLabelTypesResponse\"\x00\x12X\n\x0f\x43reateLabelType\x12 .krill.v1.CreateLabelTypeRequest\x1a!.krill.v1.CreateLabelTypeResponse\"\x00\x12X\n\x0fUpdateLabelType\x12 .krill.v1.UpdateLabelTypeRequest\x1a!.krill.v1.UpdateLabelTypeResponse\"\x00\x12X\n\x0f\x44\x65leteLabelType\x12 .krill.v1.DeleteLabelTypeRequest\x1a!.krill.v1.DeleteLabelTypeResponse\"\x00\x12^\n\x11ReorderLabelTypes\x12\".krill.v1.ReorderLabelTypesRequest\x1a#.krill.v1.ReorderLabelTypesResponse\"\x00\x42\x8b\x01\n\x0c\x63om.krill.v1B\nLabelProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14krill/v1/label.proto\x12\x08krill.v1\">\n\x0eLabelAttribute\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n\x07options\x18\x02 \x03(\tR\x07options\"\xe3\x02\n\tLabelType\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x03 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x04 \x01(\tR\x0b\x64\x65scription\x12\x1a\n\x08position\x18\x05 \x01(\x05R\x08position\x12\x38\n\nattributes\x18\x06 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\x12\x1f\n\x0btrack_count\x18\x07 \x01(\x05R\ntrackCount\x12\x1b\n\tbox_count\x18\x08 \x01(\x05R\x08\x62oxCount\x12\x14\n\x05title\x18\t \x01(\tR\x05title\x12\x1c\n\tguideline\x18\n \x01(\tR\tguideline\x12\x32\n\x08\x65xamples\x18\x0b \x03(\x0b\x32\x16.krill.v1.LabelExampleR\x08\x65xamples\"J\n\x0cLabelExample\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x18\n\x07\x63\x61ption\x18\x03 \x01(\tR\x07\x63\x61ption\"\x17\n\x15ListLabelTypesRequest\"N\n\x16ListLabelTypesResponse\x12\x34\n\x0blabel_types\x18\x01 \x03(\x0b\x32\x13.krill.v1.LabelTypeR\nlabelTypes\"\xd2\x01\n\x16\x43reateLabelTypeRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x02 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x03 \x01(\tR\x0b\x64\x65scription\x12\x38\n\nattributes\x18\x04 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\x12\x14\n\x05title\x18\x05 \x01(\tR\x05title\x12\x1c\n\tguideline\x18\x06 \x01(\tR\tguideline\"M\n\x17\x43reateLabelTypeResponse\x12\x32\n\nlabel_type\x18\x01 \x01(\x0b\x32\x13.krill.v1.LabelTypeR\tlabelType\"\xe2\x01\n\x16UpdateLabelTypeRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05\x63olor\x18\x03 \x01(\tR\x05\x63olor\x12 \n\x0b\x64\x65scription\x18\x04 \x01(\tR\x0b\x64\x65scription\x12\x38\n\nattributes\x18\x05 \x03(\x0b\x32\x18.krill.v1.LabelAttributeR\nattributes\x12\x14\n\x05title\x18\x06 \x01(\tR\x05title\x12\x1c\n\tguideline\x18\x07 \x01(\tR\tguideline\"M\n\x17UpdateLabelTypeResponse\x12\x32\n\nlabel_type\x18\x01 \x01(\x0b\x32\x13.krill.v1.LabelTypeR\tlabelType\"(\n\x16\x44\x65leteLabelTypeRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x19\n\x17\x44\x65leteLabelTypeResponse\",\n\x18ReorderLabelTypesRequest\x12\x10\n\x03ids\x18\x01 \x03(\x03R\x03ids\"Q\n\x19ReorderLabelTypesResponse\x12\x34\n\x0blabel_types\x18\x01 \x03(\x0b\x32\x13.krill.v1.LabelTypeR\nlabelTypes\"E\n\x1f\x43reateLabelExampleUploadRequest\x12\"\n\rlabel_type_id\x18\x01 \x01(\x03R\x0blabelTypeId\"S\n CreateLabelExampleUploadResponse\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x1d\n\nupload_url\x18\x02 \x01(\tR\tuploadUrl\"h\n\x16\x41\x64\x64LabelExampleRequest\x12\"\n\rlabel_type_id\x18\x01 \x01(\x03R\x0blabelTypeId\x12\x10\n\x03key\x18\x02 \x01(\tR\x03key\x12\x18\n\x07\x63\x61ption\x18\x03 \x01(\tR\x07\x63\x61ption\"K\n\x17\x41\x64\x64LabelExampleResponse\x12\x30\n\x07\x65xample\x18\x01 \x01(\x0b\x32\x16.krill.v1.LabelExampleR\x07\x65xample\"+\n\x19\x44\x65leteLabelExampleRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x1c\n\x1a\x44\x65leteLabelExampleResponse2\x85\x06\n\x0cLabelService\x12U\n\x0eListLabelTypes\x12\x1f.krill.v1.ListLabelTypesRequest\x1a .krill.v1.ListLabelTypesResponse\"\x00\x12X\n\x0f\x43reateLabelType\x12 .krill.v1.CreateLabelTypeRequest\x1a!.krill.v1.CreateLabelTypeResponse\"\x00\x12X\n\x0fUpdateLabelType\x12 .krill.v1.UpdateLabelTypeRequest\x1a!.krill.v1.UpdateLabelTypeResponse\"\x00\x12X\n\x0f\x44\x65leteLabelType\x12 .krill.v1.DeleteLabelTypeRequest\x1a!.krill.v1.DeleteLabelTypeResponse\"\x00\x12^\n\x11ReorderLabelTypes\x12\".krill.v1.ReorderLabelTypesRequest\x1a#.krill.v1.ReorderLabelTypesResponse\"\x00\x12s\n\x18\x43reateLabelExampleUpload\x12).krill.v1.CreateLabelExampleUploadRequest\x1a*.krill.v1.CreateLabelExampleUploadResponse\"\x00\x12X\n\x0f\x41\x64\x64LabelExample\x12 .krill.v1.AddLabelExampleRequest\x1a!.krill.v1.AddLabelExampleResponse\"\x00\x12\x61\n\x12\x44\x65leteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00\x42\x8b\x01\n\x0c\x63om.krill.v1B\nLabelProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,27 +35,41 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LABELATTRIBUTE']._serialized_start=34
   _globals['_LABELATTRIBUTE']._serialized_end=96
   _globals['_LABELTYPE']._serialized_start=99
-  _globals['_LABELTYPE']._serialized_end=350
-  _globals['_LISTLABELTYPESREQUEST']._serialized_start=352
-  _globals['_LISTLABELTYPESREQUEST']._serialized_end=375
-  _globals['_LISTLABELTYPESRESPONSE']._serialized_start=377
-  _globals['_LISTLABELTYPESRESPONSE']._serialized_end=455
-  _globals['_CREATELABELTYPEREQUEST']._serialized_start=458
-  _globals['_CREATELABELTYPEREQUEST']._serialized_end=616
-  _globals['_CREATELABELTYPERESPONSE']._serialized_start=618
-  _globals['_CREATELABELTYPERESPONSE']._serialized_end=695
-  _globals['_UPDATELABELTYPEREQUEST']._serialized_start=698
-  _globals['_UPDATELABELTYPEREQUEST']._serialized_end=872
-  _globals['_UPDATELABELTYPERESPONSE']._serialized_start=874
-  _globals['_UPDATELABELTYPERESPONSE']._serialized_end=951
-  _globals['_DELETELABELTYPEREQUEST']._serialized_start=953
-  _globals['_DELETELABELTYPEREQUEST']._serialized_end=993
-  _globals['_DELETELABELTYPERESPONSE']._serialized_start=995
-  _globals['_DELETELABELTYPERESPONSE']._serialized_end=1020
-  _globals['_REORDERLABELTYPESREQUEST']._serialized_start=1022
-  _globals['_REORDERLABELTYPESREQUEST']._serialized_end=1066
-  _globals['_REORDERLABELTYPESRESPONSE']._serialized_start=1068
-  _globals['_REORDERLABELTYPESRESPONSE']._serialized_end=1149
-  _globals['_LABELSERVICE']._serialized_start=1152
-  _globals['_LABELSERVICE']._serialized_end=1619
+  _globals['_LABELTYPE']._serialized_end=454
+  _globals['_LABELEXAMPLE']._serialized_start=456
+  _globals['_LABELEXAMPLE']._serialized_end=530
+  _globals['_LISTLABELTYPESREQUEST']._serialized_start=532
+  _globals['_LISTLABELTYPESREQUEST']._serialized_end=555
+  _globals['_LISTLABELTYPESRESPONSE']._serialized_start=557
+  _globals['_LISTLABELTYPESRESPONSE']._serialized_end=635
+  _globals['_CREATELABELTYPEREQUEST']._serialized_start=638
+  _globals['_CREATELABELTYPEREQUEST']._serialized_end=848
+  _globals['_CREATELABELTYPERESPONSE']._serialized_start=850
+  _globals['_CREATELABELTYPERESPONSE']._serialized_end=927
+  _globals['_UPDATELABELTYPEREQUEST']._serialized_start=930
+  _globals['_UPDATELABELTYPEREQUEST']._serialized_end=1156
+  _globals['_UPDATELABELTYPERESPONSE']._serialized_start=1158
+  _globals['_UPDATELABELTYPERESPONSE']._serialized_end=1235
+  _globals['_DELETELABELTYPEREQUEST']._serialized_start=1237
+  _globals['_DELETELABELTYPEREQUEST']._serialized_end=1277
+  _globals['_DELETELABELTYPERESPONSE']._serialized_start=1279
+  _globals['_DELETELABELTYPERESPONSE']._serialized_end=1304
+  _globals['_REORDERLABELTYPESREQUEST']._serialized_start=1306
+  _globals['_REORDERLABELTYPESREQUEST']._serialized_end=1350
+  _globals['_REORDERLABELTYPESRESPONSE']._serialized_start=1352
+  _globals['_REORDERLABELTYPESRESPONSE']._serialized_end=1433
+  _globals['_CREATELABELEXAMPLEUPLOADREQUEST']._serialized_start=1435
+  _globals['_CREATELABELEXAMPLEUPLOADREQUEST']._serialized_end=1504
+  _globals['_CREATELABELEXAMPLEUPLOADRESPONSE']._serialized_start=1506
+  _globals['_CREATELABELEXAMPLEUPLOADRESPONSE']._serialized_end=1589
+  _globals['_ADDLABELEXAMPLEREQUEST']._serialized_start=1591
+  _globals['_ADDLABELEXAMPLEREQUEST']._serialized_end=1695
+  _globals['_ADDLABELEXAMPLERESPONSE']._serialized_start=1697
+  _globals['_ADDLABELEXAMPLERESPONSE']._serialized_end=1772
+  _globals['_DELETELABELEXAMPLEREQUEST']._serialized_start=1774
+  _globals['_DELETELABELEXAMPLEREQUEST']._serialized_end=1817
+  _globals['_DELETELABELEXAMPLERESPONSE']._serialized_start=1819
+  _globals['_DELETELABELEXAMPLERESPONSE']._serialized_end=1847
+  _globals['_LABELSERVICE']._serialized_start=1850
+  _globals['_LABELSERVICE']._serialized_end=2623
 # @@protoc_insertion_point(module_scope)
