@@ -21,20 +21,25 @@ export interface StarterType {
   attributes: { name: string; options: string[] }[]
 }
 
-// From the task table in docs/design-doc.md. Roles are left out because the
-// season's role list is still an open question.
+// From docs/labeling-guideline.md. Roles are left out because the season's
+// role list is still an open question.
 export const starterTypes: StarterType[] = [
-  { name: 'gate', description: 'The gate frame.', attributes: [] },
-  { name: 'gate_marker', description: 'Role markers on the gate.', attributes: [] },
+  { name: 'gate', description: 'The entire gate frame.', attributes: [] },
+  {
+    name: 'role_sign',
+    description: 'A panel hanging from the gate, or an image on the octagon wall.',
+    attributes: [],
+  },
+  { name: 'torpedo_board', description: 'The outer edge of the torpedo board.', attributes: [] },
   {
     name: 'torpedo_hole',
-    description: 'Torpedo target holes.',
+    description: 'A torpedo hole opening.',
     attributes: [{ name: 'size', options: ['big', 'small'] }],
   },
-  { name: 'bin', description: 'A bin. Assign its role from the image inside.', attributes: [] },
-  { name: 'octagon_image', description: 'A vinyl image inside the octagon.', attributes: [] },
+  { name: 'bin', description: 'The whole bin opening, including the image.', attributes: [] },
+  { name: 'table', description: 'The tabletop.', attributes: [] },
   { name: 'table_item', description: 'An item on the table.', attributes: [] },
-  { name: 'basket', description: 'The basket on the table.', attributes: [] },
+  { name: 'basket', description: 'The entire basket.', attributes: [] },
   { name: 'path_marker', description: 'Path marker on the pool floor.', attributes: [] },
   {
     name: 'slalom_pipe',
