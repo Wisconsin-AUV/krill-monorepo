@@ -75,6 +75,8 @@ type Querier interface {
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
+	// A track whose last box is still a proposal may have drifted, so none of its
+	// boxes count until someone confirms that last frame.
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)

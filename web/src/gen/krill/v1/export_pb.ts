@@ -196,7 +196,8 @@ export type ExportStats = Message<"krill.v1.ExportStats"> & {
   incompleteFrames: number;
 
   /**
-   * Frames dropped because they hold unverified proposals.
+   * Frames dropped because they hold unverified proposals, or boxes of a
+   * track whose last box is unverified.
    *
    * @generated from field: int32 unverified_frames = 8;
    */

@@ -10,6 +10,7 @@ Each section needs example images of correct and incorrect labels.
 - Set track attributes (size, color, role) once. Tracks with unset attributes are left out of exports.
 - Press Space only when every object in the frame has a box. Only frames marked done are exported.
 - Press E for frames with no objects. Empty frames are exported as negative examples.
+- Check the last frame of every tracked object. None of its boxes are exported until that frame is marked done.
 
 ## Gate
 

@@ -342,7 +342,8 @@ type ExportStats struct {
 	UnlabeledFrames int32 `protobuf:"varint,6,opt,name=unlabeled_frames,json=unlabeledFrames,proto3" json:"unlabeled_frames,omitempty"`
 	// Frames dropped because a track on them is missing an attribute.
 	IncompleteFrames int32 `protobuf:"varint,7,opt,name=incomplete_frames,json=incompleteFrames,proto3" json:"incomplete_frames,omitempty"`
-	// Frames dropped because they hold unverified proposals.
+	// Frames dropped because they hold unverified proposals, or boxes of a
+	// track whose last box is unverified.
 	UnverifiedFrames int32               `protobuf:"varint,8,opt,name=unverified_frames,json=unverifiedFrames,proto3" json:"unverified_frames,omitempty"`
 	StrideSkipped    int32               `protobuf:"varint,9,opt,name=stride_skipped,json=strideSkipped,proto3" json:"stride_skipped,omitempty"`
 	DuplicateSkipped int32               `protobuf:"varint,10,opt,name=duplicate_skipped,json=duplicateSkipped,proto3" json:"duplicate_skipped,omitempty"`

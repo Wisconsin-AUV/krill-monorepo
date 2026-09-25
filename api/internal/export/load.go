@@ -96,7 +96,7 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 		}
 		boxes[i] = Box{
 			FrameID: b.FrameID, X: b.X, Y: b.Y, W: b.Width, H: b.Height,
-			Status: b.Status, TypeID: b.LabelTypeID, Attributes: values,
+			Status: b.Status, TrackUnconfirmed: b.TrackUnconfirmed, TypeID: b.LabelTypeID, Attributes: values,
 		}
 	}
 
