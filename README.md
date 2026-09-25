@@ -36,7 +36,7 @@ Create a Slack app with the redirect URL `$KRILL_PUBLIC_URL/auth/slack/callback`
 
 1. **Labels**: create label types, or add the starter set. Attributes such as size or color are set once per track.
 2. **Videos**: upload footage. Frames are extracted and split into 10 to 20 second clips.
-3. **Clips**: pick a type with 1 to 9 and drag to draw. Step with J and K, press C to copy boxes from the previous frame, and press Space when every object in the frame has a box (E if there are none). Press ? for all shortcuts.
+3. **Clips**: pick a type with 1 to 9 and drag to draw. Step with J and K, press C to copy boxes from the previous frame, and press Space when every object in the frame has a box (E if there are none). Shift+click an object to track it through the clip with SAM, and press R to retrack a selected box from the current frame. Tracked boxes are proposals until Space accepts them. Press ? for all shortcuts.
 4. **Exports**: preview and download a YOLO dataset split by video.
 
 ## Contributing

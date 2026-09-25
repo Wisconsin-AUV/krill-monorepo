@@ -1,10 +1,26 @@
 import { create } from 'zustand'
-import { FrameStatus, type Annotation, type Box, type Track } from '@/gen/krill/v1/annotation_pb'
+import {
+  AnnotationStatus,
+  FrameStatus,
+  type Annotation,
+  type Box,
+  type Track,
+} from '@/gen/krill/v1/annotation_pb'
 import type { GetClipResponse } from '@/gen/krill/v1/clip_pb'
 import { annotationClient } from '@/lib/clients'
 import { flash } from '@/lib/flash'
 
 export type BoxRect = Pick<Box, 'x' | 'y' | 'width' | 'height'>
+
+// Normalized to the frame, like BoxRect.
+export type TrackPrompt = { point: { x: number; y: number } } | { box: BoxRect }
+
+// trackId is unset until the server accepts the request.
+export interface TrackRun {
+  frameId: bigint
+  prompt: TrackPrompt
+  trackId?: bigint
+}
 
 type Key = string
 const key = (id: bigint): Key => String(id)
@@ -20,6 +36,9 @@ interface LabelState {
   // frame id -> track id -> box
   boxes: Record<Key, Record<Key, Annotation>>
   frameStatus: Record<Key, FrameStatus>
+  // Tracks the GPU worker is still tracking.
+  tracking: Record<Key, true>
+  trackRuns: TrackRun[]
   selectedTrackId: bigint | null
   activeTypeId: bigint | null
   hideBoxes: boolean
@@ -27,6 +46,7 @@ interface LabelState {
   undoStack: UndoEntry[]
 
   load: (clip: GetClipResponse) => void
+  refreshTracking: (clip: GetClipResponse) => void
   select: (trackId: bigint | null) => void
   setActiveType: (id: bigint | null) => void
   toggleHidden: () => void
@@ -41,6 +61,7 @@ interface LabelState {
   ) => Promise<void>
   copyBoxes: (fromFrameId: bigint, toFrameId: bigint) => Promise<number>
   setFrameStatus: (frameId: bigint, status: FrameStatus) => Promise<boolean>
+  trackObject: (frameId: bigint, prompt: TrackPrompt, trackId?: bigint) => Promise<void>
   undo: () => Promise<void>
 }
 
@@ -68,6 +89,10 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
 
 function rect(box: Box | undefined): BoxRect {
   return { x: box?.x ?? 0, y: box?.y ?? 0, width: box?.width ?? 0, height: box?.height ?? 0 }
+}
+
+function trackingSet(clip: GetClipResponse): Record<Key, true> {
+  return Object.fromEntries(clip.trackingTrackIds.map((id) => [key(id), true as const]))
 }
 
 export const useLabelStore = create<LabelState>((set, get) => {
@@ -116,6 +141,19 @@ export const useLabelStore = create<LabelState>((set, get) => {
     if (get().frameStatus[key(frameId)] === FrameStatus.EMPTY) {
       set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: FrameStatus.UNLABELED } }))
     }
+  }
+
+  function acceptProposals(frameId: bigint) {
+    set((s) => {
+      const byTrack = s.boxes[key(frameId)]
+      if (!byTrack) return {}
+      const frame: Record<Key, Annotation> = {}
+      for (const [t, a] of Object.entries(byTrack)) {
+        frame[t] =
+          a.status === AnnotationStatus.PROPOSED ? { ...a, status: AnnotationStatus.VERIFIED } : a
+      }
+      return { boxes: { ...s.boxes, [key(frameId)]: frame } }
+    })
   }
 
   function pushUndo(entry: UndoEntry) {
@@ -167,6 +205,8 @@ export const useLabelStore = create<LabelState>((set, get) => {
     tracks: {},
     boxes: {},
     frameStatus: {},
+    tracking: {},
+    trackRuns: [],
     selectedTrackId: null,
     activeTypeId: null,
     hideBoxes: false,
@@ -189,8 +229,46 @@ export const useLabelStore = create<LabelState>((set, get) => {
         tracks,
         boxes,
         frameStatus,
+        tracking: trackingSet(clip),
+        trackRuns: [],
         selectedTrackId: null,
         undoStack: [],
+      })
+    },
+
+    // Replaces the boxes of tracks that were being tracked with the server's.
+    refreshTracking: (clip) => {
+      if (clip.clip?.id !== get().clipId) return
+      const watched = new Set([
+        ...Object.keys(get().tracking),
+        ...clip.trackingTrackIds.map((id) => key(id)),
+      ])
+      const serverTracks = new Map(clip.tracks.map((t) => [key(t.id), t]))
+      for (const k of watched) {
+        if (!serverTracks.has(k)) removeTrack(BigInt(k))
+      }
+      set((s) => {
+        const tracks = { ...s.tracks }
+        const boxes: LabelState['boxes'] = {}
+        for (const [f, byTrack] of Object.entries(s.boxes)) {
+          const copy = { ...byTrack }
+          for (const k of watched) delete copy[k]
+          boxes[f] = copy
+        }
+        for (const k of watched) {
+          const t = serverTracks.get(k)
+          if (t) tracks[k] = t
+        }
+        for (const a of clip.annotations) {
+          if (!watched.has(key(a.trackId))) continue
+          const f = key(a.frameId)
+          boxes[f] = { ...boxes[f], [key(a.trackId)]: a }
+        }
+        const tracking = trackingSet(clip)
+        const trackRuns = s.trackRuns.filter(
+          (r) => r.trackId === undefined || tracking[key(r.trackId)],
+        )
+        return { tracks, boxes, tracking, trackRuns }
       })
     },
 
@@ -385,6 +463,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       const ok = await withPending('Could not update frame', async () => {
         const res = await annotationClient.setFrameStatus({ frameId, status })
         set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: res.status } }))
+        if (res.status === FrameStatus.LABELED) acceptProposals(frameId)
         if (prev !== res.status) {
           pushUndo({
             label: 'Undo frame status',
@@ -398,6 +477,62 @@ export const useLabelStore = create<LabelState>((set, get) => {
         return true
       })
       return ok ?? false
+    },
+
+    trackObject: async (frameId, prompt, trackIdIn) => {
+      const { activeTypeId } = get()
+      const trackId = trackIdIn === undefined ? undefined : resolve(trackIdIn)
+      if (trackId === undefined && activeTypeId === null) {
+        flash.error('Pick a label type first', 'Press 1 to 9 or click a type on the left.')
+        return
+      }
+      const run: TrackRun = { frameId, prompt }
+      set((s) => ({ trackRuns: [...s.trackRuns, run] }))
+      let started = false
+      await withPending('Could not start tracking', async () => {
+        const res = await annotationClient.trackObject({
+          frameId,
+          trackId: trackId ?? 0n,
+          labelTypeId: activeTypeId ?? 0n,
+          prompt:
+            'point' in prompt
+              ? { case: 'point', value: prompt.point }
+              : { case: 'box', value: prompt.box },
+        })
+        const track = res.track
+        if (!track) return
+        started = true
+        set((s) => ({
+          tracks: { ...s.tracks, [key(track.id)]: track },
+          tracking: { ...s.tracking, [key(track.id)]: true },
+          trackRuns: s.trackRuns.map((r) => (r === run ? { ...r, trackId: track.id } : r)),
+          selectedTrackId: track.id,
+        }))
+        if ('box' in prompt) {
+          putBox({
+            ...(get().boxes[key(frameId)]?.[key(track.id)] ?? {
+              id: 0n,
+              trackId: track.id,
+              frameId,
+            }),
+            box: prompt.box,
+            status: AnnotationStatus.VERIFIED,
+          } as Annotation)
+          clearEmpty(frameId)
+        }
+        if (trackId === undefined) {
+          pushUndo({
+            label: 'Undo tracking',
+            run: () =>
+              enqueue(async () => {
+                const id = resolve(track.id)
+                await annotationClient.deleteTrack({ id })
+                removeTrack(id)
+              }),
+          })
+        }
+      })
+      if (!started) set((s) => ({ trackRuns: s.trackRuns.filter((r) => r !== run) }))
     },
 
     undo: async () => {

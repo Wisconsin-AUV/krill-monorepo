@@ -1,4 +1,5 @@
 import {
+  ArrowPathIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   ExclamationTriangleIcon,
@@ -26,7 +27,13 @@ function TrackEditor({
 }) {
   const updateTrack = useLabelStore((s) => s.updateTrack)
   const deleteTrack = useLabelStore((s) => s.deleteTrack)
+  const trackObject = useLabelStore((s) => s.trackObject)
   const seek = useWorkspaceStore((s) => s.seek)
+  const frame = useWorkspaceStore((s) => s.frames[s.index])
+  const here = useLabelStore((s) =>
+    frame ? s.boxes[idKey(frame.id)]?.[idKey(info.track.id)] : undefined,
+  )
+  const tracking = useLabelStore((s) => !!s.tracking[idKey(info.track.id)])
   const { track, type } = info
 
   return (
@@ -79,6 +86,16 @@ function TrackEditor({
         <div className="flex-1" />
         <Button
           plain
+          title="Track from this frame (R)"
+          disabled={!here?.box || !frame || tracking}
+          onClick={() =>
+            frame && here?.box && void trackObject(frame.id, { box: here.box }, track.id)
+          }
+        >
+          <ArrowPathIcon data-slot="icon" />
+        </Button>
+        <Button
+          plain
           title="Delete track (Shift+Delete)"
           onClick={() => void deleteTrack(track.id)}
         >
@@ -102,6 +119,7 @@ export function TrackPanel({
   const boxes = useLabelStore((s) => s.boxes)
   const selectedTrackId = useLabelStore((s) => s.selectedTrackId)
   const select = useLabelStore((s) => s.select)
+  const tracking = useLabelStore((s) => s.tracking)
 
   // Frame positions (within the clip) that each track has a box on.
   const positions = useMemo(() => {
@@ -149,6 +167,12 @@ export function TrackPanel({
                   </span>
                   <span className="text-zinc-500"> #{info.number}</span>
                 </span>
+                {tracking[k] && (
+                  <ArrowPathIcon
+                    className="size-4 shrink-0 animate-spin text-sky-500"
+                    aria-label="Tracking"
+                  />
+                )}
                 {missing.length > 0 && (
                   <ExclamationTriangleIcon
                     className="size-4 shrink-0 text-amber-400"
@@ -177,8 +201,8 @@ export function TrackPanel({
         })}
         {list.length === 0 && (
           <li className="px-3 py-4 text-sm/6 text-zinc-500 dark:text-zinc-400">
-            Pick a type and drag on the frame to draw a box. Each object becomes a track you carry
-            across frames.
+            Pick a type and drag on the frame to draw a box, or Shift+click an object to track it
+            through the clip. Each object becomes a track you carry across frames.
           </li>
         )}
       </ul>
