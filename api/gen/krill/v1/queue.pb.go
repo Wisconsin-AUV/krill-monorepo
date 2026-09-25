@@ -356,8 +356,11 @@ func (x *ClaimNextClipRequest) GetReleaseClipId() int64 {
 
 type ClaimNextClipResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 0 when every clip is finished or being labeled.
-	ClipId        int64 `protobuf:"varint,1,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
+	// 0 when every clip is finished or being labeled, or when gold_frame_id is
+	// set.
+	ClipId int64 `protobuf:"varint,1,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
+	// Set when the caller is due a gold check.
+	GoldFrameId   int64 `protobuf:"varint,2,opt,name=gold_frame_id,json=goldFrameId,proto3" json:"gold_frame_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -399,6 +402,13 @@ func (x *ClaimNextClipResponse) GetClipId() int64 {
 	return 0
 }
 
+func (x *ClaimNextClipResponse) GetGoldFrameId() int64 {
+	if x != nil {
+		return x.GoldFrameId
+	}
+	return 0
+}
+
 var File_krill_v1_queue_proto protoreflect.FileDescriptor
 
 const file_krill_v1_queue_proto_rawDesc = "" +
@@ -426,9 +436,10 @@ const file_krill_v1_queue_proto_rawDesc = "" +
 	"\x06videos\x18\x02 \x03(\v2\x17.krill.v1.VideoProgressR\x06videos\x12'\n" +
 	"\x0favailable_clips\x18\x03 \x01(\x05R\x0eavailableClips\">\n" +
 	"\x14ClaimNextClipRequest\x12&\n" +
-	"\x0frelease_clip_id\x18\x01 \x01(\x03R\rreleaseClipId\"0\n" +
+	"\x0frelease_clip_id\x18\x01 \x01(\x03R\rreleaseClipId\"T\n" +
 	"\x15ClaimNextClipResponse\x12\x17\n" +
-	"\aclip_id\x18\x01 \x01(\x03R\x06clipId2\xa7\x01\n" +
+	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\x12\"\n" +
+	"\rgold_frame_id\x18\x02 \x01(\x03R\vgoldFrameId2\xa7\x01\n" +
 	"\fQueueService\x12C\n" +
 	"\bGetQueue\x12\x19.krill.v1.GetQueueRequest\x1a\x1a.krill.v1.GetQueueResponse\"\x00\x12R\n" +
 	"\rClaimNextClip\x12\x1e.krill.v1.ClaimNextClipRequest\x1a\x1f.krill.v1.ClaimNextClipResponse\"\x00B\x8b\x01\n" +

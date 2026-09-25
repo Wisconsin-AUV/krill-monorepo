@@ -51,6 +51,9 @@ message ClaimNextClipRequest {
 }
 
 message ClaimNextClipResponse {
-  // 0 when every clip is finished or being labeled.
+  // 0 when every clip is finished or being labeled, or when gold_frame_id is
+  // set.
   int64 clip_id = 1;
+  // Set when the caller is due a gold check.
+  int64 gold_frame_id = 2;
 }

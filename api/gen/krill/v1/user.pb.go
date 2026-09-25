@@ -86,6 +86,7 @@ const (
 	Permission_PERMISSION_MANAGE_LABEL_TYPES Permission = 3
 	Permission_PERMISSION_MANAGE_EXPORTS     Permission = 4
 	Permission_PERMISSION_MANAGE_USERS       Permission = 5
+	Permission_PERMISSION_REVIEW_LABELS      Permission = 6
 )
 
 // Enum value maps for Permission.
@@ -97,6 +98,7 @@ var (
 		3: "PERMISSION_MANAGE_LABEL_TYPES",
 		4: "PERMISSION_MANAGE_EXPORTS",
 		5: "PERMISSION_MANAGE_USERS",
+		6: "PERMISSION_REVIEW_LABELS",
 	}
 	Permission_value = map[string]int32{
 		"PERMISSION_UNSPECIFIED":        0,
@@ -105,6 +107,7 @@ var (
 		"PERMISSION_MANAGE_LABEL_TYPES": 3,
 		"PERMISSION_MANAGE_EXPORTS":     4,
 		"PERMISSION_MANAGE_USERS":       5,
+		"PERMISSION_REVIEW_LABELS":      6,
 	}
 )
 
@@ -778,7 +781,7 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\fROLE_LABELER\x10\x01\x12\x12\n" +
 	"\x0eROLE_DEVELOPER\x10\x02\x12\x0e\n" +
 	"\n" +
-	"ROLE_ADMIN\x10\x03*\xbb\x01\n" +
+	"ROLE_ADMIN\x10\x03*\xd9\x01\n" +
 	"\n" +
 	"Permission\x12\x1a\n" +
 	"\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x14\n" +
@@ -786,7 +789,8 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\x18PERMISSION_MANAGE_VIDEOS\x10\x02\x12!\n" +
 	"\x1dPERMISSION_MANAGE_LABEL_TYPES\x10\x03\x12\x1d\n" +
 	"\x19PERMISSION_MANAGE_EXPORTS\x10\x04\x12\x1b\n" +
-	"\x17PERMISSION_MANAGE_USERS\x10\x052\xc5\x02\n" +
+	"\x17PERMISSION_MANAGE_USERS\x10\x05\x12\x1c\n" +
+	"\x18PERMISSION_REVIEW_LABELS\x10\x062\xc5\x02\n" +
 	"\vUserService\x12F\n" +
 	"\tListUsers\x12\x1a.krill.v1.ListUsersRequest\x1a\x1b.krill.v1.ListUsersResponse\"\x00\x12I\n" +
 	"\n" +
