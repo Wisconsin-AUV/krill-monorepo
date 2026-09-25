@@ -24,6 +24,7 @@ type Querier interface {
 	CountUsers(ctx context.Context) (int32, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
+	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
@@ -33,6 +34,7 @@ type Querier interface {
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteExpiredSessions(ctx context.Context) error
+	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
@@ -79,6 +81,7 @@ type Querier interface {
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
+	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListUsers(ctx context.Context) ([]User, error)

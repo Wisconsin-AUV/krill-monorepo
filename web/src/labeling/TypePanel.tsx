@@ -4,12 +4,14 @@ import { Link } from 'react-router'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { useCan } from '@/lib/auth'
+import { LabelGuide } from './LabelGuide'
 import { useLabelStore } from './useLabelStore'
 
 export function TypePanel({ types, counts }: { types: LabelType[]; counts: Map<bigint, number> }) {
   const activeTypeId = useLabelStore((s) => s.activeTypeId)
   const setActiveType = useLabelStore((s) => s.setActiveType)
   const canManage = useCan(Permission.MANAGE_LABEL_TYPES)
+  const activeType = types.find((t) => t.id === activeTypeId)
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-zinc-950/10 bg-white dark:border-white/10 dark:bg-zinc-900">
@@ -80,6 +82,7 @@ export function TypePanel({ types, counts }: { types: LabelType[]; counts: Map<b
           </li>
         )}
       </ul>
+      {activeType && <LabelGuide key={String(activeType.id)} type={activeType} />}
     </aside>
   )
 }

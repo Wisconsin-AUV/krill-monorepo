@@ -81,3 +81,27 @@ func TestClasses(t *testing.T) {
 		t.Errorf("ClassName = %q", got)
 	}
 }
+
+func TestValidExampleKey(t *testing.T) {
+	const name = "0123456789abcdef0123456789abcdef"
+	tests := []struct {
+		name string
+		key  string
+		want bool
+	}{
+		{"issued", "label-types/3/examples/" + name, true},
+		{"other type", "label-types/4/examples/" + name, false},
+		{"type id prefix", "label-types/31/examples/" + name, false},
+		{"video source", "videos/1/source", false},
+		{"traversal", "label-types/3/examples/../../../videos/1/source", false},
+		{"dataset", "label-types/3/examples/" + name + "/../../../../datasets/1/dataset.zip", false},
+		{"empty name", "label-types/3/examples/", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ValidExampleKey(3, tt.key); got != tt.want {
+				t.Errorf("ValidExampleKey(3, %q) = %v, want %v", tt.key, got, tt.want)
+			}
+		})
+	}
+}

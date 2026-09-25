@@ -2,10 +2,15 @@ package taxonomy
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"regexp"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,18 +20,30 @@ import (
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
+	"github.com/wauv/krill/api/internal/storage"
 )
 
-const maxDescriptionLen = 500
+const (
+	maxTitleLen       = 60
+	maxDescriptionLen = 500
+	maxGuidelineLen   = 4000
+	maxCaptionLen     = 200
+	uploadExpiry      = 15 * time.Minute
+	// Matches the clip page's frame URLs so a long session keeps working.
+	urlExpiry = 12 * time.Hour
+)
+
+var exampleName = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 type Service struct {
 	krillv1connect.UnimplementedLabelServiceHandler
-	pool *pgxpool.Pool
-	q    *db.Queries
+	pool  *pgxpool.Pool
+	q     *db.Queries
+	store *storage.Store
 }
 
-func NewService(pool *pgxpool.Pool) *Service {
-	return &Service{pool: pool, q: db.New(pool)}
+func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store}
 }
 
 func toProto(lt db.LabelType, tracks, boxes int32) (*krillv1.LabelType, error) {
@@ -37,8 +54,10 @@ func toProto(lt db.LabelType, tracks, boxes int32) (*krillv1.LabelType, error) {
 	out := &krillv1.LabelType{
 		Id:          lt.ID,
 		Name:        lt.Name,
+		Title:       lt.Title,
 		Color:       lt.Color,
 		Description: lt.Description,
+		Guideline:   lt.Guideline,
 		Position:    lt.Position,
 		TrackCount:  tracks,
 		BoxCount:    boxes,
@@ -58,24 +77,47 @@ func fromProto(attrs []*krillv1.LabelAttribute) []Attribute {
 }
 
 type typeInput struct {
-	name, color, description string
-	attrs                    []byte
+	name, title, color, description, guideline string
+	attrs                                      []byte
 }
 
-func validate(name, color, description string, attrs []*krillv1.LabelAttribute) (typeInput, error) {
-	name, color, clean, err := NormalizeType(name, color, fromProto(attrs))
+type typeRequest interface {
+	GetName() string
+	GetTitle() string
+	GetColor() string
+	GetDescription() string
+	GetGuideline() string
+	GetAttributes() []*krillv1.LabelAttribute
+}
+
+func validate(req typeRequest) (typeInput, error) {
+	name, color, clean, err := NormalizeType(req.GetName(), req.GetColor(), fromProto(req.GetAttributes()))
 	if err != nil {
 		return typeInput{}, rpc.Invalid("%s", err)
 	}
-	description = strings.TrimSpace(description)
-	if len(description) > maxDescriptionLen {
-		return typeInput{}, rpc.Invalid("description must be at most %d characters", maxDescriptionLen)
+	in := typeInput{
+		name:        name,
+		title:       strings.TrimSpace(req.GetTitle()),
+		color:       color,
+		description: strings.TrimSpace(req.GetDescription()),
+		guideline:   strings.TrimSpace(req.GetGuideline()),
 	}
-	raw, err := json.Marshal(clean)
-	if err != nil {
+	for _, f := range []struct {
+		field, value string
+		max          int
+	}{
+		{"title", in.title, maxTitleLen},
+		{"description", in.description, maxDescriptionLen},
+		{"guideline", in.guideline, maxGuidelineLen},
+	} {
+		if len(f.value) > f.max {
+			return typeInput{}, rpc.Invalid("%s must be at most %d characters", f.field, f.max)
+		}
+	}
+	if in.attrs, err = json.Marshal(clean); err != nil {
 		return typeInput{}, rpc.Internal(err, "encode attributes")
 	}
-	return typeInput{name: name, color: color, description: description, attrs: raw}, nil
+	return in, nil
 }
 
 func duplicateName(err error, name string) error {
@@ -99,22 +141,40 @@ func (s *Service) list(ctx context.Context, q *db.Queries) ([]*krillv1.LabelType
 	if err != nil {
 		return nil, rpc.Internal(err, "list label types")
 	}
+	examples, err := q.ListLabelExamples(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "list label examples")
+	}
+	byType := map[int64][]*krillv1.LabelExample{}
+	for _, e := range examples {
+		byType[e.LabelTypeID] = append(byType[e.LabelTypeID], s.exampleProto(ctx, e))
+	}
 	out := make([]*krillv1.LabelType, len(rows))
 	for i, r := range rows {
 		if out[i], err = toProto(r.LabelType, r.TrackCount, r.BoxCount); err != nil {
 			return nil, rpc.Internal(err, "decode label type")
 		}
+		out[i].Examples = byType[r.LabelType.ID]
 	}
 	return out, nil
 }
 
+func (s *Service) exampleProto(ctx context.Context, e db.LabelExample) *krillv1.LabelExample {
+	url, err := s.store.PresignGet(ctx, e.ObjectKey, urlExpiry, "")
+	if err != nil {
+		slog.WarnContext(ctx, "presign label example", "id", e.ID, "err", err)
+	}
+	return &krillv1.LabelExample{Id: e.ID, Url: url, Caption: e.Caption}
+}
+
 func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelTypeRequest) (*krillv1.CreateLabelTypeResponse, error) {
-	in, err := validate(req.GetName(), req.GetColor(), req.GetDescription(), req.GetAttributes())
+	in, err := validate(req)
 	if err != nil {
 		return nil, err
 	}
 	lt, err := s.q.CreateLabelType(ctx, db.CreateLabelTypeParams{
-		Name: in.name, Color: in.color, Description: in.description, Attributes: in.attrs,
+		Name: in.name, Title: in.title, Color: in.color, Description: in.description,
+		Guideline: in.guideline, Attributes: in.attrs,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -130,12 +190,13 @@ func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelT
 }
 
 func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelTypeRequest) (*krillv1.UpdateLabelTypeResponse, error) {
-	in, err := validate(req.GetName(), req.GetColor(), req.GetDescription(), req.GetAttributes())
+	in, err := validate(req)
 	if err != nil {
 		return nil, err
 	}
 	lt, err := s.q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
-		ID: req.GetId(), Name: in.name, Color: in.color, Description: in.description, Attributes: in.attrs,
+		ID: req.GetId(), Name: in.name, Title: in.title, Color: in.color, Description: in.description,
+		Guideline: in.guideline, Attributes: in.attrs,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -171,6 +232,9 @@ func (s *Service) DeleteLabelType(ctx context.Context, req *krillv1.DeleteLabelT
 	if n == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("label type not found"))
 	}
+	if err := s.store.RemovePrefix(ctx, storage.LabelExamplesPrefix(req.GetId())); err != nil {
+		slog.WarnContext(ctx, "remove label examples", "label_type_id", req.GetId(), "err", err)
+	}
 	return &krillv1.DeleteLabelTypeResponse{}, nil
 }
 
@@ -195,4 +259,67 @@ func (s *Service) ReorderLabelTypes(ctx context.Context, req *krillv1.ReorderLab
 		return nil, rpc.Internal(err, "commit")
 	}
 	return &krillv1.ReorderLabelTypesResponse{LabelTypes: types}, nil
+}
+
+func (s *Service) CreateLabelExampleUpload(ctx context.Context, req *krillv1.CreateLabelExampleUploadRequest) (*krillv1.CreateLabelExampleUploadResponse, error) {
+	if _, err := s.q.GetLabelType(ctx, req.GetLabelTypeId()); err != nil {
+		return nil, rpc.DBError(err, "label type")
+	}
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return nil, rpc.Internal(err, "generate key")
+	}
+	key := storage.LabelExamplesPrefix(req.GetLabelTypeId()) + hex.EncodeToString(b)
+	url, err := s.store.PresignPut(ctx, key, uploadExpiry)
+	if err != nil {
+		return nil, rpc.Internal(err, "presign upload")
+	}
+	return &krillv1.CreateLabelExampleUploadResponse{Key: key, UploadUrl: url}, nil
+}
+
+// ValidExampleKey reports whether key is one CreateLabelExampleUpload could
+// have issued for the type. Every labeler gets a read URL for the key, so
+// accepting any key would expose videos and datasets.
+func ValidExampleKey(labelTypeID int64, key string) bool {
+	name, ok := strings.CutPrefix(key, storage.LabelExamplesPrefix(labelTypeID))
+	return ok && exampleName.MatchString(name)
+}
+
+func (s *Service) AddLabelExample(ctx context.Context, req *krillv1.AddLabelExampleRequest) (*krillv1.AddLabelExampleResponse, error) {
+	if !ValidExampleKey(req.GetLabelTypeId(), req.GetKey()) {
+		return nil, rpc.Invalid("key was not issued for this label type")
+	}
+	caption := strings.TrimSpace(req.GetCaption())
+	if len(caption) > maxCaptionLen {
+		return nil, rpc.Invalid("caption must be at most %d characters", maxCaptionLen)
+	}
+	exists, err := s.store.Exists(ctx, req.GetKey())
+	if err != nil {
+		return nil, rpc.Internal(err, "check upload")
+	}
+	if !exists {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("example image has not been uploaded"))
+	}
+	e, err := s.q.CreateLabelExample(ctx, db.CreateLabelExampleParams{
+		LabelTypeID: req.GetLabelTypeId(), ObjectKey: req.GetKey(), Caption: caption,
+	})
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("example was already added"))
+		}
+		return nil, rpc.Internal(err, "add label example")
+	}
+	return &krillv1.AddLabelExampleResponse{Example: s.exampleProto(ctx, e)}, nil
+}
+
+func (s *Service) DeleteLabelExample(ctx context.Context, req *krillv1.DeleteLabelExampleRequest) (*krillv1.DeleteLabelExampleResponse, error) {
+	e, err := s.q.DeleteLabelExample(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "label example")
+	}
+	if err := s.store.Remove(ctx, e.ObjectKey); err != nil {
+		slog.WarnContext(ctx, "remove label example", "id", e.ID, "err", err)
+	}
+	return &krillv1.DeleteLabelExampleResponse{}, nil
 }

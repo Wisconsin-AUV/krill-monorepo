@@ -25,3 +25,7 @@ func DatasetPrefix(id int64) string {
 func DatasetKey(id int64) string {
 	return fmt.Sprintf("datasets/%d/dataset.zip", id)
 }
+
+func LabelExamplesPrefix(labelTypeID int64) string {
+	return fmt.Sprintf("label-types/%d/examples/", labelTypeID)
+}

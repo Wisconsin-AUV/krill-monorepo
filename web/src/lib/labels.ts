@@ -17,33 +17,83 @@ export const palette = [
 
 export interface StarterType {
   name: string
+  title: string
   description: string
+  guideline: string
   attributes: { name: string; options: string[] }[]
 }
 
 // From docs/labeling-guideline.md. Roles are left out because the season's
 // role list is still an open question.
 export const starterTypes: StarterType[] = [
-  { name: 'gate', description: 'The entire gate frame.', attributes: [] },
   {
-    name: 'role_sign',
-    description: 'A panel hanging from the gate, or an image on the octagon wall.',
+    name: 'gate',
+    title: 'Gate',
+    description: 'The gate frame.',
+    guideline: 'Box the entire frame.',
     attributes: [],
   },
-  { name: 'torpedo_board', description: 'The outer edge of the torpedo board.', attributes: [] },
+  {
+    name: 'role_sign',
+    title: 'Role sign',
+    description: 'A panel hanging from the gate, or an image on the octagon wall.',
+    guideline: 'Box the entire panel or image.',
+    attributes: [],
+  },
+  {
+    name: 'torpedo_board',
+    title: 'Torpedo board',
+    description: 'The torpedo target board.',
+    guideline: 'Box the outer edge of the board.',
+    attributes: [],
+  },
   {
     name: 'torpedo_hole',
-    description: 'A torpedo hole opening.',
+    title: 'Torpedo hole',
+    description: 'A hole in the torpedo board.',
+    guideline: 'Box the hole opening tightly.',
     attributes: [{ name: 'size', options: ['big', 'small'] }],
   },
-  { name: 'bin', description: 'The whole bin opening, including the image.', attributes: [] },
-  { name: 'table', description: 'The tabletop.', attributes: [] },
-  { name: 'table_item', description: 'An item on the table.', attributes: [] },
-  { name: 'basket', description: 'The entire basket.', attributes: [] },
-  { name: 'path_marker', description: 'Path marker on the pool floor.', attributes: [] },
+  {
+    name: 'bin',
+    title: 'Bin',
+    description: 'A bin on the pool floor.',
+    guideline: 'Box the whole bin opening, including the image.',
+    attributes: [],
+  },
+  {
+    name: 'table',
+    title: 'Table',
+    description: 'The table.',
+    guideline: 'Box the tabletop.',
+    attributes: [],
+  },
+  {
+    name: 'table_item',
+    title: 'Table item',
+    description: 'An item on the table.',
+    guideline: 'Box each object separately.',
+    attributes: [],
+  },
+  {
+    name: 'basket',
+    title: 'Basket',
+    description: 'The basket on the table.',
+    guideline: 'Box the entire basket.',
+    attributes: [],
+  },
+  {
+    name: 'path_marker',
+    title: 'Path marker',
+    description: 'Path marker on the pool floor.',
+    guideline: '',
+    attributes: [],
+  },
   {
     name: 'slalom_pipe',
+    title: 'Slalom pipe',
     description: 'A slalom pipe.',
+    guideline: '',
     attributes: [{ name: 'color', options: ['red', 'white'] }],
   },
 ]

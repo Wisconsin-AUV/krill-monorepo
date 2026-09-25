@@ -64,6 +64,14 @@ type Frame struct {
 	StatusAt pgtype.Timestamptz `json:"status_at"`
 }
 
+type LabelExample struct {
+	ID          int64              `json:"id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	ObjectKey   string             `json:"object_key"`
+	Caption     string             `json:"caption"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type LabelType struct {
 	ID          int64              `json:"id"`
 	Name        string             `json:"name"`
@@ -72,6 +80,8 @@ type LabelType struct {
 	Position    int32              `json:"position"`
 	Attributes  []byte             `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	Title       string             `json:"title"`
+	Guideline   string             `json:"guideline"`
 }
 
 type Session struct {

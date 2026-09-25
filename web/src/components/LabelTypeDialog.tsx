@@ -1,8 +1,8 @@
 import { useMutation } from '@connectrpc/connect-query'
 import * as Headless from '@headlessui/react'
-import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import {
@@ -20,6 +20,8 @@ import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
 import { errorMessage } from '@/lib/errors'
 import { invalidateService } from '@/lib/queryClient'
 import { exportClasses, palette } from '@/lib/labels'
+import { labelClient } from '@/lib/clients'
+import { putFile } from '@/lib/upload'
 
 interface AttributeDraft {
   id: number
@@ -46,8 +48,10 @@ function parseOptions(raw: string): string[] {
 
 function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => void }) {
   const [name, setName] = useState(type?.name ?? '')
+  const [title, setTitle] = useState(type?.title ?? '')
   const [color, setColor] = useState(type?.color ?? palette[0])
   const [description, setDescription] = useState(type?.description ?? '')
+  const [guideline, setGuideline] = useState(type?.guideline ?? '')
   const [attributes, setAttributes] = useState<AttributeDraft[]>(() => toDrafts(type))
   const [error, setError] = useState<string | null>(null)
 
@@ -68,7 +72,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
   function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    const body = { name, color, description, attributes: parsed }
+    const body = { name, title, color, description, guideline, attributes: parsed }
     if (type) update.mutate({ id: type.id, ...body })
     else create.mutate(body)
   }
@@ -95,6 +99,17 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
               placeholder="torpedo_hole"
               required
               maxLength={40}
+              autoComplete="off"
+            />
+          </Field>
+
+          <Field>
+            <Label>Title</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Torpedo hole"
+              maxLength={60}
               autoComplete="off"
             />
           </Field>
@@ -133,6 +148,18 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
               rows={2}
             />
           </Field>
+
+          <Field>
+            <Label>Guideline</Label>
+            <Textarea
+              value={guideline}
+              onChange={(e) => setGuideline(e.target.value)}
+              rows={4}
+              maxLength={4000}
+            />
+          </Field>
+
+          {type && <Examples type={type} />}
 
           <Fieldset>
             <Legend>Attributes</Legend>
@@ -204,6 +231,94 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
         </Button>
       </DialogActions>
     </form>
+  )
+}
+
+function Examples({ type }: { type: LabelType }) {
+  const [caption, setCaption] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const input = useRef<HTMLInputElement>(null)
+
+  async function upload(file: File) {
+    setBusy(true)
+    setError(null)
+    try {
+      const { key, uploadUrl } = await labelClient.createLabelExampleUpload({
+        labelTypeId: type.id,
+      })
+      await putFile(uploadUrl, file, () => {}, new AbortController().signal)
+      await labelClient.addLabelExample({ labelTypeId: type.id, key, caption })
+      setCaption('')
+      await invalidateService(LabelService)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function remove(id: bigint) {
+    setError(null)
+    try {
+      await labelClient.deleteLabelExample({ id })
+      await invalidateService(LabelService)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
+  return (
+    <Fieldset>
+      <Legend>Examples</Legend>
+      {type.examples.length > 0 && (
+        <ul className="mt-3 grid grid-cols-3 gap-2">
+          {type.examples.map((e) => (
+            <li key={String(e.id)} className="group relative">
+              <img
+                src={e.url}
+                alt={e.caption}
+                className="aspect-video w-full rounded-md bg-zinc-950 object-contain"
+              />
+              <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">{e.caption}</p>
+              <button
+                type="button"
+                aria-label="Remove example"
+                onClick={() => void remove(e.id)}
+                className="absolute top-1 right-1 rounded-full bg-zinc-950/60 p-0.5 text-white opacity-0 group-hover:opacity-100 hover:bg-zinc-950/80 focus:opacity-100"
+              >
+                <XMarkIcon className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-3 flex gap-2">
+        <Input
+          aria-label="Caption"
+          placeholder="Caption"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          maxLength={200}
+        />
+        <Button outline disabled={busy} onClick={() => input.current?.click()}>
+          <PhotoIcon data-slot="icon" />
+          {busy ? 'Uploading…' : 'Add image'}
+        </Button>
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) void upload(file)
+          }}
+        />
+      </div>
+      {error && <p className="mt-2 text-sm/6 text-red-600 dark:text-red-400">{error}</p>}
+    </Fieldset>
   )
 }
 

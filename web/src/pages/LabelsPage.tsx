@@ -37,7 +37,7 @@ import { Kbd } from '@/workspace/ShortcutsDialog'
 
 export function LabelsPage() {
   const { data, isPending, error } = useQuery(LabelService.method.listLabelTypes, {})
-  const [editing, setEditing] = useState<LabelType | 'new' | null>(null)
+  const [editing, setEditing] = useState<bigint | 'new' | null>(null)
   const [deleting, setDeleting] = useState<LabelType | null>(null)
   const [seeding, setSeeding] = useState(false)
   const types = data?.labelTypes ?? []
@@ -205,7 +205,7 @@ export function LabelsPage() {
                     >
                       <ArrowDownIcon data-slot="icon" />
                     </Button>
-                    <Button plain aria-label={`Edit ${t.name}`} onClick={() => setEditing(t)}>
+                    <Button plain aria-label={`Edit ${t.name}`} onClick={() => setEditing(t.id)}>
                       <PencilSquareIcon data-slot="icon" />
                     </Button>
                     <Button
@@ -227,7 +227,7 @@ export function LabelsPage() {
 
       <LabelTypeDialog
         open={editing !== null}
-        type={editing === 'new' || editing === null ? undefined : editing}
+        type={types.find((t) => t.id === editing)}
         onClose={() => setEditing(null)}
       />
       <ConfirmAlert

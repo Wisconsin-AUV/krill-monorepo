@@ -13,6 +13,11 @@ service LabelService {
   rpc DeleteLabelType(DeleteLabelTypeRequest) returns (DeleteLabelTypeResponse) {}
   // ReorderLabelTypes sets the order, which is also the number-key order.
   rpc ReorderLabelTypes(ReorderLabelTypesRequest) returns (ReorderLabelTypesResponse) {}
+  // CreateLabelExampleUpload returns a presigned URL the browser uploads an
+  // example image to. Call AddLabelExample with the key once it finishes.
+  rpc CreateLabelExampleUpload(CreateLabelExampleUploadRequest) returns (CreateLabelExampleUploadResponse) {}
+  rpc AddLabelExample(AddLabelExampleRequest) returns (AddLabelExampleResponse) {}
+  rpc DeleteLabelExample(DeleteLabelExampleRequest) returns (DeleteLabelExampleResponse) {}
 }
 
 message LabelAttribute {
@@ -31,6 +36,16 @@ message LabelType {
   repeated LabelAttribute attributes = 6;
   int32 track_count = 7;
   int32 box_count = 8;
+  // Shown to labelers instead of name. Empty means use name.
+  string title = 9;
+  string guideline = 10;
+  repeated LabelExample examples = 11;
+}
+
+message LabelExample {
+  int64 id = 1;
+  string url = 2;
+  string caption = 3;
 }
 
 message ListLabelTypesRequest {}
@@ -44,6 +59,8 @@ message CreateLabelTypeRequest {
   string color = 2;
   string description = 3;
   repeated LabelAttribute attributes = 4;
+  string title = 5;
+  string guideline = 6;
 }
 
 message CreateLabelTypeResponse {
@@ -56,6 +73,8 @@ message UpdateLabelTypeRequest {
   string color = 3;
   string description = 4;
   repeated LabelAttribute attributes = 5;
+  string title = 6;
+  string guideline = 7;
 }
 
 message UpdateLabelTypeResponse {
@@ -75,3 +94,28 @@ message ReorderLabelTypesRequest {
 message ReorderLabelTypesResponse {
   repeated LabelType label_types = 1;
 }
+
+message CreateLabelExampleUploadRequest {
+  int64 label_type_id = 1;
+}
+
+message CreateLabelExampleUploadResponse {
+  string key = 1;
+  string upload_url = 2;
+}
+
+message AddLabelExampleRequest {
+  int64 label_type_id = 1;
+  string key = 2;
+  string caption = 3;
+}
+
+message AddLabelExampleResponse {
+  LabelExample example = 1;
+}
+
+message DeleteLabelExampleRequest {
+  int64 id = 1;
+}
+
+message DeleteLabelExampleResponse {}

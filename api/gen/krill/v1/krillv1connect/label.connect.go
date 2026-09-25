@@ -48,6 +48,15 @@ const (
 	// LabelServiceReorderLabelTypesProcedure is the fully-qualified name of the LabelService's
 	// ReorderLabelTypes RPC.
 	LabelServiceReorderLabelTypesProcedure = "/krill.v1.LabelService/ReorderLabelTypes"
+	// LabelServiceCreateLabelExampleUploadProcedure is the fully-qualified name of the LabelService's
+	// CreateLabelExampleUpload RPC.
+	LabelServiceCreateLabelExampleUploadProcedure = "/krill.v1.LabelService/CreateLabelExampleUpload"
+	// LabelServiceAddLabelExampleProcedure is the fully-qualified name of the LabelService's
+	// AddLabelExample RPC.
+	LabelServiceAddLabelExampleProcedure = "/krill.v1.LabelService/AddLabelExample"
+	// LabelServiceDeleteLabelExampleProcedure is the fully-qualified name of the LabelService's
+	// DeleteLabelExample RPC.
+	LabelServiceDeleteLabelExampleProcedure = "/krill.v1.LabelService/DeleteLabelExample"
 )
 
 // LabelServiceClient is a client for the krill.v1.LabelService service.
@@ -59,6 +68,11 @@ type LabelServiceClient interface {
 	DeleteLabelType(context.Context, *v1.DeleteLabelTypeRequest) (*v1.DeleteLabelTypeResponse, error)
 	// ReorderLabelTypes sets the order, which is also the number-key order.
 	ReorderLabelTypes(context.Context, *v1.ReorderLabelTypesRequest) (*v1.ReorderLabelTypesResponse, error)
+	// CreateLabelExampleUpload returns a presigned URL the browser uploads an
+	// example image to. Call AddLabelExample with the key once it finishes.
+	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
+	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
+	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
 }
 
 // NewLabelServiceClient constructs a client for the krill.v1.LabelService service. By default, it
@@ -102,16 +116,37 @@ func NewLabelServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(labelServiceMethods.ByName("ReorderLabelTypes")),
 			connect.WithClientOptions(opts...),
 		),
+		createLabelExampleUpload: connect.NewClient[v1.CreateLabelExampleUploadRequest, v1.CreateLabelExampleUploadResponse](
+			httpClient,
+			baseURL+LabelServiceCreateLabelExampleUploadProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("CreateLabelExampleUpload")),
+			connect.WithClientOptions(opts...),
+		),
+		addLabelExample: connect.NewClient[v1.AddLabelExampleRequest, v1.AddLabelExampleResponse](
+			httpClient,
+			baseURL+LabelServiceAddLabelExampleProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("AddLabelExample")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteLabelExample: connect.NewClient[v1.DeleteLabelExampleRequest, v1.DeleteLabelExampleResponse](
+			httpClient,
+			baseURL+LabelServiceDeleteLabelExampleProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // labelServiceClient implements LabelServiceClient.
 type labelServiceClient struct {
-	listLabelTypes    *connect.Client[v1.ListLabelTypesRequest, v1.ListLabelTypesResponse]
-	createLabelType   *connect.Client[v1.CreateLabelTypeRequest, v1.CreateLabelTypeResponse]
-	updateLabelType   *connect.Client[v1.UpdateLabelTypeRequest, v1.UpdateLabelTypeResponse]
-	deleteLabelType   *connect.Client[v1.DeleteLabelTypeRequest, v1.DeleteLabelTypeResponse]
-	reorderLabelTypes *connect.Client[v1.ReorderLabelTypesRequest, v1.ReorderLabelTypesResponse]
+	listLabelTypes           *connect.Client[v1.ListLabelTypesRequest, v1.ListLabelTypesResponse]
+	createLabelType          *connect.Client[v1.CreateLabelTypeRequest, v1.CreateLabelTypeResponse]
+	updateLabelType          *connect.Client[v1.UpdateLabelTypeRequest, v1.UpdateLabelTypeResponse]
+	deleteLabelType          *connect.Client[v1.DeleteLabelTypeRequest, v1.DeleteLabelTypeResponse]
+	reorderLabelTypes        *connect.Client[v1.ReorderLabelTypesRequest, v1.ReorderLabelTypesResponse]
+	createLabelExampleUpload *connect.Client[v1.CreateLabelExampleUploadRequest, v1.CreateLabelExampleUploadResponse]
+	addLabelExample          *connect.Client[v1.AddLabelExampleRequest, v1.AddLabelExampleResponse]
+	deleteLabelExample       *connect.Client[v1.DeleteLabelExampleRequest, v1.DeleteLabelExampleResponse]
 }
 
 // ListLabelTypes calls krill.v1.LabelService.ListLabelTypes.
@@ -159,6 +194,33 @@ func (c *labelServiceClient) ReorderLabelTypes(ctx context.Context, req *v1.Reor
 	return nil, err
 }
 
+// CreateLabelExampleUpload calls krill.v1.LabelService.CreateLabelExampleUpload.
+func (c *labelServiceClient) CreateLabelExampleUpload(ctx context.Context, req *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error) {
+	response, err := c.createLabelExampleUpload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// AddLabelExample calls krill.v1.LabelService.AddLabelExample.
+func (c *labelServiceClient) AddLabelExample(ctx context.Context, req *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error) {
+	response, err := c.addLabelExample.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// DeleteLabelExample calls krill.v1.LabelService.DeleteLabelExample.
+func (c *labelServiceClient) DeleteLabelExample(ctx context.Context, req *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error) {
+	response, err := c.deleteLabelExample.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // LabelServiceHandler is an implementation of the krill.v1.LabelService service.
 type LabelServiceHandler interface {
 	ListLabelTypes(context.Context, *v1.ListLabelTypesRequest) (*v1.ListLabelTypesResponse, error)
@@ -168,6 +230,11 @@ type LabelServiceHandler interface {
 	DeleteLabelType(context.Context, *v1.DeleteLabelTypeRequest) (*v1.DeleteLabelTypeResponse, error)
 	// ReorderLabelTypes sets the order, which is also the number-key order.
 	ReorderLabelTypes(context.Context, *v1.ReorderLabelTypesRequest) (*v1.ReorderLabelTypesResponse, error)
+	// CreateLabelExampleUpload returns a presigned URL the browser uploads an
+	// example image to. Call AddLabelExample with the key once it finishes.
+	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
+	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
+	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
 }
 
 // NewLabelServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -207,6 +274,24 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(labelServiceMethods.ByName("ReorderLabelTypes")),
 		connect.WithHandlerOptions(opts...),
 	)
+	labelServiceCreateLabelExampleUploadHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceCreateLabelExampleUploadProcedure,
+		svc.CreateLabelExampleUpload,
+		connect.WithSchema(labelServiceMethods.ByName("CreateLabelExampleUpload")),
+		connect.WithHandlerOptions(opts...),
+	)
+	labelServiceAddLabelExampleHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceAddLabelExampleProcedure,
+		svc.AddLabelExample,
+		connect.WithSchema(labelServiceMethods.ByName("AddLabelExample")),
+		connect.WithHandlerOptions(opts...),
+	)
+	labelServiceDeleteLabelExampleHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceDeleteLabelExampleProcedure,
+		svc.DeleteLabelExample,
+		connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.LabelService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case LabelServiceListLabelTypesProcedure:
@@ -219,6 +304,12 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 			labelServiceDeleteLabelTypeHandler.ServeHTTP(w, r)
 		case LabelServiceReorderLabelTypesProcedure:
 			labelServiceReorderLabelTypesHandler.ServeHTTP(w, r)
+		case LabelServiceCreateLabelExampleUploadProcedure:
+			labelServiceCreateLabelExampleUploadHandler.ServeHTTP(w, r)
+		case LabelServiceAddLabelExampleProcedure:
+			labelServiceAddLabelExampleHandler.ServeHTTP(w, r)
+		case LabelServiceDeleteLabelExampleProcedure:
+			labelServiceDeleteLabelExampleHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -246,4 +337,16 @@ func (UnimplementedLabelServiceHandler) DeleteLabelType(context.Context, *v1.Del
 
 func (UnimplementedLabelServiceHandler) ReorderLabelTypes(context.Context, *v1.ReorderLabelTypesRequest) (*v1.ReorderLabelTypesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.ReorderLabelTypes is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.CreateLabelExampleUpload is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.AddLabelExample is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.DeleteLabelExample is not implemented"))
 }

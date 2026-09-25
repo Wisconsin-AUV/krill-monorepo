@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/label.proto.
  */
 export const file_krill_v1_label: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIrEBCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFIhcKFUxpc3RMYWJlbFR5cGVzUmVxdWVzdCJCChZMaXN0TGFiZWxUeXBlc1Jlc3BvbnNlEigKC2xhYmVsX3R5cGVzGAEgAygLMhMua3JpbGwudjEuTGFiZWxUeXBlIngKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUiQgoXQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2USJwoKbGFiZWxfdHlwZRgBIAEoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSKEAQoWVXBkYXRlTGFiZWxUeXBlUmVxdWVzdBIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEg0KBWNvbG9yGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEiwKCmF0dHJpYnV0ZXMYBSADKAsyGC5rcmlsbC52MS5MYWJlbEF0dHJpYnV0ZSJCChdVcGRhdGVMYWJlbFR5cGVSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIiQKFkRlbGV0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMiGQoXRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiJwoYUmVvcmRlckxhYmVsVHlwZXNSZXF1ZXN0EgsKA2lkcxgBIAMoAyJFChlSZW9yZGVyTGFiZWxUeXBlc1Jlc3BvbnNlEigKC2xhYmVsX3R5cGVzGAEgAygLMhMua3JpbGwudjEuTGFiZWxUeXBlMtMDCgxMYWJlbFNlcnZpY2USVQoOTGlzdExhYmVsVHlwZXMSHy5rcmlsbC52MS5MaXN0TGFiZWxUeXBlc1JlcXVlc3QaIC5rcmlsbC52MS5MaXN0TGFiZWxUeXBlc1Jlc3BvbnNlIgASWAoPQ3JlYXRlTGFiZWxUeXBlEiAua3JpbGwudjEuQ3JlYXRlTGFiZWxUeXBlUmVxdWVzdBohLmtyaWxsLnYxLkNyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlIgASWAoPVXBkYXRlTGFiZWxUeXBlEiAua3JpbGwudjEuVXBkYXRlTGFiZWxUeXBlUmVxdWVzdBohLmtyaWxsLnYxLlVwZGF0ZUxhYmVsVHlwZVJlc3BvbnNlIgASWAoPRGVsZXRlTGFiZWxUeXBlEiAua3JpbGwudjEuRGVsZXRlTGFiZWxUeXBlUmVxdWVzdBohLmtyaWxsLnYxLkRlbGV0ZUxhYmVsVHlwZVJlc3BvbnNlIgASXgoRUmVvcmRlckxhYmVsVHlwZXMSIi5rcmlsbC52MS5SZW9yZGVyTGFiZWxUeXBlc1JlcXVlc3QaIy5rcmlsbC52MS5SZW9yZGVyTGFiZWxUeXBlc1Jlc3BvbnNlIgBCiwEKDGNvbS5rcmlsbC52MUIKTGFiZWxQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM");
+  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIv0BCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZSI4CgxMYWJlbEV4YW1wbGUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEg8KB2NhcHRpb24YAyABKAkiFwoVTGlzdExhYmVsVHlwZXNSZXF1ZXN0IkIKFkxpc3RMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUimgEKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBSABKAkSEQoJZ3VpZGVsaW5lGAYgASgJIkIKF0NyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUipgEKFlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIsCgphdHRyaWJ1dGVzGAUgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBiABKAkSEQoJZ3VpZGVsaW5lGAcgASgJIkIKF1VwZGF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiJAoWRGVsZXRlTGFiZWxUeXBlUmVxdWVzdBIKCgJpZBgBIAEoAyIZChdEZWxldGVMYWJlbFR5cGVSZXNwb25zZSInChhSZW9yZGVyTGFiZWxUeXBlc1JlcXVlc3QSCwoDaWRzGAEgAygDIkUKGVJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiOAofQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIkMKIENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlc3BvbnNlEgsKA2tleRgBIAEoCRISCgp1cGxvYWRfdXJsGAIgASgJIk0KFkFkZExhYmVsRXhhbXBsZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkSDwoHY2FwdGlvbhgDIAEoCSJCChdBZGRMYWJlbEV4YW1wbGVSZXNwb25zZRInCgdleGFtcGxlGAEgASgLMhYua3JpbGwudjEuTGFiZWxFeGFtcGxlIicKGURlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QSCgoCaWQYASABKAMiHAoaRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UyhQYKDExhYmVsU2VydmljZRJVCg5MaXN0TGFiZWxUeXBlcxIfLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVxdWVzdBogLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9DcmVhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9VcGRhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9EZWxldGVMYWJlbFR5cGUSIC5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiABJeChFSZW9yZGVyTGFiZWxUeXBlcxIiLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBojLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2UiABJzChhDcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWQSKS5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0Gioua3JpbGwudjEuQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2UiABJYCg9BZGRMYWJlbEV4YW1wbGUSIC5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXF1ZXN0GiEua3JpbGwudjEuQWRkTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJhChJEZWxldGVMYWJlbEV4YW1wbGUSIy5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXF1ZXN0GiQua3JpbGwudjEuRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpMYWJlbFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message krill.v1.LabelAttribute
@@ -81,6 +81,23 @@ export type LabelType = Message<"krill.v1.LabelType"> & {
    * @generated from field: int32 box_count = 8;
    */
   boxCount: number;
+
+  /**
+   * Shown to labelers instead of name. Empty means use name.
+   *
+   * @generated from field: string title = 9;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string guideline = 10;
+   */
+  guideline: string;
+
+  /**
+   * @generated from field: repeated krill.v1.LabelExample examples = 11;
+   */
+  examples: LabelExample[];
 };
 
 /**
@@ -89,6 +106,33 @@ export type LabelType = Message<"krill.v1.LabelType"> & {
  */
 export const LabelTypeSchema: GenMessage<LabelType> = /*@__PURE__*/
   messageDesc(file_krill_v1_label, 1);
+
+/**
+ * @generated from message krill.v1.LabelExample
+ */
+export type LabelExample = Message<"krill.v1.LabelExample"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url: string;
+
+  /**
+   * @generated from field: string caption = 3;
+   */
+  caption: string;
+};
+
+/**
+ * Describes the message krill.v1.LabelExample.
+ * Use `create(LabelExampleSchema)` to create a new message.
+ */
+export const LabelExampleSchema: GenMessage<LabelExample> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 2);
 
 /**
  * @generated from message krill.v1.ListLabelTypesRequest
@@ -101,7 +145,7 @@ export type ListLabelTypesRequest = Message<"krill.v1.ListLabelTypesRequest"> & 
  * Use `create(ListLabelTypesRequestSchema)` to create a new message.
  */
 export const ListLabelTypesRequestSchema: GenMessage<ListLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 2);
+  messageDesc(file_krill_v1_label, 3);
 
 /**
  * @generated from message krill.v1.ListLabelTypesResponse
@@ -118,7 +162,7 @@ export type ListLabelTypesResponse = Message<"krill.v1.ListLabelTypesResponse"> 
  * Use `create(ListLabelTypesResponseSchema)` to create a new message.
  */
 export const ListLabelTypesResponseSchema: GenMessage<ListLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 3);
+  messageDesc(file_krill_v1_label, 4);
 
 /**
  * @generated from message krill.v1.CreateLabelTypeRequest
@@ -143,6 +187,16 @@ export type CreateLabelTypeRequest = Message<"krill.v1.CreateLabelTypeRequest"> 
    * @generated from field: repeated krill.v1.LabelAttribute attributes = 4;
    */
   attributes: LabelAttribute[];
+
+  /**
+   * @generated from field: string title = 5;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string guideline = 6;
+   */
+  guideline: string;
 };
 
 /**
@@ -150,7 +204,7 @@ export type CreateLabelTypeRequest = Message<"krill.v1.CreateLabelTypeRequest"> 
  * Use `create(CreateLabelTypeRequestSchema)` to create a new message.
  */
 export const CreateLabelTypeRequestSchema: GenMessage<CreateLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 4);
+  messageDesc(file_krill_v1_label, 5);
 
 /**
  * @generated from message krill.v1.CreateLabelTypeResponse
@@ -167,7 +221,7 @@ export type CreateLabelTypeResponse = Message<"krill.v1.CreateLabelTypeResponse"
  * Use `create(CreateLabelTypeResponseSchema)` to create a new message.
  */
 export const CreateLabelTypeResponseSchema: GenMessage<CreateLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 5);
+  messageDesc(file_krill_v1_label, 6);
 
 /**
  * @generated from message krill.v1.UpdateLabelTypeRequest
@@ -197,6 +251,16 @@ export type UpdateLabelTypeRequest = Message<"krill.v1.UpdateLabelTypeRequest"> 
    * @generated from field: repeated krill.v1.LabelAttribute attributes = 5;
    */
   attributes: LabelAttribute[];
+
+  /**
+   * @generated from field: string title = 6;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string guideline = 7;
+   */
+  guideline: string;
 };
 
 /**
@@ -204,7 +268,7 @@ export type UpdateLabelTypeRequest = Message<"krill.v1.UpdateLabelTypeRequest"> 
  * Use `create(UpdateLabelTypeRequestSchema)` to create a new message.
  */
 export const UpdateLabelTypeRequestSchema: GenMessage<UpdateLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 6);
+  messageDesc(file_krill_v1_label, 7);
 
 /**
  * @generated from message krill.v1.UpdateLabelTypeResponse
@@ -221,7 +285,7 @@ export type UpdateLabelTypeResponse = Message<"krill.v1.UpdateLabelTypeResponse"
  * Use `create(UpdateLabelTypeResponseSchema)` to create a new message.
  */
 export const UpdateLabelTypeResponseSchema: GenMessage<UpdateLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 7);
+  messageDesc(file_krill_v1_label, 8);
 
 /**
  * @generated from message krill.v1.DeleteLabelTypeRequest
@@ -238,7 +302,7 @@ export type DeleteLabelTypeRequest = Message<"krill.v1.DeleteLabelTypeRequest"> 
  * Use `create(DeleteLabelTypeRequestSchema)` to create a new message.
  */
 export const DeleteLabelTypeRequestSchema: GenMessage<DeleteLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 8);
+  messageDesc(file_krill_v1_label, 9);
 
 /**
  * @generated from message krill.v1.DeleteLabelTypeResponse
@@ -251,7 +315,7 @@ export type DeleteLabelTypeResponse = Message<"krill.v1.DeleteLabelTypeResponse"
  * Use `create(DeleteLabelTypeResponseSchema)` to create a new message.
  */
 export const DeleteLabelTypeResponseSchema: GenMessage<DeleteLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 9);
+  messageDesc(file_krill_v1_label, 10);
 
 /**
  * @generated from message krill.v1.ReorderLabelTypesRequest
@@ -268,7 +332,7 @@ export type ReorderLabelTypesRequest = Message<"krill.v1.ReorderLabelTypesReques
  * Use `create(ReorderLabelTypesRequestSchema)` to create a new message.
  */
 export const ReorderLabelTypesRequestSchema: GenMessage<ReorderLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 10);
+  messageDesc(file_krill_v1_label, 11);
 
 /**
  * @generated from message krill.v1.ReorderLabelTypesResponse
@@ -285,7 +349,120 @@ export type ReorderLabelTypesResponse = Message<"krill.v1.ReorderLabelTypesRespo
  * Use `create(ReorderLabelTypesResponseSchema)` to create a new message.
  */
 export const ReorderLabelTypesResponseSchema: GenMessage<ReorderLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 11);
+  messageDesc(file_krill_v1_label, 12);
+
+/**
+ * @generated from message krill.v1.CreateLabelExampleUploadRequest
+ */
+export type CreateLabelExampleUploadRequest = Message<"krill.v1.CreateLabelExampleUploadRequest"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.CreateLabelExampleUploadRequest.
+ * Use `create(CreateLabelExampleUploadRequestSchema)` to create a new message.
+ */
+export const CreateLabelExampleUploadRequestSchema: GenMessage<CreateLabelExampleUploadRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 13);
+
+/**
+ * @generated from message krill.v1.CreateLabelExampleUploadResponse
+ */
+export type CreateLabelExampleUploadResponse = Message<"krill.v1.CreateLabelExampleUploadResponse"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string upload_url = 2;
+   */
+  uploadUrl: string;
+};
+
+/**
+ * Describes the message krill.v1.CreateLabelExampleUploadResponse.
+ * Use `create(CreateLabelExampleUploadResponseSchema)` to create a new message.
+ */
+export const CreateLabelExampleUploadResponseSchema: GenMessage<CreateLabelExampleUploadResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 14);
+
+/**
+ * @generated from message krill.v1.AddLabelExampleRequest
+ */
+export type AddLabelExampleRequest = Message<"krill.v1.AddLabelExampleRequest"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * @generated from field: string key = 2;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string caption = 3;
+   */
+  caption: string;
+};
+
+/**
+ * Describes the message krill.v1.AddLabelExampleRequest.
+ * Use `create(AddLabelExampleRequestSchema)` to create a new message.
+ */
+export const AddLabelExampleRequestSchema: GenMessage<AddLabelExampleRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 15);
+
+/**
+ * @generated from message krill.v1.AddLabelExampleResponse
+ */
+export type AddLabelExampleResponse = Message<"krill.v1.AddLabelExampleResponse"> & {
+  /**
+   * @generated from field: krill.v1.LabelExample example = 1;
+   */
+  example?: LabelExample | undefined;
+};
+
+/**
+ * Describes the message krill.v1.AddLabelExampleResponse.
+ * Use `create(AddLabelExampleResponseSchema)` to create a new message.
+ */
+export const AddLabelExampleResponseSchema: GenMessage<AddLabelExampleResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 16);
+
+/**
+ * @generated from message krill.v1.DeleteLabelExampleRequest
+ */
+export type DeleteLabelExampleRequest = Message<"krill.v1.DeleteLabelExampleRequest"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+};
+
+/**
+ * Describes the message krill.v1.DeleteLabelExampleRequest.
+ * Use `create(DeleteLabelExampleRequestSchema)` to create a new message.
+ */
+export const DeleteLabelExampleRequestSchema: GenMessage<DeleteLabelExampleRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 17);
+
+/**
+ * @generated from message krill.v1.DeleteLabelExampleResponse
+ */
+export type DeleteLabelExampleResponse = Message<"krill.v1.DeleteLabelExampleResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.DeleteLabelExampleResponse.
+ * Use `create(DeleteLabelExampleResponseSchema)` to create a new message.
+ */
+export const DeleteLabelExampleResponseSchema: GenMessage<DeleteLabelExampleResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 18);
 
 /**
  * LabelService manages the taxonomy: object types and the attributes that
@@ -338,6 +515,33 @@ export const LabelService: GenService<{
     methodKind: "unary";
     input: typeof ReorderLabelTypesRequestSchema;
     output: typeof ReorderLabelTypesResponseSchema;
+  },
+  /**
+   * CreateLabelExampleUpload returns a presigned URL the browser uploads an
+   * example image to. Call AddLabelExample with the key once it finishes.
+   *
+   * @generated from rpc krill.v1.LabelService.CreateLabelExampleUpload
+   */
+  createLabelExampleUpload: {
+    methodKind: "unary";
+    input: typeof CreateLabelExampleUploadRequestSchema;
+    output: typeof CreateLabelExampleUploadResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.LabelService.AddLabelExample
+   */
+  addLabelExample: {
+    methodKind: "unary";
+    input: typeof AddLabelExampleRequestSchema;
+    output: typeof AddLabelExampleResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.LabelService.DeleteLabelExample
+   */
+  deleteLabelExample: {
+    methodKind: "unary";
+    input: typeof DeleteLabelExampleRequestSchema;
+    output: typeof DeleteLabelExampleResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_label, 0);
