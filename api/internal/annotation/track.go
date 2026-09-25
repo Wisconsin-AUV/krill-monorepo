@@ -2,8 +2,12 @@ package annotation
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/auth"
@@ -41,6 +45,34 @@ func (TrackArgs) Kind() string { return "track" }
 
 func (TrackArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: TrackQueue, MaxAttempts: 1}
+}
+
+// Tracking returns which of the tracks have a track job that has not finished.
+func Tracking(ctx context.Context, jobs *river.Client[pgx.Tx], trackIDs []int64) ([]int64, error) {
+	want := make(map[int64]bool, len(trackIDs))
+	for _, id := range trackIDs {
+		want[id] = true
+	}
+	params := river.NewJobListParams().
+		Kinds(TrackArgs{}.Kind()).
+		States(rivertype.JobStateAvailable, rivertype.JobStateRunning, rivertype.JobStateRetryable, rivertype.JobStateScheduled, rivertype.JobStatePending).
+		First(1000)
+	res, err := jobs.JobList(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("list track jobs: %w", err)
+	}
+	var out []int64
+	for _, job := range res.Jobs {
+		var args TrackArgs
+		if err := json.Unmarshal(job.EncodedArgs, &args); err != nil {
+			return nil, fmt.Errorf("decode job %d: %w", job.ID, err)
+		}
+		if want[args.TrackID] {
+			out = append(out, args.TrackID)
+			delete(want, args.TrackID)
+		}
+	}
+	return out, nil
 }
 
 func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectRequest) (*krillv1.TrackObjectResponse, error) {

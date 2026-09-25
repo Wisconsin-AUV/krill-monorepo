@@ -707,6 +707,8 @@ export const AnnotationService: GenService<{
     output: typeof CopyBoxesResponseSchema;
   },
   /**
+   * SetFrameStatus to labeled also accepts the frame's proposed boxes.
+   *
    * @generated from rpc krill.v1.AnnotationService.SetFrameStatus
    */
   setFrameStatus: {

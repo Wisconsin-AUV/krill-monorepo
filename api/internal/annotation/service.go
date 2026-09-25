@@ -301,11 +301,26 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 				errors.New("frame has boxes; delete them before marking it empty"))
 		}
 	}
-	saved, err := s.q.SetFrameStatus(ctx, db.SetFrameStatusParams{
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	saved, err := q.SetFrameStatus(ctx, db.SetFrameStatusParams{
 		ID: req.GetFrameId(), Status: status, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.DBError(err, "frame")
+	}
+	if status == "labeled" {
+		err := q.AcceptFrameProposals(ctx, db.AcceptFrameProposalsParams{FrameID: req.GetFrameId(), UserID: auth.CallerID(ctx)})
+		if err != nil {
+			return nil, rpc.Internal(err, "accept proposals")
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, saved.ClipID)
 	return &krillv1.SetFrameStatusResponse{Status: FrameStatus(saved.Status)}, nil

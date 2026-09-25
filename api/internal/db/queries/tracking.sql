@@ -36,3 +36,10 @@ WHERE annotations.status = 'proposed';
 -- name: DeleteTrackIfEmpty :execrows
 DELETE FROM tracks t
 WHERE t.id = $1 AND NOT EXISTS (SELECT 1 FROM annotations a WHERE a.track_id = t.id);
+
+-- name: AcceptFrameProposals :exec
+UPDATE annotations SET
+    status = 'verified',
+    updated_by = sqlc.arg('user_id')::uuid,
+    updated_at = now()
+WHERE frame_id = sqlc.arg('frame_id') AND status = 'proposed';

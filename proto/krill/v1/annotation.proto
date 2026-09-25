@@ -15,6 +15,7 @@ service AnnotationService {
   // CopyBoxes copies boxes from one frame to another in the same clip,
   // skipping tracks that already have a box on the target frame.
   rpc CopyBoxes(CopyBoxesRequest) returns (CopyBoxesResponse) {}
+  // SetFrameStatus to labeled also accepts the frame's proposed boxes.
   rpc SetFrameStatus(SetFrameStatusRequest) returns (SetFrameStatusResponse) {}
   // TrackObject segments an object from a point or box on one frame, then
   // tracks it through the rest of the clip on the GPU worker. Boxes are added

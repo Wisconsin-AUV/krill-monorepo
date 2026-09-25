@@ -7,7 +7,27 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
+
+const acceptFrameProposals = `-- name: AcceptFrameProposals :exec
+UPDATE annotations SET
+    status = 'verified',
+    updated_by = $1::uuid,
+    updated_at = now()
+WHERE frame_id = $2 AND status = 'proposed'
+`
+
+type AcceptFrameProposalsParams struct {
+	UserID  uuid.UUID `json:"user_id"`
+	FrameID int64     `json:"frame_id"`
+}
+
+func (q *Queries) AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error {
+	_, err := q.db.Exec(ctx, acceptFrameProposals, arg.UserID, arg.FrameID)
+	return err
+}
 
 const deleteTrackIfEmpty = `-- name: DeleteTrackIfEmpty :execrows
 DELETE FROM tracks t

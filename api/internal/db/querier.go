@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error

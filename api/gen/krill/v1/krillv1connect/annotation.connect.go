@@ -73,6 +73,7 @@ type AnnotationServiceClient interface {
 	// CopyBoxes copies boxes from one frame to another in the same clip,
 	// skipping tracks that already have a box on the target frame.
 	CopyBoxes(context.Context, *v1.CopyBoxesRequest) (*v1.CopyBoxesResponse, error)
+	// SetFrameStatus to labeled also accepts the frame's proposed boxes.
 	SetFrameStatus(context.Context, *v1.SetFrameStatusRequest) (*v1.SetFrameStatusResponse, error)
 	// TrackObject segments an object from a point or box on one frame, then
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added
@@ -240,6 +241,7 @@ type AnnotationServiceHandler interface {
 	// CopyBoxes copies boxes from one frame to another in the same clip,
 	// skipping tracks that already have a box on the target frame.
 	CopyBoxes(context.Context, *v1.CopyBoxesRequest) (*v1.CopyBoxesResponse, error)
+	// SetFrameStatus to labeled also accepts the frame's proposed boxes.
 	SetFrameStatus(context.Context, *v1.SetFrameStatusRequest) (*v1.SetFrameStatusResponse, error)
 	// TrackObject segments an object from a point or box on one frame, then
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added

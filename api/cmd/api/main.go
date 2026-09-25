@@ -140,7 +140,7 @@ func run() error {
 		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
 	}
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
-	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, jobs), rpcOpts))
