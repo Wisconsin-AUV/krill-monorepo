@@ -11,6 +11,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -81,6 +82,17 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 		annotations[i] = annotation.Annotation(a)
 	}
 
+	gold := map[int64]bool{}
+	if auth.CallerCan(ctx, krillv1.Permission_PERMISSION_REVIEW_LABELS) {
+		ids, err := s.q.ListClipGoldFrames(ctx, c.ID)
+		if err != nil {
+			return nil, rpc.Internal(err, "list gold frames")
+		}
+		for _, id := range ids {
+			gold[id] = true
+		}
+	}
+
 	frames := make([]*krillv1.Frame, len(rows))
 	for i, f := range rows {
 		url, err := s.present.FrameURL(ctx, v.ID, f.Idx)
@@ -93,6 +105,7 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 			TimestampMs: video.FrameMs(f.Idx, v.Fps),
 			Url:         url,
 			Status:      annotation.FrameStatus(f.Status),
+			Gold:        gold[f.ID],
 		}
 	}
 

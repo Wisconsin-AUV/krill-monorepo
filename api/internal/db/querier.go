@@ -34,6 +34,7 @@ type Querier interface {
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteExpiredSessions(ctx context.Context) error
+	DeleteGoldFrame(ctx context.Context, frameID int64) error
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
@@ -51,10 +52,12 @@ type Querier interface {
 	FailInterruptedIngests(ctx context.Context) (int64, error)
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	FramesSinceGoldCheck(ctx context.Context, userID uuid.UUID) (int32, error)
 	GetClip(ctx context.Context, id int64) (Clip, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
@@ -66,13 +69,17 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
+	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
+	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
+	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) error
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
+	ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64, error)
 	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
@@ -82,7 +89,10 @@ type Querier interface {
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
+	ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
+	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
+	ListGoldLabelers(ctx context.Context) ([]ListGoldLabelersRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
@@ -93,6 +103,10 @@ type Querier interface {
 	// that, clips come from the video with the fewest clips worked on, so labels
 	// spread across as much footage as possible.
 	NextClip(ctx context.Context, arg NextClipParams) (int64, error)
+	// Skips gold frames from clips the labeler worked on, since they may remember
+	// the answer. The order is shuffled per labeler but stable, so skipping a
+	// check does not hand out an easier one.
+	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error

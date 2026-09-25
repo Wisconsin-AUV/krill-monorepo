@@ -25,6 +25,7 @@ import (
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/export"
+	"github.com/wauv/krill/api/internal/gold"
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/queue"
@@ -148,6 +149,7 @@ func run() error {
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

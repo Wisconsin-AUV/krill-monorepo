@@ -17,6 +17,7 @@ const (
 	manageLabelTypes = krillv1.Permission_PERMISSION_MANAGE_LABEL_TYPES
 	manageExports    = krillv1.Permission_PERMISSION_MANAGE_EXPORTS
 	manageUsers      = krillv1.Permission_PERMISSION_MANAGE_USERS
+	reviewLabels     = krillv1.Permission_PERMISSION_REVIEW_LABELS
 )
 
 // policy is the permission each procedure needs. Procedures missing from it
@@ -64,6 +65,11 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.WorkerServiceNextTaskProcedure:    worker,
 	krillv1connect.WorkerServiceReportTrackProcedure: worker,
 	krillv1connect.WorkerServiceFailTaskProcedure:    worker,
+
+	krillv1connect.GoldServiceSetGoldFrameProcedure:    reviewLabels,
+	krillv1connect.GoldServiceGetGoldCheckProcedure:    label,
+	krillv1connect.GoldServiceSubmitGoldCheckProcedure: label,
+	krillv1connect.GoldServiceGetGoldStatsProcedure:    reviewLabels,
 
 	krillv1connect.StatsServiceGetLeaderboardProcedure: label,
 	krillv1connect.StatsServiceGetProfileProcedure:     label,
