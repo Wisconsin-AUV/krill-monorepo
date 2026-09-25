@@ -55,11 +55,16 @@ services:
       # RX 6600 is gfx1032; ROCm treats it as gfx1030 with this override.
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"
       KRILL_API_URL: http://api:8080
+      KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
+      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-facebook/sam2.1-hiera-small}
+      HF_TOKEN: ${HF_TOKEN:-}
     devices:
       - /dev/kfd
       - /dev/dri
+    volumes: [hfcache:/root/.cache/huggingface]
     depends_on: [api]
 
 volumes:
   pgdata:
   miniodata:
+  hfcache:

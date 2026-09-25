@@ -16,3 +16,4 @@ All notable changes to this project are documented here. The format follows
 - Accounts with password or Slack sign-in, and labeler, developer, and admin roles.
 - Leaderboards for today, this week, this month, and all time, and profiles with a contribution graph, streaks, and stats.
 - Home page for labelers with a clip queue, soft clip claims, personal stats, and per-clip progress for every video.
+- Click to track: the GPU worker tracks an object through the rest of a clip from a click or box with SAM 2.1, and saves its boxes as proposals.

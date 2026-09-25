@@ -20,6 +20,8 @@ docker compose -f deploy/docker-compose.yml --profile app --profile gpu up -d
 
 Build the worker for CUDA Nvidia with `just build-worker-cuda`.
 
+The GPU worker authenticates with `KRILL_WORKER_TOKEN`, which must be set for both the API and the worker. It runs SAM 2.1 by default. To use SAM 3, request access to [facebook/sam3](https://huggingface.co/facebook/sam3), then set `HF_TOKEN` and `KRILL_SAM_MODEL=facebook/sam3`.
+
 The API image bundles the web app, so the full stack is served from `:8080`. Set `KRILL_S3_PUBLIC_ENDPOINT` to a MinIO address browsers can reach when it is not `localhost:9000`.
 
 ## Accounts
