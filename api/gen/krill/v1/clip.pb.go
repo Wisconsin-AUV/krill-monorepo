@@ -153,8 +153,10 @@ type GetClipResponse struct {
 	NextClipId     int64         `protobuf:"varint,5,opt,name=next_clip_id,json=nextClipId,proto3" json:"next_clip_id,omitempty"`
 	Tracks         []*Track      `protobuf:"bytes,6,rep,name=tracks,proto3" json:"tracks,omitempty"`
 	Annotations    []*Annotation `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Tracks the GPU worker has queued or is still tracking.
+	TrackingTrackIds []int64 `protobuf:"varint,8,rep,packed,name=tracking_track_ids,json=trackingTrackIds,proto3" json:"tracking_track_ids,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetClipResponse) Reset() {
@@ -236,6 +238,13 @@ func (x *GetClipResponse) GetAnnotations() []*Annotation {
 	return nil
 }
 
+func (x *GetClipResponse) GetTrackingTrackIds() []int64 {
+	if x != nil {
+		return x.TrackingTrackIds
+	}
+	return nil
+}
+
 var File_krill_v1_clip_proto protoreflect.FileDescriptor
 
 const file_krill_v1_clip_proto_rawDesc = "" +
@@ -248,7 +257,7 @@ const file_krill_v1_clip_proto_rawDesc = "" +
 	"\x03url\x18\x04 \x01(\tR\x03url\x12-\n" +
 	"\x06status\x18\x05 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\" \n" +
 	"\x0eGetClipRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\xb2\x02\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\xe0\x02\n" +
 	"\x0fGetClipResponse\x12%\n" +
 	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12\"\n" +
 	"\x04clip\x18\x02 \x01(\v2\x0e.krill.v1.ClipR\x04clip\x12'\n" +
@@ -257,7 +266,8 @@ const file_krill_v1_clip_proto_rawDesc = "" +
 	"\fnext_clip_id\x18\x05 \x01(\x03R\n" +
 	"nextClipId\x12'\n" +
 	"\x06tracks\x18\x06 \x03(\v2\x0f.krill.v1.TrackR\x06tracks\x126\n" +
-	"\vannotations\x18\a \x03(\v2\x14.krill.v1.AnnotationR\vannotations2O\n" +
+	"\vannotations\x18\a \x03(\v2\x14.krill.v1.AnnotationR\vannotations\x12,\n" +
+	"\x12tracking_track_ids\x18\b \x03(\x03R\x10trackingTrackIds2O\n" +
 	"\vClipService\x12@\n" +
 	"\aGetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tClipProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"

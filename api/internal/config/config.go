@@ -31,6 +31,8 @@ type Config struct {
 	SlackClientID     string
 	SlackClientSecret string
 	SlackTeamID       string
+	// WorkerToken authenticates the GPU worker. Empty turns worker RPCs off.
+	WorkerToken string
 }
 
 func Load() (Config, error) {
@@ -47,6 +49,7 @@ func Load() (Config, error) {
 		SlackClientID:     os.Getenv("KRILL_SLACK_CLIENT_ID"),
 		SlackClientSecret: os.Getenv("KRILL_SLACK_CLIENT_SECRET"),
 		SlackTeamID:       os.Getenv("KRILL_SLACK_TEAM_ID"),
+		WorkerToken:       os.Getenv("KRILL_WORKER_TOKEN"),
 	}
 	if cfg.TeamName = strings.TrimSpace(os.Getenv("KRILL_TEAM_NAME")); cfg.TeamName == "" {
 		cfg.TeamName = "Wisconsin Autonomous Underwater Vehicles"

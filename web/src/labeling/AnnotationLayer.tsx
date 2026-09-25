@@ -1,7 +1,7 @@
 import type Konva from 'konva'
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { Group, Label, Rect, Tag, Text, Transformer } from 'react-konva'
-import type { Annotation, Track } from '@/gen/krill/v1/annotation_pb'
+import { AnnotationStatus, type Annotation, type Track } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { missingAttributes, withAlpha } from '@/lib/labels'
 import type { Size } from '@/workspace/useWorkspaceStore'
@@ -113,11 +113,12 @@ export function AnnotationLayer({
           const info = tracks.get(idKey(a.trackId))
           const color = info?.type?.color ?? FALLBACK_COLOR
           const selected = a.trackId === selectedTrackId
+          const proposed = a.status === AnnotationStatus.PROPOSED
           const p = toPixels(a.box!, imageSize)
           const missing = info
             ? missingAttributes(info.type, info.track.attributes).length > 0
             : false
-          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${missing ? ' ⚠' : ''}`
+          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${proposed ? ' (SAM)' : ''}${missing ? ' ⚠' : ''}`
           return (
             <Fragment key={idKey(a.trackId)}>
               <Rect
@@ -125,6 +126,7 @@ export function AnnotationLayer({
                 {...p}
                 stroke={color}
                 strokeWidth={selected ? 3 : 2}
+                dash={proposed ? [6, 4] : undefined}
                 fill={withAlpha(color, selected ? 0.18 : 0.06)}
                 strokeScaleEnabled={false}
                 draggable

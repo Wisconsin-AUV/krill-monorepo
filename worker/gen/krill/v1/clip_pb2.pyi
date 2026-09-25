@@ -29,7 +29,7 @@ class GetClipRequest(_message.Message):
     def __init__(self, id: _Optional[int] = ...) -> None: ...
 
 class GetClipResponse(_message.Message):
-    __slots__ = ("video", "clip", "frames", "previous_clip_id", "next_clip_id", "tracks", "annotations")
+    __slots__ = ("video", "clip", "frames", "previous_clip_id", "next_clip_id", "tracks", "annotations", "tracking_track_ids")
     VIDEO_FIELD_NUMBER: _ClassVar[int]
     CLIP_FIELD_NUMBER: _ClassVar[int]
     FRAMES_FIELD_NUMBER: _ClassVar[int]
@@ -37,6 +37,7 @@ class GetClipResponse(_message.Message):
     NEXT_CLIP_ID_FIELD_NUMBER: _ClassVar[int]
     TRACKS_FIELD_NUMBER: _ClassVar[int]
     ANNOTATIONS_FIELD_NUMBER: _ClassVar[int]
+    TRACKING_TRACK_IDS_FIELD_NUMBER: _ClassVar[int]
     video: _video_pb2.Video
     clip: _video_pb2.Clip
     frames: _containers.RepeatedCompositeFieldContainer[Frame]
@@ -44,4 +45,5 @@ class GetClipResponse(_message.Message):
     next_clip_id: int
     tracks: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Track]
     annotations: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Annotation]
-    def __init__(self, video: _Optional[_Union[_video_pb2.Video, _Mapping]] = ..., clip: _Optional[_Union[_video_pb2.Clip, _Mapping]] = ..., frames: _Optional[_Iterable[_Union[Frame, _Mapping]]] = ..., previous_clip_id: _Optional[int] = ..., next_clip_id: _Optional[int] = ..., tracks: _Optional[_Iterable[_Union[_annotation_pb2.Track, _Mapping]]] = ..., annotations: _Optional[_Iterable[_Union[_annotation_pb2.Annotation, _Mapping]]] = ...) -> None: ...
+    tracking_track_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, video: _Optional[_Union[_video_pb2.Video, _Mapping]] = ..., clip: _Optional[_Union[_video_pb2.Clip, _Mapping]] = ..., frames: _Optional[_Iterable[_Union[Frame, _Mapping]]] = ..., previous_clip_id: _Optional[int] = ..., next_clip_id: _Optional[int] = ..., tracks: _Optional[_Iterable[_Union[_annotation_pb2.Track, _Mapping]]] = ..., annotations: _Optional[_Iterable[_Union[_annotation_pb2.Annotation, _Mapping]]] = ..., tracking_track_ids: _Optional[_Iterable[int]] = ...) -> None: ...

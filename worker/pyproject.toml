@@ -5,7 +5,7 @@ description = "GPU worker for the Krill labeling tool: SAM, YOLO, and classic CV
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "numpy>=2.0",
+    "numpy>=1.26",
     "opencv-python-headless>=4.10",
     "protobuf>=5.28",
 ]
@@ -24,6 +24,7 @@ dev = [
     "mypy>=1.13",
     "pytest>=8.3",
     "ruff>=0.8",
+    "types-protobuf>=5.28",
 ]
 
 [build-system]
@@ -48,7 +49,7 @@ mypy_path = "src:gen"
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
-module = ["cv2.*", "ultralytics.*", "transformers.*"]
+module = ["cv2.*", "ultralytics.*", "transformers.*", "torch.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

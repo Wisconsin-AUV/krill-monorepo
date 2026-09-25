@@ -31,6 +31,7 @@ import (
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
+	"github.com/wauv/krill/api/internal/tracker"
 	"github.com/wauv/krill/api/internal/user"
 	"github.com/wauv/krill/api/internal/video"
 	"github.com/wauv/krill/api/internal/web"
@@ -97,14 +98,17 @@ func run() error {
 		return err
 	}
 
+	dispatcher := tracker.NewDispatcher()
 	workers := river.NewWorkers()
 	river.AddWorker(workers, ingest.NewWorker(pool, store))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
+	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
-			river.QueueDefault: {MaxWorkers: 2},
-			ingest.Queue:       {MaxWorkers: 1},
+			river.QueueDefault:    {MaxWorkers: 2},
+			ingest.Queue:          {MaxWorkers: 1},
+			annotation.TrackQueue: {MaxWorkers: 1},
 		},
 		Workers: workers,
 	})
@@ -116,7 +120,7 @@ func run() error {
 	}
 
 	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
-	rpcOpts := connect.WithInterceptors(auth.NewInterceptor(db.New(pool).GetSessionUser))
+	rpcOpts := connect.WithInterceptors(auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken))
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
@@ -136,10 +140,11 @@ func run() error {
 		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
 	}
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
-	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool), rpcOpts))
-	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))

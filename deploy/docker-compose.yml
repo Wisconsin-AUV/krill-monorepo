@@ -15,7 +15,7 @@ services:
       retries: 10
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     command: server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: krill
@@ -40,6 +40,7 @@ services:
       KRILL_SLACK_CLIENT_ID: ${KRILL_SLACK_CLIENT_ID:-}
       KRILL_SLACK_CLIENT_SECRET: ${KRILL_SLACK_CLIENT_SECRET:-}
       KRILL_SLACK_TEAM_ID: ${KRILL_SLACK_TEAM_ID:-}
+      KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -54,12 +55,16 @@ services:
       # RX 6600 is gfx1032; ROCm treats it as gfx1030 with this override.
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"
       KRILL_API_URL: http://api:8080
+      KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
+      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-facebook/sam2.1-hiera-small}
+      HF_TOKEN: ${HF_TOKEN:-}
     devices:
       - /dev/kfd
       - /dev/dri
-    group_add: [video, render]
+    volumes: [hfcache:/root/.cache/huggingface]
     depends_on: [api]
 
 volumes:
   pgdata:
   miniodata:
+  hfcache:

@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
@@ -19,10 +21,11 @@ type Service struct {
 	krillv1connect.UnimplementedClipServiceHandler
 	q       *db.Queries
 	present *video.Presenter
+	jobs    *river.Client[pgx.Tx]
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
-	return &Service{q: db.New(pool), present: video.NewPresenter(store)}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
+	return &Service{q: db.New(pool), present: video.NewPresenter(store), jobs: jobs}
 }
 
 func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*krillv1.GetClipResponse, error) {
@@ -96,15 +99,25 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	out := s.present.Clip(ctx, v, c, video.Stats{LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount})
 	out.Claim = video.Claims(claimRows, time.Now())[c.ID]
 
+	trackIDs := make([]int64, len(trackRows))
+	for i, t := range trackRows {
+		trackIDs[i] = t.ID
+	}
+	tracking, err := annotation.Tracking(ctx, s.jobs, trackIDs)
+	if err != nil {
+		return nil, rpc.Internal(err, "load tracking")
+	}
+
 	return &krillv1.GetClipResponse{
 		Video: s.present.Video(ctx, v, video.Stats{
 			Clips: clipCount, LabeledFrames: videoStats.LabeledFrameCount, Boxes: videoStats.BoxCount,
 		}),
-		Clip:           out,
-		Tracks:         tracks,
-		Annotations:    annotations,
-		Frames:         frames,
-		PreviousClipId: neighbours.PreviousID,
-		NextClipId:     neighbours.NextID,
+		Clip:             out,
+		Tracks:           tracks,
+		Annotations:      annotations,
+		Frames:           frames,
+		PreviousClipId:   neighbours.PreviousID,
+		NextClipId:       neighbours.NextID,
+		TrackingTrackIds: tracking,
 	}, nil
 }

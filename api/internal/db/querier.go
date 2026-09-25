@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
@@ -36,6 +37,9 @@ type Querier interface {
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
+	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
+	// Clears what an earlier run proposed on frames the new run covers.
+	DeleteTrackProposalsFrom(ctx context.Context, arg DeleteTrackProposalsFromParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
@@ -74,6 +78,7 @@ type Querier interface {
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
+	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
@@ -103,6 +108,8 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
+	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
+	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
 	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)

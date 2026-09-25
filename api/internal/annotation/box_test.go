@@ -24,14 +24,14 @@ func TestClampBox(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			x, y, w, h, err := clampBox(tt.in)
+			x, y, w, h, err := ClampBox(tt.in)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("err = %v, wantErr %v", err, tt.wantErr)
 			}
 			got := [4]float64{x, y, w, h}
 			for i := range got {
 				if math.Abs(got[i]-tt.want[i]) > 1e-9 {
-					t.Fatalf("clampBox = %v, want %v", got, tt.want)
+					t.Fatalf("ClampBox = %v, want %v", got, tt.want)
 				}
 			}
 		})

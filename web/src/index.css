@@ -13,4 +13,16 @@
 @theme {
   --font-sans: InterVariable, ui-sans-serif, system-ui, sans-serif;
   --font-sans--font-feature-settings: 'cv11';
+
+  --animate-dot-wave: dot-wave 1.4s ease-in-out infinite;
+
+  @keyframes dot-wave {
+    0%,
+    100% {
+      scale: 1;
+    }
+    50% {
+      scale: 0.35;
+    }
+  }
 }

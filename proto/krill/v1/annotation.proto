@@ -15,7 +15,12 @@ service AnnotationService {
   // CopyBoxes copies boxes from one frame to another in the same clip,
   // skipping tracks that already have a box on the target frame.
   rpc CopyBoxes(CopyBoxesRequest) returns (CopyBoxesResponse) {}
+  // SetFrameStatus to labeled also accepts the frame's proposed boxes.
   rpc SetFrameStatus(SetFrameStatusRequest) returns (SetFrameStatusResponse) {}
+  // TrackObject segments an object from a point or box on one frame, then
+  // tracks it through the rest of the clip on the GPU worker. Boxes are added
+  // to the track as proposals while tracking runs.
+  rpc TrackObject(TrackObjectRequest) returns (TrackObjectResponse) {}
 }
 
 enum FrameStatus {
@@ -48,6 +53,12 @@ message Box {
   double y = 2;
   double width = 3;
   double height = 4;
+}
+
+// Point is normalized to the frame size, with the origin at the top left.
+message Point {
+  double x = 1;
+  double y = 2;
 }
 
 message Track {
@@ -136,4 +147,22 @@ message SetFrameStatusRequest {
 
 message SetFrameStatusResponse {
   FrameStatus status = 1;
+}
+
+message TrackObjectRequest {
+  int64 frame_id = 1;
+  // Track to retrack from this frame. When 0, a new track of label_type_id is
+  // created.
+  int64 track_id = 2;
+  int64 label_type_id = 3;
+  map<string, string> attributes = 4;
+  oneof prompt {
+    Point point = 5;
+    // Saved as the track's box on this frame before tracking.
+    Box box = 6;
+  }
+}
+
+message TrackObjectResponse {
+  Track track = 1;
 }

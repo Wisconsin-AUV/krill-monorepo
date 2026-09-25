@@ -71,7 +71,7 @@ func TestInterceptor(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewLabelServiceHandler(labelStub{},
-		connect.WithInterceptors(NewInterceptor(lookup))))
+		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -102,6 +102,60 @@ func TestInterceptor(t *testing.T) {
 			}
 		})
 	}
+}
+
+type workerStub struct {
+	krillv1connect.UnimplementedWorkerServiceHandler
+}
+
+func (workerStub) NextTask(context.Context, *krillv1.NextTaskRequest) (*krillv1.NextTaskResponse, error) {
+	return &krillv1.NextTaskResponse{}, nil
+}
+
+func TestInterceptorWorker(t *testing.T) {
+	lookup := func(context.Context, []byte) (db.User, error) { return db.User{Role: "admin"}, nil }
+	tests := []struct {
+		name       string
+		configured string
+		header     string
+		want       connect.Code
+	}{
+		{"valid token", "worker-token", "Bearer worker-token", 0},
+		{"wrong token", "worker-token", "Bearer nope", connect.CodeUnauthenticated},
+		{"no token", "worker-token", "", connect.CodeUnauthenticated},
+		{"user session", "worker-token", "", connect.CodeUnauthenticated},
+		{"token not configured", "", "Bearer ", connect.CodeUnauthenticated},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			mux.Handle(krillv1connect.NewWorkerServiceHandler(workerStub{},
+				connect.WithInterceptors(NewInterceptor(lookup, tt.configured))))
+			srv := httptest.NewServer(mux)
+			defer srv.Close()
+
+			opts := []connect.ClientOption{withHeader("Authorization", tt.header)}
+			if tt.name == "user session" {
+				opts = append(opts, withCookie("admin-token"))
+			}
+			client := krillv1connect.NewWorkerServiceClient(srv.Client(), srv.URL, opts...)
+			_, err := client.NextTask(t.Context(), &krillv1.NextTaskRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("err = %v, want code %v", err, tt.want)
+			}
+		})
+	}
+}
+
+func withHeader(key, value string) connect.ClientOption {
+	return connect.WithInterceptors(connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			if value != "" {
+				req.Header().Set(key, value)
+			}
+			return next(ctx, req)
+		}
+	}))
 }
 
 func withCookie(token string) connect.ClientOption {

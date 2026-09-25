@@ -50,6 +50,7 @@ import { TypePanel } from '@/labeling/TypePanel'
 import { frameState } from '@/labeling/frameStatus'
 import { frameShortcuts, labelingShortcuts } from '@/labeling/shortcuts'
 import { idKey, useLabelStore } from '@/labeling/useLabelStore'
+import { useTrackingPoll } from '@/labeling/useTrackingPoll'
 import { ShortcutsDialog } from '@/workspace/ShortcutsDialog'
 import { Timeline } from '@/workspace/Timeline'
 import { navigationShortcuts, viewShortcuts } from '@/workspace/shortcuts'
@@ -157,6 +158,7 @@ export function ClipPage() {
   usePrefetchNeighbours(switching ? undefined : data)
   const { data: typeData } = useQuery(LabelService.method.listLabelTypes, {})
   useClipState(data, switching)
+  useTrackingPoll(switching ? undefined : data?.clip?.id)
   usePlayback(data?.video?.fps ?? 0)
 
   const types = useMemo(() => typeData?.labelTypes ?? [], [typeData])
@@ -283,6 +285,11 @@ export function ClipPage() {
             const n = await labels().copyBoxes(frames[index - 1].id, frame.id)
             if (n === 0)
               flash.error('Nothing to copy', 'Every box on the previous frame is already here.')
+          },
+          r: () => {
+            if (!frame || selectedTrackId === null) return
+            const box = boxes[idKey(frame.id)]?.[idKey(selectedTrackId)]?.box
+            if (box) void labels().trackObject(frame.id, { box }, selectedTrackId)
           },
           h: () => labels().toggleHidden(),
           ' ': () => void mark(FrameStatus.LABELED, true),

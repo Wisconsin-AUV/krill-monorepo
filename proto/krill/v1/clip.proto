@@ -33,4 +33,6 @@ message GetClipResponse {
   int64 next_clip_id = 5;
   repeated Track tracks = 6;
   repeated Annotation annotations = 7;
+  // Tracks the GPU worker has queued or is still tracking.
+  repeated int64 tracking_track_ids = 8;
 }

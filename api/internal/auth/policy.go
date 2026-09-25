@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	// public procedures need no session, and signedIn ones need any account.
+	// public procedures need no session, signedIn ones need any account, and
+	// worker ones need the worker token.
 	public   krillv1.Permission = -1
+	worker   krillv1.Permission = -2
 	signedIn                    = krillv1.Permission_PERMISSION_UNSPECIFIED
 
 	label            = krillv1.Permission_PERMISSION_LABEL
@@ -54,6 +56,11 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AnnotationServiceDeleteBoxProcedure:      label,
 	krillv1connect.AnnotationServiceCopyBoxesProcedure:      label,
 	krillv1connect.AnnotationServiceSetFrameStatusProcedure: label,
+	krillv1connect.AnnotationServiceTrackObjectProcedure:    label,
+
+	krillv1connect.WorkerServiceNextTaskProcedure:    worker,
+	krillv1connect.WorkerServiceReportTrackProcedure: worker,
+	krillv1connect.WorkerServiceFailTaskProcedure:    worker,
 
 	krillv1connect.StatsServiceGetLeaderboardProcedure: label,
 	krillv1connect.StatsServiceGetProfileProcedure:     label,
