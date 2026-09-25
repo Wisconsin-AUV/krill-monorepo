@@ -8,8 +8,6 @@ import {
   EyeIcon,
   EyeSlashIcon,
   NoSymbolIcon,
-  PauseIcon,
-  PlayIcon,
   QuestionMarkCircleIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
@@ -404,9 +402,6 @@ export function ClipPage() {
         <span className="text-sm/6 text-zinc-500 tabular-nums dark:text-zinc-400">
           Frame <span className="text-zinc-950 dark:text-white">{index + 1}</span> / {frames.length}
         </span>
-        <NavbarItem aria-label={playing ? 'Pause' : 'Play'} onClick={() => setPlaying(!playing)}>
-          {playing ? <PauseIcon data-slot="icon" /> : <PlayIcon data-slot="icon" />}
-        </NavbarItem>
         <NavbarItem
           aria-label={hideBoxes ? 'Show boxes' : 'Hide boxes'}
           title="Hide boxes (H)"

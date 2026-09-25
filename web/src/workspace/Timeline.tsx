@@ -1,7 +1,12 @@
+import { ChevronLeftIcon, ChevronRightIcon, PauseIcon, PlayIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
+import { Button } from '@/components/ui/Button'
 import { formatFrameTime } from '@/lib/format'
 import { useWorkspaceStore } from './useWorkspaceStore'
+
+// Past this many frames the gaps between segments blur into noise.
+const MAX_SEGMENT_GAPS = 150
 
 export function Timeline({
   frameClass,
@@ -12,7 +17,10 @@ export function Timeline({
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
+  const playing = useWorkspaceStore((s) => s.playing)
   const seek = useWorkspaceStore((s) => s.seek)
+  const step = useWorkspaceStore((s) => s.step)
+  const setPlaying = useWorkspaceStore((s) => s.setPlaying)
   const track = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number | null>(null)
   const n = frames.length
@@ -24,24 +32,30 @@ export function Timeline({
   }
 
   if (n === 0) return null
-  const first = frames[0]
   const last = frames[n - 1]
   const current = frames[index]
+  const center = (i: number) => `${((i + 0.5) / n) * 100}%`
 
   return (
-    <div className="border-t border-zinc-950/10 bg-white px-4 pt-2 pb-3 select-none dark:border-white/10 dark:bg-zinc-900">
-      <div className="mb-1.5 flex justify-between text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
-        <span>{formatFrameTime(first.timestampMs)}</span>
-        <span className="text-zinc-800 dark:text-zinc-200">
-          {current && `${formatFrameTime(current.timestampMs)} · frame ${current.index}`}
-        </span>
-        <span>{formatFrameTime(last.timestampMs)}</span>
+    <div className="flex items-center gap-3 border-t border-zinc-950/10 bg-white px-3 py-2 select-none dark:border-white/10 dark:bg-zinc-900">
+      <div className="flex items-center">
+        <Button plain title="Previous frame (J)" disabled={index === 0} onClick={() => step(-1)}>
+          <ChevronLeftIcon data-slot="icon" />
+        </Button>
+        <Button plain title="Play or pause (P)" onClick={() => setPlaying(!playing)}>
+          {playing ? <PauseIcon data-slot="icon" /> : <PlayIcon data-slot="icon" />}
+        </Button>
+        <Button plain title="Next frame (K)" disabled={index === n - 1} onClick={() => step(1)}>
+          <ChevronRightIcon data-slot="icon" />
+        </Button>
       </div>
+
       <div
         ref={track}
-        className="relative h-8 cursor-pointer touch-none"
+        className="group relative h-10 flex-1 cursor-pointer touch-none"
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
+          setPlaying(false)
           seek(positionAt(e.clientX))
         }}
         onPointerMove={(e) => {
@@ -60,34 +74,57 @@ export function Timeline({
           tabIndex={-1}
           className="sr-only"
         />
-        <div className="absolute inset-y-2 left-0 flex w-full overflow-hidden rounded bg-zinc-200 dark:bg-zinc-800">
-          {frameClass &&
-            frames.map((f, i) => (
-              <div key={String(f.id)} className={clsx('h-full flex-1', frameClass(i))} />
-            ))}
+        <div
+          className={clsx(
+            'absolute inset-x-0 top-2 flex h-5 overflow-hidden rounded-md',
+            n <= MAX_SEGMENT_GAPS && 'gap-px',
+          )}
+        >
+          {frames.map((f, i) => (
+            <div
+              key={String(f.id)}
+              className={clsx(
+                'h-full flex-1 transition-opacity',
+                frameClass?.(i) || 'bg-zinc-200 dark:bg-zinc-800',
+                hover === i && 'opacity-70',
+              )}
+            />
+          ))}
         </div>
         {trackClass && (
-          <div className="absolute bottom-0 left-0 flex h-1 w-full overflow-hidden rounded-full">
+          <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
             {frames.map((f, i) => (
               <div key={String(f.id)} className={clsx('h-full flex-1', trackClass(i))} />
             ))}
           </div>
         )}
+
         {hover !== null && hover !== index && (
           <div
-            className="pointer-events-none absolute inset-y-1 w-px bg-zinc-950/30 dark:bg-white/30"
-            style={{ left: `${((hover + 0.5) / n) * 100}%` }}
+            className="pointer-events-none absolute bottom-full z-10 mb-2 -translate-x-1/2 overflow-hidden rounded-md bg-zinc-900 shadow-lg ring-1 ring-white/10"
+            style={{ left: center(hover) }}
           >
-            <span className="absolute -top-6 -translate-x-1/2 rounded bg-zinc-700 px-1.5 py-0.5 text-[11px] whitespace-nowrap text-zinc-950 tabular-nums dark:text-white">
-              {frames[hover].index}
-            </span>
+            <img src={frames[hover].url} alt="" className="block w-40" />
+            <div className="px-2 py-1 text-center text-[11px] whitespace-nowrap text-zinc-300 tabular-nums">
+              {formatFrameTime(frames[hover].timestampMs)} · frame {hover + 1}
+            </div>
           </div>
         )}
+
         <div
-          className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 rounded-full bg-sky-500 shadow-[0_0_0_2px] shadow-white dark:bg-sky-400 dark:shadow-zinc-900"
-          style={{ left: `${((index + 0.5) / n) * 100}%` }}
-        />
+          className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-sky-500 dark:bg-sky-400"
+          style={{ left: center(index) }}
+        >
+          <div className="absolute -top-1 left-1/2 size-3 -translate-x-1/2 rounded-full bg-sky-500 ring-2 ring-white dark:bg-sky-400 dark:ring-zinc-900" />
+        </div>
       </div>
+
+      <span className="w-28 text-right text-xs/5 text-zinc-500 tabular-nums dark:text-zinc-400">
+        <span className="text-zinc-950 dark:text-white">
+          {current && formatFrameTime(current.timestampMs)}
+        </span>{' '}
+        / {formatFrameTime(last.timestampMs)}
+      </span>
     </div>
   )
 }
