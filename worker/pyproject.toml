@@ -5,7 +5,7 @@ description = "GPU worker for the Krill labeling tool: SAM, YOLO, and classic CV
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "numpy>=2.0",
+    "numpy>=1.26",
     "opencv-python-headless>=4.10",
     "protobuf>=5.28",
 ]

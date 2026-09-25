@@ -58,7 +58,6 @@ services:
     devices:
       - /dev/kfd
       - /dev/dri
-    group_add: [video, render]
     depends_on: [api]
 
 volumes:
