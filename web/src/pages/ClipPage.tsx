@@ -46,6 +46,7 @@ import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
 import { TypePanel } from '@/labeling/TypePanel'
 import { frameState } from '@/labeling/frameStatus'
+import { reviewTracks } from '@/labeling/review'
 import { frameShortcuts, labelingShortcuts } from '@/labeling/shortcuts'
 import { idKey, useLabelStore } from '@/labeling/useLabelStore'
 import { useTrackingPoll } from '@/labeling/useTrackingPoll'
@@ -195,6 +196,8 @@ export function ClipPage() {
     return out
   }, [trackMap, types])
 
+  const review = useMemo(() => reviewTracks(frames, boxes), [frames, boxes])
+
   const typeCounts = useMemo(() => {
     const counts = new Map<bigint, number>()
     for (const t of Object.values(trackMap))
@@ -233,6 +236,17 @@ export function ClipPage() {
       if (index < frames.length - 1) step(1)
       else flash.success('Last frame of the clip')
     }
+  }
+
+  function nextDrift() {
+    for (let d = 1; d <= frames.length; d++) {
+      const i = (index + d) % frames.length
+      if (review.drift.has(idKey(frames[i].id))) {
+        seek(i)
+        return
+      }
+    }
+    flash.success('No drifted boxes in this clip')
   }
 
   function cycleSelection(delta: number) {
@@ -290,6 +304,7 @@ export function ClipPage() {
             if (box) void labels().trackObject(frame.id, { box }, selectedTrackId)
           },
           h: () => labels().toggleHidden(),
+          d: nextDrift,
           ' ': () => void mark(FrameStatus.LABELED, true),
           e: () => void mark(FrameStatus.EMPTY, true),
           u: () => void mark(FrameStatus.UNLABELED, false),
@@ -448,14 +463,14 @@ export function ClipPage() {
         <div className="flex min-h-0 flex-1">
           <TypePanel types={types} counts={typeCounts} />
           <main className="relative min-w-0 flex-1 bg-zinc-950 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]">
-            <LabelCanvas tracks={tracks} types={types} />
+            <LabelCanvas tracks={tracks} types={types} drift={review.drift} />
             {switching && (
               <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/40">
                 <LoadingSpinner />
               </div>
             )}
           </main>
-          <TrackPanel tracks={tracks} types={types} />
+          <TrackPanel tracks={tracks} types={types} unconfirmed={review.unconfirmed} />
         </div>
 
         <Timeline
@@ -473,6 +488,7 @@ export function ClipPage() {
                     : undefined
               : undefined
           }
+          flagged={(i) => review.drift.has(idKey(frames[i].id))}
         />
         <ShortcutsDialog
           open={showHelp}

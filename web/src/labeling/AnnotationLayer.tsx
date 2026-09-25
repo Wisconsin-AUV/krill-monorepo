@@ -9,6 +9,7 @@ import { idKey, useLabelStore, type BoxRect } from './useLabelStore'
 
 const MIN_SIDE_PX = 3
 const FALLBACK_COLOR = '#a1a1aa'
+const DRIFT_COLOR = '#f43f5e'
 
 function toPixels(box: BoxRect, size: Size) {
   return {
@@ -42,6 +43,7 @@ export function AnnotationLayer({
   imageSize,
   scale,
   tracks,
+  drifted,
   draft,
   draftColor,
   pointer,
@@ -51,6 +53,7 @@ export function AnnotationLayer({
   imageSize: Size
   scale: number
   tracks: Map<string, TrackInfo>
+  drifted?: Set<string>
   draft: BoxRect | null
   draftColor: string
   pointer: { x: number; y: number } | null
@@ -114,17 +117,18 @@ export function AnnotationLayer({
           const color = info?.type?.color ?? FALLBACK_COLOR
           const selected = a.trackId === selectedTrackId
           const proposed = a.status === AnnotationStatus.PROPOSED
+          const drift = proposed && !!drifted?.has(idKey(a.trackId))
           const p = toPixels(a.box!, imageSize)
           const missing = info
             ? missingAttributes(info.type, info.track.attributes).length > 0
             : false
-          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${proposed ? ' (SAM)' : ''}${missing ? ' ⚠' : ''}`
+          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${drift ? ' (drift?)' : proposed ? ' (SAM)' : ''}${missing ? ' ⚠' : ''}`
           return (
             <Fragment key={idKey(a.trackId)}>
               <Rect
                 ref={selected ? selectedRect : undefined}
                 {...p}
-                stroke={color}
+                stroke={drift ? DRIFT_COLOR : color}
                 strokeWidth={selected ? 3 : 2}
                 dash={proposed ? [6, 4] : undefined}
                 fill={withAlpha(color, selected ? 0.18 : 0.06)}
@@ -154,7 +158,7 @@ export function AnnotationLayer({
                 offsetY={20}
                 listening={false}
               >
-                <Tag fill={color} cornerRadius={3} />
+                <Tag fill={drift ? DRIFT_COLOR : color} cornerRadius={3} />
                 <Text text={caption} fontSize={12} fontStyle="600" padding={4} fill="#09090b" />
               </Label>
             </Fragment>

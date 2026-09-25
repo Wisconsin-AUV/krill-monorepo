@@ -24,5 +24,6 @@ export const frameShortcuts: ShortcutGroup = {
     { keys: ['Space'], label: 'Mark labeled, accept tracked boxes, and go to next frame' },
     { keys: ['E'], label: 'Mark empty and go to next frame' },
     { keys: ['U'], label: 'Mark unlabeled' },
+    { keys: ['D'], label: 'Next frame with a drifted box' },
   ],
 }

@@ -5,6 +5,7 @@ import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { FrameCanvas } from '@/workspace/FrameCanvas'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import { AnnotationLayer, type TrackInfo } from './AnnotationLayer'
+import type { TrackReview } from './review'
 import { TrackingShimmer } from './TrackingShimmer'
 import { idKey, useLabelStore, type BoxRect } from './useLabelStore'
 
@@ -26,9 +27,11 @@ function normalize(
 export function LabelCanvas({
   tracks,
   types,
+  drift,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
+  drift: TrackReview['drift']
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -138,6 +141,7 @@ export function LabelCanvas({
             imageSize={imageSize}
             scale={view.scale}
             tracks={tracks}
+            drifted={drift.get(idKey(frame.id))}
             draft={draft}
             draftColor={drawType?.color ?? '#a1a1aa'}
             pointer={drawType ? pointer : null}
