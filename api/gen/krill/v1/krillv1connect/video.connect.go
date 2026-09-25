@@ -53,8 +53,9 @@ const (
 
 // VideoServiceClient is a client for the krill.v1.VideoService service.
 type VideoServiceClient interface {
-	// CreateVideo registers a video and returns a presigned URL the browser
-	// uploads the file to. Call StartIngest once the upload finishes.
+	// CreateVideo registers a video and starts a multipart upload. The browser
+	// PUTs each part_size chunk of the file to the matching part URL, then
+	// calls StartIngest with the upload ID.
 	CreateVideo(context.Context, *v1.CreateVideoRequest) (*v1.CreateVideoResponse, error)
 	// StartIngest queues frame extraction. It also retries a failed ingest.
 	StartIngest(context.Context, *v1.StartIngestRequest) (*v1.StartIngestResponse, error)
@@ -180,8 +181,9 @@ func (c *videoServiceClient) DeleteVideo(ctx context.Context, req *v1.DeleteVide
 
 // VideoServiceHandler is an implementation of the krill.v1.VideoService service.
 type VideoServiceHandler interface {
-	// CreateVideo registers a video and returns a presigned URL the browser
-	// uploads the file to. Call StartIngest once the upload finishes.
+	// CreateVideo registers a video and starts a multipart upload. The browser
+	// PUTs each part_size chunk of the file to the matching part URL, then
+	// calls StartIngest with the upload ID.
 	CreateVideo(context.Context, *v1.CreateVideoRequest) (*v1.CreateVideoResponse, error)
 	// StartIngest queues frame extraction. It also retries a failed ingest.
 	StartIngest(context.Context, *v1.StartIngestRequest) (*v1.StartIngestResponse, error)

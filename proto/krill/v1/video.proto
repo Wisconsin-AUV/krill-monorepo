@@ -6,8 +6,9 @@ import "google/protobuf/timestamp.proto";
 import "krill/v1/stats.proto";
 
 service VideoService {
-  // CreateVideo registers a video and returns a presigned URL the browser
-  // uploads the file to. Call StartIngest once the upload finishes.
+  // CreateVideo registers a video and starts a multipart upload. The browser
+  // PUTs each part_size chunk of the file to the matching part URL, then
+  // calls StartIngest with the upload ID.
   rpc CreateVideo(CreateVideoRequest) returns (CreateVideoResponse) {}
   // StartIngest queues frame extraction. It also retries a failed ingest.
   rpc StartIngest(StartIngestRequest) returns (StartIngestResponse) {}
@@ -89,15 +90,22 @@ message CreateVideoRequest {
   string name = 1;
   string filename = 2;
   double extract_fps = 3;
+  int64 size = 4;
 }
 
 message CreateVideoResponse {
+  reserved 2;
+  reserved "upload_url";
   Video video = 1;
-  string upload_url = 2;
+  string upload_id = 3;
+  int64 part_size = 4;
+  repeated string part_urls = 5;
 }
 
 message StartIngestRequest {
   int64 video_id = 1;
+  // Completes this multipart upload first. Leave empty to retry an ingest.
+  string upload_id = 2;
 }
 
 message StartIngestResponse {

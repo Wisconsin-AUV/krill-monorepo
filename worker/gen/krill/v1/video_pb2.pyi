@@ -116,28 +116,36 @@ class ClipClaim(_message.Message):
     def __init__(self, user: _Optional[_Union[_stats_pb2.Profile, _Mapping]] = ..., active_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., active: _Optional[bool] = ...) -> None: ...
 
 class CreateVideoRequest(_message.Message):
-    __slots__ = ("name", "filename", "extract_fps")
+    __slots__ = ("name", "filename", "extract_fps", "size")
     NAME_FIELD_NUMBER: _ClassVar[int]
     FILENAME_FIELD_NUMBER: _ClassVar[int]
     EXTRACT_FPS_FIELD_NUMBER: _ClassVar[int]
+    SIZE_FIELD_NUMBER: _ClassVar[int]
     name: str
     filename: str
     extract_fps: float
-    def __init__(self, name: _Optional[str] = ..., filename: _Optional[str] = ..., extract_fps: _Optional[float] = ...) -> None: ...
+    size: int
+    def __init__(self, name: _Optional[str] = ..., filename: _Optional[str] = ..., extract_fps: _Optional[float] = ..., size: _Optional[int] = ...) -> None: ...
 
 class CreateVideoResponse(_message.Message):
-    __slots__ = ("video", "upload_url")
+    __slots__ = ("video", "upload_id", "part_size", "part_urls")
     VIDEO_FIELD_NUMBER: _ClassVar[int]
-    UPLOAD_URL_FIELD_NUMBER: _ClassVar[int]
+    UPLOAD_ID_FIELD_NUMBER: _ClassVar[int]
+    PART_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PART_URLS_FIELD_NUMBER: _ClassVar[int]
     video: Video
-    upload_url: str
-    def __init__(self, video: _Optional[_Union[Video, _Mapping]] = ..., upload_url: _Optional[str] = ...) -> None: ...
+    upload_id: str
+    part_size: int
+    part_urls: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, video: _Optional[_Union[Video, _Mapping]] = ..., upload_id: _Optional[str] = ..., part_size: _Optional[int] = ..., part_urls: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class StartIngestRequest(_message.Message):
-    __slots__ = ("video_id",)
+    __slots__ = ("video_id", "upload_id")
     VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    UPLOAD_ID_FIELD_NUMBER: _ClassVar[int]
     video_id: int
-    def __init__(self, video_id: _Optional[int] = ...) -> None: ...
+    upload_id: str
+    def __init__(self, video_id: _Optional[int] = ..., upload_id: _Optional[str] = ...) -> None: ...
 
 class StartIngestResponse(_message.Message):
     __slots__ = ("video",)

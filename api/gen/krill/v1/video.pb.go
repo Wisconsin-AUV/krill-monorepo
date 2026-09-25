@@ -519,6 +519,7 @@ type CreateVideoRequest struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
 	ExtractFps    float64                `protobuf:"fixed64,3,opt,name=extract_fps,json=extractFps,proto3" json:"extract_fps,omitempty"`
+	Size          int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -574,10 +575,19 @@ func (x *CreateVideoRequest) GetExtractFps() float64 {
 	return 0
 }
 
+func (x *CreateVideoRequest) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
 type CreateVideoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Video         *Video                 `protobuf:"bytes,1,opt,name=video,proto3" json:"video,omitempty"`
-	UploadUrl     string                 `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	UploadId      string                 `protobuf:"bytes,3,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	PartSize      int64                  `protobuf:"varint,4,opt,name=part_size,json=partSize,proto3" json:"part_size,omitempty"`
+	PartUrls      []string               `protobuf:"bytes,5,rep,name=part_urls,json=partUrls,proto3" json:"part_urls,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -619,16 +629,32 @@ func (x *CreateVideoResponse) GetVideo() *Video {
 	return nil
 }
 
-func (x *CreateVideoResponse) GetUploadUrl() string {
+func (x *CreateVideoResponse) GetUploadId() string {
 	if x != nil {
-		return x.UploadUrl
+		return x.UploadId
 	}
 	return ""
 }
 
+func (x *CreateVideoResponse) GetPartSize() int64 {
+	if x != nil {
+		return x.PartSize
+	}
+	return 0
+}
+
+func (x *CreateVideoResponse) GetPartUrls() []string {
+	if x != nil {
+		return x.PartUrls
+	}
+	return nil
+}
+
 type StartIngestRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VideoId       int64                  `protobuf:"varint,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	VideoId int64                  `protobuf:"varint,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	// Completes this multipart upload first. Leave empty to retry an ingest.
+	UploadId      string `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -668,6 +694,13 @@ func (x *StartIngestRequest) GetVideoId() int64 {
 		return x.VideoId
 	}
 	return 0
+}
+
+func (x *StartIngestRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
 }
 
 type StartIngestResponse struct {
@@ -1132,18 +1165,22 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\tClipClaim\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.krill.v1.ProfileR\x04user\x127\n" +
 	"\tactive_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bactiveAt\x12\x16\n" +
-	"\x06active\x18\x03 \x01(\bR\x06active\"e\n" +
+	"\x06active\x18\x03 \x01(\bR\x06active\"y\n" +
 	"\x12CreateVideoRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1f\n" +
 	"\vextract_fps\x18\x03 \x01(\x01R\n" +
-	"extractFps\"[\n" +
+	"extractFps\x12\x12\n" +
+	"\x04size\x18\x04 \x01(\x03R\x04size\"\xa5\x01\n" +
 	"\x13CreateVideoResponse\x12%\n" +
-	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12\x1d\n" +
-	"\n" +
-	"upload_url\x18\x02 \x01(\tR\tuploadUrl\"/\n" +
+	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12\x1b\n" +
+	"\tupload_id\x18\x03 \x01(\tR\buploadId\x12\x1b\n" +
+	"\tpart_size\x18\x04 \x01(\x03R\bpartSize\x12\x1b\n" +
+	"\tpart_urls\x18\x05 \x03(\tR\bpartUrlsJ\x04\b\x02\x10\x03R\n" +
+	"upload_url\"L\n" +
 	"\x12StartIngestRequest\x12\x19\n" +
-	"\bvideo_id\x18\x01 \x01(\x03R\avideoId\"<\n" +
+	"\bvideo_id\x18\x01 \x01(\x03R\avideoId\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\"<\n" +
 	"\x13StartIngestResponse\x12%\n" +
 	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\"\x13\n" +
 	"\x11ListVideosRequest\"=\n" +

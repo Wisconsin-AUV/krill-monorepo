@@ -3,7 +3,7 @@ import { VideoService } from '@/gen/krill/v1/video_pb'
 import { videoClient } from '@/lib/clients'
 import { errorMessage } from '@/lib/errors'
 import { invalidateService } from '@/lib/queryClient'
-import { putFile } from '@/lib/upload'
+import { putParts } from '@/lib/upload'
 
 export type UploadState = 'uploading' | 'queued' | 'error' | 'canceled'
 
@@ -36,12 +36,23 @@ export const useUploadStore = create<UploadStore>((set, get) => {
     controllers.set(id, controller)
     let videoId: bigint | undefined
     try {
-      const created = await videoClient.createVideo({ name, filename: file.name, extractFps })
+      const created = await videoClient.createVideo({
+        name,
+        filename: file.name,
+        extractFps,
+        size: BigInt(file.size),
+      })
       videoId = created.video?.id
       patch(id, { videoId })
       await invalidateService(VideoService)
-      await putFile(created.uploadUrl, file, (loaded) => patch(id, { loaded }), controller.signal)
-      await videoClient.startIngest({ videoId })
+      await putParts(
+        created.partUrls,
+        Number(created.partSize),
+        file,
+        (loaded) => patch(id, { loaded }),
+        controller.signal,
+      )
+      await videoClient.startIngest({ videoId, uploadId: created.uploadId })
       patch(id, { state: 'queued', loaded: file.size })
     } catch (err) {
       const canceled = controller.signal.aborted

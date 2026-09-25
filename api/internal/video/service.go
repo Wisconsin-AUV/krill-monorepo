@@ -24,9 +24,12 @@ import (
 )
 
 const (
-	uploadExpiry  = time.Hour
-	maxExtractFPS = 120
-	maxNameLen    = 200
+	uploadExpiry = 24 * time.Hour
+	// Cloudflare rejects request bodies over 100 MB, tunnels included.
+	uploadPartSize = 64 << 20
+	maxUploadParts = 10000
+	maxExtractFPS  = 120
+	maxNameLen     = 200
 )
 
 type Service struct {
@@ -57,21 +60,52 @@ func (s *Service) CreateVideo(ctx context.Context, req *krillv1.CreateVideoReque
 	if fps := req.GetExtractFps(); fps < 0 || fps > maxExtractFPS {
 		return nil, rpc.Invalid("extract_fps must be between 0 and %d", maxExtractFPS)
 	}
+	size := req.GetSize()
+	if size <= 0 {
+		return nil, rpc.Invalid("size is required")
+	}
+	parts := int((size + uploadPartSize - 1) / uploadPartSize)
+	if parts > maxUploadParts {
+		return nil, rpc.Invalid("video must be at most %d GiB", maxUploadParts*uploadPartSize>>30)
+	}
 
 	v, err := s.q.CreateVideo(ctx, db.CreateVideoParams{Name: name, Filename: filename, ExtractFps: req.GetExtractFps()})
 	if err != nil {
 		return nil, rpc.Internal(err, "create video")
 	}
-	uploadURL, err := s.store.PresignPut(ctx, storage.VideoSourceKey(v.ID), uploadExpiry)
+	key := storage.VideoSourceKey(v.ID)
+	uploadID, err := s.store.NewMultipartUpload(ctx, key)
 	if err != nil {
-		return nil, rpc.Internal(err, "presign upload")
+		return nil, rpc.Internal(err, "start upload")
 	}
-	return &krillv1.CreateVideoResponse{Video: s.Video(ctx, v, Stats{}), UploadUrl: uploadURL}, nil
+	urls := make([]string, parts)
+	for i := range urls {
+		urls[i], err = s.store.PresignPart(ctx, key, uploadID, i+1, uploadExpiry)
+		if err != nil {
+			return nil, rpc.Internal(err, "presign upload")
+		}
+	}
+	return &krillv1.CreateVideoResponse{
+		Video:    s.Video(ctx, v, Stats{}),
+		UploadId: uploadID,
+		PartSize: uploadPartSize,
+		PartUrls: urls,
+	}, nil
 }
 
 func (s *Service) StartIngest(ctx context.Context, req *krillv1.StartIngestRequest) (*krillv1.StartIngestResponse, error) {
 	id := req.GetVideoId()
-	exists, err := s.store.Exists(ctx, storage.VideoSourceKey(id))
+	key := storage.VideoSourceKey(id)
+	if uploadID := req.GetUploadId(); uploadID != "" {
+		err := s.store.CompleteMultipartUpload(ctx, key, uploadID)
+		if errors.Is(err, storage.ErrNoUpload) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("upload not found"))
+		}
+		if err != nil {
+			return nil, rpc.Internal(err, "complete upload")
+		}
+	}
+	exists, err := s.store.Exists(ctx, key)
 	if err != nil {
 		return nil, rpc.Internal(err, "check upload")
 	}
@@ -195,6 +229,9 @@ func (s *Service) DeleteVideo(ctx context.Context, req *krillv1.DeleteVideoReque
 	}
 	if n == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("video %d not found", id))
+	}
+	if err := s.store.AbortMultipartUploads(ctx, storage.VideoSourceKey(id)); err != nil {
+		slog.Error("abort video upload", "video_id", id, "err", err)
 	}
 	if err := s.store.RemovePrefix(ctx, storage.VideoPrefix(id)); err != nil {
 		// The rows are gone, so the objects are unreachable. Log instead of

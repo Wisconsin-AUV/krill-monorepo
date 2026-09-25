@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -16,6 +18,8 @@ import (
 // call, which would fail for the presign client when the public endpoint is
 // not reachable from inside the API container.
 const region = "us-east-1"
+
+var ErrNoUpload = errors.New("no uploaded parts")
 
 type Config struct {
 	Endpoint       string
@@ -86,6 +90,61 @@ func (s *Store) PresignPut(ctx context.Context, key string, expiry time.Duration
 		return "", fmt.Errorf("presign put %s: %w", key, err)
 	}
 	return u.String(), nil
+}
+
+func (s *Store) NewMultipartUpload(ctx context.Context, key string) (string, error) {
+	id, err := minio.Core{Client: s.client}.NewMultipartUpload(ctx, s.bucket, key, minio.PutObjectOptions{})
+	if err != nil {
+		return "", fmt.Errorf("new multipart upload %s: %w", key, err)
+	}
+	return id, nil
+}
+
+func (s *Store) PresignPart(ctx context.Context, key, uploadID string, part int, expiry time.Duration) (string, error) {
+	params := url.Values{"partNumber": {strconv.Itoa(part)}, "uploadId": {uploadID}}
+	u, err := s.presign.Presign(ctx, http.MethodPut, s.bucket, key, expiry, params)
+	if err != nil {
+		return "", fmt.Errorf("presign part %d of %s: %w", part, key, err)
+	}
+	return u.String(), nil
+}
+
+// CompleteMultipartUpload assembles every part uploaded so far. The part
+// list comes from the store so browsers never have to read ETag headers.
+func (s *Store) CompleteMultipartUpload(ctx context.Context, key, uploadID string) error {
+	core := minio.Core{Client: s.client}
+	var parts []minio.CompletePart
+	marker := 0
+	for {
+		res, err := core.ListObjectParts(ctx, s.bucket, key, uploadID, marker, 1000)
+		if minio.ToErrorResponse(err).Code == minio.NoSuchUpload {
+			return ErrNoUpload
+		}
+		if err != nil {
+			return fmt.Errorf("list parts %s: %w", key, err)
+		}
+		for _, p := range res.ObjectParts {
+			parts = append(parts, minio.CompletePart{PartNumber: p.PartNumber, ETag: p.ETag})
+		}
+		if !res.IsTruncated {
+			break
+		}
+		marker = res.NextPartNumberMarker
+	}
+	if len(parts) == 0 {
+		return ErrNoUpload
+	}
+	if _, err := core.CompleteMultipartUpload(ctx, s.bucket, key, uploadID, parts, minio.PutObjectOptions{}); err != nil {
+		return fmt.Errorf("complete %s: %w", key, err)
+	}
+	return nil
+}
+
+func (s *Store) AbortMultipartUploads(ctx context.Context, key string) error {
+	if err := s.client.RemoveIncompleteUpload(ctx, s.bucket, key); err != nil {
+		return fmt.Errorf("abort uploads %s: %w", key, err)
+	}
+	return nil
 }
 
 func (s *Store) PresignGet(ctx context.Context, key string, expiry time.Duration, filename string) (string, error) {
