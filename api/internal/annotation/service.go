@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
@@ -23,10 +25,11 @@ type Service struct {
 	krillv1connect.UnimplementedAnnotationServiceHandler
 	pool *pgxpool.Pool
 	q    *db.Queries
+	jobs *river.Client[pgx.Tx]
 }
 
-func NewService(pool *pgxpool.Pool) *Service {
-	return &Service{pool: pool, q: db.New(pool)}
+func NewService(pool *pgxpool.Pool, jobs *river.Client[pgx.Tx]) *Service {
+	return &Service{pool: pool, q: db.New(pool), jobs: jobs}
 }
 
 // claim marks the caller as working on the clip. A failed claim should not
@@ -54,8 +57,27 @@ func (s *Service) typeAttributes(ctx context.Context, q *db.Queries, labelTypeID
 	return attrs, nil
 }
 
+// newTrackAttributes checks and encodes the attributes for a new track.
+func (s *Service) newTrackAttributes(ctx context.Context, labelTypeID int64, values map[string]string) ([]byte, error) {
+	defs, err := s.typeAttributes(ctx, s.q, labelTypeID)
+	if err != nil {
+		return nil, err
+	}
+	if values == nil {
+		values = map[string]string{}
+	}
+	if err := taxonomy.CheckValues(defs, values); err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return nil, rpc.Internal(err, "encode attributes")
+	}
+	return raw, nil
+}
+
 func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackRequest) (*krillv1.CreateTrackResponse, error) {
-	x, y, w, h, err := clampBox(req.GetBox())
+	x, y, w, h, err := ClampBox(req.GetBox())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -66,20 +88,9 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 	if frame.ClipID != req.GetClipId() {
 		return nil, errWrongClip
 	}
-	defs, err := s.typeAttributes(ctx, s.q, req.GetLabelTypeId())
+	raw, err := s.newTrackAttributes(ctx, req.GetLabelTypeId(), req.GetAttributes())
 	if err != nil {
 		return nil, err
-	}
-	values := req.GetAttributes()
-	if values == nil {
-		values = map[string]string{}
-	}
-	if err := taxonomy.CheckValues(defs, values); err != nil {
-		return nil, rpc.Invalid("%s", err)
-	}
-	raw, err := json.Marshal(values)
-	if err != nil {
-		return nil, rpc.Internal(err, "encode attributes")
 	}
 
 	tx, err := s.pool.Begin(ctx)
@@ -187,7 +198,7 @@ func (s *Service) sameClip(ctx context.Context, trackID, frameID int64) (int64, 
 }
 
 func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*krillv1.SetBoxResponse, error) {
-	x, y, w, h, err := clampBox(req.GetBox())
+	x, y, w, h, err := ClampBox(req.GetBox())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}

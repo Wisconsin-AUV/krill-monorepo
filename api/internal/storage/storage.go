@@ -100,6 +100,16 @@ func (s *Store) PresignGet(ctx context.Context, key string, expiry time.Duration
 	return u.String(), nil
 }
 
+// PresignGetInternal presigns against the API's own endpoint, for services
+// such as the GPU worker that share its network rather than the browser's.
+func (s *Store) PresignGetInternal(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	u, err := s.client.PresignedGetObject(ctx, s.bucket, key, expiry, nil)
+	if err != nil {
+		return "", fmt.Errorf("presign get %s: %w", key, err)
+	}
+	return u.String(), nil
+}
+
 // Put uploads r. Pass size -1 when the length is unknown; the object is then
 // sent as a multipart upload.
 func (s *Store) Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error {

@@ -2,9 +2,11 @@ package auth
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
@@ -18,11 +20,14 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 
 // Interceptor loads the caller's session and enforces the role policy.
 type Interceptor struct {
-	lookup SessionLookup
+	lookup      SessionLookup
+	workerToken string
 }
 
-func NewInterceptor(lookup SessionLookup) *Interceptor {
-	return &Interceptor{lookup: lookup}
+// NewInterceptor returns an interceptor that also accepts workerToken as a
+// bearer token on worker procedures. An empty token turns them off.
+func NewInterceptor(lookup SessionLookup, workerToken string) *Interceptor {
+	return &Interceptor{lookup: lookup, workerToken: workerToken}
 }
 
 var _ connect.Interceptor = (*Interceptor)(nil)
@@ -56,6 +61,12 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	if !ok {
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s has no access policy", procedure))
 	}
+	if need == worker {
+		if !i.isWorker(h) {
+			return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid worker token"))
+		}
+		return ctx, nil
+	}
 	if token := tokenFromHeader(h); token != "" {
 		hash := hashToken(token)
 		user, err := i.lookup(ctx, hash)
@@ -77,4 +88,9 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have permission to do this (%s)", describe(need)))
 	}
 	return ctx, nil
+}
+
+func (i *Interceptor) isWorker(h http.Header) bool {
+	token, ok := strings.CutPrefix(h.Get("Authorization"), "Bearer ")
+	return ok && i.workerToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(i.workerToken)) == 1
 }

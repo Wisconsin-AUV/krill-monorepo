@@ -11,9 +11,9 @@ import (
 // 1080p frame. Anything thinner is almost certainly a stray click.
 const minSide = 0.001
 
-// clampBox clips a normalized box to the frame. Boxes dragged partly off the
+// ClampBox clips a normalized box to the frame. Boxes dragged partly off the
 // edge are common, so they are clipped rather than rejected.
-func clampBox(b *krillv1.Box) (x, y, w, h float64, err error) {
+func ClampBox(b *krillv1.Box) (x, y, w, h float64, err error) {
 	if b == nil {
 		return 0, 0, 0, 0, errors.New("box is required")
 	}
