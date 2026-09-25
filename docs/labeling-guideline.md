@@ -12,6 +12,7 @@ Each section needs example images of correct and incorrect labels.
 - If you can't tell which symbol an object shows, skip the frame without marking it done.
 - Press Space only when every object in the frame has a box. Only frames marked done are exported.
 - Press E for frames with no objects. Empty frames are exported as negative examples.
+- Check the last frame of every tracked object. None of its boxes are exported until that frame is marked done.
 
 ## Roles
 

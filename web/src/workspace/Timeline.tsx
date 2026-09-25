@@ -11,9 +11,11 @@ const MAX_SEGMENT_GAPS = 150
 export function Timeline({
   frameClass,
   trackClass,
+  flagged,
 }: {
   frameClass?: (position: number) => string | undefined
   trackClass?: (position: number) => string | undefined
+  flagged?: (position: number) => boolean
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -91,6 +93,16 @@ export function Timeline({
             />
           ))}
         </div>
+        {flagged && (
+          <div className="absolute inset-x-0 top-0.5 flex h-1">
+            {frames.map((f, i) => (
+              <div
+                key={String(f.id)}
+                className={clsx('h-full flex-1 rounded-full', flagged(i) && 'bg-rose-500')}
+              />
+            ))}
+          </div>
+        )}
         {trackClass && (
           <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
             {frames.map((f, i) => (

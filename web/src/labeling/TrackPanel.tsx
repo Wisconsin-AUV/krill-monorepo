@@ -3,6 +3,7 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   ExclamationTriangleIcon,
+  FlagIcon,
   TrashIcon,
 } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
@@ -110,9 +111,11 @@ function TrackEditor({
 export function TrackPanel({
   tracks,
   types,
+  unconfirmed,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
+  unconfirmed: Set<string>
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -171,6 +174,12 @@ export function TrackPanel({
                   <ArrowPathIcon
                     className="size-4 shrink-0 animate-spin text-sky-500"
                     aria-label="Tracking"
+                  />
+                )}
+                {unconfirmed.has(k) && !tracking[k] && (
+                  <FlagIcon
+                    className="size-4 shrink-0 text-rose-500"
+                    aria-label="Last box not confirmed"
                   />
                 )}
                 {missing.length > 0 && (

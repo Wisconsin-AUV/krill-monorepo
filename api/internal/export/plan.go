@@ -48,8 +48,11 @@ type Box struct {
 	FrameID    int64
 	X, Y, W, H float64
 	Status     string
-	TypeID     int64
-	Attributes map[string]string
+	// TrackUnconfirmed is set when the last box of the box's track is still a
+	// proposal.
+	TrackUnconfirmed bool
+	TypeID           int64
+	Attributes       map[string]string
 }
 
 type ItemBox struct {
@@ -115,7 +118,7 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 			}
 			item := Item{Frame: f}
 			for _, b := range boxesByFrame[f.ID] {
-				if b.Status == "proposed" {
+				if b.Status == "proposed" || b.TrackUnconfirmed {
 					stats.UnverifiedFrames++
 					continue frameLoop
 				}

@@ -29,13 +29,14 @@ func TestBuildFiltersFrames(t *testing.T) {
 		{ID: 2, Name: "hole", Attributes: []taxonomy.Attribute{{Name: "size", Options: []string{"big", "small"}}}},
 	}
 	videos := []Video{{ID: 1, Name: "a", Split: "train"}}
-	fs := frames(1, 10, 6, "labeled", distinct)
+	fs := frames(1, 10, 7, "labeled", distinct)
 	fs[5].Status = "unlabeled"
 	boxes := []Box{
 		{FrameID: fs[0].ID, TypeID: 1, X: 0.1, Y: 0.1, W: 0.2, H: 0.2, Status: "verified"},
 		{FrameID: fs[1].ID, TypeID: 2, Attributes: map[string]string{"size": "small"}, W: 0.1, H: 0.1, Status: "verified"},
 		{FrameID: fs[2].ID, TypeID: 2, Attributes: map[string]string{}, W: 0.1, H: 0.1, Status: "verified"},
 		{FrameID: fs[3].ID, TypeID: 1, W: 0.1, H: 0.1, Status: "proposed"},
+		{FrameID: fs[6].ID, TypeID: 1, W: 0.1, H: 0.1, Status: "verified", TrackUnconfirmed: true},
 	}
 
 	p := Build(Options{Stride: 1}, types, videos, fs, boxes)
@@ -44,7 +45,7 @@ func TestBuildFiltersFrames(t *testing.T) {
 		t.Fatalf("classes = %v, want %v", got, want)
 	}
 	s := p.Stats
-	if s.TrainImages != 3 || s.UnlabeledFrames != 1 || s.IncompleteFrames != 1 || s.UnverifiedFrames != 1 {
+	if s.TrainImages != 3 || s.UnlabeledFrames != 1 || s.IncompleteFrames != 1 || s.UnverifiedFrames != 2 {
 		t.Errorf("stats = %+v", s)
 	}
 	if s.NegativeImages != 1 {

@@ -68,7 +68,8 @@ message ExportStats {
   int32 unlabeled_frames = 6;
   // Frames dropped because a track on them is missing an attribute.
   int32 incomplete_frames = 7;
-  // Frames dropped because they hold unverified proposals.
+  // Frames dropped because they hold unverified proposals, or boxes of a
+  // track whose last box is unverified.
   int32 unverified_frames = 8;
   int32 stride_skipped = 9;
   int32 duplicate_skipped = 10;
