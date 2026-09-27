@@ -1,4 +1,4 @@
-import { useQuery } from '@connectrpc/connect-query'
+import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { keepPreviousData } from '@tanstack/react-query'
 import {
   CheckIcon,
@@ -9,6 +9,7 @@ import {
   EyeSlashIcon,
   NoSymbolIcon,
   QuestionMarkCircleIcon,
+  StarIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
@@ -33,10 +34,12 @@ import {
 import { StackedLayout } from '@/components/ui/StackedLayout'
 import { FrameStatus } from '@/gen/krill/v1/annotation_pb'
 import { ClipService, type GetClipResponse } from '@/gen/krill/v1/clip_pb'
+import { GoldService } from '@/gen/krill/v1/gold_pb'
 import { LabelService } from '@/gen/krill/v1/label_pb'
 import { QueueService } from '@/gen/krill/v1/queue_pb'
+import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
-import { useUser } from '@/lib/auth'
+import { useCan, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { invalidateService } from '@/lib/queryClient'
@@ -47,7 +50,7 @@ import { TrackPanel } from '@/labeling/TrackPanel'
 import { TypePanel } from '@/labeling/TypePanel'
 import { frameState } from '@/labeling/frameStatus'
 import { reviewTracks } from '@/labeling/review'
-import { frameShortcuts, labelingShortcuts } from '@/labeling/shortcuts'
+import { frameShortcuts, goldShortcut, labelingShortcuts } from '@/labeling/shortcuts'
 import { idKey, useLabelStore } from '@/labeling/useLabelStore'
 import { useTrackingPoll } from '@/labeling/useTrackingPoll'
 import { ShortcutsDialog } from '@/workspace/ShortcutsDialog'
@@ -178,6 +181,12 @@ export function ClipPage() {
   const hideBoxes = useLabelStore((s) => s.hideBoxes)
   const labels = useLabelStore.getState
 
+  const canReview = useCan(Permission.REVIEW_LABELS)
+  const [goldEdits, setGoldEdits] = useState<Record<string, boolean>>({})
+  const setGoldFrame = useMutation(GoldService.method.setGoldFrame, {
+    onError: (err) => flash.error('Could not update gold frame', err),
+  })
+
   useEffect(() => {
     const active = labels().activeTypeId
     if (types.length > 0 && (active === null || !types.some((t) => t.id === active))) {
@@ -236,6 +245,19 @@ export function ClipPage() {
       if (index < frames.length - 1) step(1)
       else flash.success('Last frame of the clip')
     }
+  }
+
+  const isGold = !!frame && (goldEdits[idKey(frame.id)] ?? frame.gold)
+  const canGold = canReview && !!frame && (isGold || state.label !== 'Unlabeled')
+
+  function toggleGold() {
+    if (!frame || !canGold || setGoldFrame.isPending) return
+    const k = idKey(frame.id)
+    const on = !isGold
+    setGoldFrame.mutate(
+      { frameId: frame.id, gold: on },
+      { onSuccess: () => setGoldEdits((prev) => ({ ...prev, [k]: on })) },
+    )
   }
 
   function nextDrift() {
@@ -305,6 +327,7 @@ export function ClipPage() {
           },
           h: () => labels().toggleHidden(),
           d: nextDrift,
+          g: toggleGold,
           ' ': () => void mark(FrameStatus.LABELED, true),
           e: () => void mark(FrameStatus.EMPTY, true),
           u: () => void mark(FrameStatus.UNLABELED, false),
@@ -417,6 +440,16 @@ export function ClipPage() {
         <span className="text-sm/6 text-zinc-500 tabular-nums dark:text-zinc-400">
           Frame <span className="text-zinc-950 dark:text-white">{index + 1}</span> / {frames.length}
         </span>
+        {canReview && (
+          <NavbarItem
+            aria-label={isGold ? 'Remove gold frame' : 'Make gold frame'}
+            title="Gold frame (G)"
+            disabled={!canGold}
+            onClick={toggleGold}
+          >
+            <StarIcon data-slot="icon" className={isGold ? 'fill-amber-400!' : undefined} />
+          </NavbarItem>
+        )}
         <NavbarItem
           aria-label={hideBoxes ? 'Show boxes' : 'Hide boxes'}
           title="Hide boxes (H)"
@@ -493,7 +526,14 @@ export function ClipPage() {
         <ShortcutsDialog
           open={showHelp}
           onClose={() => setShowHelp(false)}
-          groups={[labelingShortcuts, frameShortcuts, navigationShortcuts, viewShortcuts]}
+          groups={[
+            labelingShortcuts,
+            canReview
+              ? { ...frameShortcuts, items: [...frameShortcuts.items, goldShortcut] }
+              : frameShortcuts,
+            navigationShortcuts,
+            viewShortcuts,
+          ]}
         />
       </div>
     </ClipShell>

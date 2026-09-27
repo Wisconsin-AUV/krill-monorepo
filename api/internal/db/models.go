@@ -64,6 +64,26 @@ type Frame struct {
 	StatusAt pgtype.Timestamptz `json:"status_at"`
 }
 
+type GoldAttempt struct {
+	FrameID        int64              `json:"frame_id"`
+	UserID         uuid.UUID          `json:"user_id"`
+	Boxes          []byte             `json:"boxes"`
+	ReferenceCount int32              `json:"reference_count"`
+	AnswerCount    int32              `json:"answer_count"`
+	Matched        int32              `json:"matched"`
+	Correct        int32              `json:"correct"`
+	IouSum         float64            `json:"iou_sum"`
+	Score          float64            `json:"score"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type GoldFrame struct {
+	FrameID   int64              `json:"frame_id"`
+	Boxes     []byte             `json:"boxes"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type LabelExample struct {
 	ID          int64              `json:"id"`
 	LabelTypeID int64              `json:"label_type_id"`

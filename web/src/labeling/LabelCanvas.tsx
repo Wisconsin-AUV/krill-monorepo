@@ -28,10 +28,12 @@ export function LabelCanvas({
   tracks,
   types,
   drift,
+  canTrack = true,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
   drift: TrackReview['drift']
+  canTrack?: boolean
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -79,7 +81,7 @@ export function LabelCanvas({
     const rect = stage.container().getBoundingClientRect()
     const start = toImage({ x: e.evt.clientX - rect.left, y: e.evt.clientY - rect.top })
     const frameId = frame.id
-    const track = e.evt.shiftKey
+    const track = canTrack && e.evt.shiftKey
     let moved = false
 
     const onMove = (ev: MouseEvent) => {
@@ -120,7 +122,7 @@ export function LabelCanvas({
     : continuing
       ? `Drag to continue ${drawType.name} #${selectedInfo?.number ?? ''}`
       : `Drag to draw a new ${drawType.name}`
-  const trackHint = newType ? ` · Shift+click to track a new ${newType.name}` : ''
+  const trackHint = canTrack && newType ? ` · Shift+click to track a new ${newType.name}` : ''
   const runsHere = frame
     ? trackRuns.filter(
         (r) => r.frameId === frame.id && (r.trackId === undefined || tracking[idKey(r.trackId)]),

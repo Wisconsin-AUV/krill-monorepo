@@ -25,6 +25,7 @@ class Permission(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     PERMISSION_MANAGE_LABEL_TYPES: _ClassVar[Permission]
     PERMISSION_MANAGE_EXPORTS: _ClassVar[Permission]
     PERMISSION_MANAGE_USERS: _ClassVar[Permission]
+    PERMISSION_REVIEW_LABELS: _ClassVar[Permission]
 ROLE_UNSPECIFIED: Role
 ROLE_LABELER: Role
 ROLE_DEVELOPER: Role
@@ -35,6 +36,7 @@ PERMISSION_MANAGE_VIDEOS: Permission
 PERMISSION_MANAGE_LABEL_TYPES: Permission
 PERMISSION_MANAGE_EXPORTS: Permission
 PERMISSION_MANAGE_USERS: Permission
+PERMISSION_REVIEW_LABELS: Permission
 
 class RoleInfo(_message.Message):
     __slots__ = ("role", "label")

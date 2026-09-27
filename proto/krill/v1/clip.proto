@@ -18,6 +18,8 @@ message Frame {
   // Presigned MinIO URL, valid for several hours.
   string url = 4;
   FrameStatus status = 5;
+  // Only set for callers who can review labels.
+  bool gold = 6;
 }
 
 message GetClipRequest {

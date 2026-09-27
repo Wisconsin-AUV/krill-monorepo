@@ -9,18 +9,20 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Frame(_message.Message):
-    __slots__ = ("id", "index", "timestamp_ms", "url", "status")
+    __slots__ = ("id", "index", "timestamp_ms", "url", "status", "gold")
     ID_FIELD_NUMBER: _ClassVar[int]
     INDEX_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_MS_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
+    GOLD_FIELD_NUMBER: _ClassVar[int]
     id: int
     index: int
     timestamp_ms: int
     url: str
     status: _annotation_pb2.FrameStatus
-    def __init__(self, id: _Optional[int] = ..., index: _Optional[int] = ..., timestamp_ms: _Optional[int] = ..., url: _Optional[str] = ..., status: _Optional[_Union[_annotation_pb2.FrameStatus, str]] = ...) -> None: ...
+    gold: bool
+    def __init__(self, id: _Optional[int] = ..., index: _Optional[int] = ..., timestamp_ms: _Optional[int] = ..., url: _Optional[str] = ..., status: _Optional[_Union[_annotation_pb2.FrameStatus, str]] = ..., gold: _Optional[bool] = ...) -> None: ...
 
 class GetClipRequest(_message.Message):
     __slots__ = ("id",)

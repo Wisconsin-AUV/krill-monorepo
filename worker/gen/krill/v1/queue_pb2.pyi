@@ -60,7 +60,9 @@ class ClaimNextClipRequest(_message.Message):
     def __init__(self, release_clip_id: _Optional[int] = ...) -> None: ...
 
 class ClaimNextClipResponse(_message.Message):
-    __slots__ = ("clip_id",)
+    __slots__ = ("clip_id", "gold_frame_id")
     CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    GOLD_FRAME_ID_FIELD_NUMBER: _ClassVar[int]
     clip_id: int
-    def __init__(self, clip_id: _Optional[int] = ...) -> None: ...
+    gold_frame_id: int
+    def __init__(self, clip_id: _Optional[int] = ..., gold_frame_id: _Optional[int] = ...) -> None: ...

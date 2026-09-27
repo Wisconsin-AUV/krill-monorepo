@@ -28,8 +28,10 @@ type Frame struct {
 	Index       int32 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
 	TimestampMs int64 `protobuf:"varint,3,opt,name=timestamp_ms,json=timestampMs,proto3" json:"timestamp_ms,omitempty"`
 	// Presigned MinIO URL, valid for several hours.
-	Url           string      `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	Status        FrameStatus `protobuf:"varint,5,opt,name=status,proto3,enum=krill.v1.FrameStatus" json:"status,omitempty"`
+	Url    string      `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Status FrameStatus `protobuf:"varint,5,opt,name=status,proto3,enum=krill.v1.FrameStatus" json:"status,omitempty"`
+	// Only set for callers who can review labels.
+	Gold          bool `protobuf:"varint,6,opt,name=gold,proto3" json:"gold,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,6 +99,13 @@ func (x *Frame) GetStatus() FrameStatus {
 		return x.Status
 	}
 	return FrameStatus_FRAME_STATUS_UNSPECIFIED
+}
+
+func (x *Frame) GetGold() bool {
+	if x != nil {
+		return x.Gold
+	}
+	return false
 }
 
 type GetClipRequest struct {
@@ -249,13 +258,14 @@ var File_krill_v1_clip_proto protoreflect.FileDescriptor
 
 const file_krill_v1_clip_proto_rawDesc = "" +
 	"\n" +
-	"\x13krill/v1/clip.proto\x12\bkrill.v1\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/video.proto\"\x91\x01\n" +
+	"\x13krill/v1/clip.proto\x12\bkrill.v1\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/video.proto\"\xa5\x01\n" +
 	"\x05Frame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05index\x18\x02 \x01(\x05R\x05index\x12!\n" +
 	"\ftimestamp_ms\x18\x03 \x01(\x03R\vtimestampMs\x12\x10\n" +
 	"\x03url\x18\x04 \x01(\tR\x03url\x12-\n" +
-	"\x06status\x18\x05 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\" \n" +
+	"\x06status\x18\x05 \x01(\x0e2\x15.krill.v1.FrameStatusR\x06status\x12\x12\n" +
+	"\x04gold\x18\x06 \x01(\bR\x04gold\" \n" +
 	"\x0eGetClipRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\xe0\x02\n" +
 	"\x0fGetClipResponse\x12%\n" +

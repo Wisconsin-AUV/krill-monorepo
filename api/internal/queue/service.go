@@ -13,6 +13,7 @@ import (
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/gold"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/video"
@@ -86,6 +87,14 @@ func (s *Service) ClaimNextClip(ctx context.Context, req *krillv1.ClaimNextClipR
 		if err := s.q.ReleaseClipClaim(ctx, db.ReleaseClipClaimParams{ClipID: id, UserID: me}); err != nil {
 			return nil, rpc.Internal(err, "release claim")
 		}
+	}
+
+	goldID, err := gold.Due(ctx, s.q, me)
+	if err != nil {
+		return nil, rpc.Internal(err, "check gold")
+	}
+	if goldID != 0 {
+		return &krillv1.ClaimNextClipResponse{GoldFrameId: goldID}, nil
 	}
 
 	open, err := s.q.ListOpenClips(ctx, me)

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"slices"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
@@ -55,11 +56,18 @@ var Permissions = []PermissionDef{
 	{krillv1.Permission_PERMISSION_MANAGE_LABEL_TYPES, "Manage label types", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_EXPORTS, "Create and download exports", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_USERS, "Manage users and their roles", krillv1.Role_ROLE_ADMIN},
+	{krillv1.Permission_PERMISSION_REVIEW_LABELS, "Pick gold frames and see labeler accuracy", krillv1.Role_ROLE_DEVELOPER},
 }
 
 func Can(role krillv1.Role, p krillv1.Permission) bool {
 	i := slices.IndexFunc(Permissions, func(d PermissionDef) bool { return d.Permission == p })
 	return i >= 0 && role >= Permissions[i].Role
+}
+
+// CallerCan reports whether the signed-in user has the permission.
+func CallerCan(ctx context.Context, p krillv1.Permission) bool {
+	s, ok := SessionFrom(ctx)
+	return ok && Can(ParseRole(s.User.Role), p)
 }
 
 func describe(p krillv1.Permission) string {
