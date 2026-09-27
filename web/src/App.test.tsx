@@ -67,7 +67,7 @@ describe('App', () => {
 
     fireEvent.change(password, { target: { value: 'wrong' } })
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('incorrect username or password')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Incorrect username or password')
     expect(password).toHaveAttribute('aria-invalid', 'true')
 
     fireEvent.change(password, { target: { value: 'wrong again' } })
