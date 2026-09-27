@@ -28,6 +28,7 @@ type Options struct {
 	SignupEmailDomain string
 	TeamName          string
 	SlackEnabled      bool
+	ClientIPHeader    string
 }
 
 type Service struct {
@@ -80,7 +81,7 @@ func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) 
 
 func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv1.LoginResponse, error) {
 	login := strings.ToLower(strings.TrimSpace(req.GetLogin()))
-	ip := clientIP(ctx)
+	ip := s.clientIP(ctx)
 	for _, l := range []struct {
 		limiter *failureLimiter
 		key     string
@@ -128,14 +129,25 @@ func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv
 	return &krillv1.LoginResponse{User: ToProto(user)}, nil
 }
 
-func clientIP(ctx context.Context) string {
+func (s *Service) clientIP(ctx context.Context) string {
 	info, ok := connect.CallInfoForHandlerContext(ctx)
 	if !ok {
 		return ""
 	}
-	host, _, err := net.SplitHostPort(info.Peer().Addr)
+	return clientIP(info.Peer().Addr, info.RequestHeader(), s.opts.ClientIPHeader)
+}
+
+// clientIP reads the proxy header only when one is configured. Otherwise any
+// client could send it and pick a new address to dodge the per-IP limit.
+func clientIP(peer string, h http.Header, header string) string {
+	if header != "" {
+		if ip := strings.TrimSpace(h.Get(header)); ip != "" {
+			return ip
+		}
+	}
+	host, _, err := net.SplitHostPort(peer)
 	if err != nil {
-		return info.Peer().Addr
+		return peer
 	}
 	return host
 }

@@ -130,6 +130,7 @@ func run() error {
 		SignupEmailDomain: cfg.SignupEmailDomain,
 		SlackEnabled:      cfg.SlackClientID != "",
 		TeamName:          cfg.TeamName,
+		ClientIPHeader:    cfg.ClientIPHeader,
 	}), rpcOpts))
 	if cfg.SlackClientID != "" {
 		slack := auth.NewSlack(pool, auth.SlackConfig{

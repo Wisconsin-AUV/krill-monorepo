@@ -1,6 +1,9 @@
 package auth
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func TestPassword(t *testing.T) {
 	hash, err := HashPassword("correct horse")
@@ -85,6 +88,25 @@ func TestValidatePassword(t *testing.T) {
 	} {
 		if err := ValidatePassword(tt.password); (err == nil) != tt.ok {
 			t.Errorf("ValidatePassword(%q) = %v, want ok %v", tt.password, err, tt.ok)
+		}
+	}
+}
+
+func TestClientIP(t *testing.T) {
+	cf := http.Header{"Cf-Connecting-Ip": {" 203.0.113.7 "}}
+	for _, tt := range []struct {
+		name   string
+		h      http.Header
+		header string
+		want   string
+	}{
+		{"peer without proxy", nil, "", "10.0.0.2"},
+		{"spoofed header is ignored", cf, "", "10.0.0.2"},
+		{"trusted header", cf, "CF-Connecting-IP", "203.0.113.7"},
+		{"trusted header missing", http.Header{}, "CF-Connecting-IP", "10.0.0.2"},
+	} {
+		if got := clientIP("10.0.0.2:5123", tt.h, tt.header); got != tt.want {
+			t.Errorf("%s: got %q, want %q", tt.name, got, tt.want)
 		}
 	}
 }

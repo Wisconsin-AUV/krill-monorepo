@@ -51,6 +51,7 @@ services:
       KRILL_SLACK_CLIENT_SECRET: ${KRILL_SLACK_CLIENT_SECRET:-}
       KRILL_SLACK_TEAM_ID: ${KRILL_SLACK_TEAM_ID:-}
       KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
+      KRILL_CLIENT_IP_HEADER: ${KRILL_CLIENT_IP_HEADER:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
