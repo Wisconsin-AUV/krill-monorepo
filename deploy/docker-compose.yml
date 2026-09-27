@@ -3,11 +3,12 @@ name: krill
 services:
   postgres:
     image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_USER: krill
-      POSTGRES_PASSWORD: krill
+      POSTGRES_PASSWORD: ${KRILL_POSTGRES_PASSWORD:?set KRILL_POSTGRES_PASSWORD in .env}
       POSTGRES_DB: krill
-    ports: ["5432:5432"]
+    ports: ["127.0.0.1:5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U krill"]
@@ -16,24 +17,32 @@ services:
 
   minio:
     image: cgr.dev/chainguard/minio:latest
+    restart: unless-stopped
     command: server /data --console-address :9001
     environment:
-      MINIO_ROOT_USER: krill
-      MINIO_ROOT_PASSWORD: krillkrill
-    ports: ["9000:9000", "9001:9001"]
+      MINIO_ROOT_USER: ${KRILL_S3_ACCESS_KEY:?set KRILL_S3_ACCESS_KEY in .env}
+      MINIO_ROOT_PASSWORD: ${KRILL_S3_SECRET_KEY:?set KRILL_S3_SECRET_KEY in .env}
+    # Browsers fetch frames from :9000 with presigned URLs, so only the console
+    # stays on localhost.
+    ports: ["9000:9000", "127.0.0.1:9001:9001"]
     volumes: [miniodata:/data]
 
   api:
     profiles: [app]
+    image: krill-api:${KRILL_VERSION:-dev}
     build:
       context: ..
       dockerfile: deploy/api.Dockerfile
+      args:
+        VERSION: ${KRILL_VERSION:-dev}
+    # Also covers MinIO not being ready yet when the API creates its bucket.
+    restart: unless-stopped
     environment:
-      KRILL_DATABASE_URL: postgres://krill:krill@postgres:5432/krill?sslmode=disable
+      KRILL_DATABASE_URL: postgres://krill:${KRILL_POSTGRES_PASSWORD}@postgres:5432/krill?sslmode=disable
       KRILL_S3_ENDPOINT: http://minio:9000
       KRILL_S3_PUBLIC_ENDPOINT: ${KRILL_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
-      KRILL_S3_ACCESS_KEY: krill
-      KRILL_S3_SECRET_KEY: krillkrill
+      KRILL_S3_ACCESS_KEY: ${KRILL_S3_ACCESS_KEY}
+      KRILL_S3_SECRET_KEY: ${KRILL_S3_SECRET_KEY}
       KRILL_PUBLIC_URL: ${KRILL_PUBLIC_URL:-http://localhost:8080}
       KRILL_ALLOW_SIGNUP: ${KRILL_ALLOW_SIGNUP:-true}
       KRILL_TEAM_NAME: ${KRILL_TEAM_NAME:-}
@@ -48,9 +57,11 @@ services:
 
   worker:
     profiles: [gpu]
+    image: krill-worker:${KRILL_VERSION:-dev}-rocm
     build:
       context: ..
       dockerfile: deploy/worker.Dockerfile
+    restart: unless-stopped
     environment:
       # RX 6600 is gfx1032; ROCm treats it as gfx1030 with this override.
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"

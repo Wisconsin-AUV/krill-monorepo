@@ -25,8 +25,12 @@ api:
 web:
     cd web && pnpm dev
 
+# run the full stack with the GPU worker, using the images from `just build`
+up version="dev":
+    KRILL_VERSION={{version}} docker compose -f deploy/docker-compose.yml --profile app --profile gpu up -d
+
 down:
-    docker compose -f deploy/docker-compose.yml down
+    docker compose -f deploy/docker-compose.yml --profile app --profile gpu down
 
 # lint everything
 lint:
