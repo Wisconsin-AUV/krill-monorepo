@@ -9,6 +9,7 @@ import { Stat } from '@/components/Stat'
 import { Thumbnail } from '@/components/Thumbnail'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
@@ -16,7 +17,6 @@ import { Text } from '@/components/ui/Text'
 import { QueueService, type GetQueueResponse, type OpenClip } from '@/gen/krill/v1/queue_pb'
 import { Period, StatsService } from '@/gen/krill/v1/stats_pb'
 import { initials, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { formatNumber, plural } from '@/lib/format'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { ordinal, profilePath, timeZone } from '@/lib/stats'
@@ -267,9 +267,7 @@ export function HomePage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-4 text-red-600 dark:text-red-400">
-          Could not load your queue: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load your queue" error={error} className="mt-4" />
       ) : (
         <>
           <div className="mt-8 grid gap-10 lg:grid-cols-3">

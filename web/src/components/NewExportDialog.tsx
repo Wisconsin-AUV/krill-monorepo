@@ -4,6 +4,7 @@ import { keepPreviousData } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ExportStatsView } from '@/components/ExportStatsView'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Checkbox, CheckboxField } from '@/components/ui/Checkbox'
 import {
   Dialog,
@@ -18,7 +19,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Select } from '@/components/ui/Select'
 import { ExportOptionsSchema, ExportService } from '@/gen/krill/v1/export_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
-import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -72,7 +72,6 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
       flash.success('Export queued', 'The download appears here when it is ready.')
       onClose()
     },
-    onError: (err) => flash.error('Could not create export', err),
   })
 
   const stats = preview.data?.stats
@@ -167,6 +166,7 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </Fieldset>
+          <FormError error={createExport.error} />
         </FieldGroup>
 
         <div className="min-w-0">
@@ -175,9 +175,7 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
             {preview.isFetching && <LoadingSpinner />}
           </div>
           {preview.error ? (
-            <p className="text-sm/6 text-red-600 dark:text-red-400">
-              {errorMessage(preview.error)}
-            </p>
+            <FormError error={preview.error} />
           ) : stats ? (
             <ExportStatsView stats={stats} />
           ) : (

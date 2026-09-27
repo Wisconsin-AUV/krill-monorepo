@@ -1,10 +1,10 @@
 import { useMutation } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { FormError } from '@/components/auth/FormError'
 import { SlackButton } from '@/components/auth/SlackButton'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
@@ -61,7 +61,7 @@ export function RegisterPage() {
         }}
       >
         <Heading className="text-center">Create your account</Heading>
-        <FormError message={error} />
+        <FormError error={error} />
         <Field>
           <Label>Name</Label>
           <Input

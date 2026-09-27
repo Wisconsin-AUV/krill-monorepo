@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
@@ -43,7 +44,6 @@ function ProfileForm({ user }: { user: User }) {
       await refreshSession()
       flash.success('Profile saved')
     },
-    onError: (err) => flash.error('Could not save profile', err),
   })
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }))
@@ -91,6 +91,7 @@ function ProfileForm({ user }: { user: User }) {
             required
           />
         </Field>
+        <FormError error={update.error} />
       </FieldGroup>
       <div className="mt-8 flex justify-end">
         <Button type="submit" color="sky" disabled={!changed || update.isPending}>
@@ -179,7 +180,6 @@ function PasswordForm({ user }: { user: User }) {
       await refreshSession()
       flash.success('Password changed', 'Other devices were signed out.')
     },
-    onError: (err) => flash.error('Could not change password', err),
   })
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -212,7 +212,7 @@ function PasswordForm({ user }: { user: User }) {
           <Label>New password</Label>
           <PasswordInput value={form.next} onChange={set('next')} check={check} />
         </Field>
-        <Field>
+        <Field error={mismatch ? 'Passwords do not match' : undefined}>
           <Label>Confirm new password</Label>
           <PasswordInput
             value={form.confirm}
@@ -222,6 +222,7 @@ function PasswordForm({ user }: { user: User }) {
             invalid={mismatch}
           />
         </Field>
+        <FormError error={change.error} />
       </FieldGroup>
       <div className="mt-8 flex justify-end">
         <Button

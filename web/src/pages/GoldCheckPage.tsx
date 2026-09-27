@@ -181,7 +181,9 @@ export function GoldCheckPage() {
     return (
       <Shell>
         <div className="flex flex-1 flex-col items-center justify-center gap-4 py-24 text-zinc-700 dark:text-zinc-300">
-          <p>{error ? errorMessage(error) : 'Gold frame not found.'}</p>
+          <p>
+            {error ? `Could not load gold frame: ${errorMessage(error)}` : 'Gold frame not found.'}
+          </p>
           <Button color="sky" disabled={claimNext.isPending} onClick={next}>
             Next clip
           </Button>

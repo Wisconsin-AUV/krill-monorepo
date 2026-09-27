@@ -1,13 +1,13 @@
 import { useMutation } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Description, Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { VideoService, type SplitAssignment, type Video } from '@/gen/krill/v1/video_pb'
-import { flash } from '@/lib/flash'
 import { invalidateService } from '@/lib/queryClient'
 import { splitOptions } from '@/lib/video'
 
@@ -20,7 +20,6 @@ function EditVideoForm({ video, onClose }: { video: Video; onClose: () => void }
       await invalidateService(VideoService)
       onClose()
     },
-    onError: (err) => flash.error('Could not save video', err),
   })
 
   return (
@@ -61,6 +60,7 @@ function EditVideoForm({ video, onClose }: { video: Video; onClose: () => void }
               ))}
             </Select>
           </Field>
+          <FormError error={update.error} />
         </FieldGroup>
       </DialogBody>
       <DialogActions>
