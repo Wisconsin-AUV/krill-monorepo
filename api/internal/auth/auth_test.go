@@ -52,6 +52,24 @@ func TestNormalizeProfile(t *testing.T) {
 	}
 }
 
+func TestInEmailDomain(t *testing.T) {
+	for _, tt := range []struct {
+		email, domain string
+		ok            bool
+	}{
+		{"ada@wisc.edu", "wisc.edu", true},
+		{"ada@gmail.com", "wisc.edu", false},
+		{"ada@evilwisc.edu", "wisc.edu", false},
+		{"ada@wisc.edu.evil.com", "wisc.edu", false},
+		{"ada@cs.wisc.edu", "wisc.edu", false},
+		{"ada@gmail.com", "", true},
+	} {
+		if got := InEmailDomain(tt.email, tt.domain); got != tt.ok {
+			t.Errorf("InEmailDomain(%q, %q) = %v, want %v", tt.email, tt.domain, got, tt.ok)
+		}
+	}
+}
+
 func TestValidatePassword(t *testing.T) {
 	for _, tt := range []struct {
 		password string

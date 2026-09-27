@@ -26,7 +26,10 @@ type Config struct {
 	// AllowSignup lets anyone register as a labeler. The first account can
 	// always register and becomes an admin.
 	AllowSignup bool
-	TeamName    string
+	// SignupEmailDomain limits password sign-up to emails at this domain.
+	// Empty allows any email.
+	SignupEmailDomain string
+	TeamName          string
 	// Slack sign-in is enabled when SlackClientID is set.
 	SlackClientID     string
 	SlackClientSecret string
@@ -50,6 +53,7 @@ func Load() (Config, error) {
 		SlackClientSecret: os.Getenv("KRILL_SLACK_CLIENT_SECRET"),
 		SlackTeamID:       os.Getenv("KRILL_SLACK_TEAM_ID"),
 		WorkerToken:       os.Getenv("KRILL_WORKER_TOKEN"),
+		SignupEmailDomain: strings.ToLower(strings.TrimSpace(getenv("KRILL_SIGNUP_EMAIL_DOMAIN", "wisc.edu"))),
 	}
 	if cfg.TeamName = strings.TrimSpace(os.Getenv("KRILL_TEAM_NAME")); cfg.TeamName == "" {
 		cfg.TeamName = "Wisconsin Autonomous Underwater Vehicles"

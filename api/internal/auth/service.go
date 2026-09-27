@@ -23,10 +23,11 @@ import (
 var errBadLogin = connect.NewError(connect.CodeUnauthenticated, errors.New("incorrect username or password"))
 
 type Options struct {
-	Cookies      Cookies
-	AllowSignup  bool
-	TeamName     string
-	SlackEnabled bool
+	Cookies           Cookies
+	AllowSignup       bool
+	SignupEmailDomain string
+	TeamName          string
+	SlackEnabled      bool
 }
 
 type Service struct {
@@ -143,6 +144,9 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	p, err := NormalizeProfile(req.GetName(), req.GetUsername(), req.GetEmail())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
+	}
+	if !InEmailDomain(p.Email, s.opts.SignupEmailDomain) {
+		return nil, rpc.Invalid("sign up with your @%s email", s.opts.SignupEmailDomain)
 	}
 	if err := ValidatePassword(req.GetPassword()); err != nil {
 		return nil, rpc.Invalid("%s", err)

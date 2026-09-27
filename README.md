@@ -26,7 +26,7 @@ The API image bundles the web app, so the full stack is served from `:8080`. Bro
 
 ## Accounts
 
-The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
+The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
 
 Roles and what each can do are defined in [`api/internal/auth/access.go`](api/internal/auth/access.go).
 
