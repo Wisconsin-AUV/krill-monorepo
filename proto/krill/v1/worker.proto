@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "krill/v1/annotation.proto";
+
+// WorkerService is called by the GPU worker. Requests carry the shared worker
+// token instead of a user session.
+service WorkerService {
+  // NextTask waits up to 30 seconds for work and returns no task if none
+  // arrives.
+  rpc NextTask(NextTaskRequest) returns (NextTaskResponse) {}
+  // ReportTrack saves boxes for a track task. Workers report in batches as
+  // they go, and set done on the last one.
+  rpc ReportTrack(ReportTrackRequest) returns (ReportTrackResponse) {}
+  rpc FailTask(FailTaskRequest) returns (FailTaskResponse) {}
+}
+
+message NextTaskRequest {}
+
+message NextTaskResponse {
+  TrackTask track = 1;
+}
+
+message TaskFrame {
+  int64 id = 1;
+  // Presigned URL for the worker, not the browser.
+  string url = 2;
+}
+
+message TrackTask {
+  int64 id = 1;
+  // Frames in order. The prompt is on the first one.
+  repeated TaskFrame frames = 2;
+  oneof prompt {
+    Point point = 3;
+    Box box = 4;
+  }
+}
+
+message TrackedBox {
+  int64 frame_id = 1;
+  Box box = 2;
+}
+
+message ReportTrackRequest {
+  int64 task_id = 1;
+  // Stored as the model version on each box.
+  string model = 2;
+  repeated TrackedBox boxes = 3;
+  bool done = 4;
+}
+
+message ReportTrackResponse {}
+
+message FailTaskRequest {
+  int64 task_id = 1;
+  string error = 2;
+}
+
+message FailTaskResponse {}

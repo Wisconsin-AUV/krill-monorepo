@@ -6,10 +6,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_SYSTEM_PYTHON=1
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
@@ -17,6 +13,8 @@ COPY worker/pyproject.toml worker/README.md ./
 COPY worker/src ./src
 COPY worker/gen ./gen
 
-RUN uv pip install --system ".[ml]"
+# Pin the base image's torch and numpy stack so our deps install around it.
+RUN pip list --format=freeze | grep -iE '^(torch|torchvision|numpy|pandas|scipy|numba|pillow)==' > /tmp/base.txt \
+    && uv pip install --system -c /tmp/base.txt ".[ml]"
 
 CMD ["krill-worker"]

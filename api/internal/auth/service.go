@@ -1,0 +1,285 @@
+package auth
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"math"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+
+	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
+	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/rpc"
+)
+
+var errBadLogin = connect.NewError(connect.CodeUnauthenticated, errors.New("incorrect username or password"))
+
+type Options struct {
+	Cookies           Cookies
+	AllowSignup       bool
+	SignupEmailDomain string
+	TeamName          string
+	SlackEnabled      bool
+	ClientIPHeader    string
+}
+
+type Service struct {
+	krillv1connect.UnimplementedAuthServiceHandler
+	pool *pgxpool.Pool
+	q    *db.Queries
+	opts Options
+	// A per-account limit stops guessing one password; the looser per-IP
+	// limit stops one client trying a few passwords across many accounts.
+	accountLimit *failureLimiter
+	ipLimit      *failureLimiter
+}
+
+func NewService(pool *pgxpool.Pool, opts Options) *Service {
+	return &Service{
+		pool:         pool,
+		q:            db.New(pool),
+		opts:         opts,
+		accountLimit: newFailureLimiter(5, 15*time.Minute),
+		ipLimit:      newFailureLimiter(30, 15*time.Minute),
+	}
+}
+
+func setCookie(ctx context.Context, c *http.Cookie) {
+	if info, ok := connect.CallInfoForHandlerContext(ctx); ok {
+		info.ResponseHeader().Add("Set-Cookie", c.String())
+	}
+}
+
+func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) (*krillv1.GetSessionResponse, error) {
+	out := &krillv1.GetSessionResponse{
+		SlackEnabled:   s.opts.SlackEnabled,
+		SignupEnabled:  s.opts.AllowSignup,
+		TeamName:       s.opts.TeamName,
+		AllPermissions: PermissionInfos(),
+		Roles:          RoleInfos(),
+	}
+	if sess, ok := SessionFrom(ctx); ok {
+		out.User = ToProto(sess.User)
+	}
+	if !out.SignupEnabled {
+		n, err := s.q.CountUsers(ctx)
+		if err != nil {
+			return nil, rpc.Internal(err, "count users")
+		}
+		out.SignupEnabled = n == 0
+	}
+	return out, nil
+}
+
+func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv1.LoginResponse, error) {
+	login := strings.ToLower(strings.TrimSpace(req.GetLogin()))
+	ip := s.clientIP(ctx)
+	for _, l := range []struct {
+		limiter *failureLimiter
+		key     string
+	}{{s.accountLimit, login}, {s.ipLimit, ip}} {
+		if blocked, wait := l.limiter.blocked(l.key); blocked {
+			return nil, connect.NewError(connect.CodeResourceExhausted,
+				fmt.Errorf("too many failed sign-ins; try again in %d minutes", int(math.Ceil(wait.Minutes()))))
+		}
+	}
+	fail := func() error {
+		s.accountLimit.fail(login)
+		s.ipLimit.fail(ip)
+		return errBadLogin
+	}
+
+	user, err := s.q.GetUserByLogin(ctx, login)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, rpc.Internal(err, "load user")
+		}
+		_, _ = CheckPassword(dummyHash, req.GetPassword())
+		return nil, fail()
+	}
+	if !user.PasswordHash.Valid {
+		_, _ = CheckPassword(dummyHash, req.GetPassword())
+		return nil, fail()
+	}
+	ok, err := CheckPassword(user.PasswordHash.String, req.GetPassword())
+	if err != nil {
+		return nil, rpc.Internal(err, "check password")
+	}
+	if !ok {
+		return nil, fail()
+	}
+	s.accountLimit.clear(login)
+	if user.Disabled {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("this account is disabled"))
+	}
+	cookie, err := s.opts.Cookies.StartSession(ctx, s.q, user.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "start session")
+	}
+	setCookie(ctx, cookie)
+	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
+	return &krillv1.LoginResponse{User: ToProto(user)}, nil
+}
+
+func (s *Service) clientIP(ctx context.Context) string {
+	info, ok := connect.CallInfoForHandlerContext(ctx)
+	if !ok {
+		return ""
+	}
+	return clientIP(info.Peer().Addr, info.RequestHeader(), s.opts.ClientIPHeader)
+}
+
+// clientIP reads the proxy header only when one is configured. Otherwise any
+// client could send it and pick a new address to dodge the per-IP limit.
+func clientIP(peer string, h http.Header, header string) string {
+	if header != "" {
+		if ip := strings.TrimSpace(h.Get(header)); ip != "" {
+			return ip
+		}
+	}
+	host, _, err := net.SplitHostPort(peer)
+	if err != nil {
+		return peer
+	}
+	return host
+}
+
+func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*krillv1.RegisterResponse, error) {
+	p, err := NormalizeProfile(req.GetName(), req.GetUsername(), req.GetEmail())
+	if err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	if !InEmailDomain(p.Email, s.opts.SignupEmailDomain) {
+		return nil, rpc.Invalid("sign up with your @%s email", s.opts.SignupEmailDomain)
+	}
+	if err := ValidatePassword(req.GetPassword()); err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	hash, err := HashPassword(req.GetPassword())
+	if err != nil {
+		return nil, rpc.Internal(err, "hash password")
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	role, err := newUserRole(ctx, q, s.opts.AllowSignup)
+	if err != nil {
+		return nil, err
+	}
+	user, err := q.CreateUser(ctx, db.CreateUserParams{
+		Name: p.Name, Username: p.Username, Email: p.Email, PasswordHash: text(hash), Role: role,
+	})
+	if err != nil {
+		if dup := DuplicateError(err); dup != nil {
+			return nil, dup
+		}
+		return nil, rpc.Internal(err, "create user")
+	}
+	cookie, err := s.opts.Cookies.StartSession(ctx, q, user.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "start session")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
+	}
+	setCookie(ctx, cookie)
+	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
+	return &krillv1.RegisterResponse{User: ToProto(user)}, nil
+}
+
+// newUserRole makes the first account an admin so a fresh install can be set
+// up without touching the database. The table lock stops two first sign-ups
+// from both becoming admin.
+func newUserRole(ctx context.Context, q *db.Queries, allowSignup bool) (string, error) {
+	if err := q.LockUsers(ctx); err != nil {
+		return "", rpc.Internal(err, "lock users")
+	}
+	n, err := q.CountUsers(ctx)
+	if err != nil {
+		return "", rpc.Internal(err, "count users")
+	}
+	if n == 0 {
+		return "admin", nil
+	}
+	if !allowSignup {
+		return "", connect.NewError(connect.CodePermissionDenied, errors.New("sign-up is closed; ask an admin for an account"))
+	}
+	return "labeler", nil
+}
+
+func (s *Service) Logout(ctx context.Context, _ *krillv1.LogoutRequest) (*krillv1.LogoutResponse, error) {
+	if sess, ok := SessionFrom(ctx); ok {
+		if err := s.q.DeleteSession(ctx, sess.TokenHash); err != nil {
+			return nil, rpc.Internal(err, "delete session")
+		}
+	}
+	setCookie(ctx, s.opts.Cookies.Clear())
+	return &krillv1.LogoutResponse{}, nil
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, req *krillv1.UpdateProfileRequest) (*krillv1.UpdateProfileResponse, error) {
+	sess, _ := SessionFrom(ctx)
+	p, err := NormalizeProfile(req.GetName(), req.GetUsername(), req.GetEmail())
+	if err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	user, err := s.q.UpdateUserProfile(ctx, db.UpdateUserProfileParams{
+		ID: sess.User.ID, Name: p.Name, Username: p.Username, Email: p.Email,
+	})
+	if err != nil {
+		if dup := DuplicateError(err); dup != nil {
+			return nil, dup
+		}
+		return nil, rpc.DBError(err, "user")
+	}
+	return &krillv1.UpdateProfileResponse{User: ToProto(user)}, nil
+}
+
+func (s *Service) ChangePassword(ctx context.Context, req *krillv1.ChangePasswordRequest) (*krillv1.ChangePasswordResponse, error) {
+	sess, _ := SessionFrom(ctx)
+	if sess.User.PasswordHash.Valid {
+		ok, err := CheckPassword(sess.User.PasswordHash.String, req.GetCurrentPassword())
+		if err != nil {
+			return nil, rpc.Internal(err, "check password")
+		}
+		if !ok {
+			return nil, rpc.Invalid("current password is incorrect")
+		}
+	}
+	if err := ValidatePassword(req.GetNewPassword()); err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	hash, err := HashPassword(req.GetNewPassword())
+	if err != nil {
+		return nil, rpc.Internal(err, "hash password")
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	if _, err := q.SetUserPassword(ctx, db.SetUserPasswordParams{ID: sess.User.ID, PasswordHash: text(hash)}); err != nil {
+		return nil, rpc.Internal(err, "set password")
+	}
+	if err := q.DeleteOtherSessions(ctx, db.DeleteOtherSessionsParams{UserID: sess.User.ID, TokenHash: sess.TokenHash}); err != nil {
+		return nil, rpc.Internal(err, "delete sessions")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
+	}
+	return &krillv1.ChangePasswordResponse{}, nil
+}

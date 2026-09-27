@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// UserService is for admins managing accounts.
+service UserService {
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+  // UpdateUser fails when an admin changes their own role or disables
+  // themselves, so there is always at least one admin.
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  // SetUserPassword signs the user out everywhere.
+  rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+}
+
+// Role is ordered: each role has every permission of the roles below it.
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_LABELER = 1;
+  ROLE_DEVELOPER = 2;
+  ROLE_ADMIN = 3;
+}
+
+// Permission is something a user can do. Which role grants each one is
+// defined once in the API and sent to the web app in GetSession.
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_LABEL = 1;
+  PERMISSION_MANAGE_VIDEOS = 2;
+  PERMISSION_MANAGE_LABEL_TYPES = 3;
+  PERMISSION_MANAGE_EXPORTS = 4;
+  PERMISSION_MANAGE_USERS = 5;
+  PERMISSION_REVIEW_LABELS = 6;
+}
+
+message RoleInfo {
+  Role role = 1;
+  string label = 2;
+}
+
+message PermissionInfo {
+  Permission permission = 1;
+  string description = 2;
+  // The lowest role that has it.
+  Role role = 3;
+}
+
+message User {
+  // UUID.
+  string id = 1;
+  string name = 2;
+  string username = 3;
+  string email = 4;
+  Role role = 5;
+  bool disabled = 6;
+  bool has_password = 7;
+  bool slack_linked = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp last_login_at = 10;
+  // Granted by the role.
+  repeated Permission permissions = 11;
+}
+
+message ListUsersRequest {}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  optional Role role = 2;
+  // Disabling a user signs them out everywhere.
+  optional bool disabled = 3;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message SetUserPasswordRequest {
+  string id = 1;
+  string password = 2;
+}
+
+message SetUserPasswordResponse {}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {}
