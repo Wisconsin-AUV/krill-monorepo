@@ -23,7 +23,7 @@ import {
   DropdownLabel,
   DropdownMenu,
 } from '@/components/ui/Dropdown'
-import FlashMessageRender from '@/components/ui/FlashMessageRender'
+import { FlashMessageRender } from '@/components/ui/FlashMessageRender'
 import {
   Navbar,
   NavbarDivider,
@@ -159,7 +159,7 @@ export function AppChrome() {
   return (
     <>
       <ProgressBar />
-      <FlashMessageRender byKey="global" />
+      <FlashMessageRender />
       <Outlet />
       <UploadTray />
     </>
