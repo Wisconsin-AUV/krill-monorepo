@@ -26,13 +26,19 @@ type Config struct {
 	// AllowSignup lets anyone register as a labeler. The first account can
 	// always register and becomes an admin.
 	AllowSignup bool
-	TeamName    string
+	// SignupEmailDomain limits password sign-up to emails at this domain.
+	// Empty allows any email.
+	SignupEmailDomain string
+	TeamName          string
 	// Slack sign-in is enabled when SlackClientID is set.
 	SlackClientID     string
 	SlackClientSecret string
 	SlackTeamID       string
 	// WorkerToken authenticates the GPU worker. Empty turns worker RPCs off.
 	WorkerToken string
+	// ClientIPHeader is trusted for the client's address when set. Only set it
+	// when every request comes through the proxy that writes it.
+	ClientIPHeader string
 }
 
 func Load() (Config, error) {
@@ -50,6 +56,8 @@ func Load() (Config, error) {
 		SlackClientSecret: os.Getenv("KRILL_SLACK_CLIENT_SECRET"),
 		SlackTeamID:       os.Getenv("KRILL_SLACK_TEAM_ID"),
 		WorkerToken:       os.Getenv("KRILL_WORKER_TOKEN"),
+		SignupEmailDomain: strings.ToLower(strings.TrimSpace(getenv("KRILL_SIGNUP_EMAIL_DOMAIN", "wisc.edu"))),
+		ClientIPHeader:    strings.TrimSpace(os.Getenv("KRILL_CLIENT_IP_HEADER")),
 	}
 	if cfg.TeamName = strings.TrimSpace(os.Getenv("KRILL_TEAM_NAME")); cfg.TeamName == "" {
 		cfg.TeamName = "Wisconsin Autonomous Underwater Vehicles"
@@ -60,6 +68,9 @@ func Load() (Config, error) {
 	}
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint
+	}
+	if strings.HasPrefix(cfg.PublicURL, "https://") && !strings.HasPrefix(cfg.S3PublicEndpoint, "https://") {
+		return Config{}, errors.New("KRILL_S3_PUBLIC_ENDPOINT must be HTTPS when KRILL_PUBLIC_URL is")
 	}
 	if cfg.SlackClientID != "" && (cfg.SlackClientSecret == "" || cfg.SlackTeamID == "") {
 		return Config{}, errors.New("KRILL_SLACK_CLIENT_SECRET and KRILL_SLACK_TEAM_ID are required with KRILL_SLACK_CLIENT_ID")

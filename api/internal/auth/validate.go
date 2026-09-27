@@ -55,6 +55,10 @@ func validateEmail(email string) error {
 	return nil
 }
 
+func InEmailDomain(email, domain string) bool {
+	return domain == "" || strings.HasSuffix(email, "@"+domain)
+}
+
 // ValidatePassword enforces the rules the web app can check without its
 // strength estimator
 func ValidatePassword(password string) error {

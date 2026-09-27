@@ -12,21 +12,21 @@ just api      # :8080
 just web      # :5173
 ```
 
-Full stack on the GPU box:
+Full stack on the GPU box. Set the passwords in `.env` first:
 
 ```sh
-docker compose -f deploy/docker-compose.yml --profile app --profile gpu up -d
+just up
 ```
 
 Build the worker for CUDA Nvidia with `just build-worker-cuda`.
 
 The GPU worker authenticates with `KRILL_WORKER_TOKEN`, which must be set for both the API and the worker. It runs SAM 2.1 by default. To use SAM 3, request access to [facebook/sam3](https://huggingface.co/facebook/sam3), then set `HF_TOKEN` and `KRILL_SAM_MODEL=facebook/sam3`.
 
-The API image bundles the web app, so the full stack is served from `:8080`. Set `KRILL_S3_PUBLIC_ENDPOINT` to a MinIO address browsers can reach when it is not `localhost:9000`.
+The API image bundles the web app, so the full stack is served from `:8080`. Browsers load frames straight from MinIO on `:9000`, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach. When the app is served over HTTPS, MinIO needs its own HTTPS hostname too, for example a second Cloudflare Tunnel route to `:9000`.
 
 ## Accounts
 
-The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
+The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
 
 Roles and what each can do are defined in [`api/internal/auth/access.go`](api/internal/auth/access.go).
 

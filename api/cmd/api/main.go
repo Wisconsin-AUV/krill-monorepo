@@ -125,10 +125,12 @@ func run() error {
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
-		Cookies:      cookies,
-		AllowSignup:  cfg.AllowSignup,
-		SlackEnabled: cfg.SlackClientID != "",
-		TeamName:     cfg.TeamName,
+		Cookies:           cookies,
+		AllowSignup:       cfg.AllowSignup,
+		SignupEmailDomain: cfg.SignupEmailDomain,
+		SlackEnabled:      cfg.SlackClientID != "",
+		TeamName:          cfg.TeamName,
+		ClientIPHeader:    cfg.ClientIPHeader,
 	}), rpcOpts))
 	if cfg.SlackClientID != "" {
 		slack := auth.NewSlack(pool, auth.SlackConfig{

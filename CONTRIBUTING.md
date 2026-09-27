@@ -81,7 +81,7 @@ Keep branches small and short-lived. If a PR drags on for more than a few days, 
    ```sh
    git fetch --tags && git checkout vX.Y.Z
    just build vX.Y.Z
-   docker compose -f deploy/docker-compose.yml --profile app --profile gpu up -d
+   just up vX.Y.Z
    ```
 
 ### Hotfixes
