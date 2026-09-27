@@ -61,6 +61,9 @@ func Load() (Config, error) {
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint
 	}
+	if strings.HasPrefix(cfg.PublicURL, "https://") && !strings.HasPrefix(cfg.S3PublicEndpoint, "https://") {
+		return Config{}, errors.New("KRILL_S3_PUBLIC_ENDPOINT must be HTTPS when KRILL_PUBLIC_URL is")
+	}
 	if cfg.SlackClientID != "" && (cfg.SlackClientSecret == "" || cfg.SlackTeamID == "") {
 		return Config{}, errors.New("KRILL_SLACK_CLIENT_SECRET and KRILL_SLACK_TEAM_ID are required with KRILL_SLACK_CLIENT_ID")
 	}

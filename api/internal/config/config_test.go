@@ -42,3 +42,16 @@ func TestLoadSlackNeedsTeam(t *testing.T) {
 		t.Error("expected error when KRILL_SLACK_TEAM_ID is missing")
 	}
 }
+
+func TestLoadHTTPSNeedsHTTPSEndpoint(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	t.Setenv("KRILL_PUBLIC_URL", "https://krill.example.com")
+	t.Setenv("KRILL_S3_PUBLIC_ENDPOINT", "http://localhost:9000")
+	if _, err := Load(); err == nil {
+		t.Error("expected error when the app is HTTPS and frames are HTTP")
+	}
+	t.Setenv("KRILL_S3_PUBLIC_ENDPOINT", "https://s3.krill.example.com")
+	if _, err := Load(); err != nil {
+		t.Error(err)
+	}
+}
