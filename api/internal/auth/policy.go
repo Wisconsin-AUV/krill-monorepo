@@ -74,6 +74,7 @@ var policy = map[string]krillv1.Permission{
 
 	krillv1connect.StatsServiceGetLeaderboardProcedure: label,
 	krillv1connect.StatsServiceGetProfileProcedure:     label,
+	krillv1connect.StatsServiceGetDriftStatsProcedure:  label,
 
 	krillv1connect.ExportServicePreviewExportProcedure: manageExports,
 	krillv1connect.ExportServiceCreateExportProcedure:  manageExports,

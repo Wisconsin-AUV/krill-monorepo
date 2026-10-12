@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - Attributes page: a grid of track crops for one label type, with number keys to assign attributes.
+- Drift flags are stored by the API when the tracker writes boxes, and the Labels page shows the drift rate per type.
 
 ## [0.1.0] - 2026-09-27
 

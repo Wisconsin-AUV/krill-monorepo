@@ -28,9 +28,10 @@ import {
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
 import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
+import { StatsService, type LabelTypeDrift } from '@/gen/krill/v1/stats_pb'
 import { labelClient } from '@/lib/clients'
 import { flash } from '@/lib/flash'
-import { formatNumber } from '@/lib/format'
+import { formatNumber, plural } from '@/lib/format'
 import { exportClasses, palette, starterTypes } from '@/lib/labels'
 import { invalidateService } from '@/lib/queryClient'
 import { Kbd } from '@/workspace/ShortcutsDialog'
@@ -41,6 +42,8 @@ export function LabelsPage() {
   const [deleting, setDeleting] = useState<LabelType | null>(null)
   const [seeding, setSeeding] = useState(false)
   const types = data?.labelTypes ?? []
+  const { data: driftData } = useQuery(StatsService.method.getDriftStats, {})
+  const drift = new Map(driftData?.labelTypes.map((d) => [d.labelTypeId, d]))
 
   const reorder = useMutation(LabelService.method.reorderLabelTypes, {
     onSuccess: () => invalidateService(LabelService),
@@ -128,6 +131,7 @@ export function LabelsPage() {
               <TableHeader className="text-right">Classes</TableHeader>
               <TableHeader className="text-right">Tracks</TableHeader>
               <TableHeader className="text-right">Boxes</TableHeader>
+              <TableHeader className="text-right">Drift</TableHeader>
               <TableHeader className="relative w-0">
                 <span className="sr-only">Actions</span>
               </TableHeader>
@@ -180,6 +184,9 @@ export function LabelsPage() {
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {formatNumber(t.boxCount)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  <DriftRate stats={drift.get(t.id)} />
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1">
@@ -238,5 +245,17 @@ export function LabelsPage() {
         confirmLabel="Delete"
       />
     </PageContentBlock>
+  )
+}
+
+function DriftRate({ stats }: { stats?: LabelTypeDrift }) {
+  if (!stats || stats.proposals === 0n) return <span className="text-zinc-400">—</span>
+  const rate = Number(stats.flagged) / Number(stats.proposals)
+  return (
+    <span
+      title={`${formatNumber(stats.flagged)} of ${plural(stats.proposals, 'tracked box', 'tracked boxes')}`}
+    >
+      {Math.round(rate * 100)}%
+    </span>
   )
 }

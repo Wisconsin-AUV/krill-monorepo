@@ -137,3 +137,23 @@ class GetProfileResponse(_message.Message):
     clips: int
     label_types: _containers.RepeatedCompositeFieldContainer[LabelTypeCount]
     def __init__(self, user: _Optional[_Union[Profile, _Mapping]] = ..., periods: _Optional[_Iterable[_Union[PeriodStats, _Mapping]]] = ..., days: _Optional[_Iterable[_Union[ContributionDay, _Mapping]]] = ..., current_streak: _Optional[int] = ..., longest_streak: _Optional[int] = ..., active_days: _Optional[int] = ..., best_day: _Optional[_Union[ContributionDay, _Mapping]] = ..., clips: _Optional[int] = ..., label_types: _Optional[_Iterable[_Union[LabelTypeCount, _Mapping]]] = ...) -> None: ...
+
+class GetDriftStatsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class LabelTypeDrift(_message.Message):
+    __slots__ = ("label_type_id", "proposals", "flagged")
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    PROPOSALS_FIELD_NUMBER: _ClassVar[int]
+    FLAGGED_FIELD_NUMBER: _ClassVar[int]
+    label_type_id: int
+    proposals: int
+    flagged: int
+    def __init__(self, label_type_id: _Optional[int] = ..., proposals: _Optional[int] = ..., flagged: _Optional[int] = ...) -> None: ...
+
+class GetDriftStatsResponse(_message.Message):
+    __slots__ = ("label_types",)
+    LABEL_TYPES_FIELD_NUMBER: _ClassVar[int]
+    label_types: _containers.RepeatedCompositeFieldContainer[LabelTypeDrift]
+    def __init__(self, label_types: _Optional[_Iterable[_Union[LabelTypeDrift, _Mapping]]] = ...) -> None: ...

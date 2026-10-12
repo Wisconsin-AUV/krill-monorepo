@@ -14,7 +14,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/stats.proto.
  */
 export const file_krill_v1_stats: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9zdGF0cy5wcm90bxIIa3JpbGwudjEigwEKB1Byb2ZpbGUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIQCgh1c2VybmFtZRgDIAEoCRIcCgRyb2xlGAQgASgOMg4ua3JpbGwudjEuUm9sZRIuCgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9Cg1Db250cmlidXRpb25zEg0KBWJveGVzGAEgASgDEg4KBmZyYW1lcxgCIAEoAxINCgV0b3RhbBgDIAEoAyJxChBMZWFkZXJib2FyZEVudHJ5EgwKBHJhbmsYASABKAUSHwoEdXNlchgCIAEoCzIRLmtyaWxsLnYxLlByb2ZpbGUSLgoNY29udHJpYnV0aW9ucxgDIAEoCzIXLmtyaWxsLnYxLkNvbnRyaWJ1dGlvbnMiTAoVR2V0TGVhZGVyYm9hcmRSZXF1ZXN0EiAKBnBlcmlvZBgBIAEoDjIQLmtyaWxsLnYxLlBlcmlvZBIRCgl0aW1lX3pvbmUYAiABKAkilwEKFkdldExlYWRlcmJvYXJkUmVzcG9uc2USKwoHZW50cmllcxgBIAMoCzIaLmtyaWxsLnYxLkxlYWRlcmJvYXJkRW50cnkSKQoFc2luY2UYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiUKBHRlYW0YAyABKAsyFy5rcmlsbC52MS5Db250cmlidXRpb25zIjgKEUdldFByb2ZpbGVSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhEKCXRpbWVfem9uZRgCIAEoCSKDAQoLUGVyaW9kU3RhdHMSIAoGcGVyaW9kGAEgASgOMhAua3JpbGwudjEuUGVyaW9kEi4KDWNvbnRyaWJ1dGlvbnMYAiABKAsyFy5rcmlsbC52MS5Db250cmlidXRpb25zEgwKBHJhbmsYAyABKAUSFAoMY29udHJpYnV0b3JzGAQgASgFIi4KD0NvbnRyaWJ1dGlvbkRheRIMCgRkYXRlGAEgASgJEg0KBWNvdW50GAIgASgDIlMKDkxhYmVsVHlwZUNvdW50EhUKDWxhYmVsX3R5cGVfaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRINCgVib3hlcxgEIAEoAyK2AgoSR2V0UHJvZmlsZVJlc3BvbnNlEh8KBHVzZXIYASABKAsyES5rcmlsbC52MS5Qcm9maWxlEiYKB3BlcmlvZHMYAiADKAsyFS5rcmlsbC52MS5QZXJpb2RTdGF0cxInCgRkYXlzGAMgAygLMhkua3JpbGwudjEuQ29udHJpYnV0aW9uRGF5EhYKDmN1cnJlbnRfc3RyZWFrGAQgASgFEhYKDmxvbmdlc3Rfc3RyZWFrGAUgASgFEhMKC2FjdGl2ZV9kYXlzGAYgASgFEisKCGJlc3RfZGF5GAcgASgLMhkua3JpbGwudjEuQ29udHJpYnV0aW9uRGF5Eg0KBWNsaXBzGAggASgDEi0KC2xhYmVsX3R5cGVzGAkgAygLMhgua3JpbGwudjEuTGFiZWxUeXBlQ291bnQqaAoGUGVyaW9kEhYKElBFUklPRF9VTlNQRUNJRklFRBAAEg4KClBFUklPRF9EQVkQARIPCgtQRVJJT0RfV0VFSxACEhAKDFBFUklPRF9NT05USBADEhMKD1BFUklPRF9BTExfVElNRRAEMrABCgxTdGF0c1NlcnZpY2USVQoOR2V0TGVhZGVyYm9hcmQSHy5rcmlsbC52MS5HZXRMZWFkZXJib2FyZFJlcXVlc3QaIC5rcmlsbC52MS5HZXRMZWFkZXJib2FyZFJlc3BvbnNlIgASSQoKR2V0UHJvZmlsZRIbLmtyaWxsLnYxLkdldFByb2ZpbGVSZXF1ZXN0Ghwua3JpbGwudjEuR2V0UHJvZmlsZVJlc3BvbnNlIgBCiwEKDGNvbS5rcmlsbC52MUIKU3RhdHNQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_krill_v1_user]);
+  fileDesc("ChRrcmlsbC92MS9zdGF0cy5wcm90bxIIa3JpbGwudjEigwEKB1Byb2ZpbGUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIQCgh1c2VybmFtZRgDIAEoCRIcCgRyb2xlGAQgASgOMg4ua3JpbGwudjEuUm9sZRIuCgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI9Cg1Db250cmlidXRpb25zEg0KBWJveGVzGAEgASgDEg4KBmZyYW1lcxgCIAEoAxINCgV0b3RhbBgDIAEoAyJxChBMZWFkZXJib2FyZEVudHJ5EgwKBHJhbmsYASABKAUSHwoEdXNlchgCIAEoCzIRLmtyaWxsLnYxLlByb2ZpbGUSLgoNY29udHJpYnV0aW9ucxgDIAEoCzIXLmtyaWxsLnYxLkNvbnRyaWJ1dGlvbnMiTAoVR2V0TGVhZGVyYm9hcmRSZXF1ZXN0EiAKBnBlcmlvZBgBIAEoDjIQLmtyaWxsLnYxLlBlcmlvZBIRCgl0aW1lX3pvbmUYAiABKAkilwEKFkdldExlYWRlcmJvYXJkUmVzcG9uc2USKwoHZW50cmllcxgBIAMoCzIaLmtyaWxsLnYxLkxlYWRlcmJvYXJkRW50cnkSKQoFc2luY2UYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiUKBHRlYW0YAyABKAsyFy5rcmlsbC52MS5Db250cmlidXRpb25zIjgKEUdldFByb2ZpbGVSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhEKCXRpbWVfem9uZRgCIAEoCSKDAQoLUGVyaW9kU3RhdHMSIAoGcGVyaW9kGAEgASgOMhAua3JpbGwudjEuUGVyaW9kEi4KDWNvbnRyaWJ1dGlvbnMYAiABKAsyFy5rcmlsbC52MS5Db250cmlidXRpb25zEgwKBHJhbmsYAyABKAUSFAoMY29udHJpYnV0b3JzGAQgASgFIi4KD0NvbnRyaWJ1dGlvbkRheRIMCgRkYXRlGAEgASgJEg0KBWNvdW50GAIgASgDIlMKDkxhYmVsVHlwZUNvdW50EhUKDWxhYmVsX3R5cGVfaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRINCgVib3hlcxgEIAEoAyK2AgoSR2V0UHJvZmlsZVJlc3BvbnNlEh8KBHVzZXIYASABKAsyES5rcmlsbC52MS5Qcm9maWxlEiYKB3BlcmlvZHMYAiADKAsyFS5rcmlsbC52MS5QZXJpb2RTdGF0cxInCgRkYXlzGAMgAygLMhkua3JpbGwudjEuQ29udHJpYnV0aW9uRGF5EhYKDmN1cnJlbnRfc3RyZWFrGAQgASgFEhYKDmxvbmdlc3Rfc3RyZWFrGAUgASgFEhMKC2FjdGl2ZV9kYXlzGAYgASgFEisKCGJlc3RfZGF5GAcgASgLMhkua3JpbGwudjEuQ29udHJpYnV0aW9uRGF5Eg0KBWNsaXBzGAggASgDEi0KC2xhYmVsX3R5cGVzGAkgAygLMhgua3JpbGwudjEuTGFiZWxUeXBlQ291bnQiFgoUR2V0RHJpZnRTdGF0c1JlcXVlc3QiSwoOTGFiZWxUeXBlRHJpZnQSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxIRCglwcm9wb3NhbHMYAiABKAMSDwoHZmxhZ2dlZBgDIAEoAyJGChVHZXREcmlmdFN0YXRzUmVzcG9uc2USLQoLbGFiZWxfdHlwZXMYASADKAsyGC5rcmlsbC52MS5MYWJlbFR5cGVEcmlmdCpoCgZQZXJpb2QSFgoSUEVSSU9EX1VOU1BFQ0lGSUVEEAASDgoKUEVSSU9EX0RBWRABEg8KC1BFUklPRF9XRUVLEAISEAoMUEVSSU9EX01PTlRIEAMSEwoPUEVSSU9EX0FMTF9USU1FEAQyhAIKDFN0YXRzU2VydmljZRJVCg5HZXRMZWFkZXJib2FyZBIfLmtyaWxsLnYxLkdldExlYWRlcmJvYXJkUmVxdWVzdBogLmtyaWxsLnYxLkdldExlYWRlcmJvYXJkUmVzcG9uc2UiABJJCgpHZXRQcm9maWxlEhsua3JpbGwudjEuR2V0UHJvZmlsZVJlcXVlc3QaHC5rcmlsbC52MS5HZXRQcm9maWxlUmVzcG9uc2UiABJSCg1HZXREcmlmdFN0YXRzEh4ua3JpbGwudjEuR2V0RHJpZnRTdGF0c1JlcXVlc3QaHy5rcmlsbC52MS5HZXREcmlmdFN0YXRzUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpTdGF0c1Byb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_krill_v1_user]);
 
 /**
  * Profile is the part of a user everyone can see.
@@ -352,6 +352,65 @@ export const GetProfileResponseSchema: GenMessage<GetProfileResponse> = /*@__PUR
   messageDesc(file_krill_v1_stats, 9);
 
 /**
+ * @generated from message krill.v1.GetDriftStatsRequest
+ */
+export type GetDriftStatsRequest = Message<"krill.v1.GetDriftStatsRequest"> & {
+};
+
+/**
+ * Describes the message krill.v1.GetDriftStatsRequest.
+ * Use `create(GetDriftStatsRequestSchema)` to create a new message.
+ */
+export const GetDriftStatsRequestSchema: GenMessage<GetDriftStatsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_stats, 10);
+
+/**
+ * @generated from message krill.v1.LabelTypeDrift
+ */
+export type LabelTypeDrift = Message<"krill.v1.LabelTypeDrift"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * @generated from field: int64 proposals = 2;
+   */
+  proposals: bigint;
+
+  /**
+   * @generated from field: int64 flagged = 3;
+   */
+  flagged: bigint;
+};
+
+/**
+ * Describes the message krill.v1.LabelTypeDrift.
+ * Use `create(LabelTypeDriftSchema)` to create a new message.
+ */
+export const LabelTypeDriftSchema: GenMessage<LabelTypeDrift> = /*@__PURE__*/
+  messageDesc(file_krill_v1_stats, 11);
+
+/**
+ * @generated from message krill.v1.GetDriftStatsResponse
+ */
+export type GetDriftStatsResponse = Message<"krill.v1.GetDriftStatsResponse"> & {
+  /**
+   * Only label types with at least one proposal.
+   *
+   * @generated from field: repeated krill.v1.LabelTypeDrift label_types = 1;
+   */
+  labelTypes: LabelTypeDrift[];
+};
+
+/**
+ * Describes the message krill.v1.GetDriftStatsResponse.
+ * Use `create(GetDriftStatsResponseSchema)` to create a new message.
+ */
+export const GetDriftStatsResponseSchema: GenMessage<GetDriftStatsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_stats, 12);
+
+/**
  * @generated from enum krill.v1.Period
  */
 export const Period = {
@@ -417,6 +476,17 @@ export const StatsService: GenService<{
     methodKind: "unary";
     input: typeof GetProfileRequestSchema;
     output: typeof GetProfileResponseSchema;
+  },
+  /**
+   * GetDriftStats counts tracker proposals per label type and how many were
+   * flagged as drifted, whether or not a labeler has since looked at them.
+   *
+   * @generated from rpc krill.v1.StatsService.GetDriftStats
+   */
+  getDriftStats: {
+    methodKind: "unary";
+    input: typeof GetDriftStatsRequestSchema;
+    output: typeof GetDriftStatsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_stats, 0);

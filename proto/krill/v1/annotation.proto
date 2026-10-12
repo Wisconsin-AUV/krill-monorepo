@@ -79,6 +79,9 @@ message Annotation {
   Box box = 4;
   AnnotationSource source = 5;
   AnnotationStatus status = 6;
+  // The tracker's box jumped in size or position from the track's previous
+  // box, and no labeler has accepted or edited it yet.
+  bool drift = 7;
 }
 
 message CreateTrackRequest {

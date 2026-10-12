@@ -46,6 +46,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
@@ -96,6 +97,7 @@ type Querier interface {
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
+	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
 	// Each track comes with its first verified box, or its middle box when none
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
@@ -114,6 +116,7 @@ type Querier interface {
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
+	SetDrift(ctx context.Context, arg SetDriftParams) error
 	// Credit stays with whoever first set the current status.
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error

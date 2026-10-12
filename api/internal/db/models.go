@@ -24,6 +24,7 @@ type Annotation struct {
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	CreatedBy    pgtype.UUID        `json:"created_by"`
 	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+	Drift        pgtype.Text        `json:"drift"`
 }
 
 type Clip struct {

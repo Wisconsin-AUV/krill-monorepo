@@ -2,11 +2,14 @@ package tracker
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
+	"github.com/wauv/krill/api/internal/db"
 )
 
 func TestNextTaskHandsOffQueuedTask(t *testing.T) {
@@ -79,5 +82,28 @@ func TestFailTask(t *testing.T) {
 	}
 	if err := <-task.done; err == nil || err.Error() != "out of memory" {
 		t.Errorf("done = %v, want the worker's error", err)
+	}
+}
+
+func TestStaleDrift(t *testing.T) {
+	box := func(id int64, x float64, status, drift string) db.ListTrackBoxesRow {
+		return db.ListTrackBoxesRow{
+			ID: id, X: x, Y: 0.1, Width: 0.2, Height: 0.2, Status: status,
+			Drift: pgtype.Text{String: drift, Valid: drift != ""},
+		}
+	}
+	got := staleDrift([]db.ListTrackBoxesRow{
+		box(1, 0.1, "verified", ""),
+		box(2, 0.11, "proposed", ""),
+		box(3, 0.5, "proposed", ""),
+		box(4, 0.51, "proposed", "flagged"),
+		box(5, 0.7, "verified", "reviewed"),
+		box(6, 0.4, "proposed", "flagged"),
+	})
+	if !slices.Equal(got.Ids, []int64{2, 3, 4}) {
+		t.Errorf("ids = %v, want [2 3 4]", got.Ids)
+	}
+	if !slices.Equal(got.FlaggedIds, []int64{3}) {
+		t.Errorf("flagged = %v, want [3]", got.FlaggedIds)
 	}
 }
