@@ -96,6 +96,9 @@ type Querier interface {
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
+	// Each track comes with its first verified box, or its middle box when none
+	// is verified yet.
+	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	LockUsers(ctx context.Context) error

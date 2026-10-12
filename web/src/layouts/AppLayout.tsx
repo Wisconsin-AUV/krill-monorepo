@@ -6,6 +6,7 @@ import {
   ChartBarIcon,
   FilmIcon,
   HomeIcon,
+  Squares2X2Icon,
   StarIcon,
   TagIcon,
   TrophyIcon,
@@ -67,6 +68,13 @@ const navItems = [
     icon: FilmIcon,
     permission: Permission.MANAGE_VIDEOS,
     match: (p: string) => p.startsWith('/videos'),
+  },
+  {
+    label: 'Attributes',
+    to: '/attributes',
+    icon: Squares2X2Icon,
+    permission: Permission.LABEL,
+    match: (p: string) => p.startsWith('/attributes'),
   },
   {
     label: 'Leaderboard',

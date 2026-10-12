@@ -57,6 +57,9 @@ const (
 	// AnnotationServiceTrackObjectProcedure is the fully-qualified name of the AnnotationService's
 	// TrackObject RPC.
 	AnnotationServiceTrackObjectProcedure = "/krill.v1.AnnotationService/TrackObject"
+	// AnnotationServiceListTracksByTypeProcedure is the fully-qualified name of the AnnotationService's
+	// ListTracksByType RPC.
+	AnnotationServiceListTracksByTypeProcedure = "/krill.v1.AnnotationService/ListTracksByType"
 )
 
 // AnnotationServiceClient is a client for the krill.v1.AnnotationService service.
@@ -79,6 +82,9 @@ type AnnotationServiceClient interface {
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added
 	// to the track as proposals while tracking runs.
 	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
+	// ListTracksByType lists tracks of one type across clips, each with one box
+	// to crop, ordered by track id.
+	ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error)
 }
 
 // NewAnnotationServiceClient constructs a client for the krill.v1.AnnotationService service. By
@@ -140,19 +146,26 @@ func NewAnnotationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
 			connect.WithClientOptions(opts...),
 		),
+		listTracksByType: connect.NewClient[v1.ListTracksByTypeRequest, v1.ListTracksByTypeResponse](
+			httpClient,
+			baseURL+AnnotationServiceListTracksByTypeProcedure,
+			connect.WithSchema(annotationServiceMethods.ByName("ListTracksByType")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // annotationServiceClient implements AnnotationServiceClient.
 type annotationServiceClient struct {
-	createTrack    *connect.Client[v1.CreateTrackRequest, v1.CreateTrackResponse]
-	updateTrack    *connect.Client[v1.UpdateTrackRequest, v1.UpdateTrackResponse]
-	deleteTrack    *connect.Client[v1.DeleteTrackRequest, v1.DeleteTrackResponse]
-	setBox         *connect.Client[v1.SetBoxRequest, v1.SetBoxResponse]
-	deleteBox      *connect.Client[v1.DeleteBoxRequest, v1.DeleteBoxResponse]
-	copyBoxes      *connect.Client[v1.CopyBoxesRequest, v1.CopyBoxesResponse]
-	setFrameStatus *connect.Client[v1.SetFrameStatusRequest, v1.SetFrameStatusResponse]
-	trackObject    *connect.Client[v1.TrackObjectRequest, v1.TrackObjectResponse]
+	createTrack      *connect.Client[v1.CreateTrackRequest, v1.CreateTrackResponse]
+	updateTrack      *connect.Client[v1.UpdateTrackRequest, v1.UpdateTrackResponse]
+	deleteTrack      *connect.Client[v1.DeleteTrackRequest, v1.DeleteTrackResponse]
+	setBox           *connect.Client[v1.SetBoxRequest, v1.SetBoxResponse]
+	deleteBox        *connect.Client[v1.DeleteBoxRequest, v1.DeleteBoxResponse]
+	copyBoxes        *connect.Client[v1.CopyBoxesRequest, v1.CopyBoxesResponse]
+	setFrameStatus   *connect.Client[v1.SetFrameStatusRequest, v1.SetFrameStatusResponse]
+	trackObject      *connect.Client[v1.TrackObjectRequest, v1.TrackObjectResponse]
+	listTracksByType *connect.Client[v1.ListTracksByTypeRequest, v1.ListTracksByTypeResponse]
 }
 
 // CreateTrack calls krill.v1.AnnotationService.CreateTrack.
@@ -227,6 +240,15 @@ func (c *annotationServiceClient) TrackObject(ctx context.Context, req *v1.Track
 	return nil, err
 }
 
+// ListTracksByType calls krill.v1.AnnotationService.ListTracksByType.
+func (c *annotationServiceClient) ListTracksByType(ctx context.Context, req *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error) {
+	response, err := c.listTracksByType.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AnnotationServiceHandler is an implementation of the krill.v1.AnnotationService service.
 type AnnotationServiceHandler interface {
 	// CreateTrack starts a track with its first box.
@@ -247,6 +269,9 @@ type AnnotationServiceHandler interface {
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added
 	// to the track as proposals while tracking runs.
 	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
+	// ListTracksByType lists tracks of one type across clips, each with one box
+	// to crop, ordered by track id.
+	ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error)
 }
 
 // NewAnnotationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -304,6 +329,12 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 		connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
 		connect.WithHandlerOptions(opts...),
 	)
+	annotationServiceListTracksByTypeHandler := connect.NewUnaryHandlerSimple(
+		AnnotationServiceListTracksByTypeProcedure,
+		svc.ListTracksByType,
+		connect.WithSchema(annotationServiceMethods.ByName("ListTracksByType")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.AnnotationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AnnotationServiceCreateTrackProcedure:
@@ -322,6 +353,8 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 			annotationServiceSetFrameStatusHandler.ServeHTTP(w, r)
 		case AnnotationServiceTrackObjectProcedure:
 			annotationServiceTrackObjectHandler.ServeHTTP(w, r)
+		case AnnotationServiceListTracksByTypeProcedure:
+			annotationServiceListTracksByTypeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -361,4 +394,8 @@ func (UnimplementedAnnotationServiceHandler) SetFrameStatus(context.Context, *v1
 
 func (UnimplementedAnnotationServiceHandler) TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.TrackObject is not implemented"))
+}
+
+func (UnimplementedAnnotationServiceHandler) ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.ListTracksByType is not implemented"))
 }

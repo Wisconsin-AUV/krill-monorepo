@@ -147,6 +147,47 @@ func TestInterceptorWorker(t *testing.T) {
 	}
 }
 
+type annotationStub struct {
+	krillv1connect.UnimplementedAnnotationServiceHandler
+}
+
+func (annotationStub) ListTracksByType(context.Context, *krillv1.ListTracksByTypeRequest) (*krillv1.ListTracksByTypeResponse, error) {
+	return &krillv1.ListTracksByTypeResponse{}, nil
+}
+
+func TestListTracksByTypeAccess(t *testing.T) {
+	lookup := func(_ context.Context, hash []byte) (db.User, error) {
+		if string(hash) == string(hashToken("labeler-token")) {
+			return db.User{Role: "labeler"}, nil
+		}
+		return db.User{}, pgx.ErrNoRows
+	}
+	mux := http.NewServeMux()
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotationStub{},
+		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	tests := []struct {
+		name string
+		opt  connect.ClientOption
+		want connect.Code
+	}{
+		{"labeler", withCookie("labeler-token"), 0},
+		{"no session", withCookie(""), connect.CodeUnauthenticated},
+		{"worker token", withHeader("Authorization", "Bearer worker-token"), connect.CodeUnauthenticated},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := krillv1connect.NewAnnotationServiceClient(srv.Client(), srv.URL, tt.opt)
+			_, err := client.ListTracksByType(t.Context(), &krillv1.ListTracksByTypeRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("err = %v, want code %v", err, tt.want)
+			}
+		})
+	}
+}
+
 func withHeader(key, value string) connect.ClientOption {
 	return connect.WithInterceptors(connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {

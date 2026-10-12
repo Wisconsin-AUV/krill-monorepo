@@ -265,6 +265,100 @@ func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, er
 	return items, nil
 }
 
+const listTypeTracks = `-- name: ListTypeTracks :many
+SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
+    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
+FROM tracks t
+JOIN clips c ON c.id = t.clip_id
+JOIN label_types lt ON lt.id = t.label_type_id
+JOIN LATERAL (
+    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
+    FROM (
+        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.status,
+            row_number() OVER (ORDER BY f.idx) AS n,
+            count(*) OVER () AS total
+        FROM annotations a
+        JOIN frames f ON f.id = a.frame_id
+        WHERE a.track_id = t.id AND a.status <> 'rejected'
+    ) r
+    ORDER BY (r.status = 'verified') DESC,
+        CASE WHEN r.status = 'verified' THEN r.n ELSE abs(2 * r.n - r.total - 1) END,
+        r.n
+    LIMIT 1
+) b ON true
+WHERE t.label_type_id = $1
+    AND ($2::bigint = 0 OR c.video_id = $2::bigint)
+    AND t.id > $3::bigint
+    AND (NOT $4::bool OR EXISTS (
+        SELECT 1 FROM jsonb_array_elements(lt.attributes) d
+        WHERE NOT ((d->'options') @> jsonb_build_array(t.attributes -> (d->>'name')))
+    ))
+ORDER BY t.id
+LIMIT $5
+`
+
+type ListTypeTracksParams struct {
+	LabelTypeID int64 `json:"label_type_id"`
+	VideoID     int64 `json:"video_id"`
+	AfterID     int64 `json:"after_id"`
+	MissingOnly bool  `json:"missing_only"`
+	Lim         int32 `json:"lim"`
+}
+
+type ListTypeTracksRow struct {
+	ID          int64   `json:"id"`
+	ClipID      int64   `json:"clip_id"`
+	LabelTypeID int64   `json:"label_type_id"`
+	Attributes  []byte  `json:"attributes"`
+	VideoID     int64   `json:"video_id"`
+	FrameID     int64   `json:"frame_id"`
+	FrameIdx    int32   `json:"frame_idx"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	Width       float64 `json:"width"`
+	Height      float64 `json:"height"`
+}
+
+// Each track comes with its first verified box, or its middle box when none
+// is verified yet.
+func (q *Queries) ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error) {
+	rows, err := q.db.Query(ctx, listTypeTracks,
+		arg.LabelTypeID,
+		arg.VideoID,
+		arg.AfterID,
+		arg.MissingOnly,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTypeTracksRow
+	for rows.Next() {
+		var i ListTypeTracksRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ClipID,
+			&i.LabelTypeID,
+			&i.Attributes,
+			&i.VideoID,
+			&i.FrameID,
+			&i.FrameIdx,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setFrameStatus = `-- name: SetFrameStatus :one
 UPDATE frames SET
     status = $1,

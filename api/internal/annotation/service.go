@@ -17,19 +17,21 @@ import (
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
+	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/video"
 )
 
 type Service struct {
 	krillv1connect.UnimplementedAnnotationServiceHandler
-	pool *pgxpool.Pool
-	q    *db.Queries
-	jobs *river.Client[pgx.Tx]
+	pool    *pgxpool.Pool
+	q       *db.Queries
+	present *video.Presenter
+	jobs    *river.Client[pgx.Tx]
 }
 
-func NewService(pool *pgxpool.Pool, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{pool: pool, q: db.New(pool), jobs: jobs}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
+	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), jobs: jobs}
 }
 
 // claim marks the caller as working on the clip. A failed claim should not
