@@ -10,7 +10,7 @@ import (
 )
 
 const getClip = `-- name: GetClip :one
-SELECT id, video_id, idx, start_frame, frame_count FROM clips WHERE id = $1
+SELECT id, video_id, idx, start_frame, frame_count, embedded_at, embed_model FROM clips WHERE id = $1
 `
 
 func (q *Queries) GetClip(ctx context.Context, id int64) (Clip, error) {
@@ -22,6 +22,8 @@ func (q *Queries) GetClip(ctx context.Context, id int64) (Clip, error) {
 		&i.Idx,
 		&i.StartFrame,
 		&i.FrameCount,
+		&i.EmbeddedAt,
+		&i.EmbedModel,
 	)
 	return i, err
 }
@@ -95,4 +97,18 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 		return nil, err
 	}
 	return items, nil
+}
+
+const setClipEmbedded = `-- name: SetClipEmbedded :exec
+UPDATE clips SET embedded_at = now(), embed_model = $2 WHERE id = $1
+`
+
+type SetClipEmbeddedParams struct {
+	ID         int64  `json:"id"`
+	EmbedModel string `json:"embed_model"`
+}
+
+func (q *Queries) SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error {
+	_, err := q.db.Exec(ctx, setClipEmbedded, arg.ID, arg.EmbedModel)
+	return err
 }

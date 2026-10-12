@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- SAM image embeddings are computed for each clip after ingest, and tracking skips the image encoder on embedded frames. `KRILL_EMBED_AT_INGEST=false` turns this off.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

@@ -93,6 +93,7 @@ func (s *Presenter) Clip(ctx context.Context, v db.Video, c db.Clip, st Stats) *
 		ThumbnailUrl:      s.frameURL(ctx, v.ID, c.StartFrame+c.FrameCount/2),
 		LabeledFrameCount: st.LabeledFrames,
 		BoxCount:          st.Boxes,
+		Embedded:          c.EmbeddedAt.Valid,
 	}
 }
 

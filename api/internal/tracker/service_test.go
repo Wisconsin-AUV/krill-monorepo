@@ -13,7 +13,7 @@ func TestNextTaskHandsOffQueuedTask(t *testing.T) {
 	d := NewDispatcher()
 	s := &Service{dispatcher: d}
 	want := newTask(7, 1, &krillv1.TrackTask{Id: 7})
-	go func() { d.queue <- want }()
+	d.push(want)
 
 	res, err := s.NextTask(t.Context(), &krillv1.NextTaskRequest{})
 	if err != nil {
@@ -79,5 +79,31 @@ func TestFailTask(t *testing.T) {
 	}
 	if err := <-task.done; err == nil || err.Error() != "out of memory" {
 		t.Errorf("done = %v, want the worker's error", err)
+	}
+}
+
+func TestReportEmbed(t *testing.T) {
+	d := NewDispatcher()
+	s := &Service{dispatcher: d}
+	track := newTask(7, 1, &krillv1.TrackTask{Id: 7})
+	embed := newEmbedTask(8, &krillv1.EmbedTask{Id: 8})
+	d.add(track)
+	d.add(embed)
+
+	if _, err := s.ReportEmbed(t.Context(), &krillv1.ReportEmbedRequest{TaskId: 7, Model: "sam"}); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("embed report on a track task: err = %v, want not found", err)
+	}
+	if _, err := s.ReportTrack(t.Context(), &krillv1.ReportTrackRequest{TaskId: 8, Done: true}); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Errorf("track report on an embed task: err = %v, want not found", err)
+	}
+
+	if _, err := s.ReportEmbed(t.Context(), &krillv1.ReportEmbedRequest{TaskId: 8, Model: "facebook/sam2.1-hiera-small"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-embed.done; err != nil {
+		t.Errorf("done = %v, want nil", err)
+	}
+	if got := *embed.model.Load(); got != "facebook/sam2.1-hiera-small" {
+		t.Errorf("model = %q", got)
 	}
 }

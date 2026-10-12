@@ -109,6 +109,7 @@ type Querier interface {
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	// Credit stays with whoever first set the current status.

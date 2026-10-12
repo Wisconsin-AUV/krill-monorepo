@@ -101,15 +101,17 @@ func run() error {
 
 	dispatcher := tracker.NewDispatcher()
 	workers := river.NewWorkers()
-	river.AddWorker(workers, ingest.NewWorker(pool, store))
+	river.AddWorker(workers, ingest.NewWorker(pool, store, cfg.EmbedAtIngest))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
+	river.AddWorker(workers, tracker.NewEmbedWorker(pool, store, dispatcher))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:    {MaxWorkers: 2},
 			ingest.Queue:          {MaxWorkers: 1},
 			annotation.TrackQueue: {MaxWorkers: 1},
+			ingest.EmbedQueue:     {MaxWorkers: 1},
 		},
 		Workers: workers,
 	})
@@ -142,7 +144,7 @@ func run() error {
 		mux.HandleFunc("GET /auth/slack/login", slack.Login)
 		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
 	}
-	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, cfg.EmbedAtIngest), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))

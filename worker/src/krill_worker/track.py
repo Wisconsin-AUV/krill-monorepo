@@ -1,10 +1,14 @@
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
 # Normalized x, y, width, height with the origin at the top left.
 Box = tuple[float, float, float, float]
+
+# A frame's SAM image-encoder features, one tensor per feature level.
+Embedding = list[Any]
 
 # Masks thinner than this many pixels are noise, not an object.
 MIN_MASK_PIXELS = 2

@@ -1,3 +1,4 @@
+import io
 import warnings
 from collections.abc import Iterable, Iterator
 from typing import Any
@@ -13,7 +14,7 @@ from transformers import (
 )
 
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, PointPrompt, Prompt, mask_box
+from krill_worker.track import Box, Embedding, PointPrompt, Prompt, mask_box
 
 
 def attention_implementation(device: str) -> str:
@@ -50,26 +51,63 @@ class SamTracker:
         self.processor = processor_cls.from_pretrained(model_id)
         config = self.model.config
         self.memory_frames = max(config.num_maskmem, config.max_object_pointers_in_encoder)
+        self._position_embeddings: list[Any] | None = None
 
     def warm_up(self) -> None:
-        """Track a blank clip so ROCm compiles its kernels before the first real click."""
+        """Embed and track a blank clip so ROCm compiles its kernels before the first click."""
         frame = np.zeros((576, 1024, 3), dtype=np.uint8)
-        for _ in self.track([frame, frame], PointPrompt(0.5, 0.5)):
+        embedding = self.load_embedding(self.embed(frame))
+        for _ in self.track([(frame, embedding), (frame, None)], PointPrompt(0.5, 0.5)):
             pass
 
-    def track(self, frames: Iterable[Frame], prompt: Prompt) -> Iterator[Box | None]:
+    def embed(self, frame: Frame) -> bytes:
+        """Serialize the frame's image features as the tracker's vision cache expects them."""
+        inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
+        with torch.inference_mode():
+            out = self.model.get_image_features(
+                inputs.pixel_values.to(torch.float16), return_dict=True
+            )
+        # Position embeddings depend only on the input size, which the
+        # processor fixes, so they are kept once in memory instead of in every
+        # file where they would be five times the size of the features.
+        if self._position_embeddings is None:
+            self._position_embeddings = list(out.fpn_position_encoding)
+        feats = [
+            f.to("cpu").clone(memory_format=torch.contiguous_format) for f in out.fpn_hidden_states
+        ]
+        buf = io.BytesIO()
+        torch.save({"model": self.model_id, "vision_feats": feats}, buf)
+        return buf.getvalue()
+
+    def load_embedding(self, data: bytes) -> Embedding:
+        payload = torch.load(io.BytesIO(data), map_location="cpu", weights_only=True)
+        if payload["model"] != self.model_id:
+            raise ValueError(f"embedding is from {payload['model']}, not {self.model_id}")
+        feats: Embedding = payload["vision_feats"]
+        return feats
+
+    def track(
+        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+    ) -> Iterator[Box | None]:
         """Yield the object's box on each frame, or None where it is not visible.
 
-        The prompt is on the first frame.
+        The prompt is on the first frame. Frames with an embedding skip the
+        image encoder.
         """
         session = self.processor.init_video_session(
             inference_device=self.device, dtype=torch.float16
         )
-        for i, frame in enumerate(frames):
+        for i, (frame, embedding) in enumerate(frames):
             inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
             size = frame.shape[:2]
             if i == 0:
                 self._add_prompt(session, prompt, size)
+            if embedding is not None and self._position_embeddings is not None:
+                # The model reads the cache before running its image encoder.
+                session.cache.cache_vision_features(
+                    i,
+                    {"vision_feats": embedding, "vision_pos_embeds": self._position_embeddings},
+                )
             with torch.inference_mode():
                 out = self.model(
                     inference_session=session, frame=inputs.pixel_values[0].to(torch.float16)

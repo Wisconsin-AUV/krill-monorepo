@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from krill.v1 import annotation_pb2 as krill_dot_v1_dot_annotation__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/worker.proto\x12\x08krill.v1\x1a\x19krill/v1/annotation.proto\"\x11\n\x0fNextTaskRequest\"=\n\x10NextTaskResponse\x12)\n\x05track\x18\x01 \x01(\x0b\x32\x13.krill.v1.TrackTaskR\x05track\"-\n\tTaskFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\"\x9e\x01\n\tTrackTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.TaskFrameR\x06\x66rames\x12\'\n\x05point\x18\x03 \x01(\x0b\x32\x0f.krill.v1.PointH\x00R\x05point\x12!\n\x03\x62ox\x18\x04 \x01(\x0b\x32\r.krill.v1.BoxH\x00R\x03\x62oxB\x08\n\x06prompt\"H\n\nTrackedBox\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x1f\n\x03\x62ox\x18\x02 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"\x83\x01\n\x12ReportTrackRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12*\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\x14.krill.v1.TrackedBoxR\x05\x62oxes\x12\x12\n\x04\x64one\x18\x04 \x01(\x08R\x04\x64one\"\x15\n\x13ReportTrackResponse\"@\n\x0f\x46\x61ilTaskRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05\x65rror\x18\x02 \x01(\tR\x05\x65rror\"\x12\n\x10\x46\x61ilTaskResponse2\xe7\x01\n\rWorkerService\x12\x43\n\x08NextTask\x12\x19.krill.v1.NextTaskRequest\x1a\x1a.krill.v1.NextTaskResponse\"\x00\x12L\n\x0bReportTrack\x12\x1c.krill.v1.ReportTrackRequest\x1a\x1d.krill.v1.ReportTrackResponse\"\x00\x12\x43\n\x08\x46\x61ilTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0bWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/worker.proto\x12\x08krill.v1\x1a\x19krill/v1/annotation.proto\"\x11\n\x0fNextTaskRequest\"h\n\x10NextTaskResponse\x12)\n\x05track\x18\x01 \x01(\x0b\x32\x13.krill.v1.TrackTaskR\x05track\x12)\n\x05\x65mbed\x18\x02 \x01(\x0b\x32\x13.krill.v1.EmbedTaskR\x05\x65mbed\"R\n\tTaskFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12#\n\rembedding_url\x18\x03 \x01(\tR\x0c\x65mbeddingUrl\"\xc7\x01\n\tTrackTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.TaskFrameR\x06\x66rames\x12\'\n\x05point\x18\x03 \x01(\x0b\x32\x0f.krill.v1.PointH\x00R\x05point\x12!\n\x03\x62ox\x18\x04 \x01(\x0b\x32\r.krill.v1.BoxH\x00R\x03\x62ox\x12\'\n\x0f\x65mbedding_model\x18\x05 \x01(\tR\x0e\x65mbeddingModelB\x08\n\x06prompt\"I\n\tEmbedTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12,\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x14.krill.v1.EmbedFrameR\x06\x66rames\"M\n\nEmbedFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n\nupload_url\x18\x03 \x01(\tR\tuploadUrl\"H\n\nTrackedBox\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x1f\n\x03\x62ox\x18\x02 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"\x83\x01\n\x12ReportTrackRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12*\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\x14.krill.v1.TrackedBoxR\x05\x62oxes\x12\x12\n\x04\x64one\x18\x04 \x01(\x08R\x04\x64one\"\x15\n\x13ReportTrackResponse\"C\n\x12ReportEmbedRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\"\x15\n\x13ReportEmbedResponse\"@\n\x0f\x46\x61ilTaskRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05\x65rror\x18\x02 \x01(\tR\x05\x65rror\"\x12\n\x10\x46\x61ilTaskResponse2\xb5\x02\n\rWorkerService\x12\x43\n\x08NextTask\x12\x19.krill.v1.NextTaskRequest\x1a\x1a.krill.v1.NextTaskResponse\"\x00\x12L\n\x0bReportTrack\x12\x1c.krill.v1.ReportTrackRequest\x1a\x1d.krill.v1.ReportTrackResponse\"\x00\x12L\n\x0bReportEmbed\x12\x1c.krill.v1.ReportEmbedRequest\x1a\x1d.krill.v1.ReportEmbedResponse\"\x00\x12\x43\n\x08\x46\x61ilTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0bWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,21 +36,29 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_NEXTTASKREQUEST']._serialized_start=62
   _globals['_NEXTTASKREQUEST']._serialized_end=79
   _globals['_NEXTTASKRESPONSE']._serialized_start=81
-  _globals['_NEXTTASKRESPONSE']._serialized_end=142
-  _globals['_TASKFRAME']._serialized_start=144
-  _globals['_TASKFRAME']._serialized_end=189
-  _globals['_TRACKTASK']._serialized_start=192
-  _globals['_TRACKTASK']._serialized_end=350
-  _globals['_TRACKEDBOX']._serialized_start=352
-  _globals['_TRACKEDBOX']._serialized_end=424
-  _globals['_REPORTTRACKREQUEST']._serialized_start=427
-  _globals['_REPORTTRACKREQUEST']._serialized_end=558
-  _globals['_REPORTTRACKRESPONSE']._serialized_start=560
-  _globals['_REPORTTRACKRESPONSE']._serialized_end=581
-  _globals['_FAILTASKREQUEST']._serialized_start=583
-  _globals['_FAILTASKREQUEST']._serialized_end=647
-  _globals['_FAILTASKRESPONSE']._serialized_start=649
-  _globals['_FAILTASKRESPONSE']._serialized_end=667
-  _globals['_WORKERSERVICE']._serialized_start=670
-  _globals['_WORKERSERVICE']._serialized_end=901
+  _globals['_NEXTTASKRESPONSE']._serialized_end=185
+  _globals['_TASKFRAME']._serialized_start=187
+  _globals['_TASKFRAME']._serialized_end=269
+  _globals['_TRACKTASK']._serialized_start=272
+  _globals['_TRACKTASK']._serialized_end=471
+  _globals['_EMBEDTASK']._serialized_start=473
+  _globals['_EMBEDTASK']._serialized_end=546
+  _globals['_EMBEDFRAME']._serialized_start=548
+  _globals['_EMBEDFRAME']._serialized_end=625
+  _globals['_TRACKEDBOX']._serialized_start=627
+  _globals['_TRACKEDBOX']._serialized_end=699
+  _globals['_REPORTTRACKREQUEST']._serialized_start=702
+  _globals['_REPORTTRACKREQUEST']._serialized_end=833
+  _globals['_REPORTTRACKRESPONSE']._serialized_start=835
+  _globals['_REPORTTRACKRESPONSE']._serialized_end=856
+  _globals['_REPORTEMBEDREQUEST']._serialized_start=858
+  _globals['_REPORTEMBEDREQUEST']._serialized_end=925
+  _globals['_REPORTEMBEDRESPONSE']._serialized_start=927
+  _globals['_REPORTEMBEDRESPONSE']._serialized_end=948
+  _globals['_FAILTASKREQUEST']._serialized_start=950
+  _globals['_FAILTASKREQUEST']._serialized_end=1014
+  _globals['_FAILTASKRESPONSE']._serialized_start=1016
+  _globals['_FAILTASKRESPONSE']._serialized_end=1034
+  _globals['_WORKERSERVICE']._serialized_start=1037
+  _globals['_WORKERSERVICE']._serialized_end=1346
 # @@protoc_insertion_point(module_scope)

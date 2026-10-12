@@ -112,6 +112,10 @@ func (workerStub) NextTask(context.Context, *krillv1.NextTaskRequest) (*krillv1.
 	return &krillv1.NextTaskResponse{}, nil
 }
 
+func (workerStub) ReportEmbed(context.Context, *krillv1.ReportEmbedRequest) (*krillv1.ReportEmbedResponse, error) {
+	return &krillv1.ReportEmbedResponse{}, nil
+}
+
 func TestInterceptorWorker(t *testing.T) {
 	lookup := func(context.Context, []byte) (db.User, error) { return db.User{Role: "admin"}, nil }
 	tests := []struct {
@@ -141,7 +145,13 @@ func TestInterceptorWorker(t *testing.T) {
 			client := krillv1connect.NewWorkerServiceClient(srv.Client(), srv.URL, opts...)
 			_, err := client.NextTask(t.Context(), &krillv1.NextTaskRequest{})
 			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
-				t.Errorf("err = %v, want code %v", err, tt.want)
+				t.Errorf("NextTask: err = %v, want code %v", err, tt.want)
+			}
+			// Embeddings land in MinIO, so a forged report would mark a clip
+			// embedded with nothing behind it.
+			_, err = client.ReportEmbed(t.Context(), &krillv1.ReportEmbedRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("ReportEmbed: err = %v, want code %v", err, tt.want)
 			}
 		})
 	}

@@ -127,7 +127,7 @@ func (q *Queries) ListClipProgress(ctx context.Context) ([]ListClipProgressRow, 
 
 const listOpenClips = `-- name: ListOpenClips :many
 SELECT
-    c.id, c.video_id, c.idx, c.start_frame, c.frame_count,
+    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model,
     v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at,
     (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
     (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
@@ -162,6 +162,8 @@ func (q *Queries) ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOp
 			&i.Clip.Idx,
 			&i.Clip.StartFrame,
 			&i.Clip.FrameCount,
+			&i.Clip.EmbeddedAt,
+			&i.Clip.EmbedModel,
 			&i.Video.ID,
 			&i.Video.Name,
 			&i.Video.Filename,

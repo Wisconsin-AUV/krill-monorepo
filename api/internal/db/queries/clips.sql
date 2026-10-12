@@ -15,3 +15,6 @@ SELECT
     coalesce((SELECT n.id FROM clips n WHERE n.video_id = c.video_id AND n.idx = c.idx + 1), 0)::bigint AS next_id
 FROM clips c
 WHERE c.id = $1;
+
+-- name: SetClipEmbedded :exec
+UPDATE clips SET embedded_at = now(), embed_model = $2 WHERE id = $1;

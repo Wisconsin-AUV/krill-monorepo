@@ -27,11 +27,13 @@ type Annotation struct {
 }
 
 type Clip struct {
-	ID         int64 `json:"id"`
-	VideoID    int64 `json:"video_id"`
-	Idx        int32 `json:"idx"`
-	StartFrame int32 `json:"start_frame"`
-	FrameCount int32 `json:"frame_count"`
+	ID         int64              `json:"id"`
+	VideoID    int64              `json:"video_id"`
+	Idx        int32              `json:"idx"`
+	StartFrame int32              `json:"start_frame"`
+	FrameCount int32              `json:"frame_count"`
+	EmbeddedAt pgtype.Timestamptz `json:"embedded_at"`
+	EmbedModel string             `json:"embed_model"`
 }
 
 type ClipClaim struct {
