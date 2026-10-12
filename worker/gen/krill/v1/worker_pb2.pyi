@@ -12,10 +12,12 @@ class NextTaskRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class NextTaskResponse(_message.Message):
-    __slots__ = ("track",)
+    __slots__ = ("track", "exemplar")
     TRACK_FIELD_NUMBER: _ClassVar[int]
+    EXEMPLAR_FIELD_NUMBER: _ClassVar[int]
     track: TrackTask
-    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ...) -> None: ...
+    exemplar: ExemplarTask
+    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ...) -> None: ...
 
 class TaskFrame(_message.Message):
     __slots__ = ("id", "url")
@@ -36,6 +38,16 @@ class TrackTask(_message.Message):
     point: _annotation_pb2.Point
     box: _annotation_pb2.Box
     def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
+
+class ExemplarTask(_message.Message):
+    __slots__ = ("id", "frame", "box")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    frame: TaskFrame
+    box: _annotation_pb2.Box
+    def __init__(self, id: _Optional[int] = ..., frame: _Optional[_Union[TaskFrame, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
 
 class TrackedBox(_message.Message):
     __slots__ = ("frame_id", "box")
@@ -58,6 +70,20 @@ class ReportTrackRequest(_message.Message):
     def __init__(self, task_id: _Optional[int] = ..., model: _Optional[str] = ..., boxes: _Optional[_Iterable[_Union[TrackedBox, _Mapping]]] = ..., done: _Optional[bool] = ...) -> None: ...
 
 class ReportTrackResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ReportExemplarsRequest(_message.Message):
+    __slots__ = ("task_id", "model", "boxes")
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    BOXES_FIELD_NUMBER: _ClassVar[int]
+    task_id: int
+    model: str
+    boxes: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Box]
+    def __init__(self, task_id: _Optional[int] = ..., model: _Optional[str] = ..., boxes: _Optional[_Iterable[_Union[_annotation_pb2.Box, _Mapping]]] = ...) -> None: ...
+
+class ReportExemplarsResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 

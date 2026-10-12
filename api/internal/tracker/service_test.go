@@ -2,6 +2,7 @@ package tracker
 
 import (
 	"context"
+	"math"
 	"slices"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
+	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/db"
 )
 
@@ -105,5 +107,63 @@ func TestStaleDrift(t *testing.T) {
 	}
 	if !slices.Equal(got.FlaggedIds, []int64{3}) {
 		t.Errorf("flagged = %v, want [3]", got.FlaggedIds)
+	}
+}
+
+func TestReportsMustMatchTaskKind(t *testing.T) {
+	d := NewDispatcher()
+	s := &Service{dispatcher: d}
+	d.add(newTask(7, 1, &krillv1.TrackTask{Id: 7, Frames: []*krillv1.TaskFrame{{Id: 100}}}))
+	d.add(newExemplarTask(8, &krillv1.ExemplarTask{Id: 8, Frame: &krillv1.TaskFrame{Id: 100}}))
+
+	_, err := s.ReportExemplars(t.Context(), &krillv1.ReportExemplarsRequest{TaskId: 7})
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("exemplars for a track task: err = %v, want invalid argument", err)
+	}
+	// An exemplar task has no track, so its boxes must never be saved as one.
+	box := &krillv1.TrackedBox{FrameId: 100, Box: &krillv1.Box{Width: 0.1, Height: 0.1}}
+	_, err = s.ReportTrack(t.Context(), &krillv1.ReportTrackRequest{TaskId: 8, Boxes: []*krillv1.TrackedBox{box}})
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("track boxes for an exemplar task: err = %v, want invalid argument", err)
+	}
+}
+
+func TestReportExemplars(t *testing.T) {
+	d := NewDispatcher()
+	s := &Service{dispatcher: d}
+	task := newExemplarTask(8, &krillv1.ExemplarTask{Id: 8, Frame: &krillv1.TaskFrame{Id: 100}})
+	d.add(task)
+
+	bad := []*krillv1.Box{{X: 2, Y: 2, Width: 0.1, Height: 0.1}}
+	_, err := s.ReportExemplars(t.Context(), &krillv1.ReportExemplarsRequest{TaskId: 8, Boxes: bad})
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("box outside the frame: err = %v, want invalid argument", err)
+	}
+
+	good := []*krillv1.Box{{X: 0.9, Y: 0.1, Width: 0.2, Height: 0.1}}
+	if _, err := s.ReportExemplars(t.Context(), &krillv1.ReportExemplarsRequest{TaskId: 8, Model: "sam3", Boxes: good}); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-task.done; err != nil {
+		t.Fatalf("done = %v, want nil", err)
+	}
+	res := <-task.found
+	want := annotation.Box{X: 0.9, Y: 0.1, Width: 0.1, Height: 0.1}
+	if res.model != "sam3" || len(res.boxes) != 1 || math.Abs(res.boxes[0].Width-want.Width) > 1e-9 {
+		t.Errorf("found = %+v, want one box clamped to %+v", res, want)
+	}
+}
+
+func TestNewInstancesSkipsBoxedObjects(t *testing.T) {
+	exemplar := annotation.Box{X: 0.1, Y: 0.1, Width: 0.2, Height: 0.2}
+	other := annotation.Box{X: 0.6, Y: 0.6, Width: 0.2, Height: 0.2}
+	found := []annotation.Box{
+		{X: 0.11, Y: 0.1, Width: 0.2, Height: 0.2},
+		other,
+		{X: 0.61, Y: 0.6, Width: 0.19, Height: 0.2},
+	}
+	got := newInstances(found, []annotation.Box{exemplar})
+	if len(got) != 1 || got[0] != other {
+		t.Errorf("got %+v, want only %+v", got, other)
 	}
 }

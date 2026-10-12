@@ -36,7 +36,7 @@ func (s *Service) NextTask(ctx context.Context, _ *krillv1.NextTaskRequest) (*kr
 	defer timer.Stop()
 	select {
 	case t := <-s.dispatcher.queue:
-		return &krillv1.NextTaskResponse{Track: t.msg}, nil
+		return t.msg, nil
 	case <-timer.C:
 		return &krillv1.NextTaskResponse{}, nil
 	case <-ctx.Done():
@@ -48,6 +48,9 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 	t, ok := s.dispatcher.get(req.GetTaskId())
 	if !ok {
 		return nil, errUnknownTask
+	}
+	if t.msg.GetTrack() == nil {
+		return nil, rpc.Invalid("task %d is not a track task", t.id)
 	}
 	n := len(req.GetBoxes())
 	p := db.UpsertProposalsParams{
@@ -137,6 +140,31 @@ func staleDrift(boxes []db.ListTrackBoxesRow) db.SetDriftParams {
 		}
 	}
 	return p
+}
+
+func (s *Service) ReportExemplars(_ context.Context, req *krillv1.ReportExemplarsRequest) (*krillv1.ReportExemplarsResponse, error) {
+	t, ok := s.dispatcher.get(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	if t.msg.GetExemplar() == nil {
+		return nil, rpc.Invalid("task %d is not an exemplar task", t.id)
+	}
+	res := exemplarResult{model: req.GetModel(), boxes: make([]annotation.Box, 0, len(req.GetBoxes()))}
+	for i, b := range req.GetBoxes() {
+		x, y, w, h, err := annotation.ClampBox(b)
+		if err != nil {
+			return nil, rpc.Invalid("box %d: %s", i, err)
+		}
+		res.boxes = append(res.boxes, annotation.Box{X: x, Y: y, Width: w, Height: h})
+	}
+	select {
+	case t.found <- res:
+	default:
+		return nil, rpc.Invalid("task %d was already reported", t.id)
+	}
+	t.finish(nil)
+	return &krillv1.ReportExemplarsResponse{}, nil
 }
 
 func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*krillv1.FailTaskResponse, error) {

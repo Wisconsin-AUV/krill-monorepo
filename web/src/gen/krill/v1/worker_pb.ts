@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/worker.proto.
  */
 export const file_krill_v1_worker: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCI2ChBOZXh0VGFza1Jlc3BvbnNlEiIKBXRyYWNrGAEgASgLMhMua3JpbGwudjEuVHJhY2tUYXNrIiQKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkihgEKCVRyYWNrVGFzaxIKCgJpZBgBIAEoAxIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSIAoFcG9pbnQYAyABKAsyDy5rcmlsbC52MS5Qb2ludEgAEhwKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveEgAQggKBnByb21wdCI6CgpUcmFja2VkQm94EhAKCGZyYW1lX2lkGAEgASgDEhoKA2JveBgCIAEoCzINLmtyaWxsLnYxLkJveCJnChJSZXBvcnRUcmFja1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVtb2RlbBgCIAEoCRIjCgVib3hlcxgDIAMoCzIULmtyaWxsLnYxLlRyYWNrZWRCb3gSDAoEZG9uZRgEIAEoCCIVChNSZXBvcnRUcmFja1Jlc3BvbnNlIjEKD0ZhaWxUYXNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBWVycm9yGAIgASgJIhIKEEZhaWxUYXNrUmVzcG9uc2Uy5wEKDVdvcmtlclNlcnZpY2USQwoITmV4dFRhc2sSGS5rcmlsbC52MS5OZXh0VGFza1JlcXVlc3QaGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIgASTAoLUmVwb3J0VHJhY2sSHC5rcmlsbC52MS5SZXBvcnRUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5SZXBvcnRUcmFja1Jlc3BvbnNlIgASQwoIRmFpbFRhc2sSGS5rcmlsbC52MS5GYWlsVGFza1JlcXVlc3QaGi5rcmlsbC52MS5GYWlsVGFza1Jlc3BvbnNlIgBCjAEKDGNvbS5rcmlsbC52MUILV29ya2VyUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_annotation]);
+  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCJsChBOZXh0VGFza1Jlc3BvbnNlEiQKBXRyYWNrGAEgASgLMhMua3JpbGwudjEuVHJhY2tUYXNrSAASKgoIZXhlbXBsYXIYAiABKAsyFi5rcmlsbC52MS5FeGVtcGxhclRhc2tIAEIGCgR0YXNrIiQKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkihgEKCVRyYWNrVGFzaxIKCgJpZBgBIAEoAxIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSIAoFcG9pbnQYAyABKAsyDy5rcmlsbC52MS5Qb2ludEgAEhwKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveEgAQggKBnByb21wdCJaCgxFeGVtcGxhclRhc2sSCgoCaWQYASABKAMSIgoFZnJhbWUYAiABKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94IjoKClRyYWNrZWRCb3gSEAoIZnJhbWVfaWQYASABKAMSGgoDYm94GAIgASgLMg0ua3JpbGwudjEuQm94ImcKElJlcG9ydFRyYWNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEiMKBWJveGVzGAMgAygLMhQua3JpbGwudjEuVHJhY2tlZEJveBIMCgRkb25lGAQgASgIIhUKE1JlcG9ydFRyYWNrUmVzcG9uc2UiVgoWUmVwb3J0RXhlbXBsYXJzUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEhwKBWJveGVzGAMgAygLMg0ua3JpbGwudjEuQm94IhkKF1JlcG9ydEV4ZW1wbGFyc1Jlc3BvbnNlIjEKD0ZhaWxUYXNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBWVycm9yGAIgASgJIhIKEEZhaWxUYXNrUmVzcG9uc2UywQIKDVdvcmtlclNlcnZpY2USQwoITmV4dFRhc2sSGS5rcmlsbC52MS5OZXh0VGFza1JlcXVlc3QaGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIgASTAoLUmVwb3J0VHJhY2sSHC5rcmlsbC52MS5SZXBvcnRUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5SZXBvcnRUcmFja1Jlc3BvbnNlIgASWAoPUmVwb3J0RXhlbXBsYXJzEiAua3JpbGwudjEuUmVwb3J0RXhlbXBsYXJzUmVxdWVzdBohLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1Jlc3BvbnNlIgASQwoIRmFpbFRhc2sSGS5rcmlsbC52MS5GYWlsVGFza1JlcXVlc3QaGi5rcmlsbC52MS5GYWlsVGFza1Jlc3BvbnNlIgBCjAEKDGNvbS5rcmlsbC52MUILV29ya2VyUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_annotation]);
 
 /**
  * @generated from message krill.v1.NextTaskRequest
@@ -32,9 +32,21 @@ export const NextTaskRequestSchema: GenMessage<NextTaskRequest> = /*@__PURE__*/
  */
 export type NextTaskResponse = Message<"krill.v1.NextTaskResponse"> & {
   /**
-   * @generated from field: krill.v1.TrackTask track = 1;
+   * @generated from oneof krill.v1.NextTaskResponse.task
    */
-  track?: TrackTask | undefined;
+  task: {
+    /**
+     * @generated from field: krill.v1.TrackTask track = 1;
+     */
+    value: TrackTask;
+    case: "track";
+  } | {
+    /**
+     * @generated from field: krill.v1.ExemplarTask exemplar = 2;
+     */
+    value: ExemplarTask;
+    case: "exemplar";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -110,6 +122,35 @@ export const TrackTaskSchema: GenMessage<TrackTask> = /*@__PURE__*/
   messageDesc(file_krill_v1_worker, 3);
 
 /**
+ * ExemplarTask finds every object on a frame that looks like the one in box.
+ *
+ * @generated from message krill.v1.ExemplarTask
+ */
+export type ExemplarTask = Message<"krill.v1.ExemplarTask"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: krill.v1.TaskFrame frame = 2;
+   */
+  frame?: TaskFrame | undefined;
+
+  /**
+   * @generated from field: krill.v1.Box box = 3;
+   */
+  box?: Box | undefined;
+};
+
+/**
+ * Describes the message krill.v1.ExemplarTask.
+ * Use `create(ExemplarTaskSchema)` to create a new message.
+ */
+export const ExemplarTaskSchema: GenMessage<ExemplarTask> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 4);
+
+/**
  * @generated from message krill.v1.TrackedBox
  */
 export type TrackedBox = Message<"krill.v1.TrackedBox"> & {
@@ -129,7 +170,7 @@ export type TrackedBox = Message<"krill.v1.TrackedBox"> & {
  * Use `create(TrackedBoxSchema)` to create a new message.
  */
 export const TrackedBoxSchema: GenMessage<TrackedBox> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 4);
+  messageDesc(file_krill_v1_worker, 5);
 
 /**
  * @generated from message krill.v1.ReportTrackRequest
@@ -163,7 +204,7 @@ export type ReportTrackRequest = Message<"krill.v1.ReportTrackRequest"> & {
  * Use `create(ReportTrackRequestSchema)` to create a new message.
  */
 export const ReportTrackRequestSchema: GenMessage<ReportTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 5);
+  messageDesc(file_krill_v1_worker, 6);
 
 /**
  * @generated from message krill.v1.ReportTrackResponse
@@ -176,7 +217,49 @@ export type ReportTrackResponse = Message<"krill.v1.ReportTrackResponse"> & {
  * Use `create(ReportTrackResponseSchema)` to create a new message.
  */
 export const ReportTrackResponseSchema: GenMessage<ReportTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 6);
+  messageDesc(file_krill_v1_worker, 7);
+
+/**
+ * @generated from message krill.v1.ReportExemplarsRequest
+ */
+export type ReportExemplarsRequest = Message<"krill.v1.ReportExemplarsRequest"> & {
+  /**
+   * @generated from field: int64 task_id = 1;
+   */
+  taskId: bigint;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+
+  /**
+   * May include the exemplar itself.
+   *
+   * @generated from field: repeated krill.v1.Box boxes = 3;
+   */
+  boxes: Box[];
+};
+
+/**
+ * Describes the message krill.v1.ReportExemplarsRequest.
+ * Use `create(ReportExemplarsRequestSchema)` to create a new message.
+ */
+export const ReportExemplarsRequestSchema: GenMessage<ReportExemplarsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 8);
+
+/**
+ * @generated from message krill.v1.ReportExemplarsResponse
+ */
+export type ReportExemplarsResponse = Message<"krill.v1.ReportExemplarsResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.ReportExemplarsResponse.
+ * Use `create(ReportExemplarsResponseSchema)` to create a new message.
+ */
+export const ReportExemplarsResponseSchema: GenMessage<ReportExemplarsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 9);
 
 /**
  * @generated from message krill.v1.FailTaskRequest
@@ -198,7 +281,7 @@ export type FailTaskRequest = Message<"krill.v1.FailTaskRequest"> & {
  * Use `create(FailTaskRequestSchema)` to create a new message.
  */
 export const FailTaskRequestSchema: GenMessage<FailTaskRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 7);
+  messageDesc(file_krill_v1_worker, 10);
 
 /**
  * @generated from message krill.v1.FailTaskResponse
@@ -211,7 +294,7 @@ export type FailTaskResponse = Message<"krill.v1.FailTaskResponse"> & {
  * Use `create(FailTaskResponseSchema)` to create a new message.
  */
 export const FailTaskResponseSchema: GenMessage<FailTaskResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 8);
+  messageDesc(file_krill_v1_worker, 11);
 
 /**
  * WorkerService is called by the GPU worker. Requests carry the shared worker
@@ -241,6 +324,16 @@ export const WorkerService: GenService<{
     methodKind: "unary";
     input: typeof ReportTrackRequestSchema;
     output: typeof ReportTrackResponseSchema;
+  },
+  /**
+   * ReportExemplars finishes an exemplar task with every object found.
+   *
+   * @generated from rpc krill.v1.WorkerService.ReportExemplars
+   */
+  reportExemplars: {
+    methodKind: "unary";
+    input: typeof ReportExemplarsRequestSchema;
+    output: typeof ReportExemplarsResponseSchema;
   },
   /**
    * @generated from rpc krill.v1.WorkerService.FailTask

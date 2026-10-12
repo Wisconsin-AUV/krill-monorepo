@@ -106,6 +106,7 @@ func run() error {
 	river.AddWorker(workers, ingest.NewWorker(pool, store))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
+	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{

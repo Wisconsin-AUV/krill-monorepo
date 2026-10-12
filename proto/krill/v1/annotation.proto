@@ -24,6 +24,11 @@ service AnnotationService {
   // ListTracksByType lists tracks of one type across clips, each with one box
   // to crop, ordered by track id.
   rpc ListTracksByType(ListTracksByTypeRequest) returns (ListTracksByTypeResponse) {}
+  // SearchExemplar uses the track's box on a frame as an exemplar. The GPU
+  // worker finds the other objects like it on the frame, and each becomes a
+  // new track of the same type that is tracked through the rest of the clip.
+  rpc SearchExemplar(SearchExemplarRequest) returns (SearchExemplarResponse) {}
+  rpc GetExemplarSearch(GetExemplarSearchRequest) returns (GetExemplarSearchResponse) {}
 }
 
 enum FrameStatus {
@@ -199,4 +204,25 @@ message ListTracksByTypeResponse {
   repeated TrackCrop tracks = 1;
   // Empty on the last page.
   string next_page_token = 2;
+}
+
+message SearchExemplarRequest {
+  int64 track_id = 1;
+  int64 frame_id = 2;
+}
+
+message SearchExemplarResponse {
+  int64 search_id = 1;
+}
+
+message GetExemplarSearchRequest {
+  int64 id = 1;
+}
+
+message GetExemplarSearchResponse {
+  bool done = 1;
+  // Set when the search failed.
+  string error = 2;
+  // Tracks created for the objects found.
+  repeated int64 track_ids = 3;
 }

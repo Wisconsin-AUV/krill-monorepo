@@ -36,7 +36,13 @@ export type AnnotationBackend = Pick<
   | 'copyBoxes'
   | 'setFrameStatus'
   | 'trackObject'
+  | 'searchExemplar'
 >
+
+export interface ExemplarSearch {
+  id: bigint
+  frameId: bigint
+}
 
 type Key = string
 const key = (id: bigint): Key => String(id)
@@ -55,6 +61,7 @@ interface LabelState {
   // Tracks the GPU worker is still tracking.
   tracking: Record<Key, true>
   trackRuns: TrackRun[]
+  exemplarSearches: ExemplarSearch[]
   selectedTrackId: bigint | null
   activeTypeId: bigint | null
   hideBoxes: boolean
@@ -79,6 +86,8 @@ interface LabelState {
   copyBoxes: (fromFrameId: bigint, toFrameId: bigint) => Promise<number>
   setFrameStatus: (frameId: bigint, status: FrameStatus) => Promise<boolean>
   trackObject: (frameId: bigint, prompt: TrackPrompt, trackId?: bigint) => Promise<void>
+  searchExemplar: (frameId: bigint, trackId: bigint) => Promise<void>
+  finishExemplarSearch: (id: bigint, trackIds: bigint[]) => void
   undo: () => Promise<void>
 }
 
@@ -224,6 +233,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
     frameStatus: {},
     tracking: {},
     trackRuns: [],
+    exemplarSearches: [],
     selectedTrackId: null,
     activeTypeId: null,
     hideBoxes: false,
@@ -249,6 +259,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
         frameStatus,
         tracking: trackingSet(clip),
         trackRuns: [],
+        exemplarSearches: [],
         selectedTrackId: null,
         undoStack: [],
         backend,
@@ -553,6 +564,27 @@ export const useLabelStore = create<LabelState>((set, get) => {
       })
       if (!started) set((s) => ({ trackRuns: s.trackRuns.filter((r) => r !== run) }))
     },
+
+    searchExemplar: async (frameId, trackIdIn) => {
+      const trackId = resolve(trackIdIn)
+      if (!get().boxes[key(frameId)]?.[key(trackId)]) return
+      await withPending('Could not find similar objects', async () => {
+        const res = await get().backend.searchExemplar({ trackId, frameId })
+        set((s) => ({
+          exemplarSearches: [...s.exemplarSearches, { id: res.searchId, frameId }],
+        }))
+      })
+    },
+
+    // The new tracks join the tracking set so the poll loads their boxes.
+    finishExemplarSearch: (id, trackIds) =>
+      set((s) => ({
+        exemplarSearches: s.exemplarSearches.filter((x) => x.id !== id),
+        tracking: {
+          ...s.tracking,
+          ...Object.fromEntries(trackIds.map((t) => [key(t), true as const])),
+        },
+      })),
 
     undo: async () => {
       const entry = get().undoStack.at(-1)

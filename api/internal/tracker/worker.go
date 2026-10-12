@@ -16,16 +16,7 @@ import (
 	"github.com/wauv/krill/api/internal/storage"
 )
 
-const (
-	// pickupTimeout is how long a task waits for a GPU worker to poll.
-	pickupTimeout = 2 * time.Minute
-	// idleTimeout fails a task whose worker stopped reporting, for example
-	// because it crashed.
-	idleTimeout    = 2 * time.Minute
-	frameURLExpiry = time.Hour
-)
-
-var errNoWorker = errors.New("no GPU worker picked up the task")
+const frameURLExpiry = time.Hour
 
 type Worker struct {
 	river.WorkerDefaults[annotation.TrackArgs]
@@ -91,32 +82,5 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 		return errors.New("job has no prompt")
 	}
 
-	t := newTask(id, args.TrackID, msg)
-	w.dispatcher.add(t)
-	defer w.dispatcher.remove(id)
-
-	pickup := time.NewTimer(pickupTimeout)
-	defer pickup.Stop()
-	select {
-	case w.dispatcher.queue <- t:
-	case <-pickup.C:
-		return errNoWorker
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	idle := time.NewTimer(idleTimeout)
-	defer idle.Stop()
-	for {
-		select {
-		case err := <-t.done:
-			return err
-		case <-t.progress:
-			idle.Reset(idleTimeout)
-		case <-idle.C:
-			return errors.New("GPU worker stopped reporting")
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
+	return w.dispatcher.run(ctx, newTask(id, args.TrackID, msg))
 }

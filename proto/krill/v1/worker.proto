@@ -13,13 +13,18 @@ service WorkerService {
   // ReportTrack saves boxes for a track task. Workers report in batches as
   // they go, and set done on the last one.
   rpc ReportTrack(ReportTrackRequest) returns (ReportTrackResponse) {}
+  // ReportExemplars finishes an exemplar task with every object found.
+  rpc ReportExemplars(ReportExemplarsRequest) returns (ReportExemplarsResponse) {}
   rpc FailTask(FailTaskRequest) returns (FailTaskResponse) {}
 }
 
 message NextTaskRequest {}
 
 message NextTaskResponse {
-  TrackTask track = 1;
+  oneof task {
+    TrackTask track = 1;
+    ExemplarTask exemplar = 2;
+  }
 }
 
 message TaskFrame {
@@ -38,6 +43,13 @@ message TrackTask {
   }
 }
 
+// ExemplarTask finds every object on a frame that looks like the one in box.
+message ExemplarTask {
+  int64 id = 1;
+  TaskFrame frame = 2;
+  Box box = 3;
+}
+
 message TrackedBox {
   int64 frame_id = 1;
   Box box = 2;
@@ -52,6 +64,15 @@ message ReportTrackRequest {
 }
 
 message ReportTrackResponse {}
+
+message ReportExemplarsRequest {
+  int64 task_id = 1;
+  string model = 2;
+  // May include the exemplar itself.
+  repeated Box boxes = 3;
+}
+
+message ReportExemplarsResponse {}
 
 message FailTaskRequest {
   int64 task_id = 1;

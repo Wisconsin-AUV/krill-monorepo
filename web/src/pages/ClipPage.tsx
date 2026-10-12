@@ -380,6 +380,10 @@ export function ClipPage() {
             const box = boxes[idKey(frame.id)]?.[idKey(selectedTrackId)]?.box
             if (box) void labels().trackObject(frame.id, { box }, selectedTrackId)
           },
+          X: () => {
+            if (frame && selectedTrackId !== null)
+              void labels().searchExemplar(frame.id, selectedTrackId)
+          },
           h: () => labels().toggleHidden(),
           d: nextDrift,
           g: toggleGold,

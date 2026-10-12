@@ -56,3 +56,11 @@ UPDATE annotations SET
     updated_by = sqlc.arg('user_id')::uuid,
     updated_at = now()
 WHERE frame_id = sqlc.arg('frame_id') AND status = 'proposed';
+
+-- name: GetTrackBox :one
+SELECT x, y, width, height FROM annotations
+WHERE track_id = $1 AND frame_id = $2 AND status <> 'rejected';
+
+-- name: ListFrameBoxes :many
+SELECT x, y, width, height FROM annotations
+WHERE frame_id = $1 AND status <> 'rejected';
