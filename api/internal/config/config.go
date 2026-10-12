@@ -42,6 +42,11 @@ type Config struct {
 	// ClientIPHeader is trusted for the client's address when set. Only set it
 	// when every request comes through the proxy that writes it.
 	ClientIPHeader string
+	// A labeler's work goes to review while their mean score over recent gold
+	// checks is below GoldReviewThreshold, once they have answered at least
+	// GoldReviewMinAttempts checks.
+	GoldReviewThreshold   float64
+	GoldReviewMinAttempts int
 }
 
 func Load() (Config, error) {
@@ -73,6 +78,18 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("KRILL_EMBED_AT_INGEST: %w", err)
 	}
 	cfg.EmbedAtIngest = cfg.EmbedAtIngest && cfg.WorkerToken != ""
+	if cfg.GoldReviewThreshold, err = strconv.ParseFloat(getenv("KRILL_GOLD_REVIEW_THRESHOLD", "0.7"), 64); err != nil {
+		return Config{}, fmt.Errorf("KRILL_GOLD_REVIEW_THRESHOLD: %w", err)
+	}
+	if cfg.GoldReviewThreshold < 0 || cfg.GoldReviewThreshold > 1 {
+		return Config{}, errors.New("KRILL_GOLD_REVIEW_THRESHOLD must be between 0 and 1")
+	}
+	if cfg.GoldReviewMinAttempts, err = strconv.Atoi(getenv("KRILL_GOLD_REVIEW_MIN_ATTEMPTS", "3")); err != nil {
+		return Config{}, fmt.Errorf("KRILL_GOLD_REVIEW_MIN_ATTEMPTS: %w", err)
+	}
+	if cfg.GoldReviewMinAttempts < 1 {
+		return Config{}, errors.New("KRILL_GOLD_REVIEW_MIN_ATTEMPTS must be at least 1")
+	}
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint
 	}

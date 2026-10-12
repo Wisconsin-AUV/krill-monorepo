@@ -18,13 +18,13 @@ import { Sidebar } from '@/components/ui/Sidebar'
 import { StackedLayout } from '@/components/ui/StackedLayout'
 import { FrameStatus } from '@/gen/krill/v1/annotation_pb'
 import { FrameSchema, GetClipResponseSchema } from '@/gen/krill/v1/clip_pb'
-import { GoldService } from '@/gen/krill/v1/gold_pb'
-import { LabelService } from '@/gen/krill/v1/label_pb'
+import { GoldService, type GoldResult } from '@/gen/krill/v1/gold_pb'
+import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { useClaimNextClip } from '@/lib/queue'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
-import { resultBoxes } from '@/labeling/goldResult'
+import { resultBoxes, scoreColor } from '@/labeling/goldResult'
 import { GoldResultLayer } from '@/labeling/GoldResultLayer'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { localBackend } from '@/labeling/localBackend'
@@ -38,7 +38,15 @@ import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 const noDrift = new Map<string, Set<string>>()
 const noneUnconfirmed = new Set<string>()
 
-function Shell({ actions, children }: { actions?: React.ReactNode; children: React.ReactNode }) {
+function Shell({
+  title = 'Gold check',
+  actions,
+  children,
+}: {
+  title?: string
+  actions?: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
     <StackedLayout
       fill
@@ -49,7 +57,7 @@ function Shell({ actions, children }: { actions?: React.ReactNode; children: Rea
             <NavbarLabel>Home</NavbarLabel>
           </NavbarItem>
           <NavbarDivider className="max-lg:hidden" />
-          <span className="text-sm/6 font-medium">Gold check</span>
+          <span className="truncate text-sm/6 font-medium">{title}</span>
           <NavbarSpacer />
           <NavbarSection>{actions}</NavbarSection>
         </Navbar>
@@ -58,6 +66,100 @@ function Shell({ actions, children }: { actions?: React.ReactNode; children: Rea
     >
       {children}
     </StackedLayout>
+  )
+}
+
+function showFrame(frameId: bigint, url: string, width: number, height: number) {
+  const frame = create(FrameSchema, { id: frameId, url, status: FrameStatus.UNLABELED })
+  useWorkspaceStore.getState().setFrames([frame], 0)
+  useWorkspaceStore.getState().setImageSize({ width, height })
+  return frame
+}
+
+function ResultSummary({ result, types }: { result: GoldResult; types: LabelType[] }) {
+  const outcomes = resultBoxes(result, types)
+  const count = (o: string) => outcomes.filter((r) => r.outcome === o).length
+  return (
+    <>
+      <span className="text-sm text-zinc-500 tabular-nums max-md:hidden dark:text-zinc-400">
+        {count('correct')} correct · {count('off')} off · {count('missed')} missed ·{' '}
+        {count('extra')} extra
+      </span>
+      <Badge color={scoreColor(result.score)}>{Math.round(result.score * 100)}%</Badge>
+    </>
+  )
+}
+
+function ResultCanvas({ result, types }: { result: GoldResult; types: LabelType[] }) {
+  const view = useWorkspaceStore((s) => s.view)
+  const imageSize = useWorkspaceStore((s) => s.imageSize)
+  return (
+    <FrameCanvas>
+      <GoldResultLayer result={result} types={types} imageSize={imageSize} scale={view.scale} />
+    </FrameCanvas>
+  )
+}
+
+const canvasBackground =
+  'relative min-w-0 flex-1 bg-zinc-950 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]'
+
+export function GoldAttemptPage() {
+  const params = useParams()
+  const frameId =
+    params.frameId && /^\d+$/.test(params.frameId) ? BigInt(params.frameId) : undefined
+  const userId = params.userId ?? ''
+
+  const { data, error, isPending } = useQuery(
+    GoldService.method.getGoldAttempt,
+    { frameId, userId },
+    { enabled: frameId !== undefined && userId !== '', retry: false },
+  )
+  const { data: typeData } = useQuery(LabelService.method.listLabelTypes, {})
+  const types = useMemo(() => typeData?.labelTypes ?? [], [typeData])
+  const fit = useWorkspaceStore((s) => s.fit)
+
+  useEffect(() => {
+    if (data) showFrame(data.attempt?.frameId ?? 0n, data.url, data.width, data.height)
+  }, [data])
+
+  useEffect(() => {
+    document.title = 'Gold check · Krill'
+  }, [])
+
+  useHotkeys(data ? { f: fit } : {})
+
+  if (frameId === undefined || userId === '' || error) {
+    return (
+      <Shell>
+        <div className="flex flex-1 items-center justify-center py-24 text-zinc-700 dark:text-zinc-300">
+          {error ? `Could not load gold check: ${errorMessage(error)}` : 'Gold check not found.'}
+        </div>
+      </Shell>
+    )
+  }
+  if (isPending) {
+    return (
+      <Shell>
+        <div className="flex flex-1 items-center justify-center py-24">
+          <LoadingSpinner />
+        </div>
+      </Shell>
+    )
+  }
+
+  const { attempt: a, result } = data
+  if (!result) return null
+  return (
+    <Shell
+      title={`${a?.user?.name} · ${a?.videoName} · Frame ${(a?.index ?? 0) + 1}`}
+      actions={<ResultSummary result={result} types={types} />}
+    >
+      <div className="flex min-h-0 flex-1 text-zinc-950 dark:text-zinc-100">
+        <main className={canvasBackground}>
+          <ResultCanvas result={result} types={types} />
+        </main>
+      </div>
+    </Shell>
   )
 }
 
@@ -78,8 +180,6 @@ export function GoldCheckPage() {
   const result = submit.data?.result
 
   const types = useMemo(() => typeData?.labelTypes ?? [], [typeData])
-  const view = useWorkspaceStore((s) => s.view)
-  const imageSize = useWorkspaceStore((s) => s.imageSize)
   const fit = useWorkspaceStore((s) => s.fit)
   const trackMap = useLabelStore((s) => s.tracks)
   const boxes = useLabelStore((s) => s.boxes)
@@ -88,13 +188,7 @@ export function GoldCheckPage() {
 
   useEffect(() => {
     if (!data) return
-    const frame = create(FrameSchema, {
-      id: data.frameId,
-      url: data.url,
-      status: FrameStatus.UNLABELED,
-    })
-    useWorkspaceStore.getState().setFrames([frame], 0)
-    useWorkspaceStore.getState().setImageSize({ width: data.width, height: data.height })
+    const frame = showFrame(data.frameId, data.url, data.width, data.height)
     labels().load(
       create(GetClipResponseSchema, { clip: { id: data.frameId }, frames: [frame] }),
       localBackend(),
@@ -201,18 +295,9 @@ export function GoldCheckPage() {
     )
   }
 
-  const outcomes = result ? resultBoxes(result, types) : []
-  const count = (o: string) => outcomes.filter((r) => r.outcome === o).length
-
   const actions = result ? (
     <>
-      <span className="text-sm text-zinc-500 tabular-nums max-md:hidden dark:text-zinc-400">
-        {count('correct')} correct · {count('off')} off · {count('missed')} missed ·{' '}
-        {count('extra')} extra
-      </span>
-      <Badge color={result.score >= 0.8 ? 'green' : result.score >= 0.5 ? 'amber' : 'red'}>
-        {Math.round(result.score * 100)}%
-      </Badge>
+      <ResultSummary result={result} types={types} />
       <Button color="sky" disabled={claimNext.isPending} title="Next clip (N)" onClick={next}>
         <ForwardIcon data-slot="icon" />
         Next clip
@@ -234,16 +319,9 @@ export function GoldCheckPage() {
     <Shell actions={actions}>
       <div className="flex min-h-0 flex-1 text-zinc-950 dark:text-zinc-100">
         {!result && <TypePanel types={types} counts={typeCounts} />}
-        <main className="relative min-w-0 flex-1 bg-zinc-950 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]">
+        <main className={canvasBackground}>
           {result ? (
-            <FrameCanvas>
-              <GoldResultLayer
-                result={result}
-                types={types}
-                imageSize={imageSize}
-                scale={view.scale}
-              />
-            </FrameCanvas>
+            <ResultCanvas result={result} types={types} />
           ) : (
             <LabelCanvas tracks={tracks} types={types} drift={noDrift} canTrack={false} />
           )}

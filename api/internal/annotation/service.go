@@ -16,6 +16,7 @@ import (
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -28,10 +29,11 @@ type Service struct {
 	q       *db.Queries
 	present *video.Presenter
 	jobs    *river.Client[pgx.Tx]
+	gold    review.GoldRouting
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), jobs: jobs}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], gold review.GoldRouting) *Service {
+	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), jobs: jobs, gold: gold}
 }
 
 // claim marks the caller as working on the clip. A failed claim should not
@@ -325,5 +327,10 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, saved.ClipID)
+	if status != "unlabeled" {
+		if err := s.gold.FrameDone(ctx, s.q, req.GetFrameId(), auth.CallerID(ctx)); err != nil {
+			slog.Warn("route frame to review", "frame_id", req.GetFrameId(), "err", err)
+		}
+	}
 	return &krillv1.SetFrameStatusResponse{Status: FrameStatus(saved.Status)}, nil
 }

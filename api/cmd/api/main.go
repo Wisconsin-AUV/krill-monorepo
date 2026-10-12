@@ -125,6 +125,7 @@ func run() error {
 		return fmt.Errorf("start jobs: %w", err)
 	}
 
+	goldRouting := review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts}
 	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
 	rpcOpts := connect.WithInterceptors(
 		rpc.ErrorInterceptor{},
@@ -154,12 +155,12 @@ func run() error {
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
-	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
-	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewReviewServiceHandler(review.NewService(pool, store), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.

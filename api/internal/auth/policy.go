@@ -75,6 +75,9 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.GoldServiceGetGoldCheckProcedure:    label,
 	krillv1connect.GoldServiceSubmitGoldCheckProcedure: label,
 	krillv1connect.GoldServiceGetGoldStatsProcedure:    reviewLabels,
+	// Labelers may see their own attempts. The handlers check the rest.
+	krillv1connect.GoldServiceGetGoldAttemptProcedure:   label,
+	krillv1connect.GoldServiceListGoldAttemptsProcedure: label,
 
 	krillv1connect.ReviewServiceFlagFrameProcedure:     label,
 	krillv1connect.ReviewServiceListReviewsProcedure:   reviewLabels,

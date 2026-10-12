@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 
 	"connectrpc.com/connect"
@@ -18,6 +19,7 @@ import (
 	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -36,10 +38,11 @@ type Service struct {
 	krillv1connect.UnimplementedGoldServiceHandler
 	q       *db.Queries
 	present *video.Presenter
+	routing review.GoldRouting
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
-	return &Service{q: db.New(pool), present: video.NewPresenter(store)}
+func NewService(pool *pgxpool.Pool, store *storage.Store, routing review.GoldRouting) *Service {
+	return &Service{q: db.New(pool), present: video.NewPresenter(store), routing: routing}
 }
 
 // Due returns a gold frame for the labeler to answer, or 0 when they are not
@@ -190,7 +193,15 @@ func (s *Service) SubmitGoldCheck(ctx context.Context, req *krillv1.SubmitGoldCh
 	if n == 0 {
 		return nil, errAnswered
 	}
+	// The attempt is saved, so failing here would only stop the labeler from
+	// seeing their result.
+	if err := s.routing.GoldChecked(ctx, s.q, auth.CallerID(ctx), g.FrameID); err != nil {
+		slog.Warn("route frames to review", "user_id", auth.CallerID(ctx), "err", err)
+	}
+	return &krillv1.SubmitGoldCheckResponse{Result: resultToProto(reference, answer, res)}, nil
+}
 
+func resultToProto(reference, answer []Box, res Result) *krillv1.GoldResult {
 	out := &krillv1.GoldResult{
 		Reference: boxesToProto(reference),
 		Answer:    boxesToProto(answer),
@@ -200,11 +211,11 @@ func (s *Service) SubmitGoldCheck(ctx context.Context, req *krillv1.SubmitGoldCh
 	for i, m := range res.Matches {
 		out.Matches[i] = &krillv1.GoldMatch{Reference: small(m.Reference), Answer: small(m.Answer), Iou: m.IoU, Correct: m.Correct}
 	}
-	return &krillv1.SubmitGoldCheckResponse{Result: out}, nil
+	return out
 }
 
 func (s *Service) GetGoldStats(ctx context.Context, _ *krillv1.GetGoldStatsRequest) (*krillv1.GetGoldStatsResponse, error) {
-	labelers, err := s.q.ListGoldLabelers(ctx)
+	labelers, err := s.q.ListGoldLabelers(ctx, review.RecentGoldChecks)
 	if err != nil {
 		return nil, rpc.Internal(err, "list labelers")
 	}
@@ -219,9 +230,10 @@ func (s *Service) GetGoldStats(ctx context.Context, _ *krillv1.GetGoldStatsReque
 	}
 	for i, l := range labelers {
 		g := &krillv1.GoldLabeler{
-			User:     auth.PublicProfile(l.ID, l.Name, l.Username, l.Role, l.CreatedAt),
-			Attempts: l.Attempts,
-			Accuracy: 1,
+			User:        auth.PublicProfile(l.ID, l.Name, l.Username, l.Role, l.CreatedAt),
+			Attempts:    l.Attempts,
+			Accuracy:    1,
+			NeedsReview: s.routing.Below(l.Attempts, l.RecentScore),
 		}
 		if l.Scored > 0 {
 			g.Accuracy = float64(l.Correct) / float64(l.Scored)

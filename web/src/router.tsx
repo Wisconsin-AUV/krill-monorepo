@@ -50,6 +50,11 @@ export const router = createBrowserRouter([
               import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldCheckPage })),
           },
           {
+            path: 'gold/attempts/:frameId/:userId',
+            lazy: () =>
+              import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldAttemptPage })),
+          },
+          {
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },

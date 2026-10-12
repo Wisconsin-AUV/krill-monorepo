@@ -45,6 +45,12 @@ const (
 	// GoldServiceGetGoldStatsProcedure is the fully-qualified name of the GoldService's GetGoldStats
 	// RPC.
 	GoldServiceGetGoldStatsProcedure = "/krill.v1.GoldService/GetGoldStats"
+	// GoldServiceGetGoldAttemptProcedure is the fully-qualified name of the GoldService's
+	// GetGoldAttempt RPC.
+	GoldServiceGetGoldAttemptProcedure = "/krill.v1.GoldService/GetGoldAttempt"
+	// GoldServiceListGoldAttemptsProcedure is the fully-qualified name of the GoldService's
+	// ListGoldAttempts RPC.
+	GoldServiceListGoldAttemptsProcedure = "/krill.v1.GoldService/ListGoldAttempts"
 )
 
 // GoldServiceClient is a client for the krill.v1.GoldService service.
@@ -59,6 +65,11 @@ type GoldServiceClient interface {
 	// Each labeler answers a gold frame once.
 	SubmitGoldCheck(context.Context, *v1.SubmitGoldCheckRequest) (*v1.SubmitGoldCheckResponse, error)
 	GetGoldStats(context.Context, *v1.GetGoldStatsRequest) (*v1.GetGoldStatsResponse, error)
+	// GetGoldAttempt is open to reviewers and to the labeler who answered.
+	GetGoldAttempt(context.Context, *v1.GetGoldAttemptRequest) (*v1.GetGoldAttemptResponse, error)
+	// ListGoldAttempts lists attempts newest first. Labelers who are not
+	// reviewers can only list their own.
+	ListGoldAttempts(context.Context, *v1.ListGoldAttemptsRequest) (*v1.ListGoldAttemptsResponse, error)
 }
 
 // NewGoldServiceClient constructs a client for the krill.v1.GoldService service. By default, it
@@ -96,15 +107,29 @@ func NewGoldServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(goldServiceMethods.ByName("GetGoldStats")),
 			connect.WithClientOptions(opts...),
 		),
+		getGoldAttempt: connect.NewClient[v1.GetGoldAttemptRequest, v1.GetGoldAttemptResponse](
+			httpClient,
+			baseURL+GoldServiceGetGoldAttemptProcedure,
+			connect.WithSchema(goldServiceMethods.ByName("GetGoldAttempt")),
+			connect.WithClientOptions(opts...),
+		),
+		listGoldAttempts: connect.NewClient[v1.ListGoldAttemptsRequest, v1.ListGoldAttemptsResponse](
+			httpClient,
+			baseURL+GoldServiceListGoldAttemptsProcedure,
+			connect.WithSchema(goldServiceMethods.ByName("ListGoldAttempts")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // goldServiceClient implements GoldServiceClient.
 type goldServiceClient struct {
-	setGoldFrame    *connect.Client[v1.SetGoldFrameRequest, v1.SetGoldFrameResponse]
-	getGoldCheck    *connect.Client[v1.GetGoldCheckRequest, v1.GetGoldCheckResponse]
-	submitGoldCheck *connect.Client[v1.SubmitGoldCheckRequest, v1.SubmitGoldCheckResponse]
-	getGoldStats    *connect.Client[v1.GetGoldStatsRequest, v1.GetGoldStatsResponse]
+	setGoldFrame     *connect.Client[v1.SetGoldFrameRequest, v1.SetGoldFrameResponse]
+	getGoldCheck     *connect.Client[v1.GetGoldCheckRequest, v1.GetGoldCheckResponse]
+	submitGoldCheck  *connect.Client[v1.SubmitGoldCheckRequest, v1.SubmitGoldCheckResponse]
+	getGoldStats     *connect.Client[v1.GetGoldStatsRequest, v1.GetGoldStatsResponse]
+	getGoldAttempt   *connect.Client[v1.GetGoldAttemptRequest, v1.GetGoldAttemptResponse]
+	listGoldAttempts *connect.Client[v1.ListGoldAttemptsRequest, v1.ListGoldAttemptsResponse]
 }
 
 // SetGoldFrame calls krill.v1.GoldService.SetGoldFrame.
@@ -143,6 +168,24 @@ func (c *goldServiceClient) GetGoldStats(ctx context.Context, req *v1.GetGoldSta
 	return nil, err
 }
 
+// GetGoldAttempt calls krill.v1.GoldService.GetGoldAttempt.
+func (c *goldServiceClient) GetGoldAttempt(ctx context.Context, req *v1.GetGoldAttemptRequest) (*v1.GetGoldAttemptResponse, error) {
+	response, err := c.getGoldAttempt.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListGoldAttempts calls krill.v1.GoldService.ListGoldAttempts.
+func (c *goldServiceClient) ListGoldAttempts(ctx context.Context, req *v1.ListGoldAttemptsRequest) (*v1.ListGoldAttemptsResponse, error) {
+	response, err := c.listGoldAttempts.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // GoldServiceHandler is an implementation of the krill.v1.GoldService service.
 type GoldServiceHandler interface {
 	// SetGoldFrame saves the frame's boxes as its answer key. The frame must be
@@ -155,6 +198,11 @@ type GoldServiceHandler interface {
 	// Each labeler answers a gold frame once.
 	SubmitGoldCheck(context.Context, *v1.SubmitGoldCheckRequest) (*v1.SubmitGoldCheckResponse, error)
 	GetGoldStats(context.Context, *v1.GetGoldStatsRequest) (*v1.GetGoldStatsResponse, error)
+	// GetGoldAttempt is open to reviewers and to the labeler who answered.
+	GetGoldAttempt(context.Context, *v1.GetGoldAttemptRequest) (*v1.GetGoldAttemptResponse, error)
+	// ListGoldAttempts lists attempts newest first. Labelers who are not
+	// reviewers can only list their own.
+	ListGoldAttempts(context.Context, *v1.ListGoldAttemptsRequest) (*v1.ListGoldAttemptsResponse, error)
 }
 
 // NewGoldServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -188,6 +236,18 @@ func NewGoldServiceHandler(svc GoldServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(goldServiceMethods.ByName("GetGoldStats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	goldServiceGetGoldAttemptHandler := connect.NewUnaryHandlerSimple(
+		GoldServiceGetGoldAttemptProcedure,
+		svc.GetGoldAttempt,
+		connect.WithSchema(goldServiceMethods.ByName("GetGoldAttempt")),
+		connect.WithHandlerOptions(opts...),
+	)
+	goldServiceListGoldAttemptsHandler := connect.NewUnaryHandlerSimple(
+		GoldServiceListGoldAttemptsProcedure,
+		svc.ListGoldAttempts,
+		connect.WithSchema(goldServiceMethods.ByName("ListGoldAttempts")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.GoldService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case GoldServiceSetGoldFrameProcedure:
@@ -198,6 +258,10 @@ func NewGoldServiceHandler(svc GoldServiceHandler, opts ...connect.HandlerOption
 			goldServiceSubmitGoldCheckHandler.ServeHTTP(w, r)
 		case GoldServiceGetGoldStatsProcedure:
 			goldServiceGetGoldStatsHandler.ServeHTTP(w, r)
+		case GoldServiceGetGoldAttemptProcedure:
+			goldServiceGetGoldAttemptHandler.ServeHTTP(w, r)
+		case GoldServiceListGoldAttemptsProcedure:
+			goldServiceListGoldAttemptsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -221,4 +285,12 @@ func (UnimplementedGoldServiceHandler) SubmitGoldCheck(context.Context, *v1.Subm
 
 func (UnimplementedGoldServiceHandler) GetGoldStats(context.Context, *v1.GetGoldStatsRequest) (*v1.GetGoldStatsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.GoldService.GetGoldStats is not implemented"))
+}
+
+func (UnimplementedGoldServiceHandler) GetGoldAttempt(context.Context, *v1.GetGoldAttemptRequest) (*v1.GetGoldAttemptResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.GoldService.GetGoldAttempt is not implemented"))
+}
+
+func (UnimplementedGoldServiceHandler) ListGoldAttempts(context.Context, *v1.ListGoldAttemptsRequest) (*v1.ListGoldAttemptsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.GoldService.ListGoldAttempts is not implemented"))
 }
