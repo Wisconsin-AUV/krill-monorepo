@@ -2,6 +2,7 @@ import type Konva from 'konva'
 import { useMemo, useState } from 'react'
 import type { Annotation } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { useUIStore } from '@/store/useUIStore'
 import { FrameCanvas } from '@/workspace/FrameCanvas'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import { AnnotationLayer, type TrackInfo } from './AnnotationLayer'
@@ -47,6 +48,7 @@ export function LabelCanvas({
   const select = useLabelStore((s) => s.select)
   const tracking = useLabelStore((s) => s.tracking)
   const trackRuns = useLabelStore((s) => s.trackRuns)
+  const corrected = useUIStore((s) => s.displayCorrection)
   const [draft, setDraft] = useState<BoxRect | null>(null)
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null)
 
@@ -135,6 +137,7 @@ export function LabelCanvas({
         onStageMouseDown={onStageMouseDown}
         onPointerMove={(p) => setPointer(p ? toImage(p) : null)}
         cursor={drawType ? 'crosshair' : 'default'}
+        corrected={corrected}
       >
         {frame && (
           <AnnotationLayer

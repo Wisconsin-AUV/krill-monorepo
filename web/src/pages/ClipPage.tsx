@@ -9,6 +9,7 @@ import {
   EyeSlashIcon,
   NoSymbolIcon,
   QuestionMarkCircleIcon,
+  SparklesIcon,
   StarIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
@@ -44,6 +45,7 @@ import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { invalidateService } from '@/lib/queryClient'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
+import { useUIStore } from '@/store/useUIStore'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
@@ -180,6 +182,8 @@ export function ClipPage() {
   const selectedTrackId = useLabelStore((s) => s.selectedTrackId)
   const hideBoxes = useLabelStore((s) => s.hideBoxes)
   const labels = useLabelStore.getState
+  const corrected = useUIStore((s) => s.displayCorrection)
+  const toggleCorrected = useUIStore((s) => s.toggleDisplayCorrection)
 
   const canReview = useCan(Permission.REVIEW_LABELS)
   const [goldEdits, setGoldEdits] = useState<Record<string, boolean>>({})
@@ -298,6 +302,7 @@ export function ClipPage() {
           End: () => seek(frames.length - 1),
           p: () => setPlaying(!playing),
           f: fit,
+          v: toggleCorrected,
           '[': () => goClip(data?.previousClipId),
           ']': () => goClip(data?.nextClipId),
           n: nextFromQueue,
@@ -456,6 +461,14 @@ export function ClipPage() {
           onClick={() => labels().toggleHidden()}
         >
           {hideBoxes ? <EyeSlashIcon data-slot="icon" /> : <EyeIcon data-slot="icon" />}
+        </NavbarItem>
+        <NavbarItem
+          aria-label="Underwater correction"
+          aria-pressed={corrected}
+          title="Underwater correction (V)"
+          onClick={toggleCorrected}
+        >
+          <SparklesIcon data-slot="icon" className={corrected ? 'fill-sky-400!' : undefined} />
         </NavbarItem>
         <NavbarItem aria-label="Fit to screen" title="Fit to screen (F)" onClick={fit}>
           <span className="min-w-10 text-center tabular-nums">{zoomPct}%</span>
