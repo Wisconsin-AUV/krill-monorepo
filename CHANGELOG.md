@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Attributes page: a grid of track crops for one label type, with number keys to assign attributes.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

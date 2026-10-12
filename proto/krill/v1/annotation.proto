@@ -21,6 +21,9 @@ service AnnotationService {
   // tracks it through the rest of the clip on the GPU worker. Boxes are added
   // to the track as proposals while tracking runs.
   rpc TrackObject(TrackObjectRequest) returns (TrackObjectResponse) {}
+  // ListTracksByType lists tracks of one type across clips, each with one box
+  // to crop, ordered by track id.
+  rpc ListTracksByType(ListTracksByTypeRequest) returns (ListTracksByTypeResponse) {}
 }
 
 enum FrameStatus {
@@ -165,4 +168,32 @@ message TrackObjectRequest {
 
 message TrackObjectResponse {
   Track track = 1;
+}
+
+message ListTracksByTypeRequest {
+  int64 label_type_id = 1;
+  // 0 lists every video.
+  int64 video_id = 2;
+  // Only tracks with at least one attribute unset.
+  bool missing_attributes = 3;
+  // Defaults to 60, at most 200.
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+message TrackCrop {
+  Track track = 1;
+  int64 video_id = 2;
+  // The track's first verified box, or its middle box when none is verified.
+  int64 frame_id = 3;
+  int32 frame_index = 4;
+  Box box = 5;
+  // Presigned MinIO URL of the whole frame.
+  string frame_url = 6;
+}
+
+message ListTracksByTypeResponse {
+  repeated TrackCrop tracks = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
 }

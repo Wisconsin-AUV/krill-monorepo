@@ -5,6 +5,7 @@ import { AppChrome, AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
+import { AttributesPage } from '@/pages/AttributesPage'
 import { ExportsPage } from '@/pages/ExportsPage'
 import { GoldPage } from '@/pages/GoldPage'
 import { HomePage } from '@/pages/HomePage'
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
               { path: 'videos', element: <VideosPage /> },
               { path: 'videos/:id', element: <VideoPage /> },
               { path: 'account', element: <AccountPage /> },
+              { path: 'attributes', element: <AttributesPage /> },
               { path: 'leaderboard', element: <LeaderboardPage /> },
               { path: 'people/:username', element: <ProfilePage /> },
               {

@@ -249,3 +249,41 @@ class TrackObjectResponse(_message.Message):
     TRACK_FIELD_NUMBER: _ClassVar[int]
     track: Track
     def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ...) -> None: ...
+
+class ListTracksByTypeRequest(_message.Message):
+    __slots__ = ("label_type_id", "video_id", "missing_attributes", "page_size", "page_token")
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    MISSING_ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    label_type_id: int
+    video_id: int
+    missing_attributes: bool
+    page_size: int
+    page_token: str
+    def __init__(self, label_type_id: _Optional[int] = ..., video_id: _Optional[int] = ..., missing_attributes: _Optional[bool] = ..., page_size: _Optional[int] = ..., page_token: _Optional[str] = ...) -> None: ...
+
+class TrackCrop(_message.Message):
+    __slots__ = ("track", "video_id", "frame_id", "frame_index", "box", "frame_url")
+    TRACK_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_INDEX_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    FRAME_URL_FIELD_NUMBER: _ClassVar[int]
+    track: Track
+    video_id: int
+    frame_id: int
+    frame_index: int
+    box: Box
+    frame_url: str
+    def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ..., video_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., frame_index: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., frame_url: _Optional[str] = ...) -> None: ...
+
+class ListTracksByTypeResponse(_message.Message):
+    __slots__ = ("tracks", "next_page_token")
+    TRACKS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    tracks: _containers.RepeatedCompositeFieldContainer[TrackCrop]
+    next_page_token: str
+    def __init__(self, tracks: _Optional[_Iterable[_Union[TrackCrop, _Mapping]]] = ..., next_page_token: _Optional[str] = ...) -> None: ...
