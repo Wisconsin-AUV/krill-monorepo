@@ -19,6 +19,9 @@ export function loadFrame(id: bigint, url: string): Entry {
   }
   const img = new Image()
   img.decoding = 'async'
+  // Without CORS the canvas is tainted and display correction cannot read
+  // the pixels.
+  img.crossOrigin = 'anonymous'
   const entry: Entry = {
     img,
     loaded: false,

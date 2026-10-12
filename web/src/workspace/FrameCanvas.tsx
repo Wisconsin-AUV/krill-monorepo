@@ -2,22 +2,26 @@ import type Konva from 'konva'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Group, Image as KonvaImage, Layer, Stage } from 'react-konva'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { correctFrame } from './correctedFrames'
 import { loadFrame } from './imageCache'
 import { useWorkspaceStore } from './useWorkspaceStore'
 
 const PRELOAD_AHEAD = 12
 const PRELOAD_BEHIND = 4
+const CORRECT_AHEAD = 3
 
 export function FrameCanvas({
   children,
   onStageMouseDown,
   onPointerMove,
   cursor,
+  corrected = false,
 }: {
   children?: ReactNode
   onStageMouseDown?: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onPointerMove?: (point: { x: number; y: number } | null) => void
   cursor?: string
+  corrected?: boolean
 }) {
   const container = useRef<HTMLDivElement>(null)
   const frames = useWorkspaceStore((s) => s.frames)
@@ -28,23 +32,28 @@ export function FrameCanvas({
   const setStageSize = useWorkspaceStore((s) => s.setStageSize)
   const setView = useWorkspaceStore((s) => s.setView)
   const zoomAt = useWorkspaceStore((s) => s.zoomAt)
-  const [shown, setShown] = useState<HTMLImageElement | null>(null)
+  const [shown, setShown] = useState<CanvasImageSource | null>(null)
   const pan = useRef<{ x: number; y: number } | null>(null)
 
   const frame = frames[index]
   const entry = useMemo(() => (frame ? loadFrame(frame.id, frame.url) : undefined), [frame])
+  const fixed = useMemo(
+    () => (frame && entry && corrected ? correctFrame(frame.id, entry.ready) : undefined),
+    [frame, entry, corrected],
+  )
 
   useEffect(() => {
-    if (!entry) return
+    const source = fixed ?? entry
+    if (!source) return
     let live = true
-    entry.ready.then(
+    source.ready.then(
       (img) => live && setShown(img),
       () => undefined,
     )
     return () => {
       live = false
     }
-  }, [entry])
+  }, [entry, fixed])
 
   useEffect(() => {
     for (let i = index + 1; i <= index + PRELOAD_AHEAD && i < frames.length; i++) {
@@ -54,6 +63,13 @@ export function FrameCanvas({
       loadFrame(frames[i].id, frames[i].url)
     }
   }, [frames, index])
+
+  useEffect(() => {
+    if (!corrected) return
+    for (let i = index + 1; i <= index + CORRECT_AHEAD && i < frames.length; i++) {
+      correctFrame(frames[i].id, loadFrame(frames[i].id, frames[i].url).ready)
+    }
+  }, [frames, index, corrected])
 
   useEffect(() => {
     const el = container.current
@@ -67,8 +83,9 @@ export function FrameCanvas({
 
   // Until the new frame decodes, keep drawing the previous one so stepping
   // through frames never flashes an empty canvas.
-  const image = entry?.loaded ? entry.img : shown
-  const loading = !!frame && !entry?.loaded
+  const current = corrected ? fixed?.image : entry?.loaded ? entry.img : undefined
+  const image = current ?? shown
+  const loading = !!frame && !current
 
   function onWheel(e: Konva.KonvaEventObject<WheelEvent>) {
     e.evt.preventDefault()

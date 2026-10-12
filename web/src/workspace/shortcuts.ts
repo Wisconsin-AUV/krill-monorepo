@@ -27,6 +27,7 @@ export const viewShortcuts: ShortcutGroup = {
     { keys: ['Scroll'], label: 'Zoom at cursor' },
     { keys: ['Right drag'], label: 'Pan (or Alt + drag)' },
     { keys: ['F'], label: 'Fit frame to screen' },
+    { keys: ['V'], label: 'Underwater correction (display only)' },
     { keys: ['?'], label: 'Show shortcuts' },
   ],
 }
