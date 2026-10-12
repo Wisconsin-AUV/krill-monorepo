@@ -36,6 +36,9 @@ type Config struct {
 	SlackTeamID       string
 	// WorkerToken authenticates the GPU worker. Empty turns worker RPCs off.
 	WorkerToken string
+	// EmbedAtIngest has the GPU worker compute SAM image embeddings for every
+	// clip after ingest. It is off when WorkerToken is empty.
+	EmbedAtIngest bool
 	// ClientIPHeader is trusted for the client's address when set. Only set it
 	// when every request comes through the proxy that writes it.
 	ClientIPHeader string
@@ -66,6 +69,10 @@ func Load() (Config, error) {
 	if cfg.AllowSignup, err = strconv.ParseBool(getenv("KRILL_ALLOW_SIGNUP", "true")); err != nil {
 		return Config{}, fmt.Errorf("KRILL_ALLOW_SIGNUP: %w", err)
 	}
+	if cfg.EmbedAtIngest, err = strconv.ParseBool(getenv("KRILL_EMBED_AT_INGEST", "true")); err != nil {
+		return Config{}, fmt.Errorf("KRILL_EMBED_AT_INGEST: %w", err)
+	}
+	cfg.EmbedAtIngest = cfg.EmbedAtIngest && cfg.WorkerToken != ""
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint
 	}

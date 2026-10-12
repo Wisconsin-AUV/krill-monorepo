@@ -124,6 +124,7 @@ type Querier interface {
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
+	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	SetDrift(ctx context.Context, arg SetDriftParams) error

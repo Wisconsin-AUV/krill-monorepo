@@ -15,6 +15,9 @@ service WorkerService {
   rpc ReportTrack(ReportTrackRequest) returns (ReportTrackResponse) {}
   // ReportExemplars finishes an exemplar task with every object found.
   rpc ReportExemplars(ReportExemplarsRequest) returns (ReportExemplarsResponse) {}
+  // ReportEmbed finishes an embed task once every frame's embedding is
+  // uploaded.
+  rpc ReportEmbed(ReportEmbedRequest) returns (ReportEmbedResponse) {}
   rpc FailTask(FailTaskRequest) returns (FailTaskResponse) {}
 }
 
@@ -24,6 +27,7 @@ message NextTaskResponse {
   oneof task {
     TrackTask track = 1;
     ExemplarTask exemplar = 2;
+    EmbedTask embed = 3;
   }
 }
 
@@ -31,6 +35,9 @@ message TaskFrame {
   int64 id = 1;
   // Presigned URL for the worker, not the browser.
   string url = 2;
+  // Presigned URL of the frame's image embedding. Empty when the clip has
+  // none.
+  string embedding_url = 3;
 }
 
 message TrackTask {
@@ -41,6 +48,23 @@ message TrackTask {
     Point point = 3;
     Box box = 4;
   }
+  // Model that computed the frames' embeddings. Workers running a different
+  // model ignore them.
+  string embedding_model = 5;
+}
+
+// EmbedTask computes the SAM image embedding of each frame.
+message EmbedTask {
+  int64 id = 1;
+  repeated EmbedFrame frames = 2;
+}
+
+message EmbedFrame {
+  int64 id = 1;
+  // Presigned URL for the worker to GET the frame.
+  string url = 2;
+  // Presigned URL for the worker to PUT the embedding.
+  string upload_url = 3;
 }
 
 // ExemplarTask finds every object on a frame that looks like the one in box.
@@ -73,6 +97,13 @@ message ReportExemplarsRequest {
 }
 
 message ReportExemplarsResponse {}
+
+message ReportEmbedRequest {
+  int64 task_id = 1;
+  string model = 2;
+}
+
+message ReportEmbedResponse {}
 
 message FailTaskRequest {
   int64 task_id = 1;

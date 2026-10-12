@@ -113,8 +113,11 @@ export function VideoPage() {
     { id },
     {
       enabled: id !== undefined,
-      refetchInterval: (q) =>
-        q.state.data?.video && isIngesting(q.state.data.video) ? 1500 : false,
+      refetchInterval: (q) => {
+        const d = q.state.data
+        if (d?.video && isIngesting(d.video)) return 1500
+        return d?.embedAtIngest && d.clips.some((c) => !c.embedded) ? 5000 : false
+      },
     },
   )
   const retry = useMutation(VideoService.method.startIngest, {
@@ -261,6 +264,15 @@ export function VideoPage() {
             <DescriptionDetails className="tabular-nums">
               {formatNumber(video.frameCount)} at {formatFps(video.fps)}
             </DescriptionDetails>
+            {data.embedAtIngest && (
+              <>
+                <DescriptionTerm>Embedded</DescriptionTerm>
+                <DescriptionDetails className="tabular-nums">
+                  {formatNumber(data.clips.filter((c) => c.embedded).length)} of{' '}
+                  {plural(data.clips.length, 'clip')}
+                </DescriptionDetails>
+              </>
+            )}
             <DescriptionTerm>Labeled</DescriptionTerm>
             <DescriptionDetails className="tabular-nums">
               {plural(video.labeledFrameCount, 'frame')} done ·{' '}

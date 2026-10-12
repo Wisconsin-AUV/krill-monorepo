@@ -199,7 +199,7 @@ type InsertFramesParams struct {
 
 const listClips = `-- name: ListClips :many
 SELECT
-    c.id, c.video_id, c.idx, c.start_frame, c.frame_count,
+    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model,
     (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
     (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
 FROM clips c
@@ -228,6 +228,8 @@ func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]ListClipsRow,
 			&i.Clip.Idx,
 			&i.Clip.StartFrame,
 			&i.Clip.FrameCount,
+			&i.Clip.EmbeddedAt,
+			&i.Clip.EmbedModel,
 			&i.LabeledFrameCount,
 			&i.BoxCount,
 		); err != nil {

@@ -2,9 +2,10 @@ import logging
 import os
 import time
 import urllib.request
-from collections.abc import Iterable, Iterator
-from concurrent.futures import ThreadPoolExecutor
-from typing import Protocol
+from collections import deque
+from collections.abc import Callable, Iterable, Iterator
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import Protocol, TypeVar
 
 import cv2
 import numpy as np
@@ -13,18 +14,9 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, BoxPrompt, PointPrompt, Prompt
+from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt
 
 log = logging.getLogger(__name__)
-
-
-class Tracker(Protocol):
-    model_id: str
-    supports_exemplars: bool
-
-    def track(self, frames: Iterable[Frame], prompt: Prompt) -> Iterator[Box | None]: ...
-
-    def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
 
 
 DEFAULT_MODEL = "facebook/sam2.1-hiera-small"
@@ -32,6 +24,27 @@ DEFAULT_MODEL = "facebook/sam2.1-hiera-small"
 MAX_SIDE = 1024
 REPORT_EVERY = 2.0
 RETRY_DELAY = 5.0
+# Downloads run this many frames ahead of the GPU. Embeddings are about 8 MB
+# each, so reading a whole clip ahead would hold gigabytes.
+PREFETCH = 16
+
+T = TypeVar("T")
+R = TypeVar("R")
+
+
+class Tracker(Protocol):
+    model_id: str
+    supports_exemplars: bool
+
+    def track(
+        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+    ) -> Iterator[Box | None]: ...
+
+    def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
+
+    def embed(self, frame: Frame) -> bytes: ...
+
+    def load_embedding(self, data: bytes) -> Embedding: ...
 
 
 def decode_frame(data: bytes) -> Frame:
@@ -51,10 +64,24 @@ def fetch(url: str) -> bytes:
         return data
 
 
-def download_frames(urls: list[str]) -> Iterator[Frame]:
+def upload(url: str, data: bytes) -> None:
+    req = urllib.request.Request(
+        url, data=data, method="PUT", headers={"Content-Type": "application/octet-stream"}
+    )
+    with urllib.request.urlopen(req, timeout=30):
+        pass
+
+
+def prefetch(fn: Callable[[T], R], items: Iterable[T]) -> Iterator[R]:
+    """Yield fn of each item in order, computing up to PREFETCH ahead in threads."""
     with ThreadPoolExecutor(8) as pool:
-        for data in pool.map(fetch, urls):
-            yield decode_frame(data)
+        pending: deque[Future[R]] = deque()
+        for item in items:
+            pending.append(pool.submit(fn, item))
+            if len(pending) > PREFETCH:
+                yield pending.popleft().result()
+        while pending:
+            yield pending.popleft().result()
 
 
 def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
@@ -65,7 +92,19 @@ def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
         b = task.box
         prompt = BoxPrompt((b.x, b.y, b.width, b.height))
 
-    frames = download_frames([f.url for f in task.frames])
+    use_embeddings = task.embedding_model == tracker.model_id
+
+    def load(f: worker_pb2.TaskFrame) -> tuple[Frame, Embedding | None]:
+        frame = decode_frame(fetch(f.url))
+        if not (use_embeddings and f.embedding_url):
+            return frame, None
+        try:
+            return frame, tracker.load_embedding(fetch(f.embedding_url))
+        except (OSError, ValueError) as e:
+            log.warning("embedding for frame %d unusable, encoding it instead: %s", f.id, e)
+            return frame, None
+
+    frames = prefetch(load, task.frames)
     ids = [f.id for f in task.frames]
     start = last_report = time.monotonic()
     batch: list[worker_pb2.TrackedBox] = []
@@ -111,16 +150,42 @@ def run_exemplar(api: Api, tracker: Tracker, task: worker_pb2.ExemplarTask) -> N
     log.info("exemplar task %d: found %d objects in %.1fs", task.id, len(boxes), elapsed)
 
 
+def run_embed(
+    api: Api,
+    tracker: Tracker,
+    task: worker_pb2.EmbedTask,
+    put: Callable[[str, bytes], None] = upload,
+) -> None:
+    start = time.monotonic()
+    frames = prefetch(lambda f: decode_frame(fetch(f.url)), task.frames)
+    with ThreadPoolExecutor(4) as uploads:
+        pending = [
+            uploads.submit(put, f.upload_url, tracker.embed(frame))
+            for f, frame in zip(task.frames, frames, strict=True)
+        ]
+        for p in pending:
+            p.result()
+    api.report_embed(worker_pb2.ReportEmbedRequest(task_id=task.id, model=tracker.model_id))
+    log.info(
+        "embedded task %d: %d frames in %.1fs",
+        task.id,
+        len(task.frames),
+        time.monotonic() - start,
+    )
+
+
 def run_task(api: Api, tracker: Tracker, res: worker_pb2.NextTaskResponse) -> None:
     kind = res.WhichOneof("task")
     if kind is None:
         return
-    task = res.track if kind == "track" else res.exemplar
+    task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask = getattr(res, kind)
     try:
         if kind == "track":
             run_track(api, tracker, res.track)
-        else:
+        elif kind == "exemplar":
             run_exemplar(api, tracker, res.exemplar)
+        else:
+            run_embed(api, tracker, res.embed)
     except ApiError as e:
         log.warning("task %d dropped by the API: %s", task.id, e)
     except Exception as e:

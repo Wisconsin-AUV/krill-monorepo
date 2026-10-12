@@ -68,6 +68,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.WorkerServiceNextTaskProcedure:        worker,
 	krillv1connect.WorkerServiceReportTrackProcedure:     worker,
 	krillv1connect.WorkerServiceReportExemplarsProcedure: worker,
+	krillv1connect.WorkerServiceReportEmbedProcedure:     worker,
 	krillv1connect.WorkerServiceFailTaskProcedure:        worker,
 
 	krillv1connect.GoldServiceSetGoldFrameProcedure:    reviewLabels,

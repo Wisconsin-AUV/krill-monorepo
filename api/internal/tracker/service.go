@@ -32,16 +32,14 @@ func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher) *Service {
 }
 
 func (s *Service) NextTask(ctx context.Context, _ *krillv1.NextTaskRequest) (*krillv1.NextTaskResponse, error) {
-	timer := time.NewTimer(pollTimeout)
-	defer timer.Stop()
-	select {
-	case t := <-s.dispatcher.queue:
-		return t.msg, nil
-	case <-timer.C:
-		return &krillv1.NextTaskResponse{}, nil
-	case <-ctx.Done():
-		return nil, connect.NewError(connect.CodeCanceled, ctx.Err())
+	t, err := s.dispatcher.next(ctx, pollTimeout)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeCanceled, err)
 	}
+	if t == nil {
+		return &krillv1.NextTaskResponse{}, nil
+	}
+	return t.msg, nil
 }
 
 func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackRequest) (*krillv1.ReportTrackResponse, error) {
@@ -165,6 +163,23 @@ func (s *Service) ReportExemplars(_ context.Context, req *krillv1.ReportExemplar
 	}
 	t.finish(nil)
 	return &krillv1.ReportExemplarsResponse{}, nil
+}
+
+func (s *Service) ReportEmbed(_ context.Context, req *krillv1.ReportEmbedRequest) (*krillv1.ReportEmbedResponse, error) {
+	t, ok := s.dispatcher.get(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	if t.msg.GetEmbed() == nil {
+		return nil, rpc.Invalid("task %d is not an embed task", t.id)
+	}
+	if req.GetModel() == "" {
+		return nil, rpc.Invalid("model is required")
+	}
+	model := req.GetModel()
+	t.model.Store(&model)
+	t.finish(nil)
+	return &krillv1.ReportEmbedResponse{}, nil
 }
 
 func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*krillv1.FailTaskResponse, error) {

@@ -342,7 +342,9 @@ type Clip struct {
 	LabeledFrameCount int32                  `protobuf:"varint,9,opt,name=labeled_frame_count,json=labeledFrameCount,proto3" json:"labeled_frame_count,omitempty"`
 	BoxCount          int32                  `protobuf:"varint,10,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
 	// Unset when nobody has claimed the clip.
-	Claim         *ClipClaim `protobuf:"bytes,11,opt,name=claim,proto3" json:"claim,omitempty"`
+	Claim *ClipClaim `protobuf:"bytes,11,opt,name=claim,proto3" json:"claim,omitempty"`
+	// The SAM image embeddings of the clip's frames are stored.
+	Embedded      bool `protobuf:"varint,12,opt,name=embedded,proto3" json:"embedded,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -452,6 +454,13 @@ func (x *Clip) GetClaim() *ClipClaim {
 		return x.Claim
 	}
 	return nil
+}
+
+func (x *Clip) GetEmbedded() bool {
+	if x != nil {
+		return x.Embedded
+	}
+	return false
 }
 
 // ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
@@ -876,9 +885,11 @@ func (x *GetVideoRequest) GetId() int64 {
 }
 
 type GetVideoResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Video         *Video                 `protobuf:"bytes,1,opt,name=video,proto3" json:"video,omitempty"`
-	Clips         []*Clip                `protobuf:"bytes,2,rep,name=clips,proto3" json:"clips,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Video *Video                 `protobuf:"bytes,1,opt,name=video,proto3" json:"video,omitempty"`
+	Clips []*Clip                `protobuf:"bytes,2,rep,name=clips,proto3" json:"clips,omitempty"`
+	// Clips get SAM embeddings after ingest.
+	EmbedAtIngest bool `protobuf:"varint,3,opt,name=embed_at_ingest,json=embedAtIngest,proto3" json:"embed_at_ingest,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -925,6 +936,13 @@ func (x *GetVideoResponse) GetClips() []*Clip {
 		return x.Clips
 	}
 	return nil
+}
+
+func (x *GetVideoResponse) GetEmbedAtIngest() bool {
+	if x != nil {
+		return x.EmbedAtIngest
+	}
+	return false
 }
 
 type UpdateVideoRequest struct {
@@ -1149,7 +1167,7 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n" +
 	"\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
-	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xe2\x02\n" +
+	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xfe\x02\n" +
 	"\x04Clip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12\x14\n" +
@@ -1165,7 +1183,8 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
 	"\tbox_count\x18\n" +
 	" \x01(\x05R\bboxCount\x12)\n" +
-	"\x05claim\x18\v \x01(\v2\x13.krill.v1.ClipClaimR\x05claim\"\x83\x01\n" +
+	"\x05claim\x18\v \x01(\v2\x13.krill.v1.ClipClaimR\x05claim\x12\x1a\n" +
+	"\bembedded\x18\f \x01(\bR\bembedded\"\x83\x01\n" +
 	"\tClipClaim\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.krill.v1.ProfileR\x04user\x127\n" +
 	"\tactive_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bactiveAt\x12\x16\n" +
@@ -1191,10 +1210,11 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x12ListVideosResponse\x12'\n" +
 	"\x06videos\x18\x01 \x03(\v2\x0f.krill.v1.VideoR\x06videos\"!\n" +
 	"\x0fGetVideoRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"_\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x87\x01\n" +
 	"\x10GetVideoResponse\x12%\n" +
 	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12$\n" +
-	"\x05clips\x18\x02 \x03(\v2\x0e.krill.v1.ClipR\x05clips\"\xab\x01\n" +
+	"\x05clips\x18\x02 \x03(\v2\x0e.krill.v1.ClipR\x05clips\x12&\n" +
+	"\x0fembed_at_ingest\x18\x03 \x01(\bR\rembedAtIngest\"\xab\x01\n" +
 	"\x12UpdateVideoRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n" +

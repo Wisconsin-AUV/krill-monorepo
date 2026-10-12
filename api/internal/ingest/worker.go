@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"golang.org/x/sync/errgroup"
@@ -43,10 +44,12 @@ type Worker struct {
 	river.WorkerDefaults[Args]
 	pool  *pgxpool.Pool
 	store *storage.Store
+	// embed queues an EmbedArgs job for each clip once frames are ready.
+	embed bool
 }
 
-func NewWorker(pool *pgxpool.Pool, store *storage.Store) *Worker {
-	return &Worker{pool: pool, store: store}
+func NewWorker(pool *pgxpool.Pool, store *storage.Store, embed bool) *Worker {
+	return &Worker{pool: pool, store: store, embed: embed}
 }
 
 func (w *Worker) Timeout(*river.Job[Args]) time.Duration { return 2 * time.Hour }
@@ -87,6 +90,9 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 	}
 	if err := w.store.RemovePrefix(ctx, storage.FramesPrefix(id)); err != nil {
 		return fmt.Errorf("clear old frames: %w", err)
+	}
+	if err := w.store.RemovePrefix(ctx, storage.EmbeddingsPrefix(id)); err != nil {
+		return fmt.Errorf("clear old embeddings: %w", err)
 	}
 
 	tmp, err := os.MkdirTemp("", fmt.Sprintf("krill-ingest-%d-", id))
@@ -153,11 +159,21 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 	}); err != nil {
 		return fmt.Errorf("save probe: %w", err)
 	}
-	if err := insertClips(ctx, qtx, id, hashes, fps); err != nil {
+	clipIDs, err := insertClips(ctx, qtx, id, hashes, fps)
+	if err != nil {
 		return err
 	}
 	if err := qtx.FinishIngest(ctx, db.FinishIngestParams{ID: id, FrameCount: int32(len(files))}); err != nil { //nolint:gosec // frame counts fit in int32
 		return fmt.Errorf("finish ingest: %w", err)
+	}
+	if w.embed {
+		jobs := make([]river.InsertManyParams, len(clipIDs))
+		for i, clipID := range clipIDs {
+			jobs[i] = river.InsertManyParams{Args: EmbedArgs{ClipID: clipID}}
+		}
+		if _, err := river.ClientFromContext[pgx.Tx](ctx).InsertManyTx(ctx, tx, jobs); err != nil {
+			return fmt.Errorf("queue embeddings: %w", err)
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit: %w", err)
@@ -166,7 +182,8 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 	return nil
 }
 
-func insertClips(ctx context.Context, q *db.Queries, videoID int64, hashes []uint64, fps float64) error {
+func insertClips(ctx context.Context, q *db.Queries, videoID int64, hashes []uint64, fps float64) ([]int64, error) {
+	var ids []int64
 	for i, c := range chunkClips(len(hashes), fps) {
 		clipID, err := q.CreateClip(ctx, db.CreateClipParams{
 			VideoID:    videoID,
@@ -175,7 +192,7 @@ func insertClips(ctx context.Context, q *db.Queries, videoID int64, hashes []uin
 			FrameCount: int32(c.Count), //nolint:gosec // frame counts fit in int32
 		})
 		if err != nil {
-			return fmt.Errorf("create clip %d: %w", i, err)
+			return nil, fmt.Errorf("create clip %d: %w", i, err)
 		}
 		rows := make([]db.InsertFramesParams, c.Count)
 		for j := range rows {
@@ -188,10 +205,11 @@ func insertClips(ctx context.Context, q *db.Queries, videoID int64, hashes []uin
 			}
 		}
 		if _, err := q.InsertFrames(ctx, rows); err != nil {
-			return fmt.Errorf("insert frames for clip %d: %w", i, err)
+			return nil, fmt.Errorf("insert frames for clip %d: %w", i, err)
 		}
+		ids = append(ids, clipID)
 	}
-	return nil
+	return ids, nil
 }
 
 func (w *Worker) uploadFrames(ctx context.Context, videoID int64, files []string, onDone func(int)) ([]uint64, int32, int32, error) {

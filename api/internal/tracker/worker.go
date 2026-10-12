@@ -16,7 +16,16 @@ import (
 	"github.com/wauv/krill/api/internal/storage"
 )
 
-const frameURLExpiry = time.Hour
+const (
+	// pickupTimeout is how long a task waits for a GPU worker to poll.
+	pickupTimeout = 2 * time.Minute
+	// idleTimeout fails a task whose worker stopped reporting, for example
+	// because it crashed.
+	idleTimeout    = 2 * time.Minute
+	frameURLExpiry = time.Hour
+)
+
+var errNoWorker = errors.New("no GPU worker picked up the task")
 
 type Worker struct {
 	river.WorkerDefaults[annotation.TrackArgs]
@@ -33,7 +42,7 @@ func (w *Worker) Timeout(*river.Job[annotation.TrackArgs]) time.Duration { retur
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[annotation.TrackArgs]) error {
 	args := job.Args
-	err := w.track(ctx, job.ID, args)
+	err := w.track(ctx, w.dispatcher.nextID(), args)
 	if err != nil {
 		slog.Error("tracking failed", "track_id", args.TrackID, "frame_id", args.FrameID, "err", err)
 	}
@@ -65,12 +74,20 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 	}
 
 	msg := &krillv1.TrackTask{Id: id, Frames: make([]*krillv1.TaskFrame, len(frames))}
+	if clip.EmbeddedAt.Valid {
+		msg.EmbeddingModel = clip.EmbedModel
+	}
 	for i, f := range frames {
 		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
 		if err != nil {
 			return err
 		}
 		msg.Frames[i] = &krillv1.TaskFrame{Id: f.ID, Url: url}
+		if msg.EmbeddingModel != "" {
+			if msg.Frames[i].EmbeddingUrl, err = w.store.PresignGetInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry); err != nil {
+				return err
+			}
+		}
 	}
 	switch {
 	case args.Point != nil:
@@ -82,5 +99,29 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 		return errors.New("job has no prompt")
 	}
 
-	return w.dispatcher.run(ctx, newTask(id, args.TrackID, msg))
+	return run(ctx, w.dispatcher, newTask(id, args.TrackID, msg), pickupTimeout)
+}
+
+// run hands t to the GPU worker and waits for it to finish.
+func run(ctx context.Context, d *Dispatcher, t *task, pickup time.Duration) error {
+	d.add(t)
+	defer d.remove(t.id)
+	if err := d.offer(ctx, t, pickup); err != nil {
+		return err
+	}
+
+	idle := time.NewTimer(idleTimeout)
+	defer idle.Stop()
+	for {
+		select {
+		case err := <-t.done:
+			return err
+		case <-t.progress:
+			idle.Reset(idleTimeout)
+		case <-idle.C:
+			return errors.New("GPU worker stopped reporting")
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

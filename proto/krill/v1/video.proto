@@ -76,6 +76,8 @@ message Clip {
   int32 box_count = 10;
   // Unset when nobody has claimed the clip.
   ClipClaim claim = 11;
+  // The SAM image embeddings of the clip's frames are stored.
+  bool embedded = 12;
 }
 
 // ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
@@ -127,6 +129,8 @@ message GetVideoRequest {
 message GetVideoResponse {
   Video video = 1;
   repeated Clip clips = 2;
+  // Clips get SAM embeddings after ingest.
+  bool embed_at_ingest = 3;
 }
 
 message UpdateVideoRequest {

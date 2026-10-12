@@ -2,30 +2,34 @@ package tracker
 
 import (
 	"context"
-	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/annotation"
 )
 
+type priority int
+
+// Lower values are handed out first.
 const (
-	// pickupTimeout is how long a task waits for a GPU worker to poll.
-	pickupTimeout = 2 * time.Minute
-	// idleTimeout fails a task whose worker stopped reporting, for example
-	// because it crashed.
-	idleTimeout = 2 * time.Minute
+	interactive priority = iota
+	background
+	numPriorities
 )
 
-var errNoWorker = errors.New("no GPU worker picked up the task")
-
 type task struct {
-	id int64
-	// trackID is 0 for exemplar tasks.
+	id       int64
+	priority priority
+	// trackID is 0 for exemplar and embed tasks.
 	trackID int64
 	msg     *krillv1.NextTaskResponse
 	frames  map[int64]bool
+	// model is set by ReportEmbed before done is signaled.
+	model atomic.Pointer[string]
+	// picked is closed when a worker takes the task.
+	picked chan struct{}
 	// progress gets a signal on each report, and done gets the result.
 	progress chan struct{}
 	done     chan error
@@ -39,25 +43,32 @@ type exemplarResult struct {
 }
 
 func newTask(id, trackID int64, msg *krillv1.TrackTask) *task {
-	t := blankTask(id, &krillv1.NextTaskResponse{Task: &krillv1.NextTaskResponse_Track{Track: msg}})
-	t.trackID = trackID
+	frames := make(map[int64]bool, len(msg.GetFrames()))
 	for _, f := range msg.GetFrames() {
-		t.frames[f.GetId()] = true
+		frames[f.GetId()] = true
 	}
+	t := newBareTask(id, interactive, &krillv1.NextTaskResponse{Task: &krillv1.NextTaskResponse_Track{Track: msg}})
+	t.trackID = trackID
+	t.frames = frames
 	return t
 }
 
 func newExemplarTask(id int64, msg *krillv1.ExemplarTask) *task {
-	t := blankTask(id, &krillv1.NextTaskResponse{Task: &krillv1.NextTaskResponse_Exemplar{Exemplar: msg}})
-	t.frames[msg.GetFrame().GetId()] = true
+	t := newBareTask(id, interactive, &krillv1.NextTaskResponse{Task: &krillv1.NextTaskResponse_Exemplar{Exemplar: msg}})
+	t.frames = map[int64]bool{msg.GetFrame().GetId(): true}
 	return t
 }
 
-func blankTask(id int64, msg *krillv1.NextTaskResponse) *task {
+func newEmbedTask(id int64, msg *krillv1.EmbedTask) *task {
+	return newBareTask(id, background, &krillv1.NextTaskResponse{Task: &krillv1.NextTaskResponse_Embed{Embed: msg}})
+}
+
+func newBareTask(id int64, p priority, msg *krillv1.NextTaskResponse) *task {
 	return &task{
 		id:       id,
+		priority: p,
 		msg:      msg,
-		frames:   map[int64]bool{},
+		picked:   make(chan struct{}),
 		progress: make(chan struct{}, 1),
 		done:     make(chan error, 1),
 		found:    make(chan exemplarResult, 1),
@@ -79,15 +90,118 @@ func (t *task) finish(err error) {
 }
 
 // Dispatcher hands tasks from River jobs to the GPU worker polling NextTask.
-// It is in memory because only one API process runs.
+// It is in memory because only one API process runs. Interactive tasks are
+// always handed out before background ones so bulk embedding never delays a
+// click by more than the background task already running.
 type Dispatcher struct {
-	queue   chan *task
+	ids     atomic.Int64
 	mu      sync.Mutex
+	pending [numPriorities][]*task
+	// ready wakes a polling worker when a task is pushed.
+	ready   chan struct{}
 	running map[int64]*task
 }
 
 func NewDispatcher() *Dispatcher {
-	return &Dispatcher{queue: make(chan *task), running: map[int64]*task{}}
+	return &Dispatcher{ready: make(chan struct{}, 1), running: map[int64]*task{}}
+}
+
+func (d *Dispatcher) nextID() int64 {
+	return d.ids.Add(1)
+}
+
+func (d *Dispatcher) wake() {
+	select {
+	case d.ready <- struct{}{}:
+	default:
+	}
+}
+
+func (d *Dispatcher) push(t *task) {
+	d.mu.Lock()
+	d.pending[t.priority] = append(d.pending[t.priority], t)
+	d.mu.Unlock()
+	d.wake()
+}
+
+// take pops the oldest task of the highest priority, or nil.
+func (d *Dispatcher) take() *task {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for p := range d.pending {
+		if q := d.pending[p]; len(q) > 0 {
+			t := q[0]
+			d.pending[p] = q[1:]
+			close(t.picked)
+			if d.hasPending() {
+				d.wake()
+			}
+			return t
+		}
+	}
+	return nil
+}
+
+func (d *Dispatcher) hasPending() bool {
+	for _, q := range d.pending {
+		if len(q) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// withdraw removes t if no worker has taken it yet and reports whether it did.
+func (d *Dispatcher) withdraw(t *task) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	q := d.pending[t.priority]
+	for i, p := range q {
+		if p == t {
+			d.pending[t.priority] = append(q[:i:i], q[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// offer queues t and waits for a worker to take it.
+func (d *Dispatcher) offer(ctx context.Context, t *task, timeout time.Duration) error {
+	d.push(t)
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-t.picked:
+		return nil
+	case <-timer.C:
+		if d.withdraw(t) {
+			return errNoWorker
+		}
+	case <-ctx.Done():
+		if d.withdraw(t) {
+			return ctx.Err()
+		}
+	}
+	// A worker took it while we gave up waiting.
+	return nil
+}
+
+// next waits up to timeout for a task. It returns nil when none arrives.
+func (d *Dispatcher) next(ctx context.Context, timeout time.Duration) (*task, error) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	for {
+		if t := d.take(); t != nil {
+			return t, nil
+		}
+		select {
+		case <-d.ready:
+		case <-timer.C:
+			return nil, nil
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
 }
 
 func (d *Dispatcher) add(t *task) {
@@ -107,36 +221,4 @@ func (d *Dispatcher) get(id int64) (*task, bool) {
 	defer d.mu.Unlock()
 	t, ok := d.running[id]
 	return t, ok
-}
-
-// run hands the task to the next GPU worker that polls and waits for it to
-// finish.
-func (d *Dispatcher) run(ctx context.Context, t *task) error {
-	d.add(t)
-	defer d.remove(t.id)
-
-	pickup := time.NewTimer(pickupTimeout)
-	defer pickup.Stop()
-	select {
-	case d.queue <- t:
-	case <-pickup.C:
-		return errNoWorker
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	idle := time.NewTimer(idleTimeout)
-	defer idle.Stop()
-	for {
-		select {
-		case err := <-t.done:
-			return err
-		case <-t.progress:
-			idle.Reset(idleTimeout)
-		case <-idle.C:
-			return errors.New("GPU worker stopped reporting")
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
