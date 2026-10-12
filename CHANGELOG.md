@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Exemplar mode: Shift+X on a selected box finds the other objects like it on the frame with SAM 3 and tracks each as a new proposed track.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

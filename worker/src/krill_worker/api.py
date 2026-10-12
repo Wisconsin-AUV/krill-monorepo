@@ -54,6 +54,9 @@ class Api:
     def report_track(self, req: worker_pb2.ReportTrackRequest) -> None:
         self._call("ReportTrack", req, worker_pb2.ReportTrackResponse)
 
+    def report_exemplars(self, req: worker_pb2.ReportExemplarsRequest) -> None:
+        self._call("ReportExemplars", req, worker_pb2.ReportExemplarsResponse)
+
     def fail_task(self, task_id: int, error: str) -> None:
         req = worker_pb2.FailTaskRequest(task_id=task_id, error=error)
         self._call("FailTask", req, worker_pb2.FailTaskResponse)

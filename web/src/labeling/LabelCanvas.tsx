@@ -47,6 +47,9 @@ export function LabelCanvas({
   const select = useLabelStore((s) => s.select)
   const tracking = useLabelStore((s) => s.tracking)
   const trackRuns = useLabelStore((s) => s.trackRuns)
+  const searching = useLabelStore((s) =>
+    s.exemplarSearches.some((x) => x.frameId === frames[index]?.id),
+  )
   const [draft, setDraft] = useState<BoxRect | null>(null)
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null)
 
@@ -161,6 +164,13 @@ export function LabelCanvas({
           imageSize={imageSize}
         />
       ))}
+      {searching && (
+        <TrackingShimmer
+          prompt={{ box: { x: 0, y: 0, width: 1, height: 1 } }}
+          view={view}
+          imageSize={imageSize}
+        />
+      )}
       <div className="pointer-events-none absolute top-3 left-3 flex items-center gap-2 rounded-md bg-zinc-900/80 px-2.5 py-1 text-xs/5 text-zinc-300 ring-1 ring-white/10 backdrop-blur">
         {drawType && (
           <span className="size-2 rounded-full" style={{ backgroundColor: drawType.color }} />

@@ -62,6 +62,72 @@ func (q *Queries) DeleteTrackProposalsFrom(ctx context.Context, arg DeleteTrackP
 	return err
 }
 
+const getTrackBox = `-- name: GetTrackBox :one
+SELECT x, y, width, height FROM annotations
+WHERE track_id = $1 AND frame_id = $2 AND status <> 'rejected'
+`
+
+type GetTrackBoxParams struct {
+	TrackID int64 `json:"track_id"`
+	FrameID int64 `json:"frame_id"`
+}
+
+type GetTrackBoxRow struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
+func (q *Queries) GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error) {
+	row := q.db.QueryRow(ctx, getTrackBox, arg.TrackID, arg.FrameID)
+	var i GetTrackBoxRow
+	err := row.Scan(
+		&i.X,
+		&i.Y,
+		&i.Width,
+		&i.Height,
+	)
+	return i, err
+}
+
+const listFrameBoxes = `-- name: ListFrameBoxes :many
+SELECT x, y, width, height FROM annotations
+WHERE frame_id = $1 AND status <> 'rejected'
+`
+
+type ListFrameBoxesRow struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
+func (q *Queries) ListFrameBoxes(ctx context.Context, frameID int64) ([]ListFrameBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listFrameBoxes, frameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFrameBoxesRow
+	for rows.Next() {
+		var i ListFrameBoxesRow
+		if err := rows.Scan(
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFramesFrom = `-- name: ListFramesFrom :many
 SELECT id, video_id, clip_id, idx, phash, status, status_by, status_at FROM frames WHERE clip_id = $1 AND idx >= $2 ORDER BY idx
 `

@@ -2,9 +2,9 @@ import logging
 import os
 import time
 import urllib.request
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 import cv2
 import numpy as np
@@ -13,12 +13,19 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.prelabelers import Frame
-from krill_worker.track import BoxPrompt, PointPrompt, Prompt
-
-if TYPE_CHECKING:
-    from krill_worker.sam import SamTracker
+from krill_worker.track import Box, BoxPrompt, PointPrompt, Prompt
 
 log = logging.getLogger(__name__)
+
+
+class Tracker(Protocol):
+    model_id: str
+    supports_exemplars: bool
+
+    def track(self, frames: Iterable[Frame], prompt: Prompt) -> Iterator[Box | None]: ...
+
+    def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
+
 
 DEFAULT_MODEL = "facebook/sam2.1-hiera-small"
 # SAM resizes to about 1024 pixels, so larger frames only cost decode time.
@@ -50,7 +57,7 @@ def download_frames(urls: list[str]) -> Iterator[Frame]:
             yield decode_frame(data)
 
 
-def run_track(api: Api, tracker: "SamTracker", task: worker_pb2.TrackTask) -> None:
+def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
     prompt: Prompt
     if task.HasField("point"):
         prompt = PointPrompt(task.point.x, task.point.y)
@@ -86,6 +93,44 @@ def run_track(api: Api, tracker: "SamTracker", task: worker_pb2.TrackTask) -> No
     )
 
 
+def run_exemplar(api: Api, tracker: Tracker, task: worker_pb2.ExemplarTask) -> None:
+    if not tracker.supports_exemplars:
+        raise ValueError(
+            f"Finding similar objects needs a SAM 3 model, but the GPU worker runs "
+            f"{tracker.model_id}. Set KRILL_SAM_MODEL to a SAM 3 model."
+        )
+    start = time.monotonic()
+    frame = decode_frame(fetch(task.frame.url))
+    b = task.box
+    found = tracker.find_similar(frame, (b.x, b.y, b.width, b.height))
+    boxes = [annotation_pb2.Box(x=x, y=y, width=w, height=h) for x, y, w, h in found]
+    api.report_exemplars(
+        worker_pb2.ReportExemplarsRequest(task_id=task.id, model=tracker.model_id, boxes=boxes)
+    )
+    elapsed = time.monotonic() - start
+    log.info("exemplar task %d: found %d objects in %.1fs", task.id, len(boxes), elapsed)
+
+
+def run_task(api: Api, tracker: Tracker, res: worker_pb2.NextTaskResponse) -> None:
+    kind = res.WhichOneof("task")
+    if kind is None:
+        return
+    task = res.track if kind == "track" else res.exemplar
+    try:
+        if kind == "track":
+            run_track(api, tracker, res.track)
+        else:
+            run_exemplar(api, tracker, res.exemplar)
+    except ApiError as e:
+        log.warning("task %d dropped by the API: %s", task.id, e)
+    except Exception as e:
+        log.exception("task %d failed", task.id)
+        try:
+            api.fail_task(task.id, str(e))
+        except (ApiError, OSError):
+            log.exception("report failure for task %d", task.id)
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -107,19 +152,7 @@ def main() -> None:
             log.warning("poll failed, retrying in %.0fs: %s", RETRY_DELAY, e)
             time.sleep(RETRY_DELAY)
             continue
-        if not res.HasField("track"):
-            continue
-        task = res.track
-        try:
-            run_track(api, tracker, task)
-        except ApiError as e:
-            log.warning("task %d dropped by the API: %s", task.id, e)
-        except Exception as e:
-            log.exception("task %d failed", task.id)
-            try:
-                api.fail_task(task.id, str(e))
-            except (ApiError, OSError):
-                log.exception("report failure for task %d", task.id)
+        run_task(api, tracker, res)
 
 
 if __name__ == "__main__":

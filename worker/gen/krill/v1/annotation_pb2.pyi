@@ -249,3 +249,33 @@ class TrackObjectResponse(_message.Message):
     TRACK_FIELD_NUMBER: _ClassVar[int]
     track: Track
     def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ...) -> None: ...
+
+class SearchExemplarRequest(_message.Message):
+    __slots__ = ("track_id", "frame_id")
+    TRACK_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    track_id: int
+    frame_id: int
+    def __init__(self, track_id: _Optional[int] = ..., frame_id: _Optional[int] = ...) -> None: ...
+
+class SearchExemplarResponse(_message.Message):
+    __slots__ = ("search_id",)
+    SEARCH_ID_FIELD_NUMBER: _ClassVar[int]
+    search_id: int
+    def __init__(self, search_id: _Optional[int] = ...) -> None: ...
+
+class GetExemplarSearchRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class GetExemplarSearchResponse(_message.Message):
+    __slots__ = ("done", "error", "track_ids")
+    DONE_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    TRACK_IDS_FIELD_NUMBER: _ClassVar[int]
+    done: bool
+    error: str
+    track_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, done: _Optional[bool] = ..., error: _Optional[str] = ..., track_ids: _Optional[_Iterable[int]] = ...) -> None: ...
