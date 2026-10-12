@@ -132,7 +132,7 @@ export function PasswordInput({
   const [focused, setFocused] = useState(false)
   // The ring stays red until the latest shake has played out.
   const [settledShake, setSettledShake] = useState(shake)
-  const flash = shake !== settledShake
+  const shaking = shake !== settledShake
   const [scope, animate] = useAnimate<HTMLDivElement>()
   const reduceMotion = useReducedMotion()
   const Icon = visible ? EyeIcon : EyeSlashIcon
@@ -168,7 +168,7 @@ export function PasswordInput({
           autoComplete={autoComplete ?? (check ? 'new-password' : 'current-password')}
           required
           invalid={invalid}
-          alert={flash}
+          alert={shaking}
         />
         <button
           type="button"

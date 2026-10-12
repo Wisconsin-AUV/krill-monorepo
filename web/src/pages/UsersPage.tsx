@@ -13,6 +13,7 @@ import { PasswordInput } from '@/components/PasswordInput'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError, QueryError } from '@/components/ui/Callout'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import {
   Dropdown,
@@ -37,7 +38,6 @@ import {
 import { Text } from '@/components/ui/Text'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
 import { initials, useRoles, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatRelative } from '@/lib/format'
 import { usePasswordCheck } from '@/lib/password'
@@ -52,11 +52,14 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
       setPassword('')
       onClose()
     },
-    onError: (err) => flash.error('Could not set password', err),
   })
+  const close = () => {
+    set.reset()
+    onClose()
+  }
 
   return (
-    <Dialog open={user !== null} onClose={onClose} size="md">
+    <Dialog open={user !== null} onClose={close} size="md">
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -78,9 +81,10 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
             <Description>Share it with them directly. They can change it later.</Description>
             <PasswordInput value={password} onChange={setPassword} check={check} />
           </Field>
+          <FormError error={set.error} className="mt-6" />
         </DialogBody>
         <DialogActions>
-          <Button plain onClick={onClose}>
+          <Button plain onClick={close}>
             Cancel
           </Button>
           <Button type="submit" color="sky" disabled={set.isPending || !check.ok}>
@@ -109,10 +113,6 @@ export function UsersPage() {
       await invalidateService(UserService)
       setDeleting(null)
     },
-    onError: (err) => {
-      setDeleting(null)
-      flash.error('Could not delete user', err)
-    },
   })
 
   return (
@@ -128,9 +128,7 @@ export function UsersPage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-8 text-red-600 dark:text-red-400">
-          Could not load users: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load users" error={error} className="mt-8" />
       ) : (
         <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
           <TableHead>
@@ -236,9 +234,13 @@ export function UsersPage() {
       <PasswordDialog user={settingPassword} onClose={() => setSettingPassword(null)} />
       <ConfirmAlert
         open={deleting !== null}
-        onClose={() => setDeleting(null)}
+        onClose={() => {
+          setDeleting(null)
+          remove.reset()
+        }}
         onConfirm={() => deleting && remove.mutate({ id: deleting.id })}
         busy={remove.isPending}
+        error={remove.error}
         title={`Delete ${deleting?.name ?? ''}?`}
         description="Their labels stay. Disable the account instead if they might come back."
         confirmLabel="Delete user"

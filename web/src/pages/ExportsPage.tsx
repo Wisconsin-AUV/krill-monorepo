@@ -10,6 +10,7 @@ import { Meter } from '@/components/Meter'
 import { NewExportDialog } from '@/components/NewExportDialog'
 import { Badge, type BadgeColor } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError, QueryError } from '@/components/ui/Callout'
 import {
   Dialog,
   DialogActions,
@@ -30,8 +31,6 @@ import {
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
 import { ExportService, ExportStatus, type Export } from '@/gen/krill/v1/export_pb'
-import { errorMessage } from '@/lib/errors'
-import { flash } from '@/lib/flash'
 import { formatBytes, formatNumber, formatRelative } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 
@@ -63,11 +62,7 @@ function ExportDetails({ exp, onClose }: { exp: Export | null; onClose: () => vo
           <DialogTitle>{exp.name}</DialogTitle>
           <DialogDescription>{optionSummary(exp)}</DialogDescription>
           <DialogBody>
-            {exp.error && (
-              <p className="mb-6 rounded-lg bg-red-50 px-3 py-2 text-sm/6 text-red-700 dark:bg-red-500/10 dark:text-red-400">
-                {exp.error}
-              </p>
-            )}
+            <FormError error={exp.error} className="mb-6" />
             {exp.stats && <ExportStatsView stats={exp.stats} />}
           </DialogBody>
           <DialogActions>
@@ -101,7 +96,6 @@ export function ExportsPage() {
       await invalidateService(ExportService)
       setDeleting(null)
     },
-    onError: (err) => flash.error('Could not delete export', err),
   })
   const exports = data?.exports ?? []
 
@@ -125,9 +119,7 @@ export function ExportsPage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-8 text-red-600 dark:text-red-400">
-          Could not load exports: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load exports" error={error} className="mt-8" />
       ) : exports.length === 0 ? (
         <div className="mt-10">
           <EmptyState
@@ -220,9 +212,13 @@ export function ExportsPage() {
       <ExportDetails exp={viewing} onClose={() => setViewing(null)} />
       <ConfirmAlert
         open={deleting !== null}
-        onClose={() => setDeleting(null)}
+        onClose={() => {
+          setDeleting(null)
+          remove.reset()
+        }}
         onConfirm={() => deleting && remove.mutate({ id: deleting.id })}
         busy={remove.isPending}
+        error={remove.error}
         title={`Delete ${deleting?.name ?? ''}?`}
         description="The zip is removed from storage. Labels are not affected."
         confirmLabel="Delete export"

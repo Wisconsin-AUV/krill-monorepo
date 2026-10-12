@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import {
   Dialog,
   DialogActions,
@@ -17,7 +18,6 @@ import { Input } from '@/components/ui/Input'
 import { Text } from '@/components/ui/Text'
 import { Textarea } from '@/components/ui/Textarea'
 import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
-import { errorMessage } from '@/lib/errors'
 import { invalidateService } from '@/lib/queryClient'
 import { exportClasses, palette } from '@/lib/labels'
 import { labelClient } from '@/lib/clients'
@@ -53,15 +53,13 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
   const [description, setDescription] = useState(type?.description ?? '')
   const [guideline, setGuideline] = useState(type?.guideline ?? '')
   const [attributes, setAttributes] = useState<AttributeDraft[]>(() => toDrafts(type))
-  const [error, setError] = useState<string | null>(null)
 
   const onSuccess = async () => {
     await invalidateService(LabelService)
     onClose()
   }
-  const onError = (err: unknown) => setError(errorMessage(err))
-  const create = useMutation(LabelService.method.createLabelType, { onSuccess, onError })
-  const update = useMutation(LabelService.method.updateLabelType, { onSuccess, onError })
+  const create = useMutation(LabelService.method.createLabelType, { onSuccess })
+  const update = useMutation(LabelService.method.updateLabelType, { onSuccess })
   const busy = create.isPending || update.isPending
 
   const parsed = attributes
@@ -71,7 +69,6 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
     const body = { name, title, color, description, guideline, attributes: parsed }
     if (type) update.mutate({ id: type.id, ...body })
     else create.mutate(body)
@@ -215,11 +212,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
             </div>
           </div>
 
-          {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm/6 text-red-700 dark:bg-red-500/10 dark:text-red-400">
-              {error}
-            </p>
-          )}
+          <FormError error={create.error ?? update.error} />
         </FieldGroup>
       </DialogBody>
       <DialogActions>
@@ -237,7 +230,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 function Examples({ type }: { type: LabelType }) {
   const [caption, setCaption] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const input = useRef<HTMLInputElement>(null)
 
   async function upload(file: File) {
@@ -252,7 +245,7 @@ function Examples({ type }: { type: LabelType }) {
       setCaption('')
       await invalidateService(LabelService)
     } catch (err) {
-      setError(errorMessage(err))
+      setError(err)
     } finally {
       setBusy(false)
     }
@@ -264,7 +257,7 @@ function Examples({ type }: { type: LabelType }) {
       await labelClient.deleteLabelExample({ id })
       await invalidateService(LabelService)
     } catch (err) {
-      setError(errorMessage(err))
+      setError(err)
     }
   }
 
@@ -317,7 +310,7 @@ function Examples({ type }: { type: LabelType }) {
           }}
         />
       </div>
-      {error && <p className="mt-2 text-sm/6 text-red-600 dark:text-red-400">{error}</p>}
+      <FormError error={error} className="mt-3" />
     </Fieldset>
   )
 }

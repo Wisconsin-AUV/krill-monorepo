@@ -237,13 +237,13 @@ export function ClipPage() {
   async function mark(next: FrameStatus, advance: boolean) {
     if (!frame) return
     if (next === FrameStatus.EMPTY && frameBoxes.length > 0) {
-      flash.error('Frame has boxes', 'Delete them before marking the frame empty.')
+      flash.info('Frame has boxes', 'Delete them before marking the frame empty.')
       return
     }
     const ok = await labels().setFrameStatus(frame.id, next)
     if (ok && advance) {
       if (index < frames.length - 1) step(1)
-      else flash.success('Last frame of the clip')
+      else flash.info('Last frame of the clip')
     }
   }
 
@@ -268,7 +268,7 @@ export function ClipPage() {
         return
       }
     }
-    flash.success('No drifted boxes in this clip')
+    flash.info('No drifted boxes in this clip')
   }
 
   function cycleSelection(delta: number) {
@@ -318,7 +318,7 @@ export function ClipPage() {
             if (!frame || index === 0) return
             const n = await labels().copyBoxes(frames[index - 1].id, frame.id)
             if (n === 0)
-              flash.error('Nothing to copy', 'Every box on the previous frame is already here.')
+              flash.info('Nothing to copy', 'Every box on the previous frame is already here.')
           },
           r: () => {
             if (!frame || selectedTrackId === null) return

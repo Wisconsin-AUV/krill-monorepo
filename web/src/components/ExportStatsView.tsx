@@ -1,5 +1,5 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/16/solid'
 import { Badge } from '@/components/ui/Badge'
+import { Callout } from '@/components/ui/Callout'
 import type { ExportStats } from '@/gen/krill/v1/export_pb'
 import { formatNumber, plural } from '@/lib/format'
 
@@ -81,14 +81,13 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
       )}
 
       {warnings.length > 0 && (
-        <ul className="space-y-1.5 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-600/15 dark:bg-amber-400/10 dark:ring-amber-400/20">
-          {warnings.map((w) => (
-            <li key={w} className="flex gap-2 text-sm/6 text-amber-800 dark:text-amber-200">
-              <ExclamationTriangleIcon className="mt-1 size-4 shrink-0 text-amber-500" />
-              {w}
-            </li>
-          ))}
-        </ul>
+        <Callout type="warning">
+          <ul className="space-y-1.5">
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </Callout>
       )}
 
       {used.length > 0 && (

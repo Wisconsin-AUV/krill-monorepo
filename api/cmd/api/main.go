@@ -29,6 +29,7 @@ import (
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/queue"
+	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -121,7 +122,10 @@ func run() error {
 	}
 
 	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
-	rpcOpts := connect.WithInterceptors(auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken))
+	rpcOpts := connect.WithInterceptors(
+		rpc.ErrorInterceptor{},
+		auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken),
+	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{

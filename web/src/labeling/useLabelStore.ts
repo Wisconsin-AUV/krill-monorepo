@@ -305,7 +305,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
         return
       }
       if (activeTypeId === null || clipId === null) {
-        flash.error('Pick a label type first', 'Press 1 to 9 or click a type on the left.')
+        flash.info('Pick a label type first', 'Press 1 to 9 or click a type on the left.')
         return
       }
       await withPending('Could not create box', async () => {
@@ -502,7 +502,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       const { activeTypeId } = get()
       const trackId = trackIdIn === undefined ? undefined : resolve(trackIdIn)
       if (trackId === undefined && activeTypeId === null) {
-        flash.error('Pick a label type first', 'Press 1 to 9 or click a type on the left.')
+        flash.info('Pick a label type first', 'Press 1 to 9 or click a type on the left.')
         return
       }
       const run: TrackRun = { frameId, prompt }

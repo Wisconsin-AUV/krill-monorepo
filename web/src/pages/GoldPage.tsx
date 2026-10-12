@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Thumbnail } from '@/components/Thumbnail'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
@@ -20,7 +21,6 @@ import {
 import { Text } from '@/components/ui/Text'
 import { GoldService } from '@/gen/krill/v1/gold_pb'
 import { initials } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -44,9 +44,7 @@ export function GoldPage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-8 text-red-600 dark:text-red-400">
-          Could not load gold frames: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load gold frames" error={error} className="mt-8" />
       ) : data.frames.length === 0 ? (
         <div className="mt-8">
           <EmptyState

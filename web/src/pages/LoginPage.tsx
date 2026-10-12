@@ -3,13 +3,13 @@ import { ChevronLeftIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { FormError } from '@/components/auth/FormError'
 import { LastUsedBadge } from '@/components/auth/LastUsedBadge'
 import { OrDivider } from '@/components/auth/OrDivider'
 import { fadeWithPassword, revealPassword } from '@/components/auth/motion'
 import { SlackButton } from '@/components/auth/SlackButton'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Field, LabelRow } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
@@ -24,7 +24,7 @@ const CONTINUE_MS = 350
 
 export function LoginPage() {
   const { data } = useSession()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
 
@@ -46,6 +46,17 @@ export function LoginPage() {
       passwordRef.current?.select()
     },
   })
+
+  useEffect(() => {
+    if (!params.has('error')) return
+    setParams(
+      (p) => {
+        p.delete('error')
+        return p
+      },
+      { replace: true },
+    )
+  }, [params, setParams])
 
   useEffect(() => {
     if (!continuing) return
@@ -85,7 +96,7 @@ export function LoginPage() {
         }}
       >
         <Heading className="text-center">Sign in to Krill</Heading>
-        <FormError message={error} />
+        <FormError error={error} />
         <Field>
           <LabelRow action={onPasswordStep && <TextButton onClick={back}>Change</TextButton>}>
             Username or email

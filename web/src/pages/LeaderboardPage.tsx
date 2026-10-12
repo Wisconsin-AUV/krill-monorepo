@@ -8,6 +8,7 @@ import { SegmentedTabs } from '@/components/SegmentedTabs'
 import { Stat } from '@/components/Stat'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
@@ -22,7 +23,6 @@ import {
 import { Text } from '@/components/ui/Text'
 import { StatsService, type LeaderboardEntry } from '@/gen/krill/v1/stats_pb'
 import { initials, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { formatNumber, plural } from '@/lib/format'
 import { ordinal, periodFromKey, periods, profilePath, timeZone } from '@/lib/stats'
 
@@ -108,9 +108,7 @@ export function LeaderboardPage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-8 text-red-600 dark:text-red-400">
-          Could not load the leaderboard: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load the leaderboard" error={error} className="mt-8" />
       ) : (
         <>
           <div className="mt-8 grid gap-8 sm:grid-cols-2 xl:grid-cols-4">

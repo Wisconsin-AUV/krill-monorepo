@@ -1,37 +1,32 @@
-import React, { Fragment } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useUIStore } from '@/store/useUIStore'
-import Notification from './Notification'
+import { Notification } from './Notification'
 
-interface FlashMessageRenderProps {
-  byKey: string
-  className?: string
-}
-
-const FlashMessageRender: React.FC<FlashMessageRenderProps> = ({ byKey }) => {
+export function FlashMessageRender() {
   const flashes = useUIStore((s) => s.flashes)
-  const filteredFlashes = flashes.filter((flash) => flash.key === byKey)
-
-  if (filteredFlashes.length === 0) {
-    return null
-  }
+  const removeFlash = useUIStore((s) => s.removeFlash)
 
   return (
+    // Always mounted: screen readers skip messages in a live region that was just added.
     <div
-      aria-live="assertive"
-      className="pointer-events-none fixed inset-0 z-100 flex items-end px-4 py-6 sm:items-start sm:p-6"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-0 z-100 flex flex-col items-center gap-4 px-4 py-6 sm:items-end sm:p-6"
     >
-      <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
-        {filteredFlashes.map((flash, index) => (
-          <Fragment key={flash.id ?? `${flash.key}-${index}`}>
-            {index > 0 && <div className="mt-2"></div>}
-            <Notification type={flash.type} title={flash.title}>
-              {flash.message}
-            </Notification>
-          </Fragment>
+      <AnimatePresence>
+        {flashes.map((flash) => (
+          <motion.div
+            key={flash.id}
+            layout
+            className="flex w-full max-w-sm"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Notification flash={flash} onClose={() => removeFlash(flash.id)} />
+          </motion.div>
         ))}
-      </div>
+      </AnimatePresence>
     </div>
   )
 }
-
-export default FlashMessageRender
