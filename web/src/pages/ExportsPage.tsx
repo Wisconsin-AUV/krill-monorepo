@@ -183,7 +183,7 @@ export function ExportsPage() {
                     {formatNumber(s?.valImages ?? 0)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {formatNumber((s?.trainBoxes ?? 0) + (s?.valBoxes ?? 0))}
+                    {formatNumber((s?.trainBoxes ?? 0) + (s?.valBoxes ?? 0) + (s?.testBoxes ?? 0))}
                   </TableCell>
                   <TableCell className="text-right text-zinc-500 tabular-nums dark:text-zinc-400">
                     {e.sizeBytes > 0n ? formatBytes(Number(e.sizeBytes)) : '—'}

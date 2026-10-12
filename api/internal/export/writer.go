@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"time"
 )
@@ -21,6 +22,8 @@ type Manifest struct {
 	Classes    []string        `json:"classes"`
 	TrainFiles []string        `json:"train"`
 	ValFiles   []string        `json:"val"`
+	TestFiles  []string        `json:"test,omitempty"`
+	TestVideos []int64         `json:"test_videos,omitempty"`
 }
 
 type FrameOpener func(ctx context.Context, f Frame) (io.ReadCloser, error)
@@ -43,9 +46,12 @@ func clamp01(v float64) float64 {
 	return min(max(v, 0), 1)
 }
 
-func dataYAML(classes []string) string {
+func dataYAML(classes []string, test bool) string {
 	var b strings.Builder
 	b.WriteString("path: .\ntrain: images/train\nval: images/val\n")
+	if test {
+		b.WriteString("test: images/test\n")
+	}
 	fmt.Fprintf(&b, "nc: %d\nnames:\n", len(classes))
 	for i, c := range classes {
 		fmt.Fprintf(&b, "  %d: %s\n", i, c)
@@ -54,7 +60,7 @@ func dataYAML(classes []string) string {
 }
 
 // Write streams the dataset as a zip in the Ultralytics layout:
-// images/{train,val}/*.jpg, labels/{train,val}/*.txt, data.yaml, and
+// images/{train,val,test}/*.jpg, labels/{train,val,test}/*.txt, data.yaml, and
 // manifest.json.
 func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpener, onProgress func(done, total int)) error {
 	zw := zip.NewWriter(w)
@@ -67,9 +73,15 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 			return err
 		}
 		name := itemName(it)
-		if it.Split == splitVal {
+		switch it.Split {
+		case splitVal:
 			m.ValFiles = append(m.ValFiles, name)
-		} else {
+		case splitTest:
+			m.TestFiles = append(m.TestFiles, name)
+			if !slices.Contains(m.TestVideos, it.Frame.VideoID) {
+				m.TestVideos = append(m.TestVideos, it.Frame.VideoID)
+			}
+		default:
 			m.TrainFiles = append(m.TrainFiles, name)
 		}
 
@@ -102,7 +114,7 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 	if err != nil {
 		return fmt.Errorf("add data.yaml: %w", err)
 	}
-	if _, err := io.WriteString(yaml, dataYAML(p.Classes)); err != nil {
+	if _, err := io.WriteString(yaml, dataYAML(p.Classes, len(m.TestFiles) > 0)); err != nil {
 		return fmt.Errorf("write data.yaml: %w", err)
 	}
 
