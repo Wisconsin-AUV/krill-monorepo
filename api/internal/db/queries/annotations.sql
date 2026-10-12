@@ -38,6 +38,7 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    drift = CASE WHEN annotations.drift = 'flagged' THEN 'reviewed' ELSE annotations.drift END,
     updated_by = excluded.updated_by,
     updated_at = now()
 RETURNING *;

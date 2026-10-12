@@ -9,11 +9,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const acceptFrameProposals = `-- name: AcceptFrameProposals :exec
 UPDATE annotations SET
     status = 'verified',
+    drift = CASE WHEN drift = 'flagged' THEN 'reviewed' ELSE drift END,
     updated_by = $1::uuid,
     updated_at = now()
 WHERE frame_id = $2 AND status = 'proposed'
@@ -98,6 +100,68 @@ func (q *Queries) ListFramesFrom(ctx context.Context, arg ListFramesFromParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTrackBoxes = `-- name: ListTrackBoxes :many
+SELECT a.id, a.x, a.y, a.width, a.height, a.status, a.drift
+FROM annotations a
+JOIN frames f ON f.id = a.frame_id
+WHERE a.track_id = $1
+ORDER BY f.idx
+`
+
+type ListTrackBoxesRow struct {
+	ID     int64       `json:"id"`
+	X      float64     `json:"x"`
+	Y      float64     `json:"y"`
+	Width  float64     `json:"width"`
+	Height float64     `json:"height"`
+	Status string      `json:"status"`
+	Drift  pgtype.Text `json:"drift"`
+}
+
+func (q *Queries) ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listTrackBoxes, trackID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTrackBoxesRow
+	for rows.Next() {
+		var i ListTrackBoxesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+			&i.Status,
+			&i.Drift,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setDrift = `-- name: SetDrift :exec
+UPDATE annotations SET
+    drift = CASE WHEN id = ANY($1::bigint[]) THEN 'flagged' ELSE 'ok' END
+WHERE id = ANY($2::bigint[]) AND status = 'proposed'
+`
+
+type SetDriftParams struct {
+	FlaggedIds []int64 `json:"flagged_ids"`
+	Ids        []int64 `json:"ids"`
+}
+
+func (q *Queries) SetDrift(ctx context.Context, arg SetDriftParams) error {
+	_, err := q.db.Exec(ctx, setDrift, arg.FlaggedIds, arg.Ids)
+	return err
 }
 
 const upsertProposals = `-- name: UpsertProposals :execrows

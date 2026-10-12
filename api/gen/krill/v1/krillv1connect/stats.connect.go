@@ -38,12 +38,18 @@ const (
 	StatsServiceGetLeaderboardProcedure = "/krill.v1.StatsService/GetLeaderboard"
 	// StatsServiceGetProfileProcedure is the fully-qualified name of the StatsService's GetProfile RPC.
 	StatsServiceGetProfileProcedure = "/krill.v1.StatsService/GetProfile"
+	// StatsServiceGetDriftStatsProcedure is the fully-qualified name of the StatsService's
+	// GetDriftStats RPC.
+	StatsServiceGetDriftStatsProcedure = "/krill.v1.StatsService/GetDriftStats"
 )
 
 // StatsServiceClient is a client for the krill.v1.StatsService service.
 type StatsServiceClient interface {
 	GetLeaderboard(context.Context, *v1.GetLeaderboardRequest) (*v1.GetLeaderboardResponse, error)
 	GetProfile(context.Context, *v1.GetProfileRequest) (*v1.GetProfileResponse, error)
+	// GetDriftStats counts tracker proposals per label type and how many were
+	// flagged as drifted, whether or not a labeler has since looked at them.
+	GetDriftStats(context.Context, *v1.GetDriftStatsRequest) (*v1.GetDriftStatsResponse, error)
 }
 
 // NewStatsServiceClient constructs a client for the krill.v1.StatsService service. By default, it
@@ -69,6 +75,12 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(statsServiceMethods.ByName("GetProfile")),
 			connect.WithClientOptions(opts...),
 		),
+		getDriftStats: connect.NewClient[v1.GetDriftStatsRequest, v1.GetDriftStatsResponse](
+			httpClient,
+			baseURL+StatsServiceGetDriftStatsProcedure,
+			connect.WithSchema(statsServiceMethods.ByName("GetDriftStats")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -76,6 +88,7 @@ func NewStatsServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type statsServiceClient struct {
 	getLeaderboard *connect.Client[v1.GetLeaderboardRequest, v1.GetLeaderboardResponse]
 	getProfile     *connect.Client[v1.GetProfileRequest, v1.GetProfileResponse]
+	getDriftStats  *connect.Client[v1.GetDriftStatsRequest, v1.GetDriftStatsResponse]
 }
 
 // GetLeaderboard calls krill.v1.StatsService.GetLeaderboard.
@@ -96,10 +109,22 @@ func (c *statsServiceClient) GetProfile(ctx context.Context, req *v1.GetProfileR
 	return nil, err
 }
 
+// GetDriftStats calls krill.v1.StatsService.GetDriftStats.
+func (c *statsServiceClient) GetDriftStats(ctx context.Context, req *v1.GetDriftStatsRequest) (*v1.GetDriftStatsResponse, error) {
+	response, err := c.getDriftStats.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // StatsServiceHandler is an implementation of the krill.v1.StatsService service.
 type StatsServiceHandler interface {
 	GetLeaderboard(context.Context, *v1.GetLeaderboardRequest) (*v1.GetLeaderboardResponse, error)
 	GetProfile(context.Context, *v1.GetProfileRequest) (*v1.GetProfileResponse, error)
+	// GetDriftStats counts tracker proposals per label type and how many were
+	// flagged as drifted, whether or not a labeler has since looked at them.
+	GetDriftStats(context.Context, *v1.GetDriftStatsRequest) (*v1.GetDriftStatsResponse, error)
 }
 
 // NewStatsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -121,12 +146,20 @@ func NewStatsServiceHandler(svc StatsServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(statsServiceMethods.ByName("GetProfile")),
 		connect.WithHandlerOptions(opts...),
 	)
+	statsServiceGetDriftStatsHandler := connect.NewUnaryHandlerSimple(
+		StatsServiceGetDriftStatsProcedure,
+		svc.GetDriftStats,
+		connect.WithSchema(statsServiceMethods.ByName("GetDriftStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.StatsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StatsServiceGetLeaderboardProcedure:
 			statsServiceGetLeaderboardHandler.ServeHTTP(w, r)
 		case StatsServiceGetProfileProcedure:
 			statsServiceGetProfileHandler.ServeHTTP(w, r)
+		case StatsServiceGetDriftStatsProcedure:
+			statsServiceGetDriftStatsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -142,4 +175,8 @@ func (UnimplementedStatsServiceHandler) GetLeaderboard(context.Context, *v1.GetL
 
 func (UnimplementedStatsServiceHandler) GetProfile(context.Context, *v1.GetProfileRequest) (*v1.GetProfileResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.StatsService.GetProfile is not implemented"))
+}
+
+func (UnimplementedStatsServiceHandler) GetDriftStats(context.Context, *v1.GetDriftStatsRequest) (*v1.GetDriftStatsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.StatsService.GetDriftStats is not implemented"))
 }

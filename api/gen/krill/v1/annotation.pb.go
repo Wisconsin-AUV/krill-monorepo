@@ -374,13 +374,16 @@ func (x *Track) GetAttributes() map[string]string {
 }
 
 type Annotation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	TrackId       int64                  `protobuf:"varint,2,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
-	FrameId       int64                  `protobuf:"varint,3,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
-	Box           *Box                   `protobuf:"bytes,4,opt,name=box,proto3" json:"box,omitempty"`
-	Source        AnnotationSource       `protobuf:"varint,5,opt,name=source,proto3,enum=krill.v1.AnnotationSource" json:"source,omitempty"`
-	Status        AnnotationStatus       `protobuf:"varint,6,opt,name=status,proto3,enum=krill.v1.AnnotationStatus" json:"status,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Id      int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TrackId int64                  `protobuf:"varint,2,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	FrameId int64                  `protobuf:"varint,3,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	Box     *Box                   `protobuf:"bytes,4,opt,name=box,proto3" json:"box,omitempty"`
+	Source  AnnotationSource       `protobuf:"varint,5,opt,name=source,proto3,enum=krill.v1.AnnotationSource" json:"source,omitempty"`
+	Status  AnnotationStatus       `protobuf:"varint,6,opt,name=status,proto3,enum=krill.v1.AnnotationStatus" json:"status,omitempty"`
+	// The tracker's box jumped in size or position from the track's previous
+	// box, and no labeler has accepted or edited it yet.
+	Drift         bool `protobuf:"varint,7,opt,name=drift,proto3" json:"drift,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -455,6 +458,13 @@ func (x *Annotation) GetStatus() AnnotationStatus {
 		return x.Status
 	}
 	return AnnotationStatus_ANNOTATION_STATUS_UNSPECIFIED
+}
+
+func (x *Annotation) GetDrift() bool {
+	if x != nil {
+		return x.Drift
+	}
+	return false
 }
 
 type CreateTrackRequest struct {
@@ -1363,7 +1373,7 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdb\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf1\x01\n" +
 	"\n" +
 	"Annotation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
@@ -1371,7 +1381,8 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\bframe_id\x18\x03 \x01(\x03R\aframeId\x12\x1f\n" +
 	"\x03box\x18\x04 \x01(\v2\r.krill.v1.BoxR\x03box\x122\n" +
 	"\x06source\x18\x05 \x01(\x0e2\x1a.krill.v1.AnnotationSourceR\x06source\x122\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1a.krill.v1.AnnotationStatusR\x06status\"\x9a\x02\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1a.krill.v1.AnnotationStatusR\x06status\x12\x14\n" +
+	"\x05drift\x18\a \x01(\bR\x05drift\"\x9a\x02\n" +
 	"\x12CreateTrackRequest\x12\x17\n" +
 	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\x12\"\n" +
 	"\rlabel_type_id\x18\x02 \x01(\x03R\vlabelTypeId\x12L\n" +
