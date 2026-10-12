@@ -74,10 +74,70 @@ SELECT
     sum(ga.correct)::bigint AS correct,
     sum(ga.reference_count + ga.answer_count - ga.matched)::bigint AS scored,
     sum(ga.matched)::bigint AS matched,
-    sum(ga.iou_sum)::float8 AS iou_sum
+    sum(ga.iou_sum)::float8 AS iou_sum,
+    (
+        SELECT avg(r.score) FROM (
+            SELECT score FROM gold_attempts WHERE user_id = u.id ORDER BY created_at DESC LIMIT @recent::int
+        ) r
+    )::float8 AS recent_score
 FROM gold_attempts ga
 JOIN users u ON u.id = ga.user_id
 GROUP BY u.id;
+
+-- name: RecentGoldScore :one
+SELECT
+    (SELECT count(*) FROM gold_attempts WHERE user_id = @user_id::uuid)::int AS attempts,
+    coalesce((
+        SELECT avg(r.score) FROM (
+            SELECT score FROM gold_attempts WHERE user_id = @user_id::uuid ORDER BY created_at DESC LIMIT @recent::int
+        ) r
+    ), 0)::float8 AS recent_score;
+
+-- name: EnqueueDoneSinceGoldCheck :execrows
+-- Queues the frames the labeler marked done since their gold check before the
+-- one on @gold_frame_id, newest first.
+INSERT INTO reviews (frame_id, reason)
+SELECT f.id, @reason::text
+FROM frames f
+WHERE f.status_by = @user_id::uuid
+    AND f.status_at > coalesce(
+        (SELECT max(created_at) FROM gold_attempts WHERE user_id = @user_id::uuid AND frame_id <> @gold_frame_id::bigint),
+        '-infinity'::timestamptz
+    )
+ORDER BY f.status_at DESC
+LIMIT @lim::int
+ON CONFLICT (frame_id) WHERE resolved_at IS NULL DO NOTHING;
+
+-- name: GetGoldAttempt :one
+SELECT
+    ga.frame_id, ga.boxes, ga.matched, ga.iou_sum, ga.score, ga.created_at,
+    g.boxes AS reference, f.clip_id, f.idx, f.video_id, v.name AS video_name, v.width, v.height,
+    u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
+FROM gold_attempts ga
+JOIN gold_frames g ON g.frame_id = ga.frame_id
+JOIN frames f ON f.id = ga.frame_id
+JOIN videos v ON v.id = f.video_id
+JOIN users u ON u.id = ga.user_id
+WHERE ga.frame_id = @frame_id AND ga.user_id = @user_id;
+
+-- name: ListGoldAttempts :many
+SELECT
+    ga.frame_id, ga.matched, ga.iou_sum, ga.score, ga.created_at,
+    f.clip_id, f.idx, v.name AS video_name,
+    u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
+FROM gold_attempts ga
+JOIN frames f ON f.id = ga.frame_id
+JOIN videos v ON v.id = f.video_id
+JOIN users u ON u.id = ga.user_id
+WHERE (sqlc.narg(user_id)::uuid IS NULL OR ga.user_id = sqlc.narg(user_id)::uuid)
+    AND (sqlc.narg(frame_id)::bigint IS NULL OR ga.frame_id = sqlc.narg(frame_id)::bigint)
+    AND (
+        sqlc.narg(before_at)::timestamptz IS NULL
+        OR (ga.created_at, ga.frame_id, ga.user_id)
+            < (sqlc.narg(before_at)::timestamptz, sqlc.narg(before_frame_id)::bigint, sqlc.narg(before_user_id)::uuid)
+    )
+ORDER BY ga.created_at DESC, ga.frame_id DESC, ga.user_id DESC
+LIMIT @lim::int;
 
 -- name: ListGoldFrames :many
 SELECT

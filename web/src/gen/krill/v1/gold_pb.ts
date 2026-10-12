@@ -4,6 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Box } from "./annotation_pb";
 import { file_krill_v1_annotation } from "./annotation_pb";
 import type { Profile } from "./stats_pb";
@@ -14,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/gold.proto.
  */
 export const file_krill_v1_gold: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9nb2xkLnByb3RvEghrcmlsbC52MSKmAQoHR29sZEJveBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEjUKCmF0dHJpYnV0ZXMYAiADKAsyIS5rcmlsbC52MS5Hb2xkQm94LkF0dHJpYnV0ZXNFbnRyeRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3gaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTAoJR29sZE1hdGNoEhEKCXJlZmVyZW5jZRgBIAEoBRIOCgZhbnN3ZXIYAiABKAUSCwoDaW91GAMgASgBEg8KB2NvcnJlY3QYBCABKAgiigEKCkdvbGRSZXN1bHQSJAoJcmVmZXJlbmNlGAEgAygLMhEua3JpbGwudjEuR29sZEJveBIhCgZhbnN3ZXIYAiADKAsyES5rcmlsbC52MS5Hb2xkQm94EiQKB21hdGNoZXMYAyADKAsyEy5rcmlsbC52MS5Hb2xkTWF0Y2gSDQoFc2NvcmUYBCABKAEiNQoTU2V0R29sZEZyYW1lUmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIMCgRnb2xkGAIgASgIIhYKFFNldEdvbGRGcmFtZVJlc3BvbnNlIicKE0dldEdvbGRDaGVja1JlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMiVAoUR2V0R29sZENoZWNrUmVzcG9uc2USEAoIZnJhbWVfaWQYASABKAMSCwoDdXJsGAIgASgJEg0KBXdpZHRoGAMgASgFEg4KBmhlaWdodBgEIAEoBSJMChZTdWJtaXRHb2xkQ2hlY2tSZXF1ZXN0EhAKCGZyYW1lX2lkGAEgASgDEiAKBWJveGVzGAIgAygLMhEua3JpbGwudjEuR29sZEJveCI/ChdTdWJtaXRHb2xkQ2hlY2tSZXNwb25zZRIkCgZyZXN1bHQYASABKAsyFC5rcmlsbC52MS5Hb2xkUmVzdWx0IhUKE0dldEdvbGRTdGF0c1JlcXVlc3QiZAoLR29sZExhYmVsZXISHwoEdXNlchgBIAEoCzIRLmtyaWxsLnYxLlByb2ZpbGUSEAoIYXR0ZW1wdHMYAiABKAUSEAoIYWNjdXJhY3kYAyABKAESEAoIbWVhbl9pb3UYBCABKAEioQEKCUdvbGRGcmFtZRIQCghmcmFtZV9pZBgBIAEoAxIPCgdjbGlwX2lkGAIgASgDEg0KBWluZGV4GAMgASgFEhIKCnZpZGVvX25hbWUYBCABKAkSFQoNdGh1bWJuYWlsX3VybBgFIAEoCRIRCglib3hfY291bnQYBiABKAUSEAoIYXR0ZW1wdHMYByABKAUSEgoKbWVhbl9zY29yZRgIIAEoASJkChRHZXRHb2xkU3RhdHNSZXNwb25zZRInCghsYWJlbGVycxgBIAMoCzIVLmtyaWxsLnYxLkdvbGRMYWJlbGVyEiMKBmZyYW1lcxgCIAMoCzITLmtyaWxsLnYxLkdvbGRGcmFtZTLaAgoLR29sZFNlcnZpY2USTwoMU2V0R29sZEZyYW1lEh0ua3JpbGwudjEuU2V0R29sZEZyYW1lUmVxdWVzdBoeLmtyaWxsLnYxLlNldEdvbGRGcmFtZVJlc3BvbnNlIgASTwoMR2V0R29sZENoZWNrEh0ua3JpbGwudjEuR2V0R29sZENoZWNrUmVxdWVzdBoeLmtyaWxsLnYxLkdldEdvbGRDaGVja1Jlc3BvbnNlIgASWAoPU3VibWl0R29sZENoZWNrEiAua3JpbGwudjEuU3VibWl0R29sZENoZWNrUmVxdWVzdBohLmtyaWxsLnYxLlN1Ym1pdEdvbGRDaGVja1Jlc3BvbnNlIgASTwoMR2V0R29sZFN0YXRzEh0ua3JpbGwudjEuR2V0R29sZFN0YXRzUmVxdWVzdBoeLmtyaWxsLnYxLkdldEdvbGRTdGF0c1Jlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJR29sZFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation, file_krill_v1_stats]);
+  fileDesc("ChNrcmlsbC92MS9nb2xkLnByb3RvEghrcmlsbC52MSKmAQoHR29sZEJveBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEjUKCmF0dHJpYnV0ZXMYAiADKAsyIS5rcmlsbC52MS5Hb2xkQm94LkF0dHJpYnV0ZXNFbnRyeRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3gaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTAoJR29sZE1hdGNoEhEKCXJlZmVyZW5jZRgBIAEoBRIOCgZhbnN3ZXIYAiABKAUSCwoDaW91GAMgASgBEg8KB2NvcnJlY3QYBCABKAgiigEKCkdvbGRSZXN1bHQSJAoJcmVmZXJlbmNlGAEgAygLMhEua3JpbGwudjEuR29sZEJveBIhCgZhbnN3ZXIYAiADKAsyES5rcmlsbC52MS5Hb2xkQm94EiQKB21hdGNoZXMYAyADKAsyEy5rcmlsbC52MS5Hb2xkTWF0Y2gSDQoFc2NvcmUYBCABKAEiNQoTU2V0R29sZEZyYW1lUmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIMCgRnb2xkGAIgASgIIhYKFFNldEdvbGRGcmFtZVJlc3BvbnNlIicKE0dldEdvbGRDaGVja1JlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMiVAoUR2V0R29sZENoZWNrUmVzcG9uc2USEAoIZnJhbWVfaWQYASABKAMSCwoDdXJsGAIgASgJEg0KBXdpZHRoGAMgASgFEg4KBmhlaWdodBgEIAEoBSJMChZTdWJtaXRHb2xkQ2hlY2tSZXF1ZXN0EhAKCGZyYW1lX2lkGAEgASgDEiAKBWJveGVzGAIgAygLMhEua3JpbGwudjEuR29sZEJveCI/ChdTdWJtaXRHb2xkQ2hlY2tSZXNwb25zZRIkCgZyZXN1bHQYASABKAsyFC5rcmlsbC52MS5Hb2xkUmVzdWx0IhUKE0dldEdvbGRTdGF0c1JlcXVlc3QiegoLR29sZExhYmVsZXISHwoEdXNlchgBIAEoCzIRLmtyaWxsLnYxLlByb2ZpbGUSEAoIYXR0ZW1wdHMYAiABKAUSEAoIYWNjdXJhY3kYAyABKAESEAoIbWVhbl9pb3UYBCABKAESFAoMbmVlZHNfcmV2aWV3GAUgASgIIqEBCglHb2xkRnJhbWUSEAoIZnJhbWVfaWQYASABKAMSDwoHY2xpcF9pZBgCIAEoAxINCgVpbmRleBgDIAEoBRISCgp2aWRlb19uYW1lGAQgASgJEhUKDXRodW1ibmFpbF91cmwYBSABKAkSEQoJYm94X2NvdW50GAYgASgFEhAKCGF0dGVtcHRzGAcgASgFEhIKCm1lYW5fc2NvcmUYCCABKAEiZAoUR2V0R29sZFN0YXRzUmVzcG9uc2USJwoIbGFiZWxlcnMYASADKAsyFS5rcmlsbC52MS5Hb2xkTGFiZWxlchIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5Hb2xkRnJhbWUixQEKC0dvbGRBdHRlbXB0EhAKCGZyYW1lX2lkGAEgASgDEh8KBHVzZXIYAiABKAsyES5rcmlsbC52MS5Qcm9maWxlEg8KB2NsaXBfaWQYAyABKAMSDQoFaW5kZXgYBCABKAUSEgoKdmlkZW9fbmFtZRgFIAEoCRINCgVzY29yZRgGIAEoARIQCghtZWFuX2lvdRgHIAEoARIuCgpjcmVhdGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCI6ChVHZXRHb2xkQXR0ZW1wdFJlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMSDwoHdXNlcl9pZBgCIAEoCSKSAQoWR2V0R29sZEF0dGVtcHRSZXNwb25zZRImCgdhdHRlbXB0GAEgASgLMhUua3JpbGwudjEuR29sZEF0dGVtcHQSJAoGcmVzdWx0GAIgASgLMhQua3JpbGwudjEuR29sZFJlc3VsdBILCgN1cmwYAyABKAkSDQoFd2lkdGgYBCABKAUSDgoGaGVpZ2h0GAUgASgFImMKF0xpc3RHb2xkQXR0ZW1wdHNSZXF1ZXN0Eg8KB3VzZXJfaWQYASABKAkSEAoIZnJhbWVfaWQYAiABKAMSEQoJcGFnZV9zaXplGAMgASgFEhIKCnBhZ2VfdG9rZW4YBCABKAkiXAoYTGlzdEdvbGRBdHRlbXB0c1Jlc3BvbnNlEicKCGF0dGVtcHRzGAEgAygLMhUua3JpbGwudjEuR29sZEF0dGVtcHQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJMo4ECgtHb2xkU2VydmljZRJPCgxTZXRHb2xkRnJhbWUSHS5rcmlsbC52MS5TZXRHb2xkRnJhbWVSZXF1ZXN0Gh4ua3JpbGwudjEuU2V0R29sZEZyYW1lUmVzcG9uc2UiABJPCgxHZXRHb2xkQ2hlY2sSHS5rcmlsbC52MS5HZXRHb2xkQ2hlY2tSZXF1ZXN0Gh4ua3JpbGwudjEuR2V0R29sZENoZWNrUmVzcG9uc2UiABJYCg9TdWJtaXRHb2xkQ2hlY2sSIC5rcmlsbC52MS5TdWJtaXRHb2xkQ2hlY2tSZXF1ZXN0GiEua3JpbGwudjEuU3VibWl0R29sZENoZWNrUmVzcG9uc2UiABJPCgxHZXRHb2xkU3RhdHMSHS5rcmlsbC52MS5HZXRHb2xkU3RhdHNSZXF1ZXN0Gh4ua3JpbGwudjEuR2V0R29sZFN0YXRzUmVzcG9uc2UiABJVCg5HZXRHb2xkQXR0ZW1wdBIfLmtyaWxsLnYxLkdldEdvbGRBdHRlbXB0UmVxdWVzdBogLmtyaWxsLnYxLkdldEdvbGRBdHRlbXB0UmVzcG9uc2UiABJbChBMaXN0R29sZEF0dGVtcHRzEiEua3JpbGwudjEuTGlzdEdvbGRBdHRlbXB0c1JlcXVlc3QaIi5rcmlsbC52MS5MaXN0R29sZEF0dGVtcHRzUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglHb2xkUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_stats]);
 
 /**
  * @generated from message krill.v1.GoldBox
@@ -286,6 +288,13 @@ export type GoldLabeler = Message<"krill.v1.GoldLabeler"> & {
    * @generated from field: double mean_iou = 4;
    */
   meanIou: number;
+
+  /**
+   * Their recent gold scores are low, so frames they finish go to review.
+   *
+   * @generated from field: bool needs_review = 5;
+   */
+  needsReview: boolean;
 };
 
 /**
@@ -378,6 +387,187 @@ export const GetGoldStatsResponseSchema: GenMessage<GetGoldStatsResponse> = /*@_
   messageDesc(file_krill_v1_gold, 12);
 
 /**
+ * GoldAttempt is one labeler's answer to one gold frame.
+ *
+ * @generated from message krill.v1.GoldAttempt
+ */
+export type GoldAttempt = Message<"krill.v1.GoldAttempt"> & {
+  /**
+   * @generated from field: int64 frame_id = 1;
+   */
+  frameId: bigint;
+
+  /**
+   * @generated from field: krill.v1.Profile user = 2;
+   */
+  user?: Profile | undefined;
+
+  /**
+   * @generated from field: int64 clip_id = 3;
+   */
+  clipId: bigint;
+
+  /**
+   * Index of the frame within the video.
+   *
+   * @generated from field: int32 index = 4;
+   */
+  index: number;
+
+  /**
+   * @generated from field: string video_name = 5;
+   */
+  videoName: string;
+
+  /**
+   * @generated from field: double score = 6;
+   */
+  score: number;
+
+  /**
+   * Over matched boxes. 0 when nothing matched.
+   *
+   * @generated from field: double mean_iou = 7;
+   */
+  meanIou: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 8;
+   */
+  createdAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message krill.v1.GoldAttempt.
+ * Use `create(GoldAttemptSchema)` to create a new message.
+ */
+export const GoldAttemptSchema: GenMessage<GoldAttempt> = /*@__PURE__*/
+  messageDesc(file_krill_v1_gold, 13);
+
+/**
+ * @generated from message krill.v1.GetGoldAttemptRequest
+ */
+export type GetGoldAttemptRequest = Message<"krill.v1.GetGoldAttemptRequest"> & {
+  /**
+   * @generated from field: int64 frame_id = 1;
+   */
+  frameId: bigint;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message krill.v1.GetGoldAttemptRequest.
+ * Use `create(GetGoldAttemptRequestSchema)` to create a new message.
+ */
+export const GetGoldAttemptRequestSchema: GenMessage<GetGoldAttemptRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_gold, 14);
+
+/**
+ * @generated from message krill.v1.GetGoldAttemptResponse
+ */
+export type GetGoldAttemptResponse = Message<"krill.v1.GetGoldAttemptResponse"> & {
+  /**
+   * @generated from field: krill.v1.GoldAttempt attempt = 1;
+   */
+  attempt?: GoldAttempt | undefined;
+
+  /**
+   * @generated from field: krill.v1.GoldResult result = 2;
+   */
+  result?: GoldResult | undefined;
+
+  /**
+   * Presigned MinIO URL.
+   *
+   * @generated from field: string url = 3;
+   */
+  url: string;
+
+  /**
+   * @generated from field: int32 width = 4;
+   */
+  width: number;
+
+  /**
+   * @generated from field: int32 height = 5;
+   */
+  height: number;
+};
+
+/**
+ * Describes the message krill.v1.GetGoldAttemptResponse.
+ * Use `create(GetGoldAttemptResponseSchema)` to create a new message.
+ */
+export const GetGoldAttemptResponseSchema: GenMessage<GetGoldAttemptResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_gold, 15);
+
+/**
+ * @generated from message krill.v1.ListGoldAttemptsRequest
+ */
+export type ListGoldAttemptsRequest = Message<"krill.v1.ListGoldAttemptsRequest"> & {
+  /**
+   * Empty lists every labeler.
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * 0 lists every gold frame.
+   *
+   * @generated from field: int64 frame_id = 2;
+   */
+  frameId: bigint;
+
+  /**
+   * Defaults to 20, at most 100.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message krill.v1.ListGoldAttemptsRequest.
+ * Use `create(ListGoldAttemptsRequestSchema)` to create a new message.
+ */
+export const ListGoldAttemptsRequestSchema: GenMessage<ListGoldAttemptsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_gold, 16);
+
+/**
+ * @generated from message krill.v1.ListGoldAttemptsResponse
+ */
+export type ListGoldAttemptsResponse = Message<"krill.v1.ListGoldAttemptsResponse"> & {
+  /**
+   * @generated from field: repeated krill.v1.GoldAttempt attempts = 1;
+   */
+  attempts: GoldAttempt[];
+
+  /**
+   * Empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message krill.v1.ListGoldAttemptsResponse.
+ * Use `create(ListGoldAttemptsResponseSchema)` to create a new message.
+ */
+export const ListGoldAttemptsResponseSchema: GenMessage<ListGoldAttemptsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_gold, 17);
+
+/**
  * GoldService scores labelers against gold frames: labeled frames whose boxes
  * are saved as an answer key. The queue hands each labeler a gold frame every
  * so often, and they label it without seeing the key.
@@ -425,6 +615,27 @@ export const GoldService: GenService<{
     methodKind: "unary";
     input: typeof GetGoldStatsRequestSchema;
     output: typeof GetGoldStatsResponseSchema;
+  },
+  /**
+   * GetGoldAttempt is open to reviewers and to the labeler who answered.
+   *
+   * @generated from rpc krill.v1.GoldService.GetGoldAttempt
+   */
+  getGoldAttempt: {
+    methodKind: "unary";
+    input: typeof GetGoldAttemptRequestSchema;
+    output: typeof GetGoldAttemptResponseSchema;
+  },
+  /**
+   * ListGoldAttempts lists attempts newest first. Labelers who are not
+   * reviewers can only list their own.
+   *
+   * @generated from rpc krill.v1.GoldService.ListGoldAttempts
+   */
+  listGoldAttempts: {
+    methodKind: "unary";
+    input: typeof ListGoldAttemptsRequestSchema;
+    output: typeof ListGoldAttemptsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_gold, 0);

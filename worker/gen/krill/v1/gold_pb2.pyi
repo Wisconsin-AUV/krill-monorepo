@@ -1,3 +1,6 @@
+import datetime
+
+from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from krill.v1 import annotation_pb2 as _annotation_pb2
 from krill.v1 import stats_pb2 as _stats_pb2
 from google.protobuf.internal import containers as _containers
@@ -98,16 +101,18 @@ class GetGoldStatsRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class GoldLabeler(_message.Message):
-    __slots__ = ("user", "attempts", "accuracy", "mean_iou")
+    __slots__ = ("user", "attempts", "accuracy", "mean_iou", "needs_review")
     USER_FIELD_NUMBER: _ClassVar[int]
     ATTEMPTS_FIELD_NUMBER: _ClassVar[int]
     ACCURACY_FIELD_NUMBER: _ClassVar[int]
     MEAN_IOU_FIELD_NUMBER: _ClassVar[int]
+    NEEDS_REVIEW_FIELD_NUMBER: _ClassVar[int]
     user: _stats_pb2.Profile
     attempts: int
     accuracy: float
     mean_iou: float
-    def __init__(self, user: _Optional[_Union[_stats_pb2.Profile, _Mapping]] = ..., attempts: _Optional[int] = ..., accuracy: _Optional[float] = ..., mean_iou: _Optional[float] = ...) -> None: ...
+    needs_review: bool
+    def __init__(self, user: _Optional[_Union[_stats_pb2.Profile, _Mapping]] = ..., attempts: _Optional[int] = ..., accuracy: _Optional[float] = ..., mean_iou: _Optional[float] = ..., needs_review: _Optional[bool] = ...) -> None: ...
 
 class GoldFrame(_message.Message):
     __slots__ = ("frame_id", "clip_id", "index", "video_name", "thumbnail_url", "box_count", "attempts", "mean_score")
@@ -136,3 +141,65 @@ class GetGoldStatsResponse(_message.Message):
     labelers: _containers.RepeatedCompositeFieldContainer[GoldLabeler]
     frames: _containers.RepeatedCompositeFieldContainer[GoldFrame]
     def __init__(self, labelers: _Optional[_Iterable[_Union[GoldLabeler, _Mapping]]] = ..., frames: _Optional[_Iterable[_Union[GoldFrame, _Mapping]]] = ...) -> None: ...
+
+class GoldAttempt(_message.Message):
+    __slots__ = ("frame_id", "user", "clip_id", "index", "video_name", "score", "mean_iou", "created_at")
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_FIELD_NUMBER: _ClassVar[int]
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    INDEX_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_NAME_FIELD_NUMBER: _ClassVar[int]
+    SCORE_FIELD_NUMBER: _ClassVar[int]
+    MEAN_IOU_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    frame_id: int
+    user: _stats_pb2.Profile
+    clip_id: int
+    index: int
+    video_name: str
+    score: float
+    mean_iou: float
+    created_at: _timestamp_pb2.Timestamp
+    def __init__(self, frame_id: _Optional[int] = ..., user: _Optional[_Union[_stats_pb2.Profile, _Mapping]] = ..., clip_id: _Optional[int] = ..., index: _Optional[int] = ..., video_name: _Optional[str] = ..., score: _Optional[float] = ..., mean_iou: _Optional[float] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class GetGoldAttemptRequest(_message.Message):
+    __slots__ = ("frame_id", "user_id")
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    frame_id: int
+    user_id: str
+    def __init__(self, frame_id: _Optional[int] = ..., user_id: _Optional[str] = ...) -> None: ...
+
+class GetGoldAttemptResponse(_message.Message):
+    __slots__ = ("attempt", "result", "url", "width", "height")
+    ATTEMPT_FIELD_NUMBER: _ClassVar[int]
+    RESULT_FIELD_NUMBER: _ClassVar[int]
+    URL_FIELD_NUMBER: _ClassVar[int]
+    WIDTH_FIELD_NUMBER: _ClassVar[int]
+    HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    attempt: GoldAttempt
+    result: GoldResult
+    url: str
+    width: int
+    height: int
+    def __init__(self, attempt: _Optional[_Union[GoldAttempt, _Mapping]] = ..., result: _Optional[_Union[GoldResult, _Mapping]] = ..., url: _Optional[str] = ..., width: _Optional[int] = ..., height: _Optional[int] = ...) -> None: ...
+
+class ListGoldAttemptsRequest(_message.Message):
+    __slots__ = ("user_id", "frame_id", "page_size", "page_token")
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    user_id: str
+    frame_id: int
+    page_size: int
+    page_token: str
+    def __init__(self, user_id: _Optional[str] = ..., frame_id: _Optional[int] = ..., page_size: _Optional[int] = ..., page_token: _Optional[str] = ...) -> None: ...
+
+class ListGoldAttemptsResponse(_message.Message):
+    __slots__ = ("attempts", "next_page_token")
+    ATTEMPTS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    attempts: _containers.RepeatedCompositeFieldContainer[GoldAttempt]
+    next_page_token: str
+    def __init__(self, attempts: _Optional[_Iterable[_Union[GoldAttempt, _Mapping]]] = ..., next_page_token: _Optional[str] = ...) -> None: ...

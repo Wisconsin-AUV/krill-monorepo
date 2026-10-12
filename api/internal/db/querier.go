@@ -49,6 +49,9 @@ type Querier interface {
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
 	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
+	// Queues the frames the labeler marked done since their gold check before the
+	// one on @gold_frame_id, newest first.
+	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
 	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
@@ -61,6 +64,7 @@ type Querier interface {
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
@@ -99,8 +103,9 @@ type Querier interface {
 	ListFrameBoxes(ctx context.Context, frameID int64) ([]ListFrameBoxesRow, error)
 	ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
+	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
-	ListGoldLabelers(ctx context.Context) ([]ListGoldLabelersRow, error)
+	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
@@ -121,6 +126,7 @@ type Querier interface {
 	// check does not hand out an easier one.
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)

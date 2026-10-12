@@ -1,5 +1,9 @@
+import type { BadgeColor } from '@/components/ui/Badge'
 import type { GoldBox, GoldResult } from '@/gen/krill/v1/gold_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+
+export const scoreColor = (score: number): BadgeColor =>
+  score >= 0.8 ? 'green' : score >= 0.5 ? 'amber' : 'red'
 
 export type Outcome = 'correct' | 'off' | 'missed' | 'extra'
 

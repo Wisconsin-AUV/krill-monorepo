@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows
 - Drift flags are stored by the API when the tracker writes boxes, and the Labels page shows the drift rate per type.
 - Review queue: labelers flag frames with M, and developers and admins see open reviews and resolve them as accepted, fixed, or dismissed.
 - Exemplar mode: Shift+X on a selected box finds the other objects like it on the frame with SAM 3 and tracks each as a new proposed track.
+- Gold routing and history: labelers whose recent gold scores fall below `KRILL_GOLD_REVIEW_THRESHOLD` have their finished frames queued for review, and the Gold page lists past checks with the match view for each.
 
 ## [0.1.0] - 2026-09-27
 
