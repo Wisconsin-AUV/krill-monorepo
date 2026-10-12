@@ -72,6 +72,11 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.GoldServiceSubmitGoldCheckProcedure: label,
 	krillv1connect.GoldServiceGetGoldStatsProcedure:    reviewLabels,
 
+	krillv1connect.ReviewServiceFlagFrameProcedure:     label,
+	krillv1connect.ReviewServiceListReviewsProcedure:   reviewLabels,
+	krillv1connect.ReviewServiceCountReviewsProcedure:  reviewLabels,
+	krillv1connect.ReviewServiceResolveReviewProcedure: reviewLabels,
+
 	krillv1connect.StatsServiceGetLeaderboardProcedure: label,
 	krillv1connect.StatsServiceGetProfileProcedure:     label,
 	krillv1connect.StatsServiceGetDriftStatsProcedure:  label,

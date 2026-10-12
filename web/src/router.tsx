@@ -15,6 +15,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFound } from '@/pages/NotFound'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { ReviewPage } from '@/pages/ReviewPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
@@ -68,7 +69,10 @@ export const router = createBrowserRouter([
               },
               {
                 element: <RequirePermission permission={Permission.REVIEW_LABELS} />,
-                children: [{ path: 'gold', element: <GoldPage /> }],
+                children: [
+                  { path: 'gold', element: <GoldPage /> },
+                  { path: 'review', element: <ReviewPage /> },
+                ],
               },
               {
                 element: <RequirePermission permission={Permission.MANAGE_USERS} />,

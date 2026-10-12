@@ -13,6 +13,7 @@ import (
 	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/video"
@@ -93,6 +94,11 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 		}
 	}
 
+	reviews, err := review.ClipReviews(ctx, s.q, c.ID)
+	if err != nil {
+		return nil, rpc.Internal(err, "list reviews")
+	}
+
 	frames := make([]*krillv1.Frame, len(rows))
 	for i, f := range rows {
 		url, err := s.present.FrameURL(ctx, v.ID, f.Idx)
@@ -106,6 +112,7 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 			Url:         url,
 			Status:      annotation.FrameStatus(f.Status),
 			Gold:        gold[f.ID],
+			Review:      reviews[f.ID],
 		}
 	}
 

@@ -25,6 +25,7 @@ export const frameShortcuts: ShortcutGroup = {
     { keys: ['E'], label: 'Mark empty and go to next frame' },
     { keys: ['U'], label: 'Mark unlabeled' },
     { keys: ['D'], label: 'Next frame with a drifted box' },
+    { keys: ['M'], label: 'Flag frame for review or unflag it' },
   ],
 }
 

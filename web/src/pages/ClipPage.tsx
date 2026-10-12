@@ -7,6 +7,7 @@ import {
   ForwardIcon,
   EyeIcon,
   EyeSlashIcon,
+  FlagIcon,
   NoSymbolIcon,
   QuestionMarkCircleIcon,
   SparklesIcon,
@@ -16,6 +17,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/ui/Dropdown'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   Navbar,
@@ -34,10 +36,16 @@ import {
 } from '@/components/ui/Sidebar'
 import { StackedLayout } from '@/components/ui/StackedLayout'
 import { FrameStatus } from '@/gen/krill/v1/annotation_pb'
-import { ClipService, type GetClipResponse } from '@/gen/krill/v1/clip_pb'
+import { ClipService, type Frame, type GetClipResponse } from '@/gen/krill/v1/clip_pb'
 import { GoldService } from '@/gen/krill/v1/gold_pb'
 import { LabelService } from '@/gen/krill/v1/label_pb'
 import { QueueService } from '@/gen/krill/v1/queue_pb'
+import {
+  ReviewReason,
+  ReviewService,
+  type Review,
+  type ReviewResolution,
+} from '@/gen/krill/v1/review_pb'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
@@ -46,6 +54,7 @@ import { flash } from '@/lib/flash'
 import { invalidateService } from '@/lib/queryClient'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { useUIStore } from '@/store/useUIStore'
+import { reasons, resolutions } from '@/lib/reviews'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
@@ -190,6 +199,13 @@ export function ClipPage() {
   const setGoldFrame = useMutation(GoldService.method.setGoldFrame, {
     onError: (err) => flash.error('Could not update gold frame', err),
   })
+  const [reviewEdits, setReviewEdits] = useState<Record<string, Review | null>>({})
+  const flagFrame = useMutation(ReviewService.method.flagFrame, {
+    onError: (err) => flash.error('Could not flag frame', err),
+  })
+  const resolveReview = useMutation(ReviewService.method.resolveReview, {
+    onError: (err) => flash.error('Could not resolve review', err),
+  })
 
   useEffect(() => {
     const active = labels().activeTypeId
@@ -264,6 +280,40 @@ export function ClipPage() {
     )
   }
 
+  const reviewOf = (f: Frame) => {
+    const k = idKey(f.id)
+    return k in reviewEdits ? reviewEdits[k] : f.review
+  }
+  const openReview = frame ? reviewOf(frame) : undefined
+
+  function setReview(f: Frame, r: Review | undefined) {
+    setReviewEdits((prev) => ({ ...prev, [idKey(f.id)]: r ?? null }))
+    void invalidateService(ReviewService)
+  }
+
+  function toggleFlag() {
+    if (!frame || flagFrame.isPending) return
+    const own = openReview?.reason === ReviewReason.FLAGGED && openReview.createdBy?.id === me?.id
+    if (openReview && !own) {
+      flash.error('Already in review', reasons[openReview.reason].label)
+      return
+    }
+    const f = frame
+    flagFrame.mutate(
+      { frameId: f.id, flagged: !openReview },
+      { onSuccess: (res) => setReview(f, res.review) },
+    )
+  }
+
+  function resolve(resolution: ReviewResolution) {
+    if (!frame || !openReview || resolveReview.isPending) return
+    const f = frame
+    resolveReview.mutate(
+      { id: openReview.id, resolution },
+      { onSuccess: () => setReview(f, undefined) },
+    )
+  }
+
   function nextDrift() {
     for (let d = 1; d <= frames.length; d++) {
       const i = (index + d) % frames.length
@@ -333,6 +383,7 @@ export function ClipPage() {
           h: () => labels().toggleHidden(),
           d: nextDrift,
           g: toggleGold,
+          m: toggleFlag,
           ' ': () => void mark(FrameStatus.LABELED, true),
           e: () => void mark(FrameStatus.EMPTY, true),
           u: () => void mark(FrameStatus.UNLABELED, false),
@@ -409,6 +460,26 @@ export function ClipPage() {
       <NavbarSection>
         {otherLabeler && <Badge color="amber">{otherLabeler} is labeling this</Badge>}
         <SaveIndicator />
+        {openReview && (
+          <Badge color={reasons[openReview.reason].color}>
+            <FlagIcon className="size-3" />
+            {reasons[openReview.reason].label}
+          </Badge>
+        )}
+        {openReview && canReview && (
+          <Dropdown>
+            <DropdownButton outline disabled={switching || resolveReview.isPending}>
+              Resolve
+            </DropdownButton>
+            <DropdownMenu anchor="bottom end">
+              {resolutions.map((r) => (
+                <DropdownItem key={r.resolution} onClick={() => resolve(r.resolution)}>
+                  {r.label}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        )}
         <Badge color={state.color}>{state.label}</Badge>
         <Button
           plain
@@ -445,6 +516,13 @@ export function ClipPage() {
         <span className="text-sm/6 text-zinc-500 tabular-nums dark:text-zinc-400">
           Frame <span className="text-zinc-950 dark:text-white">{index + 1}</span> / {frames.length}
         </span>
+        <NavbarItem
+          aria-label={openReview ? 'Unflag frame' : 'Flag frame for review'}
+          title="Flag for review (M)"
+          onClick={toggleFlag}
+        >
+          <FlagIcon data-slot="icon" className={openReview ? 'fill-amber-400!' : undefined} />
+        </NavbarItem>
         {canReview && (
           <NavbarItem
             aria-label={isGold ? 'Remove gold frame' : 'Make gold frame'}
@@ -535,6 +613,7 @@ export function ClipPage() {
               : undefined
           }
           flagged={(i) => review.drift.has(idKey(frames[i].id))}
+          marked={(i) => !!reviewOf(frames[i])}
         />
         <ShortcutsDialog
           open={showHelp}

@@ -1,4 +1,5 @@
 from krill.v1 import annotation_pb2 as _annotation_pb2
+from krill.v1 import review_pb2 as _review_pb2
 from krill.v1 import video_pb2 as _video_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
@@ -9,20 +10,22 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Frame(_message.Message):
-    __slots__ = ("id", "index", "timestamp_ms", "url", "status", "gold")
+    __slots__ = ("id", "index", "timestamp_ms", "url", "status", "gold", "review")
     ID_FIELD_NUMBER: _ClassVar[int]
     INDEX_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_MS_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     GOLD_FIELD_NUMBER: _ClassVar[int]
+    REVIEW_FIELD_NUMBER: _ClassVar[int]
     id: int
     index: int
     timestamp_ms: int
     url: str
     status: _annotation_pb2.FrameStatus
     gold: bool
-    def __init__(self, id: _Optional[int] = ..., index: _Optional[int] = ..., timestamp_ms: _Optional[int] = ..., url: _Optional[str] = ..., status: _Optional[_Union[_annotation_pb2.FrameStatus, str]] = ..., gold: _Optional[bool] = ...) -> None: ...
+    review: _review_pb2.Review
+    def __init__(self, id: _Optional[int] = ..., index: _Optional[int] = ..., timestamp_ms: _Optional[int] = ..., url: _Optional[str] = ..., status: _Optional[_Union[_annotation_pb2.FrameStatus, str]] = ..., gold: _Optional[bool] = ..., review: _Optional[_Union[_review_pb2.Review, _Mapping]] = ...) -> None: ...
 
 class GetClipRequest(_message.Message):
     __slots__ = ("id",)

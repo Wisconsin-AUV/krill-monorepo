@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows
 
 - Attributes page: a grid of track crops for one label type, with number keys to assign attributes.
 - Drift flags are stored by the API when the tracker writes boxes, and the Labels page shows the drift rate per type.
+- Review queue: labelers flag frames with M, and developers and admins see open reviews and resolve them as accepted, fixed, or dismissed.
 
 ## [0.1.0] - 2026-09-27
 
