@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Review queue: labelers flag frames with M, and developers and admins see open reviews and resolve them as accepted, fixed, or dismissed.
+
 ## [0.1.0] - 2026-09-27
 
 ### Added

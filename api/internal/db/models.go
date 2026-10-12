@@ -104,6 +104,17 @@ type LabelType struct {
 	Guideline   string             `json:"guideline"`
 }
 
+type Review struct {
+	ID         int64              `json:"id"`
+	FrameID    int64              `json:"frame_id"`
+	Reason     string             `json:"reason"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ResolvedBy pgtype.UUID        `json:"resolved_by"`
+	ResolvedAt pgtype.Timestamptz `json:"resolved_at"`
+	Resolution pgtype.Text        `json:"resolution"`
+}
+
 type Session struct {
 	TokenHash []byte             `json:"token_hash"`
 	UserID    uuid.UUID          `json:"user_id"`

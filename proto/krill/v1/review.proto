@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+
+// ReviewService is the queue of frames a reviewer should look at. A frame has
+// at most one open review.
+service ReviewService {
+  // FlagFrame queues the frame for review, or with flagged false removes the
+  // caller's own flag. Flagging a frame that is already in review returns
+  // the open review.
+  rpc FlagFrame(FlagFrameRequest) returns (FlagFrameResponse) {}
+  // ListReviews returns open reviews, newest first.
+  rpc ListReviews(ListReviewsRequest) returns (ListReviewsResponse) {}
+  rpc CountReviews(CountReviewsRequest) returns (CountReviewsResponse) {}
+  // ResolveReview fails with FailedPrecondition when the review is already
+  // resolved.
+  rpc ResolveReview(ResolveReviewRequest) returns (ResolveReviewResponse) {}
+}
+
+enum ReviewReason {
+  REVIEW_REASON_UNSPECIFIED = 0;
+  // A labeler flagged the frame.
+  REVIEW_REASON_FLAGGED = 1;
+  // The labeler's gold-frame accuracy is below the threshold.
+  REVIEW_REASON_LOW_ACCURACY = 2;
+  // A tracked box on the frame looks like it slid off its object.
+  REVIEW_REASON_DRIFT = 3;
+}
+
+enum ReviewResolution {
+  REVIEW_RESOLUTION_UNSPECIFIED = 0;
+  // The labels were right.
+  REVIEW_RESOLUTION_ACCEPTED = 1;
+  // The reviewer corrected the labels.
+  REVIEW_RESOLUTION_FIXED = 2;
+  // The review was not needed.
+  REVIEW_RESOLUTION_DISMISSED = 3;
+}
+
+message Review {
+  int64 id = 1;
+  int64 frame_id = 2;
+  ReviewReason reason = 3;
+  // Unset when the review was queued automatically.
+  Profile created_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ReviewItem {
+  Review review = 1;
+  int64 clip_id = 2;
+  int32 clip_index = 3;
+  // Index within the video.
+  int32 frame_index = 4;
+  string video_name = 5;
+  // Presigned MinIO URL.
+  string thumbnail_url = 6;
+  // Who last marked the frame labeled or empty. Unset when nobody has.
+  Profile labeler = 7;
+}
+
+message FlagFrameRequest {
+  int64 frame_id = 1;
+  bool flagged = 2;
+}
+
+message FlagFrameResponse {
+  // The frame's open review. Unset after unflagging.
+  Review review = 1;
+}
+
+message ListReviewsRequest {
+  // Only reviews with this reason. Unspecified lists every reason.
+  ReviewReason reason = 1;
+}
+
+message ListReviewsResponse {
+  repeated ReviewItem reviews = 1;
+}
+
+message CountReviewsRequest {}
+
+message CountReviewsResponse {
+  // Open reviews.
+  int32 count = 1;
+}
+
+message ResolveReviewRequest {
+  int64 id = 1;
+  ReviewResolution resolution = 2;
+}
+
+message ResolveReviewResponse {}

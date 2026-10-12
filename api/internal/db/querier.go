@@ -19,6 +19,7 @@ type Querier interface {
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
+	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
@@ -38,6 +39,7 @@ type Querier interface {
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
+	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
@@ -46,6 +48,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
@@ -60,6 +63,7 @@ type Querier interface {
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
+	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
@@ -80,6 +84,7 @@ type Querier interface {
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
 	ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64, error)
+	ListClipOpenReviews(ctx context.Context, clipID int64) ([]ListClipOpenReviewsRow, error)
 	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
@@ -96,6 +101,7 @@ type Querier interface {
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
+	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	LockUsers(ctx context.Context) error
@@ -109,6 +115,8 @@ type Querier interface {
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
+	ReviewExists(ctx context.Context, id int64) (bool, error)
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	// Credit stays with whoever first set the current status.
