@@ -15,6 +15,7 @@ func TestWrite(t *testing.T) {
 		Items: []Item{
 			{Frame: Frame{VideoID: 1, Idx: 7}, Split: "train", Boxes: []ItemBox{{Class: 1, X: 0.1, Y: 0.2, W: 0.4, H: 0.2}}},
 			{Frame: Frame{VideoID: 2, Idx: 3}, Split: "val"},
+			{Frame: Frame{VideoID: 3, Idx: 1}, Split: "test"},
 		},
 	}
 	open := func(_ context.Context, f Frame) (io.ReadCloser, error) {
@@ -25,8 +26,8 @@ func TestWrite(t *testing.T) {
 	if err := Write(context.Background(), &buf, p, Manifest{Name: "test"}, open, func(int, int) { calls++ }); err != nil {
 		t.Fatal(err)
 	}
-	if calls != 2 {
-		t.Errorf("progress calls = %d, want 2", calls)
+	if calls != 3 {
+		t.Errorf("progress calls = %d, want 3", calls)
 	}
 
 	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
@@ -49,6 +50,7 @@ func TestWrite(t *testing.T) {
 		"labels/train/v1_f000007.txt": "1 0.300000 0.300000 0.400000 0.200000\n",
 		"images/val/v2_f000003.jpg":   "jpeg",
 		"labels/val/v2_f000003.txt":   "",
+		"images/test/v3_f000001.jpg":  "jpeg",
 	}
 	for name, content := range want {
 		got, ok := files[name]
@@ -60,10 +62,16 @@ func TestWrite(t *testing.T) {
 			t.Errorf("%s = %q, want %q", name, got, content)
 		}
 	}
+	if !strings.Contains(files["data.yaml"], "test: images/test\n") {
+		t.Errorf("data.yaml missing test: %q", files["data.yaml"])
+	}
 	if !strings.Contains(files["data.yaml"], "nc: 2\nnames:\n  0: gate\n  1: bin\n") {
 		t.Errorf("data.yaml = %q", files["data.yaml"])
 	}
 	if !strings.Contains(files["manifest.json"], `"val": [`) {
 		t.Errorf("manifest missing val list: %s", files["manifest.json"])
+	}
+	if !strings.Contains(files["manifest.json"], `"test_videos": [`) {
+		t.Errorf("manifest missing test videos: %s", files["manifest.json"])
 	}
 }

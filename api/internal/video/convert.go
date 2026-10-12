@@ -36,6 +36,7 @@ var splitToProto = map[string]krillv1.SplitAssignment{
 	"auto":  krillv1.SplitAssignment_SPLIT_ASSIGNMENT_AUTO,
 	"train": krillv1.SplitAssignment_SPLIT_ASSIGNMENT_TRAIN,
 	"val":   krillv1.SplitAssignment_SPLIT_ASSIGNMENT_VAL,
+	"test":  krillv1.SplitAssignment_SPLIT_ASSIGNMENT_TEST,
 }
 
 func splitFromProto(s krillv1.SplitAssignment) (string, bool) {

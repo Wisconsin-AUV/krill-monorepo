@@ -18,6 +18,7 @@ export const splitOptions = [
   },
   { value: SplitAssignment.TRAIN, label: 'Train', description: 'Always in the training set' },
   { value: SplitAssignment.VAL, label: 'Validation', description: 'Always in the validation set' },
+  { value: SplitAssignment.TEST, label: 'Test', description: 'Held out for final evaluation' },
 ]
 
 export function splitLabel(split: SplitAssignment): string {

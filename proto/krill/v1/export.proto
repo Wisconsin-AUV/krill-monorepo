@@ -4,7 +4,7 @@ package krill.v1;
 
 import "google/protobuf/timestamp.proto";
 
-// ExportService builds YOLO datasets. Train and val are split by video,
+// ExportService builds YOLO datasets. Train, val, and test are split by video,
 // never by frame, and only frames marked labeled or empty are exported.
 service ExportService {
   // PreviewExport plans an export without writing anything.
@@ -45,12 +45,13 @@ message ExportClassStats {
   // counts overstate variety because tracked frames are near-identical.
   int32 clips = 5;
   int32 videos = 6;
+  int32 test_boxes = 7;
 }
 
 message ExportVideoStats {
   int64 video_id = 1;
   string name = 2;
-  // "train" or "val".
+  // "train", "val", or "test".
   string split = 3;
   bool pinned = 4;
   int32 images = 5;
@@ -75,6 +76,8 @@ message ExportStats {
   int32 duplicate_skipped = 10;
   repeated ExportClassStats classes = 11;
   repeated ExportVideoStats videos = 12;
+  int32 test_images = 13;
+  int32 test_boxes = 14;
 }
 
 message Export {

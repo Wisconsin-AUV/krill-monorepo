@@ -75,7 +75,7 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
   })
 
   const stats = preview.data?.stats
-  const images = stats ? stats.trainImages + stats.valImages : 0
+  const images = stats ? stats.trainImages + stats.valImages + stats.testImages : 0
 
   function toggleVideo(id: bigint, on: boolean) {
     const next = on ? [...selected, id] : selected.filter((v) => v !== id)

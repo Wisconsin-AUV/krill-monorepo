@@ -81,7 +81,8 @@ func (VideoStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 // SplitAssignment pins a video to a dataset split. Export balances AUTO
-// videos between train and val.
+// videos between train and val. TEST videos are held out: they never join
+// the auto balance and must never be pre-labeled by a model.
 type SplitAssignment int32
 
 const (
@@ -89,6 +90,7 @@ const (
 	SplitAssignment_SPLIT_ASSIGNMENT_AUTO        SplitAssignment = 1
 	SplitAssignment_SPLIT_ASSIGNMENT_TRAIN       SplitAssignment = 2
 	SplitAssignment_SPLIT_ASSIGNMENT_VAL         SplitAssignment = 3
+	SplitAssignment_SPLIT_ASSIGNMENT_TEST        SplitAssignment = 4
 )
 
 // Enum value maps for SplitAssignment.
@@ -98,12 +100,14 @@ var (
 		1: "SPLIT_ASSIGNMENT_AUTO",
 		2: "SPLIT_ASSIGNMENT_TRAIN",
 		3: "SPLIT_ASSIGNMENT_VAL",
+		4: "SPLIT_ASSIGNMENT_TEST",
 	}
 	SplitAssignment_value = map[string]int32{
 		"SPLIT_ASSIGNMENT_UNSPECIFIED": 0,
 		"SPLIT_ASSIGNMENT_AUTO":        1,
 		"SPLIT_ASSIGNMENT_TRAIN":       2,
 		"SPLIT_ASSIGNMENT_VAL":         3,
+		"SPLIT_ASSIGNMENT_TEST":        4,
 	}
 )
 
@@ -1210,12 +1214,13 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x13VIDEO_STATUS_QUEUED\x10\x02\x12\x1b\n" +
 	"\x17VIDEO_STATUS_PROCESSING\x10\x03\x12\x16\n" +
 	"\x12VIDEO_STATUS_READY\x10\x04\x12\x17\n" +
-	"\x13VIDEO_STATUS_FAILED\x10\x05*\x84\x01\n" +
+	"\x13VIDEO_STATUS_FAILED\x10\x05*\x9f\x01\n" +
 	"\x0fSplitAssignment\x12 \n" +
 	"\x1cSPLIT_ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15SPLIT_ASSIGNMENT_AUTO\x10\x01\x12\x1a\n" +
 	"\x16SPLIT_ASSIGNMENT_TRAIN\x10\x02\x12\x18\n" +
-	"\x14SPLIT_ASSIGNMENT_VAL\x10\x032\xd6\x03\n" +
+	"\x14SPLIT_ASSIGNMENT_VAL\x10\x03\x12\x19\n" +
+	"\x15SPLIT_ASSIGNMENT_TEST\x10\x042\xd6\x03\n" +
 	"\fVideoService\x12L\n" +
 	"\vCreateVideo\x12\x1c.krill.v1.CreateVideoRequest\x1a\x1d.krill.v1.CreateVideoResponse\"\x00\x12L\n" +
 	"\vStartIngest\x12\x1c.krill.v1.StartIngestRequest\x1a\x1d.krill.v1.StartIngestResponse\"\x00\x12I\n" +

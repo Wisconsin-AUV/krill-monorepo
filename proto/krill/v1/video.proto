@@ -28,12 +28,14 @@ enum VideoStatus {
 }
 
 // SplitAssignment pins a video to a dataset split. Export balances AUTO
-// videos between train and val.
+// videos between train and val. TEST videos are held out: they never join
+// the auto balance and must never be pre-labeled by a model.
 enum SplitAssignment {
   SPLIT_ASSIGNMENT_UNSPECIFIED = 0;
   SPLIT_ASSIGNMENT_AUTO = 1;
   SPLIT_ASSIGNMENT_TRAIN = 2;
   SPLIT_ASSIGNMENT_VAL = 3;
+  SPLIT_ASSIGNMENT_TEST = 4;
 }
 
 message Video {

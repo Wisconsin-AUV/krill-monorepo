@@ -26,6 +26,7 @@ class SplitAssignment(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SPLIT_ASSIGNMENT_AUTO: _ClassVar[SplitAssignment]
     SPLIT_ASSIGNMENT_TRAIN: _ClassVar[SplitAssignment]
     SPLIT_ASSIGNMENT_VAL: _ClassVar[SplitAssignment]
+    SPLIT_ASSIGNMENT_TEST: _ClassVar[SplitAssignment]
 VIDEO_STATUS_UNSPECIFIED: VideoStatus
 VIDEO_STATUS_UPLOADING: VideoStatus
 VIDEO_STATUS_QUEUED: VideoStatus
@@ -36,6 +37,7 @@ SPLIT_ASSIGNMENT_UNSPECIFIED: SplitAssignment
 SPLIT_ASSIGNMENT_AUTO: SplitAssignment
 SPLIT_ASSIGNMENT_TRAIN: SplitAssignment
 SPLIT_ASSIGNMENT_VAL: SplitAssignment
+SPLIT_ASSIGNMENT_TEST: SplitAssignment
 
 class Video(_message.Message):
     __slots__ = ("id", "name", "filename", "notes", "status", "error", "ingest_progress", "split", "extract_fps", "width", "height", "fps", "duration_ms", "frame_count", "clip_count", "thumbnail_url", "created_at", "labeled_frame_count", "box_count")

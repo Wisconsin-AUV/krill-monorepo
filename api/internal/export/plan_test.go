@@ -79,6 +79,35 @@ func TestBuildStrideAndDedup(t *testing.T) {
 	}
 }
 
+func TestBuildTestSplit(t *testing.T) {
+	types := []LabelType{{ID: 1, Name: "gate"}}
+	videos := []Video{{ID: 1, Split: "auto"}, {ID: 2, Split: "auto"}, {ID: 3, Split: "test"}}
+	fs := append(frames(1, 1, 6, "empty", distinct), frames(2, 2, 4, "empty", distinct)...)
+	fs = append(fs, frames(3, 3, 6, "labeled", func(int) uint64 { return 0 })...)
+	var boxes []Box
+	for _, f := range fs[10:] {
+		boxes = append(boxes, Box{FrameID: f.ID, TypeID: 1, W: 0.1, H: 0.1, Status: "verified"})
+	}
+
+	p := Build(Options{ValFraction: 0.5, Stride: 2, Dedup: true, DedupDistance: 4}, types, videos, fs, boxes)
+
+	s := p.Stats
+	if s.TestImages != 1 || s.TestBoxes != 1 || s.Classes[0].TestBoxes != 1 || s.Classes[0].TrainBoxes != 0 {
+		t.Errorf("test split: %+v", s)
+	}
+	if s.StrideSkipped != 3+2+3 || s.DuplicateSkipped != 2 {
+		t.Errorf("stride %d dedup %d, want 8 and 2", s.StrideSkipped, s.DuplicateSkipped)
+	}
+	if s.TrainImages != 3 || s.ValImages != 2 {
+		t.Errorf("train %d val %d, want 3 and 2", s.TrainImages, s.ValImages)
+	}
+	for _, it := range p.Items {
+		if (it.Frame.VideoID == 3) != (it.Split == "test") {
+			t.Errorf("video %d frame %d in %s", it.Frame.VideoID, it.Frame.Idx, it.Split)
+		}
+	}
+}
+
 func TestAssignSplits(t *testing.T) {
 	plan := func(id int64, split string, n int) videoPlan {
 		return videoPlan{video: Video{ID: id, Split: split}, items: make([]Item, n)}
@@ -112,6 +141,18 @@ func TestAssignSplits(t *testing.T) {
 			[]videoPlan{plan(1, "auto", 60), plan(2, "auto", 40)},
 			0.2,
 			map[int64]string{1: "train", 2: "val"},
+		},
+		{
+			"test video is left out of the val share",
+			[]videoPlan{plan(1, "test", 80), plan(2, "auto", 50), plan(3, "auto", 30), plan(4, "auto", 20)},
+			0.2,
+			map[int64]string{1: "test", 2: "train", 3: "train", 4: "val"},
+		},
+		{
+			"test video does not count toward the val fallback",
+			[]videoPlan{plan(1, "test", 10), plan(2, "auto", 100)},
+			0.2,
+			map[int64]string{1: "test", 2: "train"},
 		},
 		{
 			"single video goes to train",
