@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Buttons keep their height while showing a loading spinner.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

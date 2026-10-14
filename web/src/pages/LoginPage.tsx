@@ -140,7 +140,7 @@ export function LoginPage() {
           >
             {signIn.isPending || continuing ? (
               <>
-                <LoadingSpinner className="size-4" />
+                <LoadingSpinner className="my-1 size-4" />
                 <span className="sr-only">Signing in</span>
               </>
             ) : onPasswordStep ? (
