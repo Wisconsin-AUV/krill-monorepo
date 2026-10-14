@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"maps"
 	"time"
 
 	"connectrpc.com/connect"
@@ -150,6 +151,7 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 		return nil, rpc.Internal(err, "decode track")
 	}
 
+	old := values
 	labelTypeID := track.LabelTypeID
 	if req.LabelTypeId != nil {
 		labelTypeID = req.GetLabelTypeId()
@@ -185,7 +187,10 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 			return nil, rpc.Internal(err, "update track")
 		}
 	}
-	updated, err := q.UpdateTrack(ctx, db.UpdateTrackParams{ID: track.ID, LabelTypeID: labelTypeID, Attributes: raw})
+	updated, err := q.UpdateTrack(ctx, db.UpdateTrackParams{
+		ID: track.ID, LabelTypeID: labelTypeID, Attributes: raw,
+		ClassEdited: labelTypeID != track.LabelTypeID || !maps.Equal(old, values),
+	})
 	if err != nil {
 		return nil, rpc.DBError(err, "track")
 	}

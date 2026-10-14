@@ -53,7 +53,7 @@ func (q *Queries) InsertBoxEvents(ctx context.Context, arg InsertBoxEventsParams
 const listBoxStates = `-- name: ListBoxStates :many
 SELECT
     f.id AS frame_id, f.status AS frame_status, f.status_by, f.status_at,
-    t.id AS track_id, t.label_type_id,
+    t.id AS track_id, t.label_type_id, t.class_edited, t.proposed_label_type_id,
     a.status AS box_status, a.source, a.x, a.y, a.width, a.height
 FROM tracks t
 JOIN frames f ON f.clip_id = t.clip_id
@@ -69,18 +69,20 @@ type ListBoxStatesParams struct {
 }
 
 type ListBoxStatesRow struct {
-	FrameID     int64              `json:"frame_id"`
-	FrameStatus string             `json:"frame_status"`
-	StatusBy    pgtype.UUID        `json:"status_by"`
-	StatusAt    pgtype.Timestamptz `json:"status_at"`
-	TrackID     int64              `json:"track_id"`
-	LabelTypeID int64              `json:"label_type_id"`
-	BoxStatus   pgtype.Text        `json:"box_status"`
-	Source      pgtype.Text        `json:"source"`
-	X           pgtype.Float8      `json:"x"`
-	Y           pgtype.Float8      `json:"y"`
-	Width       pgtype.Float8      `json:"width"`
-	Height      pgtype.Float8      `json:"height"`
+	FrameID             int64              `json:"frame_id"`
+	FrameStatus         string             `json:"frame_status"`
+	StatusBy            pgtype.UUID        `json:"status_by"`
+	StatusAt            pgtype.Timestamptz `json:"status_at"`
+	TrackID             int64              `json:"track_id"`
+	LabelTypeID         int64              `json:"label_type_id"`
+	ClassEdited         bool               `json:"class_edited"`
+	ProposedLabelTypeID pgtype.Int8        `json:"proposed_label_type_id"`
+	BoxStatus           pgtype.Text        `json:"box_status"`
+	Source              pgtype.Text        `json:"source"`
+	X                   pgtype.Float8      `json:"x"`
+	Y                   pgtype.Float8      `json:"y"`
+	Width               pgtype.Float8      `json:"width"`
+	Height              pgtype.Float8      `json:"height"`
 }
 
 // Every box of the track, or only the one on frame_id when it is set, with
@@ -102,6 +104,8 @@ func (q *Queries) ListBoxStates(ctx context.Context, arg ListBoxStatesParams) ([
 			&i.StatusAt,
 			&i.TrackID,
 			&i.LabelTypeID,
+			&i.ClassEdited,
+			&i.ProposedLabelTypeID,
 			&i.BoxStatus,
 			&i.Source,
 			&i.X,
@@ -121,7 +125,9 @@ func (q *Queries) ListBoxStates(ctx context.Context, arg ListBoxStatesParams) ([
 
 const recordAcceptedProposals = `-- name: RecordAcceptedProposals :exec
 INSERT INTO box_events (kind, frame_id, track_id, label_type_id, user_id, source)
-SELECT 'accepted', a.frame_id, a.track_id, t.label_type_id, $1::uuid, a.source
+SELECT
+    CASE WHEN t.class_edited AND a.source IN ('yolo', 'cv') THEN 'edited' ELSE 'accepted' END,
+    a.frame_id, a.track_id, t.label_type_id, $1::uuid, a.source
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE a.frame_id = $2 AND a.status = 'proposed'

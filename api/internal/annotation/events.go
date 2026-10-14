@@ -38,10 +38,11 @@ func boxEvent(me uuid.UUID, s db.ListBoxStatesRow, op boxOp, to rect) string {
 	if s.BoxStatus.Valid && s.BoxStatus.String == "proposed" {
 		switch op {
 		case opSet:
-			if to.same(s) {
-				return "accepted"
+			// Keeping a model's box under a class a labeler changed is an edit.
+			if !to.same(s) || s.ClassEdited && modelSource(s) {
+				return "edited"
 			}
-			return "edited"
+			return "accepted"
 		case opDelete:
 			return "rejected"
 		}
@@ -72,6 +73,31 @@ func boxEvent(me uuid.UUID, s db.ListBoxStatesRow, op boxOp, to rect) string {
 	return ""
 }
 
+func modelSource(s db.ListBoxStatesRow) bool {
+	return s.Source.Valid && (s.Source.String == "yolo" || s.Source.String == "cv")
+}
+
+// rejectsPrelabel reports whether the edit tells pre-labelers that the
+// proposal's box is not an object of the track's current label type: it is
+// deleted, its track moves off the class the pre-labeler gave it, or it is
+// moved too far for the moved box to cover where it was.
+func rejectsPrelabel(s db.ListBoxStatesRow, op boxOp, to rect) bool {
+	if !s.BoxStatus.Valid || s.BoxStatus.String != "proposed" || !modelSource(s) {
+		return false
+	}
+	switch op {
+	case opDelete:
+		return true
+	case opRelabel:
+		// Moving between classes a labeler picked rejects none of the model's.
+		return s.ProposedLabelTypeID.Valid && s.ProposedLabelTypeID.Int64 == s.LabelTypeID
+	case opSet:
+		from := Rect{X: s.X.Float64, Y: s.Y.Float64, W: s.Width.Float64, H: s.Height.Float64}
+		return iou(Rect{X: to.x, Y: to.y, W: to.w, H: to.h}, from) <= DuplicateIoU
+	}
+	return false
+}
+
 func isCorrection(kind string) bool {
 	return kind != "accepted" && kind != "edited" && kind != "rejected"
 }
@@ -95,6 +121,14 @@ func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []
 	p := db.InsertBoxEventsParams{UserID: me}
 	var rej db.InsertRejectedPrelabelsParams
 	for _, s := range states {
+		if rejectsPrelabel(s, op, to) {
+			rej.FrameIds = append(rej.FrameIds, s.FrameID)
+			rej.LabelTypeIds = append(rej.LabelTypeIds, s.LabelTypeID)
+			rej.Xs = append(rej.Xs, s.X.Float64)
+			rej.Ys = append(rej.Ys, s.Y.Float64)
+			rej.Widths = append(rej.Widths, s.Width.Float64)
+			rej.Heights = append(rej.Heights, s.Height.Float64)
+		}
 		kind := boxEvent(me, s, op, to)
 		if kind == "" {
 			continue
@@ -102,14 +136,6 @@ func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []
 		source := "human"
 		if s.Source.Valid {
 			source = s.Source.String
-		}
-		if kind == "rejected" && (source == "yolo" || source == "cv") {
-			rej.FrameIds = append(rej.FrameIds, s.FrameID)
-			rej.LabelTypeIds = append(rej.LabelTypeIds, s.LabelTypeID)
-			rej.Xs = append(rej.Xs, s.X.Float64)
-			rej.Ys = append(rej.Ys, s.Y.Float64)
-			rej.Widths = append(rej.Widths, s.Width.Float64)
-			rej.Heights = append(rej.Heights, s.Height.Float64)
 		}
 		labeler, markedAt := uuid.Nil, pgtype.Timestamptz{}
 		if isCorrection(kind) {
@@ -123,11 +149,10 @@ func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []
 		p.LabelerIds = append(p.LabelerIds, labeler)
 		p.MarkedAts = append(p.MarkedAts, markedAt)
 	}
-	if len(p.Kinds) == 0 {
-		return nil
-	}
-	if err := q.InsertBoxEvents(ctx, p); err != nil {
-		return fmt.Errorf("record box events: %w", err)
+	if len(p.Kinds) > 0 {
+		if err := q.InsertBoxEvents(ctx, p); err != nil {
+			return fmt.Errorf("record box events: %w", err)
+		}
 	}
 	if len(rej.FrameIds) > 0 {
 		if err := q.InsertRejectedPrelabels(ctx, rej); err != nil {

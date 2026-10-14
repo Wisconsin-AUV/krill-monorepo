@@ -304,11 +304,13 @@ type StorageScanVideo struct {
 }
 
 type Track struct {
-	ID          int64              `json:"id"`
-	ClipID      int64              `json:"clip_id"`
-	LabelTypeID int64              `json:"label_type_id"`
-	Attributes  []byte             `json:"attributes"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID                  int64              `json:"id"`
+	ClipID              int64              `json:"clip_id"`
+	LabelTypeID         int64              `json:"label_type_id"`
+	Attributes          []byte             `json:"attributes"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	ClassEdited         bool               `json:"class_edited"`
+	ProposedLabelTypeID pgtype.Int8        `json:"proposed_label_type_id"`
 }
 
 type TrainingRun struct {

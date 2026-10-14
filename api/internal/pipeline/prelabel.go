@@ -421,13 +421,13 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 	ins := db.InsertPrelabelsParams{Source: l.source}
 	for _, group := range linkTracks(kept) {
 		tg := byIndex[kept[group[0]].target]
-		track, err := q.CreateTrack(ctx, db.CreateTrackParams{ClipID: c.ID, LabelTypeID: tg.labelTypeID, Attributes: tg.attributes})
+		track, err := q.CreatePrelabelTrack(ctx, db.CreatePrelabelTrackParams{ClipID: c.ID, LabelTypeID: tg.labelTypeID, Attributes: tg.attributes})
 		if err != nil {
 			return 0, fmt.Errorf("create track: %w", err)
 		}
 		for _, i := range group {
 			d := kept[i]
-			ins.TrackIds = append(ins.TrackIds, track.ID)
+			ins.TrackIds = append(ins.TrackIds, track)
 			ins.FrameIds = append(ins.FrameIds, d.frameID)
 			ins.Xs = append(ins.Xs, d.box.X)
 			ins.Ys = append(ins.Ys, d.box.Y)

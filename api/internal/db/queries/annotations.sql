@@ -16,8 +16,8 @@ JOIN videos v ON v.id = c.video_id
 WHERE t.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL;
 
 -- name: UpdateTrack :one
-UPDATE tracks SET label_type_id = $2, attributes = $3
-WHERE id = $1
+UPDATE tracks SET label_type_id = @label_type_id, attributes = @attributes, class_edited = class_edited OR @class_edited
+WHERE id = @id
 RETURNING *;
 
 -- name: DeleteTrack :one

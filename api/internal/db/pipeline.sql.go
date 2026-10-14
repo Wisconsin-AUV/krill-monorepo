@@ -179,6 +179,25 @@ func (q *Queries) CreatePrelabelRun(ctx context.Context, arg CreatePrelabelRunPa
 	return i, err
 }
 
+const createPrelabelTrack = `-- name: CreatePrelabelTrack :one
+INSERT INTO tracks (clip_id, label_type_id, attributes, proposed_label_type_id)
+VALUES ($1, $2, $3, $2)
+RETURNING id
+`
+
+type CreatePrelabelTrackParams struct {
+	ClipID      int64  `json:"clip_id"`
+	LabelTypeID int64  `json:"label_type_id"`
+	Attributes  []byte `json:"attributes"`
+}
+
+func (q *Queries) CreatePrelabelTrack(ctx context.Context, arg CreatePrelabelTrackParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createPrelabelTrack, arg.ClipID, arg.LabelTypeID, arg.Attributes)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createTrainingRun = `-- name: CreateTrainingRun :one
 INSERT INTO training_runs (trigger, created_by, config, verified_boxes)
 VALUES ($1, $2::uuid, $3, $4)
@@ -241,9 +260,11 @@ func (q *Queries) DeleteEmptyTracks(ctx context.Context, ids []int64) error {
 }
 
 const deleteOpenPrelabels = `-- name: DeleteOpenPrelabels :many
-DELETE FROM annotations
-WHERE frame_id = ANY($1::bigint[]) AND source = $2 AND status = 'proposed'
-RETURNING track_id
+DELETE FROM annotations a
+USING tracks t
+WHERE t.id = a.track_id AND NOT t.class_edited
+    AND a.frame_id = ANY($1::bigint[]) AND a.source = $2 AND a.status = 'proposed'
+RETURNING a.track_id
 `
 
 type DeleteOpenPrelabelsParams struct {

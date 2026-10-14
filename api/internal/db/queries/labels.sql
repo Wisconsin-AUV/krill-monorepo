@@ -108,6 +108,9 @@ WHERE t.label_type_id = @source_id;
 -- name: MergeRejectedPrelabels :exec
 UPDATE rejected_prelabels SET label_type_id = @target_id WHERE label_type_id = @source_id;
 
+-- name: MergeProposedLabelTypes :exec
+UPDATE tracks SET proposed_label_type_id = @target_id::bigint WHERE proposed_label_type_id = @source_id::bigint;
+
 -- name: MergeGoldFrames :execrows
 -- Rewrites the copied boxes the same way as MergeTracks, so the key keeps
 -- matching what labelers will draw.

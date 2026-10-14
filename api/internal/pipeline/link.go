@@ -16,7 +16,7 @@ const (
 	linkMaxGap = 2
 	// duplicateIoU drops a proposal over a box that is already there or
 	// was rejected there.
-	duplicateIoU = 0.5
+	duplicateIoU = annotation.DuplicateIoU
 )
 
 // detection is one box a pre-labeler found.

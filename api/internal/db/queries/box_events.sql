@@ -4,7 +4,7 @@
 -- box columns null when frame_id is set.
 SELECT
     f.id AS frame_id, f.status AS frame_status, f.status_by, f.status_at,
-    t.id AS track_id, t.label_type_id,
+    t.id AS track_id, t.label_type_id, t.class_edited, t.proposed_label_type_id,
     a.status AS box_status, a.source, a.x, a.y, a.width, a.height
 FROM tracks t
 JOIN frames f ON f.clip_id = t.clip_id
@@ -28,7 +28,9 @@ SELECT
 -- name: RecordAcceptedProposals :exec
 -- Run before AcceptFrameProposals.
 INSERT INTO box_events (kind, frame_id, track_id, label_type_id, user_id, source)
-SELECT 'accepted', a.frame_id, a.track_id, t.label_type_id, @user_id::uuid, a.source
+SELECT
+    CASE WHEN t.class_edited AND a.source IN ('yolo', 'cv') THEN 'edited' ELSE 'accepted' END,
+    a.frame_id, a.track_id, t.label_type_id, @user_id::uuid, a.source
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE a.frame_id = @frame_id AND a.status = 'proposed';

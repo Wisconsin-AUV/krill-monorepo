@@ -194,79 +194,207 @@ func TestHeldOutVideosAreNeverPrelabeled(t *testing.T) {
 	}
 }
 
-func TestRejectedProposalsAreNotProposedAgain(t *testing.T) {
+// reviewFixture is a clip of unlabeled frames that a yolo run proposes buoys
+// and gates on, and a labeler who reviews them.
+type reviewFixture struct {
+	pool   *pgxpool.Pool
+	p      *Pipeline
+	s      *annotation.Service
+	ctx    context.Context
+	user   db.User
+	buoy   int64
+	gate   int64
+	clip   db.ListPrelabelClipsRow
+	frames []db.ListUnlabeledClipFramesRow
+	runID  int64
+	l      *labeler
+}
+
+func newReviewFixture(t *testing.T, frames int) *reviewFixture {
+	t.Helper()
 	pool := testPool(t)
 	ctx := t.Context()
-	p := New(Deps{Pool: pool})
-	s := annotation.NewService(pool, nil, nil, func() review.GoldRouting { return review.GoldRouting{} })
-
-	var user db.User
+	f := &reviewFixture{
+		pool: pool, ctx: ctx, p: New(Deps{Pool: pool}),
+		s: annotation.NewService(pool, nil, nil, func() review.GoldRouting { return review.GoldRouting{} }),
+	}
 	err := pool.QueryRow(ctx, `
 		INSERT INTO users (name, username, email, role) VALUES ('Ada', $1, $1 || '@example.com', 'labeler')
-		RETURNING id, name, username, role`, "reject-test-"+uuid.NewString()[:8],
-	).Scan(&user.ID, &user.Name, &user.Username, &user.Role)
+		RETURNING id, name, username, role`, "review-test-"+uuid.NewString()[:8],
+	).Scan(&f.user.ID, &f.user.Name, &f.user.Username, &f.user.Role)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, user.ID) })
-	buoy := scalar[int64](t, pool, `INSERT INTO label_types (name, color, position) VALUES ($1, '#ff0000', 99) RETURNING id`, "reject-test-buoy-"+uuid.NewString()[:8])
-	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM label_types WHERE id = $1`, buoy) })
-	gate := scalar[int64](t, pool, `INSERT INTO label_types (name, color, position) VALUES ($1, '#00ff00', 99) RETURNING id`, "reject-test-gate-"+uuid.NewString()[:8])
-	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM label_types WHERE id = $1`, gate) })
-	videoID := scalar[int64](t, pool, `INSERT INTO videos (name, filename, status, frame_count) VALUES ('pool.mp4', 'pool.mp4', 'ready', 2) RETURNING id`)
+	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, f.user.ID) })
+	for _, lt := range []*int64{&f.buoy, &f.gate} {
+		*lt = scalar[int64](t, pool, `INSERT INTO label_types (name, color, position) VALUES ($1, '#ff0000', 99) RETURNING id`, "review-test-"+uuid.NewString()[:8])
+		t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM label_types WHERE id = $1`, *lt) })
+	}
+	videoID := scalar[int64](t, pool, `INSERT INTO videos (name, filename, status, frame_count) VALUES ('pool.mp4', 'pool.mp4', 'ready', $1) RETURNING id`, frames)
 	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM videos WHERE id = $1`, videoID) })
-	clipID := scalar[int64](t, pool, `INSERT INTO clips (video_id, idx, start_frame, frame_count) VALUES ($1, 0, 0, 2) RETURNING id`, videoID)
-	frames := make([]db.ListUnlabeledClipFramesRow, 2)
-	for i := range frames {
-		frames[i].Idx = int32(i)
-		frames[i].ID = scalar[int64](t, pool, `INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, $3, 0) RETURNING id`, videoID, clipID, i)
+	clipID := scalar[int64](t, pool, `INSERT INTO clips (video_id, idx, start_frame, frame_count) VALUES ($1, 0, 0, $2) RETURNING id`, videoID, frames)
+	f.clip = db.ListPrelabelClipsRow{ID: clipID, VideoID: videoID}
+	f.frames = make([]db.ListUnlabeledClipFramesRow, frames)
+	for i := range f.frames {
+		f.frames[i].Idx = int32(i)
+		f.frames[i].ID = scalar[int64](t, pool, `INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, $3, 0) RETURNING id`, videoID, clipID, i)
 	}
-	runID := scalar[int64](t, pool, `INSERT INTO prelabel_runs (source, status) VALUES ('yolo', 'running') RETURNING id`)
-	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM prelabel_runs WHERE id = $1`, runID) })
-
-	l := &labeler{source: sourceYolo, version: "1", targets: map[string]target{
-		"buoy": {index: 0, labelTypeID: buoy, attributes: []byte(`{}`)},
-		"gate": {index: 1, labelTypeID: gate, attributes: []byte(`{}`)},
+	f.runID = scalar[int64](t, pool, `INSERT INTO prelabel_runs (source, status) VALUES ('yolo', 'running') RETURNING id`)
+	t.Cleanup(func() { _, _ = pool.Exec(context.Background(), `DELETE FROM prelabel_runs WHERE id = $1`, f.runID) })
+	f.l = &labeler{source: sourceYolo, version: "1", targets: map[string]target{
+		"buoy": {index: 0, labelTypeID: f.buoy, attributes: []byte(`{}`)},
+		"gate": {index: 1, labelTypeID: f.gate, attributes: []byte(`{}`)},
 	}}
-	det := func(frame int32, target int, x float64) detection {
-		return detection{
-			frameID: frames[frame].ID, frameIdx: frame, conf: 0.9, model: "1", target: target,
-			box: annotation.Box{X: x, Y: 0.2, Width: 0.2, Height: 0.2},
-		}
+	return f
+}
+
+const (
+	buoyClass = 0
+	gateClass = 1
+)
+
+func (f *reviewFixture) det(frame int32, class int, x float64) detection {
+	return detection{
+		frameID: f.frames[frame].ID, frameIdx: frame, conf: 0.9, model: "1", target: class,
+		box: annotation.Box{X: x, Y: 0.2, Width: 0.2, Height: 0.2},
 	}
-	clip := db.ListPrelabelClipsRow{ID: clipID, VideoID: videoID}
-	if _, err := p.savePrelabels(ctx, runID, l, clip, frames, []detection{det(0, 0, 0.1), det(1, 0, 0.1)}); err != nil {
+}
+
+// run saves dets as a pre-label run would and returns the clip's boxes.
+func (f *reviewFixture) run(t *testing.T, dets ...detection) []savedBox {
+	t.Helper()
+	if _, err := f.p.savePrelabels(f.ctx, f.runID, f.l, f.clip, f.frames, dets); err != nil {
 		t.Fatal(err)
 	}
-	got := clipBoxes(t, pool, clipID)
+	return clipBoxes(t, f.pool, f.clip.ID)
+}
+
+func (f *reviewFixture) as() context.Context { return auth.WithUser(f.ctx, f.user) }
+
+func (f *reviewFixture) labelType(t *testing.T, trackID int64) int64 {
+	t.Helper()
+	return scalar[int64](t, f.pool, `SELECT label_type_id FROM tracks WHERE id = $1`, trackID)
+}
+
+func TestRejectedProposalsAreNotProposedAgain(t *testing.T) {
+	f := newReviewFixture(t, 2)
+	got := f.run(t, f.det(0, buoyClass, 0.1), f.det(1, buoyClass, 0.1))
 	if len(got) != 2 {
 		t.Fatalf("boxes = %+v, want a proposal on each frame", got)
 	}
 	// Both proposals are in one track. Reject one box, then the rest with
 	// the track, which also deletes the track the rejections were in.
-	_, err = s.DeleteBox(auth.WithUser(ctx, user), &krillv1.DeleteBoxRequest{TrackId: got[0].trackID, FrameId: frames[0].ID})
-	if err != nil {
+	if _, err := f.s.DeleteBox(f.as(), &krillv1.DeleteBoxRequest{TrackId: got[0].trackID, FrameId: f.frames[0].ID}); err != nil {
 		t.Fatal(err)
 	}
-	_, err = s.DeleteTrack(auth.WithUser(ctx, user), &krillv1.DeleteTrackRequest{Id: got[1].trackID})
-	if err != nil {
+	if _, err := f.s.DeleteTrack(f.as(), &krillv1.DeleteTrackRequest{Id: got[1].trackID}); err != nil {
 		t.Fatal(err)
 	}
-	if n := scalar[int](t, pool, `SELECT count(*)::int FROM box_events WHERE user_id = $1 AND kind = 'rejected'`, user.ID); n != 2 {
+	if n := scalar[int](t, f.pool, `SELECT count(*)::int FROM box_events WHERE user_id = $1 AND kind = 'rejected'`, f.user.ID); n != 2 {
 		t.Errorf("logged %d rejections, want 2", n)
 	}
 
 	// The next run sees the same boxes, nudged, plus a gate where a buoy was
 	// rejected, which is a different claim about the frame.
-	n, err := p.savePrelabels(ctx, runID, l, clip, frames, []detection{det(0, 0, 0.12), det(1, 0, 0.1), det(0, 1, 0.1)})
+	got = f.run(t, f.det(0, buoyClass, 0.12), f.det(1, buoyClass, 0.1), f.det(0, gateClass, 0.1))
+	if len(got) != 1 {
+		t.Fatalf("boxes = %+v, want only the gate", got)
+	}
+	if lt := f.labelType(t, got[0].trackID); lt != f.gate || got[0].frameID != f.frames[0].ID {
+		t.Errorf("proposal is label type %d on frame %d, want the gate on frame %d", lt, got[0].frameID, f.frames[0].ID)
+	}
+}
+
+func TestMovedProposalsAreNotProposedAgainWhereTheyWere(t *testing.T) {
+	f := newReviewFixture(t, 2)
+	got := f.run(t, f.det(0, buoyClass, 0.1), f.det(1, buoyClass, 0.1))
+	// Frame 0's buoy is dragged onto the real one, frame 1's only nudged.
+	for i, x := range []float64{0.6, 0.12} {
+		_, err := f.s.SetBox(f.as(), &krillv1.SetBoxRequest{
+			TrackId: got[i].trackID, FrameId: f.frames[i].ID, Box: &krillv1.Box{X: x, Y: 0.2, Width: 0.2, Height: 0.2},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	got = f.run(t, f.det(0, buoyClass, 0.1), f.det(1, buoyClass, 0.1))
+	for _, b := range got {
+		if b.source != "human" {
+			t.Errorf("boxes = %+v, want only the two moved boxes", got)
+			break
+		}
+	}
+	if n := scalar[int](t, f.pool, `SELECT count(*)::int FROM rejected_prelabels WHERE frame_id = ANY($1)`,
+		[]int64{f.frames[0].ID, f.frames[1].ID}); n != 1 {
+		t.Errorf("recorded %d rejections, want only the far move", n)
+	}
+}
+
+func TestRelabeledProposalsSurviveTheNextRun(t *testing.T) {
+	f := newReviewFixture(t, 3)
+	got := f.run(t, f.det(0, buoyClass, 0.1), f.det(1, buoyClass, 0.1), f.det(2, buoyClass, 0.1))
+	track := got[0].trackID
+	gate := f.gate
+	if _, err := f.s.UpdateTrack(f.as(), &krillv1.UpdateTrackRequest{Id: track, LabelTypeId: &gate}); err != nil {
+		t.Fatal(err)
+	}
+
+	got = f.run(t, f.det(0, buoyClass, 0.1), f.det(1, buoyClass, 0.1), f.det(2, buoyClass, 0.1))
+	if len(got) != 3 {
+		t.Fatalf("boxes = %+v, want the three relabeled proposals", got)
+	}
+	for _, b := range got {
+		if b.trackID != track || b.status != "proposed" {
+			t.Errorf("box = %+v, want the relabeled track's proposal still open", b)
+		}
+	}
+	if lt := f.labelType(t, track); lt != f.gate {
+		t.Errorf("track is label type %d, want the gate %d", lt, f.gate)
+	}
+
+	// The model's buoy was wrong even once the box is gone.
+	if _, err := f.s.DeleteBox(f.as(), &krillv1.DeleteBoxRequest{TrackId: track, FrameId: f.frames[1].ID}); err != nil {
+		t.Fatal(err)
+	}
+	got = f.run(t, f.det(1, buoyClass, 0.1))
+	if len(got) != 2 || got[0].frameID == f.frames[1].ID || got[1].frameID == f.frames[1].ID {
+		t.Errorf("boxes = %+v, want only the gates on frames 0 and 2", got)
+	}
+
+	// Keeping a box, by accepting it or marking its frame done, keeps the
+	// labeler's class, which the model got wrong.
+	_, err := f.s.SetBox(f.as(), &krillv1.SetBoxRequest{
+		TrackId: track, FrameId: f.frames[2].ID, Box: &krillv1.Box{X: 0.1, Y: 0.2, Width: 0.2, Height: 0.2},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	got = clipBoxes(t, pool, clipID)
-	if n != 1 || len(got) != 1 {
-		t.Fatalf("saved %d proposals, boxes = %+v, want only the gate", n, got)
+	_, err = f.s.SetFrameStatus(f.as(), &krillv1.SetFrameStatusRequest{FrameId: f.frames[0].ID, Status: krillv1.FrameStatus_FRAME_STATUS_LABELED})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if lt := scalar[int64](t, pool, `SELECT label_type_id FROM tracks WHERE id = $1`, got[0].trackID); lt != gate || got[0].frameID != frames[0].ID {
-		t.Errorf("proposal is label type %d on frame %d, want the gate on frame %d", lt, got[0].frameID, frames[0].ID)
+	kinds := scalar[[]string](t, f.pool, `SELECT array_agg(kind ORDER BY id) FROM box_events WHERE user_id = $1`, f.user.ID)
+	if !slices.Equal(kinds, []string{"rejected", "edited", "edited"}) {
+		t.Errorf("box events = %v, want the deleted box rejected and the kept ones edited", kinds)
+	}
+}
+
+func TestUndoingARelabelRejectsOnlyTheModelsClass(t *testing.T) {
+	f := newReviewFixture(t, 1)
+	got := f.run(t, f.det(0, buoyClass, 0.1))
+	track := got[0].trackID
+	for _, lt := range []int64{f.gate, f.buoy} {
+		if _, err := f.s.UpdateTrack(f.as(), &krillv1.UpdateTrackRequest{Id: track, LabelTypeId: &lt}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := f.s.DeleteBox(f.as(), &krillv1.DeleteBoxRequest{TrackId: track, FrameId: f.frames[0].ID}); err != nil {
+		t.Fatal(err)
+	}
+	// Going back from the gate was the labeler changing their mind, not
+	// rejecting the model.
+	got = f.run(t, f.det(0, buoyClass, 0.1), f.det(0, gateClass, 0.1))
+	if len(got) != 1 || f.labelType(t, got[0].trackID) != f.gate {
+		t.Errorf("boxes = %+v, want only a gate", got)
 	}
 }

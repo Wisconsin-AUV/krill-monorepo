@@ -106,7 +106,7 @@ func (q *Queries) CountTrackAnnotations(ctx context.Context, trackID int64) (int
 const createTrack = `-- name: CreateTrack :one
 INSERT INTO tracks (clip_id, label_type_id, attributes)
 VALUES ($1, $2, $3)
-RETURNING id, clip_id, label_type_id, attributes, created_at
+RETURNING id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id
 `
 
 type CreateTrackParams struct {
@@ -124,6 +124,8 @@ func (q *Queries) CreateTrack(ctx context.Context, arg CreateTrackParams) (Track
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }
@@ -187,7 +189,7 @@ func (q *Queries) GetFrame(ctx context.Context, id int64) (Frame, error) {
 }
 
 const getTrack = `-- name: GetTrack :one
-SELECT t.id, t.clip_id, t.label_type_id, t.attributes, t.created_at FROM tracks t
+SELECT t.id, t.clip_id, t.label_type_id, t.attributes, t.created_at, t.class_edited, t.proposed_label_type_id FROM tracks t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
 WHERE t.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL
@@ -202,6 +204,8 @@ func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }
@@ -252,7 +256,7 @@ func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Anno
 }
 
 const listClipTracks = `-- name: ListClipTracks :many
-SELECT id, clip_id, label_type_id, attributes, created_at FROM tracks WHERE clip_id = $1 ORDER BY id
+SELECT id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id FROM tracks WHERE clip_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, error) {
@@ -270,6 +274,8 @@ func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, er
 			&i.LabelTypeID,
 			&i.Attributes,
 			&i.CreatedAt,
+			&i.ClassEdited,
+			&i.ProposedLabelTypeID,
 		); err != nil {
 			return nil, err
 		}
@@ -416,19 +422,25 @@ func (q *Queries) SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) 
 }
 
 const updateTrack = `-- name: UpdateTrack :one
-UPDATE tracks SET label_type_id = $2, attributes = $3
-WHERE id = $1
-RETURNING id, clip_id, label_type_id, attributes, created_at
+UPDATE tracks SET label_type_id = $1, attributes = $2, class_edited = class_edited OR $3
+WHERE id = $4
+RETURNING id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id
 `
 
 type UpdateTrackParams struct {
-	ID          int64  `json:"id"`
 	LabelTypeID int64  `json:"label_type_id"`
 	Attributes  []byte `json:"attributes"`
+	ClassEdited bool   `json:"class_edited"`
+	ID          int64  `json:"id"`
 }
 
 func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error) {
-	row := q.db.QueryRow(ctx, updateTrack, arg.ID, arg.LabelTypeID, arg.Attributes)
+	row := q.db.QueryRow(ctx, updateTrack,
+		arg.LabelTypeID,
+		arg.Attributes,
+		arg.ClassEdited,
+		arg.ID,
+	)
 	var i Track
 	err := row.Scan(
 		&i.ID,
@@ -436,6 +448,8 @@ func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }

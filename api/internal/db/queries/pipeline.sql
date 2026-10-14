@@ -174,10 +174,17 @@ WHERE id = ANY(@ids::bigint[]) AND status = 'unlabeled'
 ORDER BY id
 FOR UPDATE;
 
+-- name: CreatePrelabelTrack :one
+INSERT INTO tracks (clip_id, label_type_id, attributes, proposed_label_type_id)
+VALUES (@clip_id, @label_type_id, @attributes, @label_type_id)
+RETURNING id;
+
 -- name: DeleteOpenPrelabels :many
-DELETE FROM annotations
-WHERE frame_id = ANY(@frame_ids::bigint[]) AND source = @source AND status = 'proposed'
-RETURNING track_id;
+DELETE FROM annotations a
+USING tracks t
+WHERE t.id = a.track_id AND NOT t.class_edited
+    AND a.frame_id = ANY(@frame_ids::bigint[]) AND a.source = @source AND a.status = 'proposed'
+RETURNING a.track_id;
 
 -- name: DeleteEmptyTracks :exec
 DELETE FROM tracks t

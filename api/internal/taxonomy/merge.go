@@ -328,6 +328,9 @@ func (s *Service) MergeLabelTypes(ctx context.Context, req *krillv1.MergeLabelTy
 	if err := q.MergeRejectedPrelabels(ctx, db.MergeRejectedPrelabelsParams{SourceID: in.source.ID, TargetID: in.target.ID}); err != nil {
 		return nil, rpc.Internal(err, "move rejected proposals")
 	}
+	if err := q.MergeProposedLabelTypes(ctx, db.MergeProposedLabelTypesParams{SourceID: in.source.ID, TargetID: in.target.ID}); err != nil {
+		return nil, rpc.Internal(err, "move proposed classes")
+	}
 	gold, err := q.MergeGoldFrames(ctx, db.MergeGoldFramesParams{SourceID: in.source.ID, TargetID: in.target.ID, Mapping: mapping})
 	if err != nil {
 		return nil, rpc.Internal(err, "rewrite gold frames")

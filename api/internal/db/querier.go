@@ -52,6 +52,7 @@ type Querier interface {
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreatePrelabelRun(ctx context.Context, arg CreatePrelabelRunParams) (PrelabelRun, error)
+	CreatePrelabelTrack(ctx context.Context, arg CreatePrelabelTrackParams) (int64, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateStorageScan(ctx context.Context, createdBy pgtype.UUID) (int64, error)
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
@@ -296,6 +297,7 @@ type Querier interface {
 	// Rewrites the copied boxes the same way as MergeTracks, so the key keeps
 	// matching what labelers will draw.
 	MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams) (int64, error)
+	MergeProposedLabelTypes(ctx context.Context, arg MergeProposedLabelTypesParams) error
 	MergeRejectedPrelabels(ctx context.Context, arg MergeRejectedPrelabelsParams) error
 	// @mapping is {"source attribute": {"source option": ["target attribute",
 	// "target option"]}}. Values without a mapping are dropped.
