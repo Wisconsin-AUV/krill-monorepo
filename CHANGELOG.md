@@ -21,10 +21,18 @@ All notable changes to this project are documented here. The format follows
 - A labelers page shows each person's frames, drawn boxes, proposals kept and rejected, how often reviewers corrected their frames, active time, and gold accuracy for a day, week, month, or all time, with trends per person.
 - A coverage page counts verified and proposed boxes per label type and video, leaves held-out test videos out of the totals, and flags label types with few boxes or few videos.
 - A stuck clips page lists claimed clips nobody has edited for a few days, `KRILL_STUCK_CLAIM_DAYS` by default, and releases them back to the queue.
+- Invite links with a role, a number of uses, and an expiry, which work while sign-up is closed and with Sign in with Slack. Admins can email the link, see who used it, and revoke it.
+- Pre-approved emails can sign up once with a set role, whatever the sign-up settings.
+- Admins can deactivate an account, which signs it out everywhere, blocks every way of signing in, and frees its clips. Its labels keep its name.
+- Admins can email a user a password reset code.
+- Admins can merge two accounts that belong to the same person. A preview shows what moves, and the kept account gets the other's sign-in methods and the higher role.
+- Each user has a page in the admin panel with their sessions and history.
+- A sessions page shows who is signed in, from which browser and address, and when they were last active, and revokes any session. Everyone can see and revoke their own sessions on the Account page.
 
 ### Changed
 
 - Users moved from the top bar into the admin panel, and `/users` redirects there.
+- Disabling a user is now called deactivating, and also frees the clips they were working on.
 - The version moved from the top bar into the help menu.
 - An empty `KRILL_` variable now counts as unset. To accept any email domain from the environment, set `KRILL_EMAIL_VERIFICATION=off`.
 - Docker Compose no longer fills in defaults for settings the admin panel can change.

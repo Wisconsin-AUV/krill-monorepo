@@ -1,4 +1,3 @@
-import type { JsonObject, JsonValue } from '@bufbuild/protobuf'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useInfiniteQuery, useQuery } from '@connectrpc/connect-query'
 import { useState } from 'react'
@@ -18,29 +17,10 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { AuditService, type AuditEntry } from '@/gen/krill/v1/audit_pb'
+import { summarize } from '@/lib/audit'
 import { formatRelative } from '@/lib/format'
 
 const fullDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' })
-
-function show(v: JsonValue | undefined): string {
-  if (v === null || v === undefined || v === '') return '—'
-  if (Array.isArray(v)) return v.map(show).join(', ')
-  if (typeof v === 'object') return JSON.stringify(v)
-  return String(v)
-}
-
-function summarize(details: JsonObject | undefined): string {
-  if (!details) return ''
-  const parts: string[] = []
-  if ('from' in details || 'to' in details)
-    parts.push(`${show(details.from)} → ${show(details.to)}`)
-  for (const [key, value] of Object.entries(details)) {
-    if (key === 'from' || key === 'to') continue
-    if (value === true) parts.push(key)
-    else parts.push(`${key}: ${show(value)}`)
-  }
-  return parts.join(' · ')
-}
 
 // Each group's prefix option lists every action in it.
 function actionGroups(actions: string[]) {

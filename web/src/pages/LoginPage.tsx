@@ -224,7 +224,7 @@ export function LoginPage() {
             </motion.div>
           )}
         </AnimatePresence>
-        {data?.signupEnabled && !onPasswordStep && (
+        {(data?.signupEnabled || data?.approvedSignupOpen) && !onPasswordStep && (
           <Text className="text-center">
             Don’t have an account?{' '}
             <TextLink to={withNext('/register', params)}>

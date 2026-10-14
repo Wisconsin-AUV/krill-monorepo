@@ -119,6 +119,23 @@ export const router = createBrowserRouter([
                     lazy: () =>
                       import('@/admin/UsersPage').then((m) => ({ Component: m.UsersPage })),
                   },
+                  {
+                    path: 'users/:id',
+                    lazy: () =>
+                      import('@/admin/UserDetailPage').then((m) => ({
+                        Component: m.UserDetailPage,
+                      })),
+                  },
+                  {
+                    path: 'invites',
+                    lazy: () =>
+                      import('@/admin/InvitesPage').then((m) => ({ Component: m.InvitesPage })),
+                  },
+                  {
+                    path: 'sessions',
+                    lazy: () =>
+                      import('@/admin/SessionsPage').then((m) => ({ Component: m.SessionsPage })),
+                  },
                 ],
               },
               { path: '*', element: <NotFound /> },

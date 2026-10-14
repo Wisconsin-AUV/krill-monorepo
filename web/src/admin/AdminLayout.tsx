@@ -7,10 +7,12 @@ import {
   EnvelopeIcon,
   TableCellsIcon,
   ClipboardDocumentListIcon,
+  ComputerDesktopIcon,
   CpuChipIcon,
   Cog6ToothIcon,
   HomeIcon,
   QuestionMarkCircleIcon,
+  TicketIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
 import { Navigate, Outlet, useLocation } from 'react-router'
@@ -69,6 +71,18 @@ const sections = [
     heading: 'People',
     items: [
       { label: 'Users', to: '/admin/users', icon: UsersIcon, permission: Permission.MANAGE_USERS },
+      {
+        label: 'Invites',
+        to: '/admin/invites',
+        icon: TicketIcon,
+        permission: Permission.MANAGE_USERS,
+      },
+      {
+        label: 'Sessions',
+        to: '/admin/sessions',
+        icon: ComputerDesktopIcon,
+        permission: Permission.MANAGE_USERS,
+      },
       {
         label: 'Audit log',
         to: '/admin/audit',
