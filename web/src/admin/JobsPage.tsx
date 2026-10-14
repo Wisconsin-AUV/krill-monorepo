@@ -51,6 +51,15 @@ const jobKinds: Record<string, string> = {
   track: 'Tracking',
   exemplar: 'Similar objects',
   export: 'Export',
+  train: 'Training',
+  prelabel: 'Pre-label',
+  retrain_schedule: 'Scheduled retrain',
+  backup: 'Backup',
+  backup_schedule: 'Scheduled backup',
+  storage_scan: 'Storage scan',
+  storage_cleanup: 'Storage cleanup',
+  purge_objects: 'Delete files',
+  auto_purge_trash: 'Empty old trash',
 }
 
 const states: { state: JobState; param: string; label: string; color: BadgeColor }[] = [
