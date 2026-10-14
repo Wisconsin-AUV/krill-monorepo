@@ -20,7 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
-import { Text } from '@/components/ui/Text'
 import { StatsService, type LeaderboardEntry } from '@/gen/krill/v1/stats_pb'
 import { initials, useUser } from '@/lib/auth'
 import { formatNumber, plural } from '@/lib/format'
@@ -89,13 +88,7 @@ export function LeaderboardPage() {
   return (
     <PageContentBlock title="Leaderboard · Krill">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Heading>Leaderboard</Heading>
-          <Text className="mt-1">
-            One point per box drawn and per frame marked done. Deleted boxes and reopened frames
-            don't count.
-          </Text>
-        </div>
+        <Heading>Leaderboard</Heading>
         <SegmentedTabs
           options={periods}
           value={period.key}

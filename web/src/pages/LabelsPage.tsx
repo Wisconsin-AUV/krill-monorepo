@@ -83,10 +83,7 @@ export function LabelsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Heading>Labels</Heading>
-          <Text className="mt-1">
-            Object types and their track attributes. Press 1 to 9 while labeling to pick a type in
-            this order.
-          </Text>
+          <Text className="mt-1">Press 1 to 9 while labeling to pick a type.</Text>
         </div>
         {types.length > 0 && (
           <Button color="sky" onClick={() => setEditing('new')}>

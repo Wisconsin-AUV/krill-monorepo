@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/Dialog'
-import { Description, Field, FieldGroup, Label } from '@/components/ui/Fieldset'
+import { Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { formatBytes } from '@/lib/format'
@@ -62,10 +62,7 @@ export function UploadDialog({ open, onClose }: { open: boolean; onClose: () => 
     <Dialog open={open} onClose={close} size="xl">
       <form onSubmit={submit}>
         <DialogTitle>Upload videos</DialogTitle>
-        <DialogDescription>
-          Frames are extracted and split into 10 to 20 second clips. Uploads keep going if you leave
-          this page.
-        </DialogDescription>
+        <DialogDescription>Uploads keep going if you leave this page.</DialogDescription>
         <DialogBody>
           <FieldGroup>
             <button
@@ -138,10 +135,6 @@ export function UploadDialog({ open, onClose }: { open: boolean; onClose: () => 
 
             <Field>
               <Label>Extraction rate</Label>
-              <Description>
-                Lower rates save storage when the camera moves slowly. Export can stride further
-                later.
-              </Description>
               <Select value={fps} onChange={(e) => setFps(Number(e.target.value))}>
                 {extractFpsOptions.map((o) => (
                   <option key={o.value} value={o.value}>

@@ -29,7 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
-import { Text } from '@/components/ui/Text'
 import { ExportService, ExportStatus, type Export } from '@/gen/krill/v1/export_pb'
 import { formatBytes, formatNumber, formatRelative } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -102,12 +101,7 @@ export function ExportsPage() {
   return (
     <PageContentBlock title="Exports · Krill">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Heading>Exports</Heading>
-          <Text className="mt-1">
-            Versioned YOLO datasets built from frames marked labeled or empty.
-          </Text>
-        </div>
+        <Heading>Exports</Heading>
         <Button color="sky" onClick={() => setCreating(true)}>
           <PlusIcon data-slot="icon" />
           New export

@@ -35,7 +35,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
-import { Text } from '@/components/ui/Text'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
 import { initials, useRoles, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
@@ -118,10 +117,6 @@ export function UsersPage() {
   return (
     <PageContentBlock title="Users · Krill">
       <Heading>Users</Heading>
-      <Text className="mt-1">
-        Each role has everything the role below it has. Everyone can see what their role allows on
-        their Account page.
-      </Text>
 
       {isPending ? (
         <div className="flex justify-center py-16">
