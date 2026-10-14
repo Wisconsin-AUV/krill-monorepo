@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format follows
 - A test email can be sent from the settings page.
 - A help menu in the top bar lists what's new and opens the changelog in the app, with a dot until you've seen the latest release.
 - An audit log in the admin panel records who changed users, settings, videos, clips, label types, exports, gold frames, and reviews, and when. Secret settings are logged as changed without their value.
+- A labelers page shows each person's frames, drawn boxes, proposals kept and rejected, how often reviewers corrected their frames, active time, and gold accuracy for a day, week, month, or all time, with trends per person.
+- A coverage page counts verified and proposed boxes per label type and video, leaves held-out test videos out of the totals, and flags label types with few boxes or few videos.
+- A stuck clips page lists claimed clips nobody has edited for a few days, `KRILL_STUCK_CLAIM_DAYS` by default, and releases them back to the queue.
 
 ### Changed
 

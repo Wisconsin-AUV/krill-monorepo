@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+
+// InsightService shows admins how labeling is going: who labels how much and
+// how well, which classes are thin, and which claimed clips have stalled.
+service InsightService {
+  rpc GetLabelerStats(GetLabelerStatsRequest) returns (GetLabelerStatsResponse) {}
+  rpc GetLabelerTrend(GetLabelerTrendRequest) returns (GetLabelerTrendResponse) {}
+  rpc GetCoverage(GetCoverageRequest) returns (GetCoverageResponse) {}
+  // ListStuckClips lists unfinished clips whose claimant hasn't edited them
+  // for idle_days, longest idle first.
+  rpc ListStuckClips(ListStuckClipsRequest) returns (ListStuckClipsResponse) {}
+  // ReleaseStuckClips drops the claims so the queue hands the clips out
+  // again. Claims that were used again since they were listed are kept.
+  rpc ReleaseStuckClips(ReleaseStuckClipsRequest) returns (ReleaseStuckClipsResponse) {}
+}
+
+message GetLabelerStatsRequest {
+  Period period = 1;
+  // See GetLeaderboardRequest.time_zone.
+  string time_zone = 2;
+}
+
+// ProposalCounts is what a labeler did with the boxes a model proposed.
+message ProposalCounts {
+  // sam, yolo, or cv.
+  string source = 1;
+  // Kept as proposed.
+  int64 accepted = 2;
+  // Moved or resized before keeping.
+  int64 edited = 3;
+  // Deleted.
+  int64 rejected = 4;
+}
+
+message LabelerStats {
+  Profile user = 1;
+  int64 frames_labeled = 2;
+  int64 frames_empty = 3;
+  // Boxes they drew themselves.
+  int64 boxes_drawn = 4;
+  repeated ProposalCounts proposals = 5;
+  // Frames they marked in the period, including ones a correction has since
+  // reopened.
+  int64 frames_marked = 6;
+  // Of frames_marked, those where someone else later added, moved, deleted,
+  // or relabeled a box.
+  int64 frames_corrected = 7;
+  int64 boxes_corrected = 8;
+  // Time spent labeling, with idle gaps capped.
+  double active_seconds = 9;
+}
+
+message GetLabelerStatsResponse {
+  // Only users who did something in the period.
+  repeated LabelerStats labelers = 1;
+  // Unset for PERIOD_ALL_TIME.
+  google.protobuf.Timestamp since = 2;
+}
+
+message GetLabelerTrendRequest {
+  string user_id = 1;
+  Period period = 2;
+  string time_zone = 3;
+}
+
+enum TrendBucket {
+  TREND_BUCKET_UNSPECIFIED = 0;
+  TREND_BUCKET_HOUR = 1;
+  TREND_BUCKET_DAY = 2;
+  TREND_BUCKET_WEEK = 3;
+}
+
+message TrendPoint {
+  google.protobuf.Timestamp start = 1;
+  int64 frames = 2;
+  int64 boxes_drawn = 3;
+  int64 proposals_kept = 4;
+  int64 frames_corrected = 5;
+  double active_seconds = 6;
+}
+
+message CorrectionCount {
+  // added, moved, deleted, or relabeled.
+  string kind = 1;
+  int64 boxes = 2;
+}
+
+message GetLabelerTrendResponse {
+  Profile user = 1;
+  TrendBucket bucket = 2;
+  // Every bucket from the start of the period, or the user's first activity,
+  // to now.
+  repeated TrendPoint points = 3;
+  // Corrections to frames they marked in the period.
+  repeated CorrectionCount corrections = 4;
+}
+
+message GetCoverageRequest {}
+
+message CoverageVideo {
+  int64 id = 1;
+  string name = 2;
+  // auto, train, val, or test.
+  string split = 3;
+  // Held-out test footage, left out of the label type totals.
+  bool held_out = 4;
+  int32 frames = 5;
+  int32 labeled = 6;
+  int32 empty = 7;
+  int32 unlabeled = 8;
+}
+
+message CoverageCell {
+  int64 video_id = 1;
+  int64 label_type_id = 2;
+  int64 verified = 3;
+  int64 proposed = 4;
+  // Frames with a verified box of the type.
+  int64 frames = 5;
+}
+
+message CoverageLabelType {
+  int64 id = 1;
+  string name = 2;
+  string color = 3;
+  // Totals over videos that aren't held out.
+  int64 verified = 4;
+  int64 proposed = 5;
+  int64 frames = 6;
+  int32 videos = 7;
+  int64 held_out_verified = 8;
+  int32 held_out_videos = 9;
+  // Below GetCoverageResponse.min_boxes or min_videos.
+  bool few_boxes = 10;
+  bool few_videos = 11;
+}
+
+message GetCoverageResponse {
+  repeated CoverageLabelType label_types = 1;
+  // Newest first.
+  repeated CoverageVideo videos = 2;
+  // Only pairs with at least one box.
+  repeated CoverageCell cells = 3;
+  int32 min_boxes = 4;
+  int32 min_videos = 5;
+}
+
+message ListStuckClipsRequest {
+  // Zero uses KRILL_STUCK_CLAIM_DAYS.
+  int32 idle_days = 1;
+}
+
+message StuckClip {
+  int64 clip_id = 1;
+  int32 clip_index = 2;
+  int64 video_id = 3;
+  string video_name = 4;
+  Profile claimant = 5;
+  // Their last edit.
+  google.protobuf.Timestamp active_at = 6;
+  int32 frame_count = 7;
+  int32 labeled_frames = 8;
+  int32 boxes = 9;
+}
+
+message ListStuckClipsResponse {
+  repeated StuckClip clips = 1;
+  int32 idle_days = 2;
+}
+
+message ReleaseStuckClipsRequest {
+  repeated int64 clip_ids = 1;
+  // The idle_days the clips were listed with.
+  int32 idle_days = 2;
+}
+
+message ReleaseStuckClipsResponse {
+  int32 released = 1;
+}

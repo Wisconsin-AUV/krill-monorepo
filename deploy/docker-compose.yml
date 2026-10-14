@@ -60,6 +60,7 @@ services:
       KRILL_GOLD_REVIEW_THRESHOLD: ${KRILL_GOLD_REVIEW_THRESHOLD:-}
       KRILL_GOLD_REVIEW_MIN_ATTEMPTS: ${KRILL_GOLD_REVIEW_MIN_ATTEMPTS:-}
       KRILL_UPDATE_CHECK: ${KRILL_UPDATE_CHECK:-}
+      KRILL_STUCK_CLAIM_DAYS: ${KRILL_STUCK_CLAIM_DAYS:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }

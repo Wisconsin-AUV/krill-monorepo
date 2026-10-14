@@ -2,6 +2,9 @@ import { useQuery } from '@connectrpc/connect-query'
 import { CloseButton } from '@headlessui/react'
 import {
   ArrowLeftIcon,
+  ChartBarIcon,
+  ClockIcon,
+  TableCellsIcon,
   ClipboardDocumentListIcon,
   CpuChipIcon,
   Cog6ToothIcon,
@@ -63,6 +66,29 @@ const sections = [
         label: 'Audit log',
         to: '/admin/audit',
         icon: ClipboardDocumentListIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'Labeling',
+    items: [
+      {
+        label: 'Labelers',
+        to: '/admin/labelers',
+        icon: ChartBarIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Coverage',
+        to: '/admin/coverage',
+        icon: TableCellsIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Stuck clips',
+        to: '/admin/stuck',
+        icon: ClockIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
     ],

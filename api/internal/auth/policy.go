@@ -122,4 +122,10 @@ var policy = map[string]krillv1.Permission{
 
 	krillv1connect.AuditServiceListAuditLogProcedure:     manageSystem,
 	krillv1connect.AuditServiceListAuditFiltersProcedure: manageSystem,
+
+	krillv1connect.InsightServiceGetLabelerStatsProcedure:   manageSystem,
+	krillv1connect.InsightServiceGetLabelerTrendProcedure:   manageSystem,
+	krillv1connect.InsightServiceGetCoverageProcedure:       manageSystem,
+	krillv1connect.InsightServiceListStuckClipsProcedure:    manageSystem,
+	krillv1connect.InsightServiceReleaseStuckClipsProcedure: manageSystem,
 }

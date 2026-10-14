@@ -127,7 +127,11 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 		}
 	}
 	if b := args.Box; b != nil {
-		_, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
+		err := recordBoxEvents(ctx, q, auth.CallerID(ctx), track.ID, &frame.ID, opSet, rect{b.X, b.Y, b.Width, b.Height})
+		if err != nil {
+			return nil, rpc.Internal(err, "save box")
+		}
+		_, err = q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 			TrackID: track.ID, FrameID: frame.ID, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, UserID: auth.CallerID(ctx),
 		})
 		if err != nil {

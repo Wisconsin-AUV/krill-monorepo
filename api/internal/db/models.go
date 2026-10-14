@@ -40,6 +40,19 @@ type AuditLog struct {
 	Ip         string             `json:"ip"`
 }
 
+type BoxEvent struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	FrameID     int64              `json:"frame_id"`
+	TrackID     int64              `json:"track_id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Source      string             `json:"source"`
+	LabelerID   pgtype.UUID        `json:"labeler_id"`
+	MarkedAt    pgtype.Timestamptz `json:"marked_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Clip struct {
 	ID         int64              `json:"id"`
 	VideoID    int64              `json:"video_id"`

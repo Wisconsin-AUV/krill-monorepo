@@ -67,6 +67,9 @@ type Config struct {
 	GoldReviewMinAttempts int
 	// UpdateCheck has the API look up the latest release on GitHub.
 	UpdateCheck bool
+	// StuckClaimDays is how long a claimed clip goes without edits before the
+	// admin panel lists it as stuck.
+	StuckClaimDays int
 }
 
 // Lookup returns a setting's raw value, or false when nothing sets it and
@@ -128,6 +131,7 @@ func Parse(lookup Lookup) (Config, error) {
 		GoldReviewThreshold:   p.float("KRILL_GOLD_REVIEW_THRESHOLD"),
 		GoldReviewMinAttempts: p.int("KRILL_GOLD_REVIEW_MIN_ATTEMPTS"),
 		UpdateCheck:           p.bool("KRILL_UPDATE_CHECK"),
+		StuckClaimDays:        p.int("KRILL_STUCK_CLAIM_DAYS"),
 	}
 	if p.err != nil {
 		return Config{}, p.err
@@ -155,6 +159,9 @@ func (c Config) validate() error {
 	}
 	if c.GoldReviewMinAttempts < 1 {
 		return invalid("KRILL_GOLD_REVIEW_MIN_ATTEMPTS", "must be at least 1")
+	}
+	if c.StuckClaimDays < 1 {
+		return invalid("KRILL_STUCK_CLAIM_DAYS", "must be at least 1")
 	}
 	if strings.HasPrefix(c.PublicURL, "https://") && !strings.HasPrefix(c.S3PublicEndpoint, "https://") {
 		return invalid("KRILL_S3_PUBLIC_ENDPOINT", "must be HTTPS when KRILL_PUBLIC_URL is")

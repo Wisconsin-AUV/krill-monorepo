@@ -26,6 +26,8 @@ type Querier interface {
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
+	CoverageCells(ctx context.Context) ([]CoverageCellsRow, error)
+	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
@@ -92,6 +94,7 @@ type Querier interface {
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
 	InsertAuditEntry(ctx context.Context, arg InsertAuditEntryParams) error
+	InsertBoxEvents(ctx context.Context, arg InsertBoxEventsParams) error
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
@@ -99,12 +102,27 @@ type Querier interface {
 	// keep_live, a code that has not expired and went to the same address is kept.
 	// No row means nothing was issued.
 	IssueEmailCode(ctx context.Context, arg IssueEmailCodeParams) (pgtype.Timestamptz, error)
+	// See activeGapCap in internal/insight for how this counts.
+	LabelerActiveSeconds(ctx context.Context, arg LabelerActiveSecondsParams) ([]LabelerActiveSecondsRow, error)
+	LabelerBoxesDrawn(ctx context.Context, since pgtype.Timestamptz) ([]LabelerBoxesDrawnRow, error)
+	LabelerCorrectionKinds(ctx context.Context, arg LabelerCorrectionKindsParams) ([]LabelerCorrectionKindsRow, error)
+	// Corrections count against the period the frame was marked in, not when the
+	// fix happened. A frame a correction reopened is no longer credited to its
+	// labeler, so it is added back to the frames they marked.
+	LabelerCorrections(ctx context.Context, since pgtype.Timestamptz) ([]LabelerCorrectionsRow, error)
+	LabelerFrameCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerFrameCountsRow, error)
+	LabelerProposalCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerProposalCountsRow, error)
+	LabelerTrend(ctx context.Context, arg LabelerTrendParams) ([]LabelerTrendRow, error)
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
 	ListAuditActions(ctx context.Context) ([]string, error)
 	ListAuditActors(ctx context.Context) ([]User, error)
 	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
+	// Every box of the track, or only the one on frame_id when it is set, with
+	// its frame's status. A frame with no box of the track comes back with the
+	// box columns null when frame_id is set.
+	ListBoxStates(ctx context.Context, arg ListBoxStatesParams) ([]ListBoxStatesRow, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
@@ -132,11 +150,13 @@ type Querier interface {
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
+	ListStuckClips(ctx context.Context, idleBefore pgtype.Timestamptz) ([]ListStuckClipsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
 	// Each track comes with its first verified box, or its middle box when none
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
+	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
@@ -156,8 +176,13 @@ type Querier interface {
 	ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
+	// Run before AcceptFrameProposals.
+	RecordAcceptedProposals(ctx context.Context, arg RecordAcceptedProposalsParams) error
 	RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	// Only claims still idle since idle_before go, so a claimant who came back
+	// after the list loaded keeps their clip.
+	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
 	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error

@@ -89,6 +89,21 @@ export const router = createBrowserRouter([
                     lazy: () =>
                       import('@/admin/AuditPage').then((m) => ({ Component: m.AuditPage })),
                   },
+                  {
+                    path: 'labelers',
+                    lazy: () =>
+                      import('@/admin/LabelersPage').then((m) => ({ Component: m.LabelersPage })),
+                  },
+                  {
+                    path: 'coverage',
+                    lazy: () =>
+                      import('@/admin/CoveragePage').then((m) => ({ Component: m.CoveragePage })),
+                  },
+                  {
+                    path: 'stuck',
+                    lazy: () =>
+                      import('@/admin/StuckPage').then((m) => ({ Component: m.StuckPage })),
+                  },
                 ],
               },
               {

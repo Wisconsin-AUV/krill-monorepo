@@ -116,6 +116,9 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 	if err != nil {
 		return nil, rpc.Internal(err, "create track")
 	}
+	if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), track.ID, &frame.ID, opSet, rect{x, y, w, h}); err != nil {
+		return nil, rpc.Internal(err, "create box")
+	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, UserID: auth.CallerID(ctx),
 	})
@@ -171,9 +174,23 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 		return nil, rpc.Internal(err, "encode attributes")
 	}
 
-	updated, err := s.q.UpdateTrack(ctx, db.UpdateTrackParams{ID: track.ID, LabelTypeID: labelTypeID, Attributes: raw})
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	if labelTypeID != track.LabelTypeID {
+		if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), track.ID, nil, opRelabel, rect{}); err != nil {
+			return nil, rpc.Internal(err, "update track")
+		}
+	}
+	updated, err := q.UpdateTrack(ctx, db.UpdateTrackParams{ID: track.ID, LabelTypeID: labelTypeID, Attributes: raw})
 	if err != nil {
 		return nil, rpc.DBError(err, "track")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, updated.ClipID)
 	out, err := Track(updated)
@@ -184,9 +201,21 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 }
 
 func (s *Service) DeleteTrack(ctx context.Context, req *krillv1.DeleteTrackRequest) (*krillv1.DeleteTrackResponse, error) {
-	clipID, err := s.q.DeleteTrack(ctx, req.GetId())
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), req.GetId(), nil, opDelete, rect{}); err != nil {
+		return nil, rpc.Internal(err, "delete track")
+	}
+	clipID, err := q.DeleteTrack(ctx, req.GetId())
 	if err != nil {
 		return nil, rpc.DBError(err, "track")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, clipID)
 	return &krillv1.DeleteTrackResponse{}, nil
@@ -217,16 +246,29 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	if err != nil {
 		return nil, err
 	}
-	ann, err := s.q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: req.GetTrackId(), FrameID: req.GetFrameId(), X: x, Y: y, Width: w, Height: h,
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	frameID := req.GetFrameId()
+	if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), req.GetTrackId(), &frameID, opSet, rect{x, y, w, h}); err != nil {
+		return nil, rpc.Internal(err, "save box")
+	}
+	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
+		TrackID: req.GetTrackId(), FrameID: frameID, X: x, Y: y, Width: w, Height: h,
 		UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "save box")
 	}
 	// A frame marked empty that now has a box needs to be confirmed again.
-	if err := s.q.ClearEmptyFrame(ctx, req.GetFrameId()); err != nil {
+	if err := q.ClearEmptyFrame(ctx, frameID); err != nil {
 		return nil, rpc.Internal(err, "update frame status")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, clipID)
 	return &krillv1.SetBoxResponse{Annotation: Annotation(ann)}, nil
@@ -240,7 +282,11 @@ func (s *Service) DeleteBox(ctx context.Context, req *krillv1.DeleteBoxRequest) 
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
 
-	clipID, err := q.DeleteAnnotation(ctx, db.DeleteAnnotationParams{TrackID: req.GetTrackId(), FrameID: req.GetFrameId()})
+	frameID := req.GetFrameId()
+	if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), req.GetTrackId(), &frameID, opDelete, rect{}); err != nil {
+		return nil, rpc.Internal(err, "delete box")
+	}
+	clipID, err := q.DeleteAnnotation(ctx, db.DeleteAnnotationParams{TrackID: req.GetTrackId(), FrameID: frameID})
 	if err != nil {
 		return nil, rpc.DBError(err, "box")
 	}
@@ -276,16 +322,28 @@ func (s *Service) CopyBoxes(ctx context.Context, req *krillv1.CopyBoxesRequest) 
 	if trackIDs == nil {
 		trackIDs = []int64{}
 	}
-	rows, err := s.q.CopyAnnotations(ctx, db.CopyAnnotationsParams{
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	rows, err := q.CopyAnnotations(ctx, db.CopyAnnotationsParams{
 		FromFrameID: from.ID, ToFrameID: to.ID, TrackIds: trackIDs, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "copy boxes")
 	}
 	if len(rows) > 0 {
-		if err := s.q.ClearEmptyFrame(ctx, to.ID); err != nil {
+		if err := recordCopies(ctx, q, auth.CallerID(ctx), to, rows); err != nil {
+			return nil, rpc.Internal(err, "copy boxes")
+		}
+		if err := q.ClearEmptyFrame(ctx, to.ID); err != nil {
 			return nil, rpc.Internal(err, "update frame status")
 		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	s.claim(ctx, to.ClipID)
 	out := make([]*krillv1.Annotation, len(rows))
@@ -323,7 +381,11 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 		return nil, rpc.DBError(err, "frame")
 	}
 	if status == "labeled" {
-		err := q.AcceptFrameProposals(ctx, db.AcceptFrameProposalsParams{FrameID: req.GetFrameId(), UserID: auth.CallerID(ctx)})
+		err := q.RecordAcceptedProposals(ctx, db.RecordAcceptedProposalsParams{FrameID: req.GetFrameId(), UserID: auth.CallerID(ctx)})
+		if err != nil {
+			return nil, rpc.Internal(err, "accept proposals")
+		}
+		err = q.AcceptFrameProposals(ctx, db.AcceptFrameProposalsParams{FrameID: req.GetFrameId(), UserID: auth.CallerID(ctx)})
 		if err != nil {
 			return nil, rpc.Internal(err, "accept proposals")
 		}

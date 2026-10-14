@@ -16,6 +16,7 @@ import (
 
 const (
 	ClipDelete      = "clip.delete"
+	ClipRelease     = "clip.release"
 	ClipTake        = "clip.take"
 	ExportDelete    = "export.delete"
 	GoldSet         = "gold.set"
