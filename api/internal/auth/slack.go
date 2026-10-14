@@ -44,6 +44,7 @@ type Slack struct {
 	cookies Cookies
 	client  *http.Client
 	baseURL string
+	tests   *slackTests
 }
 
 func NewSlack(pool *pgxpool.Pool, cfg func() SlackConfig, cookies Cookies) *Slack {
@@ -54,6 +55,7 @@ func NewSlack(pool *pgxpool.Pool, cfg func() SlackConfig, cookies Cookies) *Slac
 		cookies: cookies,
 		client:  &http.Client{Timeout: 10 * time.Second},
 		baseURL: "https://slack.com",
+		tests:   newSlackTests(),
 	}
 }
 
@@ -82,6 +84,10 @@ func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	state := base64.RawURLEncoding.EncodeToString(raw)
 	http.SetCookie(w, s.stateCookie(state, 600))
+	http.Redirect(w, r, s.authorizeURL(cfg, state), http.StatusFound)
+}
+
+func (s *Slack) authorizeURL(cfg SlackConfig, state string) string {
 	q := url.Values{
 		"response_type": {"code"},
 		"scope":         {"openid profile email"},
@@ -90,12 +96,16 @@ func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
 		"team":          {cfg.TeamID},
 		"redirect_uri":  {cfg.redirectURL()},
 	}
-	http.Redirect(w, r, s.baseURL+"/openid/connect/authorize?"+q.Encode(), http.StatusFound)
+	return s.baseURL + "/openid/connect/authorize?" + q.Encode()
 }
 
 // Callback finishes sign-in and redirects to the app, or to the login page
 // with an error message.
 func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
+	if id, ok := s.tests.take(r.URL.Query().Get("state")); ok {
+		s.finishTest(w, r, id)
+		return
+	}
 	fail := func(msg string) { signInError(w, r, msg) }
 	http.SetCookie(w, s.stateCookie("", -1))
 	cfg := s.cfg()
@@ -165,6 +175,7 @@ type slackIdentity struct {
 	Error         string `json:"error"`
 	Sub           string `json:"sub"`
 	TeamID        string `json:"https://slack.com/team_id"`
+	TeamName      string `json:"https://slack.com/team_name"`
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
@@ -194,7 +205,7 @@ func (s *Slack) identity(ctx context.Context, cfg SlackConfig, code string) (sla
 		return slackIdentity{}, fmt.Errorf("exchange code: %w", err)
 	}
 	if !token.OK {
-		return slackIdentity{}, fmt.Errorf("exchange code: %s", token.Error)
+		return slackIdentity{}, fmt.Errorf("exchange code: %w", slackError(token.Error))
 	}
 
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, s.baseURL+"/api/openid.connect.userInfo", nil)

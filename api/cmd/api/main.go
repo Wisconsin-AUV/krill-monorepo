@@ -211,6 +211,8 @@ func run() error {
 		Version:    version,
 	}), rpcOpts))
 	mux.Handle(krillv1connect.NewAuditServiceHandler(audit.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewSettingsCheckServiceHandler(admin.NewSettingsCheck(slack, settingsStore,
+		func() email.Sender { return live.Load().auth.Mailer }), rpcOpts))
 	mux.Handle(krillv1connect.NewInsightServiceHandler(insight.NewService(pool, settingsStore), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.

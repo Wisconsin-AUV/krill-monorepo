@@ -123,6 +123,12 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AuditServiceListAuditLogProcedure:     manageSystem,
 	krillv1connect.AuditServiceListAuditFiltersProcedure: manageSystem,
 
+	krillv1connect.SettingsCheckServiceCheckSlackCredentialsProcedure: manageSystem,
+	krillv1connect.SettingsCheckServiceStartSlackTestProcedure:        manageSystem,
+	krillv1connect.SettingsCheckServiceGetSlackTestResultProcedure:    manageSystem,
+	krillv1connect.SettingsCheckServiceListEmailPreviewsProcedure:     manageSystem,
+	krillv1connect.SettingsCheckServiceSendEmailPreviewProcedure:      manageSystem,
+
 	krillv1connect.InsightServiceGetLabelerStatsProcedure:   manageSystem,
 	krillv1connect.InsightServiceGetLabelerTrendProcedure:   manageSystem,
 	krillv1connect.InsightServiceGetCoverageProcedure:       manageSystem,

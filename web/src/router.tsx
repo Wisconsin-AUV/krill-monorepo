@@ -90,6 +90,11 @@ export const router = createBrowserRouter([
                       import('@/admin/AuditPage').then((m) => ({ Component: m.AuditPage })),
                   },
                   {
+                    path: 'emails',
+                    lazy: () =>
+                      import('@/admin/EmailsPage').then((m) => ({ Component: m.EmailsPage })),
+                  },
+                  {
                     path: 'labelers',
                     lazy: () =>
                       import('@/admin/LabelersPage').then((m) => ({ Component: m.LabelersPage })),
