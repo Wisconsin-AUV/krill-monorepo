@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package krill.v1;
 
+import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
+import "krill/v1/system.proto";
 
 // WorkerService is called by the GPU worker. Requests carry the shared worker
 // token instead of a user session.
@@ -19,6 +21,9 @@ service WorkerService {
   // uploaded.
   rpc ReportEmbed(ReportEmbedRequest) returns (ReportEmbedResponse) {}
   rpc FailTask(FailTaskRequest) returns (FailTaskResponse) {}
+  // Heartbeat reports the worker's state every few seconds for the admin
+  // panel. A worker that stops sending them shows as offline.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
 }
 
 message NextTaskRequest {}
@@ -111,3 +116,19 @@ message FailTaskRequest {
 }
 
 message FailTaskResponse {}
+
+message HeartbeatRequest {
+  // Random for each process, so a restarted worker shows as a new one.
+  string instance_id = 1;
+  string hostname = 2;
+  string version = 3;
+  string model = 4;
+  string accelerator = 5;
+  google.protobuf.Timestamp started_at = 6;
+  HostStats host = 7;
+  repeated GpuStats gpus = 8;
+  // The task being worked on, or 0 when idle.
+  int64 task_id = 9;
+}
+
+message HeartbeatResponse {}

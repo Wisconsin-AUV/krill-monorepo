@@ -1,13 +1,16 @@
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import {
+  ArrowRightStartOnRectangleIcon,
+  CheckBadgeIcon,
   EllipsisHorizontalIcon,
   KeyIcon,
   LockClosedIcon,
   LockOpenIcon,
+  MagnifyingGlassIcon,
   TrashIcon,
 } from '@heroicons/react/20/solid'
-import { useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { ConfirmAlert } from '@/components/ConfirmAlert'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Avatar } from '@/components/ui/Avatar'
@@ -24,6 +27,7 @@ import {
 } from '@/components/ui/Dropdown'
 import { Description, Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
+import { Input, InputGroup } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Select } from '@/components/ui/Select'
@@ -36,9 +40,9 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
-import { useRoles, useUser } from '@/lib/auth'
+import { useRoles, useSession, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
-import { formatRelative } from '@/lib/format'
+import { formatRelative, plural } from '@/lib/format'
 import { usePasswordCheck } from '@/lib/password'
 import { invalidateService } from '@/lib/queryClient'
 
@@ -98,14 +102,36 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
 export function UsersPage() {
   const me = useUser()
   const roles = useRoles()
+  // Unverified emails only matter when sign-up checks them with a code.
+  const verifying = useSession().data?.emailVerificationRequired ?? false
   const { data, isPending, error } = useQuery(UserService.method.listUsers, {})
   const [settingPassword, setSettingPassword] = useState<User | null>(null)
   const [deleting, setDeleting] = useState<User | null>(null)
-  const users = data?.users ?? []
+  const [search, setSearch] = useState('')
+  const query = useDeferredValue(search.trim().toLowerCase())
+  const users = (data?.users ?? []).filter(
+    (u) =>
+      !query ||
+      u.name.toLowerCase().includes(query) ||
+      u.username.includes(query) ||
+      u.email.includes(query),
+  )
 
   const update = useMutation(UserService.method.updateUser, {
     onSuccess: () => invalidateService(UserService),
     onError: (err) => flash.error('Could not update user', err),
+  })
+  const signOut = useMutation(UserService.method.signOutUser, {
+    onSuccess: async (_, req) => {
+      await invalidateService(UserService)
+      const u = data?.users.find((x) => x.id === req.id)
+      flash.success('Signed out', `${u?.name ?? 'They'} will need to sign in again.`)
+    },
+    onError: (err) => flash.error('Could not sign out user', err),
+  })
+  const verify = useMutation(UserService.method.markEmailVerified, {
+    onSuccess: () => invalidateService(UserService),
+    onError: (err) => flash.error('Could not verify email', err),
   })
   const remove = useMutation(UserService.method.deleteUser, {
     onSuccess: async () => {
@@ -115,8 +141,22 @@ export function UsersPage() {
   })
 
   return (
-    <PageContentBlock title="Users · Krill">
-      <Heading>Users</Heading>
+    <PageContentBlock title="Users · Admin · Krill">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <Heading>Users</Heading>
+        <div className="w-full sm:max-w-xs">
+          <InputGroup>
+            <MagnifyingGlassIcon data-slot="icon" />
+            <Input
+              type="search"
+              aria-label="Search users"
+              placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
+        </div>
+      </div>
 
       {isPending ? (
         <div className="flex justify-center py-16">
@@ -151,6 +191,7 @@ export function UsersPage() {
                           {u.name}
                           {self && <Badge color="sky">You</Badge>}
                           {u.disabled && <Badge color="red">Disabled</Badge>}
+                          {verifying && !u.emailVerified && <Badge color="amber">Unverified</Badge>}
                         </div>
                         <div className="truncate text-zinc-500 dark:text-zinc-400">{u.email}</div>
                       </div>
@@ -194,6 +235,23 @@ export function UsersPage() {
                             <KeyIcon data-slot="icon" />
                             <DropdownLabel>Set password</DropdownLabel>
                           </DropdownItem>
+                          {verifying && !u.emailVerified && (
+                            <DropdownItem onClick={() => verify.mutate({ id: u.id })}>
+                              <CheckBadgeIcon data-slot="icon" />
+                              <DropdownLabel>Mark email verified</DropdownLabel>
+                            </DropdownItem>
+                          )}
+                          <DropdownItem
+                            onClick={() => signOut.mutate({ id: u.id })}
+                            disabled={u.activeSessions === 0}
+                          >
+                            <ArrowRightStartOnRectangleIcon data-slot="icon" />
+                            <DropdownLabel>
+                              {u.activeSessions > 0
+                                ? `Sign out of ${plural(u.activeSessions, 'session')}`
+                                : 'Not signed in'}
+                            </DropdownLabel>
+                          </DropdownItem>
                           <DropdownItem
                             onClick={() => update.mutate({ id: u.id, disabled: !u.disabled })}
                           >
@@ -217,6 +275,11 @@ export function UsersPage() {
             })}
           </TableBody>
         </Table>
+      )}
+      {!isPending && !error && users.length === 0 && query && (
+        <p className="py-10 text-center text-sm/6 text-zinc-500 dark:text-zinc-400">
+          No users match “{search.trim()}”
+        </p>
       )}
 
       <PasswordDialog user={settingPassword} onClose={() => setSettingPassword(null)} />

@@ -38,7 +38,7 @@ type SlackConfig struct {
 // account whose email was never verified drops its password and sessions,
 // since whoever set them may not own the email.
 type Slack struct {
-	cfg     SlackConfig
+	cfg     func() SlackConfig
 	pool    *pgxpool.Pool
 	q       *db.Queries
 	cookies Cookies
@@ -46,7 +46,7 @@ type Slack struct {
 	baseURL string
 }
 
-func NewSlack(pool *pgxpool.Pool, cfg SlackConfig, cookies Cookies) *Slack {
+func NewSlack(pool *pgxpool.Pool, cfg func() SlackConfig, cookies Cookies) *Slack {
 	return &Slack{
 		cfg:     cfg,
 		pool:    pool,
@@ -57,11 +57,24 @@ func NewSlack(pool *pgxpool.Pool, cfg SlackConfig, cookies Cookies) *Slack {
 	}
 }
 
-func (s *Slack) redirectURL() string {
-	return s.cfg.PublicURL + "/auth/slack/callback"
+func (c SlackConfig) redirectURL() string {
+	return c.PublicURL + "/auth/slack/callback"
 }
 
+func signInError(w http.ResponseWriter, r *http.Request, msg string) {
+	http.Redirect(w, r, "/login?error="+url.QueryEscape(msg), http.StatusFound)
+}
+
+// errSlackOff is shown when an admin turned Slack off after the sign-in page
+// loaded.
+const errSlackOff = "Sign in with Slack is turned off."
+
 func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
+	cfg := s.cfg()
+	if cfg.ClientID == "" {
+		signInError(w, r, errSlackOff)
+		return
+	}
 	raw := make([]byte, 16)
 	if _, err := rand.Read(raw); err != nil {
 		http.Error(w, "could not start sign-in", http.StatusInternalServerError)
@@ -72,10 +85,10 @@ func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
 	q := url.Values{
 		"response_type": {"code"},
 		"scope":         {"openid profile email"},
-		"client_id":     {s.cfg.ClientID},
+		"client_id":     {cfg.ClientID},
 		"state":         {state},
-		"team":          {s.cfg.TeamID},
-		"redirect_uri":  {s.redirectURL()},
+		"team":          {cfg.TeamID},
+		"redirect_uri":  {cfg.redirectURL()},
 	}
 	http.Redirect(w, r, s.baseURL+"/openid/connect/authorize?"+q.Encode(), http.StatusFound)
 }
@@ -83,10 +96,13 @@ func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
 // Callback finishes sign-in and redirects to the app, or to the login page
 // with an error message.
 func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
-	fail := func(msg string) {
-		http.Redirect(w, r, "/login?error="+url.QueryEscape(msg), http.StatusFound)
-	}
+	fail := func(msg string) { signInError(w, r, msg) }
 	http.SetCookie(w, s.stateCookie("", -1))
+	cfg := s.cfg()
+	if cfg.ClientID == "" {
+		fail(errSlackOff)
+		return
+	}
 
 	query := r.URL.Query()
 	if query.Get("error") != "" {
@@ -100,13 +116,13 @@ func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.identity(r.Context(), query.Get("code"))
+	id, err := s.identity(r.Context(), cfg, query.Get("code"))
 	if err != nil {
 		slog.Error("slack sign-in", "err", err)
 		fail("Could not reach Slack. Try again.")
 		return
 	}
-	if id.TeamID != s.cfg.TeamID {
+	if id.TeamID != cfg.TeamID {
 		fail("That Slack workspace can't sign in here.")
 		return
 	}
@@ -156,12 +172,12 @@ type slackIdentity struct {
 
 // identity trades the authorization code for the user's Slack profile. The
 // profile comes straight from Slack over TLS, so the ID token is not needed.
-func (s *Slack) identity(ctx context.Context, code string) (slackIdentity, error) {
+func (s *Slack) identity(ctx context.Context, cfg SlackConfig, code string) (slackIdentity, error) {
 	form := url.Values{
 		"code":          {code},
-		"client_id":     {s.cfg.ClientID},
-		"client_secret": {s.cfg.ClientSecret},
-		"redirect_uri":  {s.redirectURL()},
+		"client_id":     {cfg.ClientID},
+		"client_secret": {cfg.ClientSecret},
+		"redirect_uri":  {cfg.redirectURL()},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.baseURL+"/api/openid.connect.token",
 		strings.NewReader(form.Encode()))

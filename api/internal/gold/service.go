@@ -38,10 +38,10 @@ type Service struct {
 	krillv1connect.UnimplementedGoldServiceHandler
 	q       *db.Queries
 	present *video.Presenter
-	routing review.GoldRouting
+	routing func() review.GoldRouting
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, routing review.GoldRouting) *Service {
+func NewService(pool *pgxpool.Pool, store *storage.Store, routing func() review.GoldRouting) *Service {
 	return &Service{q: db.New(pool), present: video.NewPresenter(store), routing: routing}
 }
 
@@ -195,7 +195,7 @@ func (s *Service) SubmitGoldCheck(ctx context.Context, req *krillv1.SubmitGoldCh
 	}
 	// The attempt is saved, so failing here would only stop the labeler from
 	// seeing their result.
-	if err := s.routing.GoldChecked(ctx, s.q, auth.CallerID(ctx), g.FrameID); err != nil {
+	if err := s.routing().GoldChecked(ctx, s.q, auth.CallerID(ctx), g.FrameID); err != nil {
 		slog.Warn("route frames to review", "user_id", auth.CallerID(ctx), "err", err)
 	}
 	return &krillv1.SubmitGoldCheckResponse{Result: resultToProto(reference, answer, res)}, nil
@@ -233,7 +233,7 @@ func (s *Service) GetGoldStats(ctx context.Context, _ *krillv1.GetGoldStatsReque
 			User:        auth.PublicProfile(l.ID, l.Name, l.Username, l.Role, l.CreatedAt),
 			Attempts:    l.Attempts,
 			Accuracy:    1,
-			NeedsReview: s.routing.Below(l.Attempts, l.RecentScore),
+			NeedsReview: s.routing().Below(l.Attempts, l.RecentScore),
 		}
 		if l.Scored > 0 {
 			g.Accuracy = float64(l.Correct) / float64(l.Scored)

@@ -57,6 +57,17 @@ func SignInCode(to string, c Code) (Message, error) {
 	return render(to, c.Code+" is your Krill sign-in code", "sign-in-code", c)
 }
 
+// Test fills in the template for an email an admin sends to check email works.
+type Test struct {
+	Username string
+	Team     string
+	Year     int
+}
+
+func TestEmail(to string, t Test) (Message, error) {
+	return render(to, "Krill can send email", "test-email", t)
+}
+
 func render(to, subject, name string, data any) (Message, error) {
 	var html, text bytes.Buffer
 	if err := htmlTemplates.ExecuteTemplate(&html, name+".html", data); err != nil {

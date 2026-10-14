@@ -28,8 +28,9 @@ type task struct {
 	frames  map[int64]bool
 	// model is set by ReportEmbed before done is signaled.
 	model atomic.Pointer[string]
-	// picked is closed when a worker takes the task.
-	picked chan struct{}
+	// picked is closed when a worker takes the task, at pickedAt.
+	picked   chan struct{}
+	pickedAt time.Time
 	// progress gets a signal on each report, and done gets the result.
 	progress chan struct{}
 	done     chan error
@@ -132,6 +133,7 @@ func (d *Dispatcher) take() *task {
 		if q := d.pending[p]; len(q) > 0 {
 			t := q[0]
 			d.pending[p] = q[1:]
+			t.pickedAt = time.Now()
 			close(t.picked)
 			if d.hasPending() {
 				d.wake()
@@ -221,4 +223,39 @@ func (d *Dispatcher) get(id int64) (*task, bool) {
 	defer d.mu.Unlock()
 	t, ok := d.running[id]
 	return t, ok
+}
+
+// Queue counts the tasks waiting for a worker.
+func (d *Dispatcher) Queue() (waitingInteractive, waitingBackground int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return len(d.pending[interactive]), len(d.pending[background])
+}
+
+// TaskInfo describes a task a worker is running.
+type TaskInfo struct {
+	ID        int64
+	Kind      string
+	Frames    int
+	StartedAt time.Time
+}
+
+// Running describes task id if a worker has taken it and not finished.
+func (d *Dispatcher) Running(id int64) (TaskInfo, bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	t, ok := d.running[id]
+	if !ok || t.pickedAt.IsZero() {
+		return TaskInfo{}, false
+	}
+	info := TaskInfo{ID: id, StartedAt: t.pickedAt}
+	switch m := t.msg.GetTask().(type) {
+	case *krillv1.NextTaskResponse_Track:
+		info.Kind, info.Frames = "track", len(m.Track.GetFrames())
+	case *krillv1.NextTaskResponse_Exemplar:
+		info.Kind, info.Frames = "exemplar", 1
+	case *krillv1.NextTaskResponse_Embed:
+		info.Kind, info.Frames = "embed", len(m.Embed.GetFrames())
+	}
+	return info, true
 }

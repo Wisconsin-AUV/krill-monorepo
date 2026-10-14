@@ -1,4 +1,8 @@
+import datetime
+
+from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from krill.v1 import annotation_pb2 as _annotation_pb2
+from krill.v1 import system_pb2 as _system_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -132,5 +136,31 @@ class FailTaskRequest(_message.Message):
     def __init__(self, task_id: _Optional[int] = ..., error: _Optional[str] = ...) -> None: ...
 
 class FailTaskResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class HeartbeatRequest(_message.Message):
+    __slots__ = ("instance_id", "hostname", "version", "model", "accelerator", "started_at", "host", "gpus", "task_id")
+    INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
+    HOSTNAME_FIELD_NUMBER: _ClassVar[int]
+    VERSION_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    ACCELERATOR_FIELD_NUMBER: _ClassVar[int]
+    STARTED_AT_FIELD_NUMBER: _ClassVar[int]
+    HOST_FIELD_NUMBER: _ClassVar[int]
+    GPUS_FIELD_NUMBER: _ClassVar[int]
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    instance_id: str
+    hostname: str
+    version: str
+    model: str
+    accelerator: str
+    started_at: _timestamp_pb2.Timestamp
+    host: _system_pb2.HostStats
+    gpus: _containers.RepeatedCompositeFieldContainer[_system_pb2.GpuStats]
+    task_id: int
+    def __init__(self, instance_id: _Optional[str] = ..., hostname: _Optional[str] = ..., version: _Optional[str] = ..., model: _Optional[str] = ..., accelerator: _Optional[str] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., host: _Optional[_Union[_system_pb2.HostStats, _Mapping]] = ..., gpus: _Optional[_Iterable[_Union[_system_pb2.GpuStats, _Mapping]]] = ..., task_id: _Optional[int] = ...) -> None: ...
+
+class HeartbeatResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...

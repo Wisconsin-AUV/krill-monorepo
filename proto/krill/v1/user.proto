@@ -13,6 +13,9 @@ service UserService {
   // SetUserPassword signs the user out everywhere.
   rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) {}
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+  rpc SignOutUser(SignOutUserRequest) returns (SignOutUserResponse) {}
+  // MarkEmailVerified trusts the user's current email without a code.
+  rpc MarkEmailVerified(MarkEmailVerifiedRequest) returns (MarkEmailVerifiedResponse) {}
 }
 
 // Role is ordered: each role has every permission of the roles below it.
@@ -33,6 +36,7 @@ enum Permission {
   PERMISSION_MANAGE_EXPORTS = 4;
   PERMISSION_MANAGE_USERS = 5;
   PERMISSION_REVIEW_LABELS = 6;
+  PERMISSION_MANAGE_SYSTEM = 7;
 }
 
 message RoleInfo {
@@ -64,6 +68,8 @@ message User {
   bool email_verified = 12;
   // A new email waiting for its verification code. Empty when there is none.
   string pending_email = 13;
+  // Signed-in sessions. Only ListUsers sets it.
+  int32 active_sessions = 14;
 }
 
 message ListUsersRequest {}
@@ -95,3 +101,17 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {}
+
+message SignOutUserRequest {
+  string id = 1;
+}
+
+message SignOutUserResponse {}
+
+message MarkEmailVerifiedRequest {
+  string id = 1;
+}
+
+message MarkEmailVerifiedResponse {
+  User user = 1;
+}

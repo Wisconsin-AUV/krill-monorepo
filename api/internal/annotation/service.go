@@ -29,10 +29,10 @@ type Service struct {
 	q       *db.Queries
 	present *video.Presenter
 	jobs    *river.Client[pgx.Tx]
-	gold    review.GoldRouting
+	gold    func() review.GoldRouting
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], gold review.GoldRouting) *Service {
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], gold func() review.GoldRouting) *Service {
 	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), jobs: jobs, gold: gold}
 }
 
@@ -333,7 +333,7 @@ func (s *Service) SetFrameStatus(ctx context.Context, req *krillv1.SetFrameStatu
 	}
 	s.claim(ctx, saved.ClipID)
 	if status != "unlabeled" {
-		if err := s.gold.FrameDone(ctx, s.q, req.GetFrameId(), auth.CallerID(ctx)); err != nil {
+		if err := s.gold().FrameDone(ctx, s.q, req.GetFrameId(), auth.CallerID(ctx)); err != nil {
 			slog.Warn("route frame to review", "frame_id", req.GetFrameId(), "err", err)
 		}
 	}

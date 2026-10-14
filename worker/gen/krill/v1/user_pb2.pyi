@@ -26,6 +26,7 @@ class Permission(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     PERMISSION_MANAGE_EXPORTS: _ClassVar[Permission]
     PERMISSION_MANAGE_USERS: _ClassVar[Permission]
     PERMISSION_REVIEW_LABELS: _ClassVar[Permission]
+    PERMISSION_MANAGE_SYSTEM: _ClassVar[Permission]
 ROLE_UNSPECIFIED: Role
 ROLE_LABELER: Role
 ROLE_DEVELOPER: Role
@@ -37,6 +38,7 @@ PERMISSION_MANAGE_LABEL_TYPES: Permission
 PERMISSION_MANAGE_EXPORTS: Permission
 PERMISSION_MANAGE_USERS: Permission
 PERMISSION_REVIEW_LABELS: Permission
+PERMISSION_MANAGE_SYSTEM: Permission
 
 class RoleInfo(_message.Message):
     __slots__ = ("role", "label")
@@ -57,7 +59,7 @@ class PermissionInfo(_message.Message):
     def __init__(self, permission: _Optional[_Union[Permission, str]] = ..., description: _Optional[str] = ..., role: _Optional[_Union[Role, str]] = ...) -> None: ...
 
 class User(_message.Message):
-    __slots__ = ("id", "name", "username", "email", "role", "disabled", "has_password", "slack_linked", "created_at", "last_login_at", "permissions", "email_verified", "pending_email")
+    __slots__ = ("id", "name", "username", "email", "role", "disabled", "has_password", "slack_linked", "created_at", "last_login_at", "permissions", "email_verified", "pending_email", "active_sessions")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
@@ -71,6 +73,7 @@ class User(_message.Message):
     PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
     EMAIL_VERIFIED_FIELD_NUMBER: _ClassVar[int]
     PENDING_EMAIL_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_SESSIONS_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     username: str
@@ -84,7 +87,8 @@ class User(_message.Message):
     permissions: _containers.RepeatedScalarFieldContainer[Permission]
     email_verified: bool
     pending_email: str
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., username: _Optional[str] = ..., email: _Optional[str] = ..., role: _Optional[_Union[Role, str]] = ..., disabled: _Optional[bool] = ..., has_password: _Optional[bool] = ..., slack_linked: _Optional[bool] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., last_login_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., permissions: _Optional[_Iterable[_Union[Permission, str]]] = ..., email_verified: _Optional[bool] = ..., pending_email: _Optional[str] = ...) -> None: ...
+    active_sessions: int
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., username: _Optional[str] = ..., email: _Optional[str] = ..., role: _Optional[_Union[Role, str]] = ..., disabled: _Optional[bool] = ..., has_password: _Optional[bool] = ..., slack_linked: _Optional[bool] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., last_login_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., permissions: _Optional[_Iterable[_Union[Permission, str]]] = ..., email_verified: _Optional[bool] = ..., pending_email: _Optional[str] = ..., active_sessions: _Optional[int] = ...) -> None: ...
 
 class ListUsersRequest(_message.Message):
     __slots__ = ()
@@ -133,3 +137,25 @@ class DeleteUserRequest(_message.Message):
 class DeleteUserResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class SignOutUserRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class SignOutUserResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MarkEmailVerifiedRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class MarkEmailVerifiedResponse(_message.Message):
+    __slots__ = ("user",)
+    USER_FIELD_NUMBER: _ClassVar[int]
+    user: User
+    def __init__(self, user: _Optional[_Union[User, _Mapping]] = ...) -> None: ...

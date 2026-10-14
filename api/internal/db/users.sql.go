@@ -21,6 +21,35 @@ func (q *Queries) ClearPassword(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const countActiveSessions = `-- name: CountActiveSessions :many
+SELECT user_id, count(*)::int AS sessions FROM sessions WHERE expires_at > now() GROUP BY user_id
+`
+
+type CountActiveSessionsRow struct {
+	UserID   uuid.UUID `json:"user_id"`
+	Sessions int32     `json:"sessions"`
+}
+
+func (q *Queries) CountActiveSessions(ctx context.Context) ([]CountActiveSessionsRow, error) {
+	rows, err := q.db.Query(ctx, countActiveSessions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountActiveSessionsRow
+	for rows.Next() {
+		var i CountActiveSessionsRow
+		if err := rows.Scan(&i.UserID, &i.Sessions); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*)::int FROM users
 `

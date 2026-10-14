@@ -73,7 +73,7 @@ func TestInterceptor(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewLabelServiceHandler(labelStub{},
-		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+		connect.WithInterceptors(NewInterceptor(lookup, workerToken("worker-token")))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -136,7 +136,7 @@ func TestInterceptorWorker(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mux := http.NewServeMux()
 			mux.Handle(krillv1connect.NewWorkerServiceHandler(workerStub{},
-				connect.WithInterceptors(NewInterceptor(lookup, tt.configured))))
+				connect.WithInterceptors(NewInterceptor(lookup, workerToken(tt.configured)))))
 			srv := httptest.NewServer(mux)
 			defer srv.Close()
 
@@ -176,7 +176,7 @@ func TestListTracksByTypeAccess(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotationStub{},
-		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+		connect.WithInterceptors(NewInterceptor(lookup, workerToken("worker-token")))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -225,7 +225,7 @@ func TestInterceptorRequiresVerifiedEmail(t *testing.T) {
 
 	for _, required := range []bool{true, false} {
 		mux := http.NewServeMux()
-		opts := connect.WithInterceptors(NewInterceptor(lookup, "").RequireVerifiedEmail(required))
+		opts := connect.WithInterceptors(NewInterceptor(lookup, workerToken("")).RequireVerifiedEmail(func() bool { return required }))
 		mux.Handle(krillv1connect.NewLabelServiceHandler(labelStub{}, opts))
 		mux.Handle(krillv1connect.NewAuthServiceHandler(authStub{}, opts))
 		srv := httptest.NewServer(mux)
@@ -286,4 +286,8 @@ func TestEveryPermissionIsDefined(t *testing.T) {
 			t.Errorf("%s has no entry in Permissions", name)
 		}
 	}
+}
+
+func workerToken(token string) func() string {
+	return func() string { return token }
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
-import { Role, type Permission, type User } from '@/gen/krill/v1/user_pb'
+import { Permission, Role, type User } from '@/gen/krill/v1/user_pb'
 import { invalidateService } from './queryClient'
 
 export function useSession() {
@@ -13,6 +13,11 @@ export function useUser(): User | undefined {
 
 export function can(user: User | undefined, permission: Permission): boolean {
   return user?.permissions.includes(permission) ?? false
+}
+
+// The admin panel opens for anyone with one of its permissions.
+export function canAdmin(user: User | undefined): boolean {
+  return can(user, Permission.MANAGE_SYSTEM) || can(user, Permission.MANAGE_USERS)
 }
 
 export function useCan(permission: Permission): boolean {

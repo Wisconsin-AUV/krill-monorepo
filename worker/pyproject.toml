@@ -8,10 +8,13 @@ dependencies = [
     "numpy>=1.26",
     "opencv-python-headless>=4.10",
     "protobuf>=5.28",
+    "psutil>=6.0",
 ]
 
 [project.optional-dependencies]
 ml = [
+    # torch reads NVIDIA utilization, temperature, and power through pynvml.
+    "nvidia-ml-py>=12.560",
     "transformers>=4.56",
     "ultralytics>=8.3",
 ]
@@ -25,6 +28,7 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.8",
     "types-protobuf>=5.28",
+    "types-psutil>=6.0",
 ]
 
 [build-system]

@@ -135,6 +135,13 @@ type Session struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
+type Setting struct {
+	Key       string             `json:"key"`
+	Value     string             `json:"value"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
 type Track struct {
 	ID          int64              `json:"id"`
 	ClipID      int64              `json:"clip_id"`

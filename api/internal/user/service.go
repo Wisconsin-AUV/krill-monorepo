@@ -47,9 +47,18 @@ func (s *Service) ListUsers(ctx context.Context, _ *krillv1.ListUsersRequest) (*
 	if err != nil {
 		return nil, rpc.Internal(err, "list users")
 	}
+	counts, err := s.q.CountActiveSessions(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "count sessions")
+	}
+	sessions := make(map[uuid.UUID]int32, len(counts))
+	for _, c := range counts {
+		sessions[c.UserID] = c.Sessions
+	}
 	out := make([]*krillv1.User, len(rows))
 	for i, u := range rows {
 		out[i] = auth.ToProto(u)
+		out[i].ActiveSessions = sessions[u.ID]
 	}
 	return &krillv1.ListUsersResponse{Users: out}, nil
 }
@@ -143,4 +152,27 @@ func (s *Service) DeleteUser(ctx context.Context, req *krillv1.DeleteUserRequest
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
 	}
 	return &krillv1.DeleteUserResponse{}, nil
+}
+
+func (s *Service) SignOutUser(ctx context.Context, req *krillv1.SignOutUserRequest) (*krillv1.SignOutUserResponse, error) {
+	id, err := target(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+	if err := s.q.DeleteUserSessions(ctx, id); err != nil {
+		return nil, rpc.Internal(err, "delete sessions")
+	}
+	return &krillv1.SignOutUserResponse{}, nil
+}
+
+func (s *Service) MarkEmailVerified(ctx context.Context, req *krillv1.MarkEmailVerifiedRequest) (*krillv1.MarkEmailVerifiedResponse, error) {
+	id, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return nil, rpc.Invalid("invalid user id")
+	}
+	u, err := s.q.MarkEmailVerified(ctx, id)
+	if err != nil {
+		return nil, rpc.DBError(err, "user")
+	}
+	return &krillv1.MarkEmailVerifiedResponse{User: auth.ToProto(u)}, nil
 }
