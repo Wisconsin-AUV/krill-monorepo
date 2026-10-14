@@ -1,0 +1,12 @@
+Sign-in code
+
+Enter this code in Krill to sign in as @{{.Username}}:
+
+{{.Code}}
+
+It expires in {{.Minutes}} minutes. To protect your account, don't share it.
+
+Didn't request this?
+This code was requested from {{.IP}} ({{.Device}}) at {{.Time}}. If you didn't try to sign in, you can ignore this email. Nobody can sign in without the code.
+
+© {{.Year}} {{.Team}}

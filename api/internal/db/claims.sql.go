@@ -34,7 +34,7 @@ func (q *Queries) ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, er
 }
 
 const listClipClaims = `-- name: ListClipClaims :many
-SELECT cc.clip_id, cc.active_at, u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at
+SELECT cc.clip_id, cc.active_at, u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at, u.email_verified_at, u.pending_email
 FROM clip_claims cc
 JOIN users u ON u.id = cc.user_id
 WHERE cc.clip_id = ANY($1::bigint[])
@@ -68,6 +68,8 @@ func (q *Queries) ListClipClaims(ctx context.Context, clipIds []int64) ([]ListCl
 			&i.User.Disabled,
 			&i.User.CreatedAt,
 			&i.User.LastLoginAt,
+			&i.User.EmailVerifiedAt,
+			&i.User.PendingEmail,
 		); err != nil {
 			return nil, err
 		}

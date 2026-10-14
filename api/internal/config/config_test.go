@@ -55,3 +55,22 @@ func TestLoadHTTPSNeedsHTTPSEndpoint(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestLoadVerifyNeedsResendOffLocalhost(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	t.Setenv("KRILL_EMAIL_VERIFICATION", "verify")
+	t.Setenv("KRILL_RESEND_API_KEY", "")
+	t.Setenv("KRILL_PUBLIC_URL", "http://localhost:5173")
+	if cfg, err := Load(); err != nil || !cfg.LogEmails {
+		t.Errorf("localhost should log emails: %v", err)
+	}
+	t.Setenv("KRILL_PUBLIC_URL", "http://krill.example.com")
+	if _, err := Load(); err == nil {
+		t.Error("expected error when verifying emails with no way to send them")
+	}
+	t.Setenv("KRILL_RESEND_API_KEY", "re_key")
+	t.Setenv("KRILL_EMAIL_FROM", "Krill <noreply@krill.example.com>")
+	if cfg, err := Load(); err != nil || cfg.LogEmails {
+		t.Errorf("Resend should send emails: %v", err)
+	}
+}

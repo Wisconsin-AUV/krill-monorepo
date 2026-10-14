@@ -29,9 +29,10 @@ export function RequireAuth() {
       </div>
     )
   }
-  if (!data.user) {
-    const next = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname + search)}`
-    return <Navigate to={`/login${next}`} replace />
+  const next = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname + search)}`
+  if (!data.user) return <Navigate to={`/login${next}`} replace />
+  if (data.emailVerificationRequired && !data.user.emailVerified) {
+    return <Navigate to={`/verify${next}`} replace />
   }
   return <Outlet />
 }

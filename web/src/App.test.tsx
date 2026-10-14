@@ -10,7 +10,7 @@ import { queryClient } from '@/lib/queryClient'
 import { router } from '@/router'
 import App from './App'
 
-function transport(role?: Role) {
+function transport(role?: Role, { emailVerified = true } = {}) {
   return createRouterTransport(({ service }) => {
     service(AuthService, {
       getSession: () => ({
@@ -19,12 +19,24 @@ function transport(role?: Role) {
               id: '1',
               name: 'Ada Lovelace',
               username: 'ada',
+              email: 'ada@wisc.edu',
               role,
               permissions: [Permission.LABEL],
+              emailVerified,
             }
           : undefined,
         signupEnabled: true,
+        emailVerificationRequired: true,
+        emailCodesEnabled: true,
       }),
+      sendVerificationCode: () => ({}),
+      requestSignInCode: () => ({}),
+      signInWithCode: (req) => {
+        if (req.code !== '123456') {
+          throw new ConnectError('that code is incorrect or has expired', Code.InvalidArgument)
+        }
+        return {}
+      },
       login: () => {
         throw new ConnectError('incorrect username or password', Code.Unauthenticated)
       },
@@ -53,6 +65,30 @@ describe('App', () => {
     expect(screen.queryByText('Videos')).not.toBeInTheDocument()
     expect(screen.queryByText('Exports')).not.toBeInTheDocument()
     expect(screen.queryByText('Upload videos')).not.toBeInTheDocument()
+  })
+
+  it('keeps unverified accounts on the verify page', async () => {
+    await router.navigate('/videos')
+    render(<App transport={transport(Role.ADMIN, { emailVerified: false })} />)
+    expect(await screen.findByRole('heading', { name: 'Verify your email' })).toBeInTheDocument()
+    expect(screen.getByText('ada@wisc.edu')).toBeInTheDocument()
+    expect(screen.queryByText('Home')).not.toBeInTheDocument()
+  })
+
+  it('signs in with an emailed code', async () => {
+    render(<App transport={transport()} />)
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Username or email' }), {
+      target: { value: 'ada' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Email sign-in code' }))
+    const code = await screen.findByRole('textbox', { name: 'Code' })
+
+    fireEvent.change(code, { target: { value: '000000' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'That code is incorrect or has expired',
+    )
+    expect(code).toHaveValue('')
   })
 
   it('asks for the password after the username and shows a wrong password', async () => {

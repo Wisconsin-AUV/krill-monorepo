@@ -61,6 +61,9 @@ message User {
   google.protobuf.Timestamp last_login_at = 10;
   // Granted by the role.
   repeated Permission permissions = 11;
+  bool email_verified = 12;
+  // A new email waiting for its verification code. Empty when there is none.
+  string pending_email = 13;
 }
 
 message ListUsersRequest {}

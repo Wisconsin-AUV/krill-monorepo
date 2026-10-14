@@ -3,14 +3,16 @@ set dotenv-load
 default:
     @just --list
 
-# generate protobuf code for Go, TS, and Python, and sqlc queries for Go
+# generate protobuf code for Go, TS, and Python, sqlc queries for Go, and the email templates
 gen:
     cd proto && buf lint && buf generate
     cd api && sqlc generate
+    cd emails && pnpm build
 
 # install dependencies for every project
 setup:
     cd web && pnpm install
+    cd emails && pnpm install
     cd api && go mod download
     cd worker && uv sync
 
@@ -25,6 +27,10 @@ api:
 web:
     cd web && pnpm dev
 
+# preview the email templates on :3001
+emails:
+    cd emails && pnpm dev
+
 # run the full stack with the GPU worker, using the images from `just build`
 up version="dev":
     KRILL_VERSION={{version}} docker compose -f deploy/docker-compose.yml --profile app --profile gpu up -d
@@ -37,12 +43,14 @@ lint:
     cd proto && buf lint
     cd api && golangci-lint run
     cd web && pnpm lint && pnpm format:check
+    cd emails && pnpm typecheck && pnpm format:check
     cd worker && uv run ruff check . && uv run ruff format --check . && uv run mypy src
 
 # auto-format everything
 fmt:
     cd api && golangci-lint fmt
     cd web && pnpm format
+    cd emails && pnpm format
     cd worker && uv run ruff format . && uv run ruff check --fix .
 
 test:
