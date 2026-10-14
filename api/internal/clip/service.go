@@ -21,13 +21,14 @@ import (
 
 type Service struct {
 	krillv1connect.UnimplementedClipServiceHandler
+	pool    *pgxpool.Pool
 	q       *db.Queries
 	present *video.Presenter
 	jobs    *river.Client[pgx.Tx]
 }
 
 func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{q: db.New(pool), present: video.NewPresenter(store), jobs: jobs}
+	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), jobs: jobs}
 }
 
 func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*krillv1.GetClipResponse, error) {
@@ -140,4 +141,37 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 		NextClipId:       neighbours.NextID,
 		TrackingTrackIds: tracking,
 	}, nil
+}
+
+// DeleteClip leaves the frame images in storage. The video's thumbnail is
+// picked by frame index, so it could point at one of them, and they are
+// removed with the video.
+func (s *Service) DeleteClip(ctx context.Context, req *krillv1.DeleteClipRequest) (*krillv1.DeleteClipResponse, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+
+	// Locks the video row before touching its clips, so two deletes in one
+	// video renumber one after the other instead of deadlocking.
+	videoID, err := q.SubtractClipFrames(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "clip")
+	}
+	idx, err := q.DeleteClip(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.Internal(err, "delete clip")
+	}
+	if err := q.ParkClipsAfter(ctx, db.ParkClipsAfterParams{VideoID: videoID, Idx: idx}); err != nil {
+		return nil, rpc.Internal(err, "renumber clips")
+	}
+	if err := q.UnparkClips(ctx, videoID); err != nil {
+		return nil, rpc.Internal(err, "renumber clips")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
+	}
+	return &krillv1.DeleteClipResponse{}, nil
 }

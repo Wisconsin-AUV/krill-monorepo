@@ -35,12 +35,17 @@ const (
 const (
 	// ClipServiceGetClipProcedure is the fully-qualified name of the ClipService's GetClip RPC.
 	ClipServiceGetClipProcedure = "/krill.v1.ClipService/GetClip"
+	// ClipServiceDeleteClipProcedure is the fully-qualified name of the ClipService's DeleteClip RPC.
+	ClipServiceDeleteClipProcedure = "/krill.v1.ClipService/DeleteClip"
 )
 
 // ClipServiceClient is a client for the krill.v1.ClipService service.
 type ClipServiceClient interface {
 	// GetClip returns everything the labeling view needs for one clip.
 	GetClip(context.Context, *v1.GetClipRequest) (*v1.GetClipResponse, error)
+	// DeleteClip removes a clip with its frames and labels, and renumbers the
+	// clips after it so the video has no gap.
+	DeleteClip(context.Context, *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error)
 }
 
 // NewClipServiceClient constructs a client for the krill.v1.ClipService service. By default, it
@@ -60,12 +65,19 @@ func NewClipServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(clipServiceMethods.ByName("GetClip")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteClip: connect.NewClient[v1.DeleteClipRequest, v1.DeleteClipResponse](
+			httpClient,
+			baseURL+ClipServiceDeleteClipProcedure,
+			connect.WithSchema(clipServiceMethods.ByName("DeleteClip")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clipServiceClient implements ClipServiceClient.
 type clipServiceClient struct {
-	getClip *connect.Client[v1.GetClipRequest, v1.GetClipResponse]
+	getClip    *connect.Client[v1.GetClipRequest, v1.GetClipResponse]
+	deleteClip *connect.Client[v1.DeleteClipRequest, v1.DeleteClipResponse]
 }
 
 // GetClip calls krill.v1.ClipService.GetClip.
@@ -77,10 +89,22 @@ func (c *clipServiceClient) GetClip(ctx context.Context, req *v1.GetClipRequest)
 	return nil, err
 }
 
+// DeleteClip calls krill.v1.ClipService.DeleteClip.
+func (c *clipServiceClient) DeleteClip(ctx context.Context, req *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error) {
+	response, err := c.deleteClip.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClipServiceHandler is an implementation of the krill.v1.ClipService service.
 type ClipServiceHandler interface {
 	// GetClip returns everything the labeling view needs for one clip.
 	GetClip(context.Context, *v1.GetClipRequest) (*v1.GetClipResponse, error)
+	// DeleteClip removes a clip with its frames and labels, and renumbers the
+	// clips after it so the video has no gap.
+	DeleteClip(context.Context, *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error)
 }
 
 // NewClipServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -96,10 +120,18 @@ func NewClipServiceHandler(svc ClipServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(clipServiceMethods.ByName("GetClip")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clipServiceDeleteClipHandler := connect.NewUnaryHandlerSimple(
+		ClipServiceDeleteClipProcedure,
+		svc.DeleteClip,
+		connect.WithSchema(clipServiceMethods.ByName("DeleteClip")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.ClipService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClipServiceGetClipProcedure:
 			clipServiceGetClipHandler.ServeHTTP(w, r)
+		case ClipServiceDeleteClipProcedure:
+			clipServiceDeleteClipHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -111,4 +143,8 @@ type UnimplementedClipServiceHandler struct{}
 
 func (UnimplementedClipServiceHandler) GetClip(context.Context, *v1.GetClipRequest) (*v1.GetClipResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.ClipService.GetClip is not implemented"))
+}
+
+func (UnimplementedClipServiceHandler) DeleteClip(context.Context, *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.ClipService.DeleteClip is not implemented"))
 }
