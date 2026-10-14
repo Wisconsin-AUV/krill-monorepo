@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Developers and admins can delete a clip from the labeling view. The clips after it are renumbered and the next one opens.
+- Opening a clip someone else is labeling asks before taking it over.
+
+### Changed
+
+- Gold is a tab on the Review page, and `/gold` redirects there.
+- SAM tracking is about 40% faster on GPUs without fused attention kernels, such as the RX 6600.
+- The timeline no longer redraws on every playhead or hover move.
+
+### Fixed
+
+- Holding space to mark frames done keeps up instead of trailing the server, and frames that fail to save are reverted.
+- Every label edit keeps the clip claimed, so a clip is no longer handed out while someone is still working on it.
+- Reviewer fixes no longer take a clip from the labeler working on it.
+
 ## [0.3.0] - 2026-10-14
 
 ### Added
