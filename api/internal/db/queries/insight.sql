@@ -5,15 +5,18 @@ SELECT
     count(*) FILTER (WHERE status = 'empty')::bigint AS empty
 FROM frames
 WHERE status_by IS NOT NULL
+    AND clip_id IN (SELECT id FROM live_clips)
     AND (sqlc.narg('since')::timestamptz IS NULL OR status_at >= sqlc.narg('since'))
 GROUP BY status_by;
 
 -- name: LabelerBoxesDrawn :many
-SELECT created_by::uuid AS user_id, count(*)::bigint AS boxes
-FROM annotations
-WHERE created_by IS NOT NULL
-    AND (sqlc.narg('since')::timestamptz IS NULL OR created_at >= sqlc.narg('since'))
-GROUP BY created_by;
+SELECT a.created_by::uuid AS user_id, count(*)::bigint AS boxes
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips lc ON lc.id = t.clip_id
+WHERE a.created_by IS NOT NULL
+    AND (sqlc.narg('since')::timestamptz IS NULL OR a.created_at >= sqlc.narg('since'))
+GROUP BY a.created_by;
 
 -- name: LabelerProposalCounts :many
 SELECT
@@ -140,8 +143,8 @@ SELECT
     count(f.id) FILTER (WHERE f.status = 'labeled')::int AS labeled,
     count(f.id) FILTER (WHERE f.status = 'empty')::int AS empty
 FROM videos v
-LEFT JOIN frames f ON f.video_id = v.id
-WHERE v.status = 'ready'
+LEFT JOIN frames f ON f.video_id = v.id AND f.clip_id IN (SELECT id FROM live_clips)
+WHERE v.status = 'ready' AND v.deleted_at IS NULL
 GROUP BY v.id
 ORDER BY v.created_at DESC, v.id DESC;
 
@@ -155,6 +158,7 @@ SELECT
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN frames f ON f.id = a.frame_id
+JOIN live_clips lc ON lc.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready' AND a.status <> 'rejected'
 GROUP BY f.video_id, t.label_type_id;
@@ -171,6 +175,7 @@ JOIN videos v ON v.id = c.video_id
 JOIN users u ON u.id = cc.user_id
 WHERE cc.active_at < @idle_before
     AND v.status = 'ready'
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
     AND EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status = 'unlabeled')
 ORDER BY cc.active_at, c.id;
 
