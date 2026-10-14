@@ -12,6 +12,7 @@ from krill.v1 import system_pb2, worker_pb2
 
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
+from krill_worker.logs import LogBuffer
 from krill_worker.models import Models, cached_models, supports_exemplars
 from krill_worker.stats import host_stats
 
@@ -33,11 +34,13 @@ class Heartbeat:
         models: Models[Any],
         accelerator: str,
         gpus: Callable[[], list[system_pb2.GpuStats]],
+        logs: LogBuffer | None = None,
     ) -> None:
         self.api = api
         self.models = models
         self.accelerator = accelerator
         self.gpus = gpus
+        self.logs = logs
         self.instance_id = uuid.uuid4().hex
         self.hostname = socket.gethostname()
         self.started_at = Timestamp()
@@ -78,10 +81,15 @@ class Heartbeat:
             cached_models=cached_models(),
             command_id=m.command_id,
             supports_exemplars=supports_exemplars(m.model_id),
+            logs=self.logs.pending() if self.logs else [],
         )
 
     def beat(self) -> None:
-        res = self.api.heartbeat(self.request())
+        """Send one heartbeat and drop the log records it delivered."""
+        req = self.request()
+        res = self.api.heartbeat(req)
+        if self.logs and req.logs:
+            self.logs.delivered(req.logs[-1].seq)
         self.models.want(res.model)
         if res.HasField("command"):
             self.models.command(res.command)

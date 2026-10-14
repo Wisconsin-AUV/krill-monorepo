@@ -15,6 +15,7 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.heartbeat import Heartbeat
+from krill_worker.logs import LogBuffer
 from krill_worker.models import ModelLoadError, Models
 from krill_worker.prelabelers import Frame
 from krill_worker.stats import accelerator, gpu_stats
@@ -248,6 +249,8 @@ def serve(
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logs = LogBuffer()
+    logging.getLogger().addHandler(logs)
     log.info("krill-worker %s starting", __version__)
     # Imported here so everything else works without torch installed.
     import torch
@@ -274,7 +277,7 @@ def main() -> None:
     )
     pinned = os.environ.get("KRILL_SAM_MODEL", "").strip()
     models = Models(load, pinned, memory, release)
-    heartbeat = Heartbeat(api, models, accelerator(torch), lambda: gpu_stats(torch))
+    heartbeat = Heartbeat(api, models, accelerator(torch), lambda: gpu_stats(torch), logs)
     # One heartbeat first, so the worker loads the model the API asks for.
     try:
         heartbeat.beat()
