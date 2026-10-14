@@ -10,7 +10,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/annotation.proto.
  */
 export const file_krill_v1_annotation: GenFile = /*@__PURE__*/
-  fileDesc("ChlrcmlsbC92MS9hbm5vdGF0aW9uLnByb3RvEghrcmlsbC52MSI6CgNCb3gSCQoBeBgBIAEoARIJCgF5GAIgASgBEg0KBXdpZHRoGAMgASgBEg4KBmhlaWdodBgEIAEoASIdCgVQb2ludBIJCgF4GAEgASgBEgkKAXkYAiABKAEiowEKBVRyYWNrEgoKAmlkGAEgASgDEg8KB2NsaXBfaWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxIzCgphdHRyaWJ1dGVzGAQgAygLMh8ua3JpbGwudjEuVHJhY2suQXR0cmlidXRlc0VudHJ5GjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIrABCgpBbm5vdGF0aW9uEgoKAmlkGAEgASgDEhAKCHRyYWNrX2lkGAIgASgDEhAKCGZyYW1lX2lkGAMgASgDEhoKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveBIqCgZzb3VyY2UYBSABKA4yGi5rcmlsbC52MS5Bbm5vdGF0aW9uU291cmNlEioKBnN0YXR1cxgGIAEoDjIaLmtyaWxsLnYxLkFubm90YXRpb25TdGF0dXMi3wEKEkNyZWF0ZVRyYWNrUmVxdWVzdBIPCgdjbGlwX2lkGAEgASgDEhUKDWxhYmVsX3R5cGVfaWQYAiABKAMSQAoKYXR0cmlidXRlcxgDIAMoCzIsLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdC5BdHRyaWJ1dGVzRW50cnkSEAoIZnJhbWVfaWQYBCABKAMSGgoDYm94GAUgASgLMg0ua3JpbGwudjEuQm94GjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIl8KE0NyZWF0ZVRyYWNrUmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjaxIoCgphbm5vdGF0aW9uGAIgASgLMhQua3JpbGwudjEuQW5ub3RhdGlvbiLbAQoSVXBkYXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDEhoKDWxhYmVsX3R5cGVfaWQYAiABKANIAIgBARJACgphdHRyaWJ1dGVzGAMgAygLMiwua3JpbGwudjEuVXBkYXRlVHJhY2tSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIWCg5zZXRfYXR0cmlidXRlcxgEIAEoCBoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIQCg5fbGFiZWxfdHlwZV9pZCI1ChNVcGRhdGVUcmFja1Jlc3BvbnNlEh4KBXRyYWNrGAEgASgLMg8ua3JpbGwudjEuVHJhY2siIAoSRGVsZXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDIhUKE0RlbGV0ZVRyYWNrUmVzcG9uc2UiTwoNU2V0Qm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAxIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoOU2V0Qm94UmVzcG9uc2USKAoKYW5ub3RhdGlvbhgBIAEoCzIULmtyaWxsLnYxLkFubm90YXRpb24iNgoQRGVsZXRlQm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAyIqChFEZWxldGVCb3hSZXNwb25zZRIVCg10cmFja19kZWxldGVkGAEgASgIIlEKEENvcHlCb3hlc1JlcXVlc3QSFQoNZnJvbV9mcmFtZV9pZBgBIAEoAxITCgt0b19mcmFtZV9pZBgCIAEoAxIRCgl0cmFja19pZHMYAyADKAMiPgoRQ29weUJveGVzUmVzcG9uc2USKQoLYW5ub3RhdGlvbnMYASADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uIlAKFVNldEZyYW1lU3RhdHVzUmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIlCgZzdGF0dXMYAiABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cyI/ChZTZXRGcmFtZVN0YXR1c1Jlc3BvbnNlEiUKBnN0YXR1cxgBIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzIo4CChJUcmFja09iamVjdFJlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMSEAoIdHJhY2tfaWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxJACgphdHRyaWJ1dGVzGAQgAygLMiwua3JpbGwudjEuVHJhY2tPYmplY3RSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIgCgVwb2ludBgFIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAYgASgLMg0ua3JpbGwudjEuQm94SAAaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGcHJvbXB0IjUKE1RyYWNrT2JqZWN0UmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjayp5CgtGcmFtZVN0YXR1cxIcChhGUkFNRV9TVEFUVVNfVU5TUEVDSUZJRUQQABIaChZGUkFNRV9TVEFUVVNfVU5MQUJFTEVEEAESGAoURlJBTUVfU1RBVFVTX0xBQkVMRUQQAhIWChJGUkFNRV9TVEFUVVNfRU1QVFkQAyqjAQoQQW5ub3RhdGlvblNvdXJjZRIhCh1BTk5PVEFUSU9OX1NPVVJDRV9VTlNQRUNJRklFRBAAEhsKF0FOTk9UQVRJT05fU09VUkNFX0hVTUFOEAESGQoVQU5OT1RBVElPTl9TT1VSQ0VfU0FNEAISGgoWQU5OT1RBVElPTl9TT1VSQ0VfWU9MTxADEhgKFEFOTk9UQVRJT05fU09VUkNFX0NWEAQqlQEKEEFubm90YXRpb25TdGF0dXMSIQodQU5OT1RBVElPTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIeChpBTk5PVEFUSU9OX1NUQVRVU19QUk9QT1NFRBABEh4KGkFOTk9UQVRJT05fU1RBVFVTX1ZFUklGSUVEEAISHgoaQU5OT1RBVElPTl9TVEFUVVNfUkVKRUNURUQQAzLxBAoRQW5ub3RhdGlvblNlcnZpY2USTAoLQ3JlYXRlVHJhY2sSHC5rcmlsbC52MS5DcmVhdGVUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5DcmVhdGVUcmFja1Jlc3BvbnNlIgASTAoLVXBkYXRlVHJhY2sSHC5rcmlsbC52MS5VcGRhdGVUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5VcGRhdGVUcmFja1Jlc3BvbnNlIgASTAoLRGVsZXRlVHJhY2sSHC5rcmlsbC52MS5EZWxldGVUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5EZWxldGVUcmFja1Jlc3BvbnNlIgASPQoGU2V0Qm94Ehcua3JpbGwudjEuU2V0Qm94UmVxdWVzdBoYLmtyaWxsLnYxLlNldEJveFJlc3BvbnNlIgASRgoJRGVsZXRlQm94Ehoua3JpbGwudjEuRGVsZXRlQm94UmVxdWVzdBobLmtyaWxsLnYxLkRlbGV0ZUJveFJlc3BvbnNlIgASRgoJQ29weUJveGVzEhoua3JpbGwudjEuQ29weUJveGVzUmVxdWVzdBobLmtyaWxsLnYxLkNvcHlCb3hlc1Jlc3BvbnNlIgASVQoOU2V0RnJhbWVTdGF0dXMSHy5rcmlsbC52MS5TZXRGcmFtZVN0YXR1c1JlcXVlc3QaIC5rcmlsbC52MS5TZXRGcmFtZVN0YXR1c1Jlc3BvbnNlIgASTAoLVHJhY2tPYmplY3QSHC5rcmlsbC52MS5UcmFja09iamVjdFJlcXVlc3QaHS5rcmlsbC52MS5UcmFja09iamVjdFJlc3BvbnNlIgBCkAEKDGNvbS5rcmlsbC52MUIPQW5ub3RhdGlvblByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw");
+  fileDesc("ChlrcmlsbC92MS9hbm5vdGF0aW9uLnByb3RvEghrcmlsbC52MSI6CgNCb3gSCQoBeBgBIAEoARIJCgF5GAIgASgBEg0KBXdpZHRoGAMgASgBEg4KBmhlaWdodBgEIAEoASIdCgVQb2ludBIJCgF4GAEgASgBEgkKAXkYAiABKAEiowEKBVRyYWNrEgoKAmlkGAEgASgDEg8KB2NsaXBfaWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxIzCgphdHRyaWJ1dGVzGAQgAygLMh8ua3JpbGwudjEuVHJhY2suQXR0cmlidXRlc0VudHJ5GjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIr8BCgpBbm5vdGF0aW9uEgoKAmlkGAEgASgDEhAKCHRyYWNrX2lkGAIgASgDEhAKCGZyYW1lX2lkGAMgASgDEhoKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveBIqCgZzb3VyY2UYBSABKA4yGi5rcmlsbC52MS5Bbm5vdGF0aW9uU291cmNlEioKBnN0YXR1cxgGIAEoDjIaLmtyaWxsLnYxLkFubm90YXRpb25TdGF0dXMSDQoFZHJpZnQYByABKAgi3wEKEkNyZWF0ZVRyYWNrUmVxdWVzdBIPCgdjbGlwX2lkGAEgASgDEhUKDWxhYmVsX3R5cGVfaWQYAiABKAMSQAoKYXR0cmlidXRlcxgDIAMoCzIsLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdC5BdHRyaWJ1dGVzRW50cnkSEAoIZnJhbWVfaWQYBCABKAMSGgoDYm94GAUgASgLMg0ua3JpbGwudjEuQm94GjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIl8KE0NyZWF0ZVRyYWNrUmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjaxIoCgphbm5vdGF0aW9uGAIgASgLMhQua3JpbGwudjEuQW5ub3RhdGlvbiLbAQoSVXBkYXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDEhoKDWxhYmVsX3R5cGVfaWQYAiABKANIAIgBARJACgphdHRyaWJ1dGVzGAMgAygLMiwua3JpbGwudjEuVXBkYXRlVHJhY2tSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIWCg5zZXRfYXR0cmlidXRlcxgEIAEoCBoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIQCg5fbGFiZWxfdHlwZV9pZCI1ChNVcGRhdGVUcmFja1Jlc3BvbnNlEh4KBXRyYWNrGAEgASgLMg8ua3JpbGwudjEuVHJhY2siIAoSRGVsZXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDIhUKE0RlbGV0ZVRyYWNrUmVzcG9uc2UiTwoNU2V0Qm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAxIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoOU2V0Qm94UmVzcG9uc2USKAoKYW5ub3RhdGlvbhgBIAEoCzIULmtyaWxsLnYxLkFubm90YXRpb24iNgoQRGVsZXRlQm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAyIqChFEZWxldGVCb3hSZXNwb25zZRIVCg10cmFja19kZWxldGVkGAEgASgIIlEKEENvcHlCb3hlc1JlcXVlc3QSFQoNZnJvbV9mcmFtZV9pZBgBIAEoAxITCgt0b19mcmFtZV9pZBgCIAEoAxIRCgl0cmFja19pZHMYAyADKAMiPgoRQ29weUJveGVzUmVzcG9uc2USKQoLYW5ub3RhdGlvbnMYASADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uIlAKFVNldEZyYW1lU3RhdHVzUmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIlCgZzdGF0dXMYAiABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cyI/ChZTZXRGcmFtZVN0YXR1c1Jlc3BvbnNlEiUKBnN0YXR1cxgBIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzIo4CChJUcmFja09iamVjdFJlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMSEAoIdHJhY2tfaWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxJACgphdHRyaWJ1dGVzGAQgAygLMiwua3JpbGwudjEuVHJhY2tPYmplY3RSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIgCgVwb2ludBgFIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAYgASgLMg0ua3JpbGwudjEuQm94SAAaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGcHJvbXB0IjUKE1RyYWNrT2JqZWN0UmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjayKFAQoXTGlzdFRyYWNrc0J5VHlwZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxIQCgh2aWRlb19pZBgCIAEoAxIaChJtaXNzaW5nX2F0dHJpYnV0ZXMYAyABKAgSEQoJcGFnZV9zaXplGAQgASgFEhIKCnBhZ2VfdG9rZW4YBSABKAkikwEKCVRyYWNrQ3JvcBIeCgV0cmFjaxgBIAEoCzIPLmtyaWxsLnYxLlRyYWNrEhAKCHZpZGVvX2lkGAIgASgDEhAKCGZyYW1lX2lkGAMgASgDEhMKC2ZyYW1lX2luZGV4GAQgASgFEhoKA2JveBgFIAEoCzINLmtyaWxsLnYxLkJveBIRCglmcmFtZV91cmwYBiABKAkiWAoYTGlzdFRyYWNrc0J5VHlwZVJlc3BvbnNlEiMKBnRyYWNrcxgBIAMoCzITLmtyaWxsLnYxLlRyYWNrQ3JvcBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiOwoVU2VhcmNoRXhlbXBsYXJSZXF1ZXN0EhAKCHRyYWNrX2lkGAEgASgDEhAKCGZyYW1lX2lkGAIgASgDIisKFlNlYXJjaEV4ZW1wbGFyUmVzcG9uc2USEQoJc2VhcmNoX2lkGAEgASgDIiYKGEdldEV4ZW1wbGFyU2VhcmNoUmVxdWVzdBIKCgJpZBgBIAEoAyJLChlHZXRFeGVtcGxhclNlYXJjaFJlc3BvbnNlEgwKBGRvbmUYASABKAgSDQoFZXJyb3IYAiABKAkSEQoJdHJhY2tfaWRzGAMgAygDKnkKC0ZyYW1lU3RhdHVzEhwKGEZSQU1FX1NUQVRVU19VTlNQRUNJRklFRBAAEhoKFkZSQU1FX1NUQVRVU19VTkxBQkVMRUQQARIYChRGUkFNRV9TVEFUVVNfTEFCRUxFRBACEhYKEkZSQU1FX1NUQVRVU19FTVBUWRADKqMBChBBbm5vdGF0aW9uU291cmNlEiEKHUFOTk9UQVRJT05fU09VUkNFX1VOU1BFQ0lGSUVEEAASGwoXQU5OT1RBVElPTl9TT1VSQ0VfSFVNQU4QARIZChVBTk5PVEFUSU9OX1NPVVJDRV9TQU0QAhIaChZBTk5PVEFUSU9OX1NPVVJDRV9ZT0xPEAMSGAoUQU5OT1RBVElPTl9TT1VSQ0VfQ1YQBCqVAQoQQW5ub3RhdGlvblN0YXR1cxIhCh1BTk5PVEFUSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGkFOTk9UQVRJT05fU1RBVFVTX1BST1BPU0VEEAESHgoaQU5OT1RBVElPTl9TVEFUVVNfVkVSSUZJRUQQAhIeChpBTk5PVEFUSU9OX1NUQVRVU19SRUpFQ1RFRBADMoUHChFBbm5vdGF0aW9uU2VydmljZRJMCgtDcmVhdGVUcmFjaxIcLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVzcG9uc2UiABJMCgtVcGRhdGVUcmFjaxIcLmtyaWxsLnYxLlVwZGF0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLlVwZGF0ZVRyYWNrUmVzcG9uc2UiABJMCgtEZWxldGVUcmFjaxIcLmtyaWxsLnYxLkRlbGV0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLkRlbGV0ZVRyYWNrUmVzcG9uc2UiABI9CgZTZXRCb3gSFy5rcmlsbC52MS5TZXRCb3hSZXF1ZXN0Ghgua3JpbGwudjEuU2V0Qm94UmVzcG9uc2UiABJGCglEZWxldGVCb3gSGi5rcmlsbC52MS5EZWxldGVCb3hSZXF1ZXN0Ghsua3JpbGwudjEuRGVsZXRlQm94UmVzcG9uc2UiABJGCglDb3B5Qm94ZXMSGi5rcmlsbC52MS5Db3B5Qm94ZXNSZXF1ZXN0Ghsua3JpbGwudjEuQ29weUJveGVzUmVzcG9uc2UiABJVCg5TZXRGcmFtZVN0YXR1cxIfLmtyaWxsLnYxLlNldEZyYW1lU3RhdHVzUmVxdWVzdBogLmtyaWxsLnYxLlNldEZyYW1lU3RhdHVzUmVzcG9uc2UiABJMCgtUcmFja09iamVjdBIcLmtyaWxsLnYxLlRyYWNrT2JqZWN0UmVxdWVzdBodLmtyaWxsLnYxLlRyYWNrT2JqZWN0UmVzcG9uc2UiABJbChBMaXN0VHJhY2tzQnlUeXBlEiEua3JpbGwudjEuTGlzdFRyYWNrc0J5VHlwZVJlcXVlc3QaIi5rcmlsbC52MS5MaXN0VHJhY2tzQnlUeXBlUmVzcG9uc2UiABJVCg5TZWFyY2hFeGVtcGxhchIfLmtyaWxsLnYxLlNlYXJjaEV4ZW1wbGFyUmVxdWVzdBogLmtyaWxsLnYxLlNlYXJjaEV4ZW1wbGFyUmVzcG9uc2UiABJeChFHZXRFeGVtcGxhclNlYXJjaBIiLmtyaWxsLnYxLkdldEV4ZW1wbGFyU2VhcmNoUmVxdWVzdBojLmtyaWxsLnYxLkdldEV4ZW1wbGFyU2VhcmNoUmVzcG9uc2UiAEKQAQoMY29tLmtyaWxsLnYxQg9Bbm5vdGF0aW9uUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z");
 
 /**
  * Box is normalized to the frame size, with the origin at the top left.
@@ -137,6 +137,14 @@ export type Annotation = Message<"krill.v1.Annotation"> & {
    * @generated from field: krill.v1.AnnotationStatus status = 6;
    */
   status: AnnotationStatus;
+
+  /**
+   * The tracker's box jumped in size or position from the track's previous
+   * box, and no labeler has accepted or edited it yet.
+   *
+   * @generated from field: bool drift = 7;
+   */
+  drift: boolean;
 };
 
 /**
@@ -528,6 +536,206 @@ export const TrackObjectResponseSchema: GenMessage<TrackObjectResponse> = /*@__P
   messageDesc(file_krill_v1_annotation, 19);
 
 /**
+ * @generated from message krill.v1.ListTracksByTypeRequest
+ */
+export type ListTracksByTypeRequest = Message<"krill.v1.ListTracksByTypeRequest"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * 0 lists every video.
+   *
+   * @generated from field: int64 video_id = 2;
+   */
+  videoId: bigint;
+
+  /**
+   * Only tracks with at least one attribute unset.
+   *
+   * @generated from field: bool missing_attributes = 3;
+   */
+  missingAttributes: boolean;
+
+  /**
+   * Defaults to 60, at most 200.
+   *
+   * @generated from field: int32 page_size = 4;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 5;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message krill.v1.ListTracksByTypeRequest.
+ * Use `create(ListTracksByTypeRequestSchema)` to create a new message.
+ */
+export const ListTracksByTypeRequestSchema: GenMessage<ListTracksByTypeRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 20);
+
+/**
+ * @generated from message krill.v1.TrackCrop
+ */
+export type TrackCrop = Message<"krill.v1.TrackCrop"> & {
+  /**
+   * @generated from field: krill.v1.Track track = 1;
+   */
+  track?: Track | undefined;
+
+  /**
+   * @generated from field: int64 video_id = 2;
+   */
+  videoId: bigint;
+
+  /**
+   * The track's first verified box, or its middle box when none is verified.
+   *
+   * @generated from field: int64 frame_id = 3;
+   */
+  frameId: bigint;
+
+  /**
+   * @generated from field: int32 frame_index = 4;
+   */
+  frameIndex: number;
+
+  /**
+   * @generated from field: krill.v1.Box box = 5;
+   */
+  box?: Box | undefined;
+
+  /**
+   * Presigned MinIO URL of the whole frame.
+   *
+   * @generated from field: string frame_url = 6;
+   */
+  frameUrl: string;
+};
+
+/**
+ * Describes the message krill.v1.TrackCrop.
+ * Use `create(TrackCropSchema)` to create a new message.
+ */
+export const TrackCropSchema: GenMessage<TrackCrop> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 21);
+
+/**
+ * @generated from message krill.v1.ListTracksByTypeResponse
+ */
+export type ListTracksByTypeResponse = Message<"krill.v1.ListTracksByTypeResponse"> & {
+  /**
+   * @generated from field: repeated krill.v1.TrackCrop tracks = 1;
+   */
+  tracks: TrackCrop[];
+
+  /**
+   * Empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message krill.v1.ListTracksByTypeResponse.
+ * Use `create(ListTracksByTypeResponseSchema)` to create a new message.
+ */
+export const ListTracksByTypeResponseSchema: GenMessage<ListTracksByTypeResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 22);
+
+/**
+ * @generated from message krill.v1.SearchExemplarRequest
+ */
+export type SearchExemplarRequest = Message<"krill.v1.SearchExemplarRequest"> & {
+  /**
+   * @generated from field: int64 track_id = 1;
+   */
+  trackId: bigint;
+
+  /**
+   * @generated from field: int64 frame_id = 2;
+   */
+  frameId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.SearchExemplarRequest.
+ * Use `create(SearchExemplarRequestSchema)` to create a new message.
+ */
+export const SearchExemplarRequestSchema: GenMessage<SearchExemplarRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 23);
+
+/**
+ * @generated from message krill.v1.SearchExemplarResponse
+ */
+export type SearchExemplarResponse = Message<"krill.v1.SearchExemplarResponse"> & {
+  /**
+   * @generated from field: int64 search_id = 1;
+   */
+  searchId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.SearchExemplarResponse.
+ * Use `create(SearchExemplarResponseSchema)` to create a new message.
+ */
+export const SearchExemplarResponseSchema: GenMessage<SearchExemplarResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 24);
+
+/**
+ * @generated from message krill.v1.GetExemplarSearchRequest
+ */
+export type GetExemplarSearchRequest = Message<"krill.v1.GetExemplarSearchRequest"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+};
+
+/**
+ * Describes the message krill.v1.GetExemplarSearchRequest.
+ * Use `create(GetExemplarSearchRequestSchema)` to create a new message.
+ */
+export const GetExemplarSearchRequestSchema: GenMessage<GetExemplarSearchRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 25);
+
+/**
+ * @generated from message krill.v1.GetExemplarSearchResponse
+ */
+export type GetExemplarSearchResponse = Message<"krill.v1.GetExemplarSearchResponse"> & {
+  /**
+   * @generated from field: bool done = 1;
+   */
+  done: boolean;
+
+  /**
+   * Set when the search failed.
+   *
+   * @generated from field: string error = 2;
+   */
+  error: string;
+
+  /**
+   * Tracks created for the objects found.
+   *
+   * @generated from field: repeated int64 track_ids = 3;
+   */
+  trackIds: bigint[];
+};
+
+/**
+ * Describes the message krill.v1.GetExemplarSearchResponse.
+ * Use `create(GetExemplarSearchResponseSchema)` to create a new message.
+ */
+export const GetExemplarSearchResponseSchema: GenMessage<GetExemplarSearchResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 26);
+
+/**
  * @generated from enum krill.v1.FrameStatus
  */
 export const FrameStatus = {
@@ -727,6 +935,37 @@ export const AnnotationService: GenService<{
     methodKind: "unary";
     input: typeof TrackObjectRequestSchema;
     output: typeof TrackObjectResponseSchema;
+  },
+  /**
+   * ListTracksByType lists tracks of one type across clips, each with one box
+   * to crop, ordered by track id.
+   *
+   * @generated from rpc krill.v1.AnnotationService.ListTracksByType
+   */
+  listTracksByType: {
+    methodKind: "unary";
+    input: typeof ListTracksByTypeRequestSchema;
+    output: typeof ListTracksByTypeResponseSchema;
+  },
+  /**
+   * SearchExemplar uses the track's box on a frame as an exemplar. The GPU
+   * worker finds the other objects like it on the frame, and each becomes a
+   * new track of the same type that is tracked through the rest of the clip.
+   *
+   * @generated from rpc krill.v1.AnnotationService.SearchExemplar
+   */
+  searchExemplar: {
+    methodKind: "unary";
+    input: typeof SearchExemplarRequestSchema;
+    output: typeof SearchExemplarResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.AnnotationService.GetExemplarSearch
+   */
+  getExemplarSearch: {
+    methodKind: "unary";
+    input: typeof GetExemplarSearchRequestSchema;
+    output: typeof GetExemplarSearchResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_annotation, 0);

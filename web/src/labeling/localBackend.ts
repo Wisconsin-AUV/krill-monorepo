@@ -93,5 +93,8 @@ export function localBackend(): AnnotationBackend {
     trackObject: async () => {
       throw new Error('Tracking is off for gold checks.')
     },
+    searchExemplar: async () => {
+      throw new Error('Tracking is off for gold checks.')
+    },
   }
 }

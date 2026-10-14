@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
+import { useFieldInvalid } from './fieldInvalid'
 
 export function InputGroup({ children }: React.ComponentPropsWithoutRef<'span'>) {
   return (
@@ -35,6 +36,7 @@ export const Input = forwardRef(function Input(
   } & Omit<Headless.InputProps, 'as' | 'className'>,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
+  const fieldInvalid = useFieldInvalid()
   return (
     <span
       data-slot="control"
@@ -64,6 +66,7 @@ export const Input = forwardRef(function Input(
       <Headless.Input
         ref={ref}
         {...props}
+        invalid={props.invalid || fieldInvalid}
         className={clsx([
           // Date classes
           props.type &&

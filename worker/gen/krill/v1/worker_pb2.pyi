@@ -12,30 +12,66 @@ class NextTaskRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class NextTaskResponse(_message.Message):
-    __slots__ = ("track",)
+    __slots__ = ("track", "exemplar", "embed")
     TRACK_FIELD_NUMBER: _ClassVar[int]
+    EXEMPLAR_FIELD_NUMBER: _ClassVar[int]
+    EMBED_FIELD_NUMBER: _ClassVar[int]
     track: TrackTask
-    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ...) -> None: ...
+    exemplar: ExemplarTask
+    embed: EmbedTask
+    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ...) -> None: ...
 
 class TaskFrame(_message.Message):
-    __slots__ = ("id", "url")
+    __slots__ = ("id", "url", "embedding_url")
     ID_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
+    EMBEDDING_URL_FIELD_NUMBER: _ClassVar[int]
     id: int
     url: str
-    def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ...) -> None: ...
+    embedding_url: str
+    def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ..., embedding_url: _Optional[str] = ...) -> None: ...
 
 class TrackTask(_message.Message):
-    __slots__ = ("id", "frames", "point", "box")
+    __slots__ = ("id", "frames", "point", "box", "embedding_model")
     ID_FIELD_NUMBER: _ClassVar[int]
     FRAMES_FIELD_NUMBER: _ClassVar[int]
     POINT_FIELD_NUMBER: _ClassVar[int]
     BOX_FIELD_NUMBER: _ClassVar[int]
+    EMBEDDING_MODEL_FIELD_NUMBER: _ClassVar[int]
     id: int
     frames: _containers.RepeatedCompositeFieldContainer[TaskFrame]
     point: _annotation_pb2.Point
     box: _annotation_pb2.Box
-    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
+    embedding_model: str
+    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., embedding_model: _Optional[str] = ...) -> None: ...
+
+class EmbedTask(_message.Message):
+    __slots__ = ("id", "frames")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    FRAMES_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    frames: _containers.RepeatedCompositeFieldContainer[EmbedFrame]
+    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[EmbedFrame, _Mapping]]] = ...) -> None: ...
+
+class EmbedFrame(_message.Message):
+    __slots__ = ("id", "url", "upload_url")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    URL_FIELD_NUMBER: _ClassVar[int]
+    UPLOAD_URL_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    url: str
+    upload_url: str
+    def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ..., upload_url: _Optional[str] = ...) -> None: ...
+
+class ExemplarTask(_message.Message):
+    __slots__ = ("id", "frame", "box")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    frame: TaskFrame
+    box: _annotation_pb2.Box
+    def __init__(self, id: _Optional[int] = ..., frame: _Optional[_Union[TaskFrame, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
 
 class TrackedBox(_message.Message):
     __slots__ = ("frame_id", "box")
@@ -58,6 +94,32 @@ class ReportTrackRequest(_message.Message):
     def __init__(self, task_id: _Optional[int] = ..., model: _Optional[str] = ..., boxes: _Optional[_Iterable[_Union[TrackedBox, _Mapping]]] = ..., done: _Optional[bool] = ...) -> None: ...
 
 class ReportTrackResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ReportExemplarsRequest(_message.Message):
+    __slots__ = ("task_id", "model", "boxes")
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    BOXES_FIELD_NUMBER: _ClassVar[int]
+    task_id: int
+    model: str
+    boxes: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Box]
+    def __init__(self, task_id: _Optional[int] = ..., model: _Optional[str] = ..., boxes: _Optional[_Iterable[_Union[_annotation_pb2.Box, _Mapping]]] = ...) -> None: ...
+
+class ReportExemplarsResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ReportEmbedRequest(_message.Message):
+    __slots__ = ("task_id", "model")
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    task_id: int
+    model: str
+    def __init__(self, task_id: _Optional[int] = ..., model: _Optional[str] = ...) -> None: ...
+
+class ReportEmbedResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 

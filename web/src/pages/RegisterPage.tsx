@@ -1,10 +1,10 @@
 import { useMutation } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { FormError } from '@/components/auth/FormError'
 import { SlackButton } from '@/components/auth/SlackButton'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
@@ -12,18 +12,15 @@ import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Strong, Text, TextLink } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { refreshSession, useSession, withNext } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { usePasswordCheck } from '@/lib/password'
 
 export function RegisterPage() {
   const { data } = useSession()
   const [params] = useSearchParams()
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '' })
-  const [error, setError] = useState<string | null>(null)
   const check = usePasswordCheck(form.password, [form.name, form.username, form.email])
   const register = useMutation(AuthService.method.register, {
     onSuccess: () => refreshSession(),
-    onError: (err) => setError(errorMessage(err)),
   })
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }))
@@ -56,12 +53,11 @@ export function RegisterPage() {
         className="grid grid-cols-1 gap-8"
         onSubmit={(e) => {
           e.preventDefault()
-          setError(null)
           register.mutate(form)
         }}
       >
         <Heading className="text-center">Create your account</Heading>
-        <FormError message={error} />
+        <FormError error={register.error} />
         <Field>
           <Label>Name</Label>
           <Input

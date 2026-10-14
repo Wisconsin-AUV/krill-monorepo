@@ -9,6 +9,7 @@ package krillv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -565,7 +566,9 @@ type GoldLabeler struct {
 	// Correct boxes over reference plus extra boxes, across every attempt.
 	Accuracy float64 `protobuf:"fixed64,3,opt,name=accuracy,proto3" json:"accuracy,omitempty"`
 	// Over matched boxes. 0 when nothing matched.
-	MeanIou       float64 `protobuf:"fixed64,4,opt,name=mean_iou,json=meanIou,proto3" json:"mean_iou,omitempty"`
+	MeanIou float64 `protobuf:"fixed64,4,opt,name=mean_iou,json=meanIou,proto3" json:"mean_iou,omitempty"`
+	// Their recent gold scores are low, so frames they finish go to review.
+	NeedsReview   bool `protobuf:"varint,5,opt,name=needs_review,json=needsReview,proto3" json:"needs_review,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -626,6 +629,13 @@ func (x *GoldLabeler) GetMeanIou() float64 {
 		return x.MeanIou
 	}
 	return 0
+}
+
+func (x *GoldLabeler) GetNeedsReview() bool {
+	if x != nil {
+		return x.NeedsReview
+	}
+	return false
 }
 
 type GoldFrame struct {
@@ -784,11 +794,367 @@ func (x *GetGoldStatsResponse) GetFrames() []*GoldFrame {
 	return nil
 }
 
+// GoldAttempt is one labeler's answer to one gold frame.
+type GoldAttempt struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	FrameId int64                  `protobuf:"varint,1,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	User    *Profile               `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	ClipId  int64                  `protobuf:"varint,3,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
+	// Index of the frame within the video.
+	Index     int32   `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	VideoName string  `protobuf:"bytes,5,opt,name=video_name,json=videoName,proto3" json:"video_name,omitempty"`
+	Score     float64 `protobuf:"fixed64,6,opt,name=score,proto3" json:"score,omitempty"`
+	// Over matched boxes. 0 when nothing matched.
+	MeanIou       float64                `protobuf:"fixed64,7,opt,name=mean_iou,json=meanIou,proto3" json:"mean_iou,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GoldAttempt) Reset() {
+	*x = GoldAttempt{}
+	mi := &file_krill_v1_gold_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GoldAttempt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GoldAttempt) ProtoMessage() {}
+
+func (x *GoldAttempt) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_gold_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GoldAttempt.ProtoReflect.Descriptor instead.
+func (*GoldAttempt) Descriptor() ([]byte, []int) {
+	return file_krill_v1_gold_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GoldAttempt) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+func (x *GoldAttempt) GetUser() *Profile {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *GoldAttempt) GetClipId() int64 {
+	if x != nil {
+		return x.ClipId
+	}
+	return 0
+}
+
+func (x *GoldAttempt) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *GoldAttempt) GetVideoName() string {
+	if x != nil {
+		return x.VideoName
+	}
+	return ""
+}
+
+func (x *GoldAttempt) GetScore() float64 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+func (x *GoldAttempt) GetMeanIou() float64 {
+	if x != nil {
+		return x.MeanIou
+	}
+	return 0
+}
+
+func (x *GoldAttempt) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type GetGoldAttemptRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FrameId       int64                  `protobuf:"varint,1,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGoldAttemptRequest) Reset() {
+	*x = GetGoldAttemptRequest{}
+	mi := &file_krill_v1_gold_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGoldAttemptRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGoldAttemptRequest) ProtoMessage() {}
+
+func (x *GetGoldAttemptRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_gold_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGoldAttemptRequest.ProtoReflect.Descriptor instead.
+func (*GetGoldAttemptRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_gold_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetGoldAttemptRequest) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+func (x *GetGoldAttemptRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetGoldAttemptResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Attempt *GoldAttempt           `protobuf:"bytes,1,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	Result  *GoldResult            `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
+	// Presigned MinIO URL.
+	Url           string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	Width         int32  `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32  `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGoldAttemptResponse) Reset() {
+	*x = GetGoldAttemptResponse{}
+	mi := &file_krill_v1_gold_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGoldAttemptResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGoldAttemptResponse) ProtoMessage() {}
+
+func (x *GetGoldAttemptResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_gold_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGoldAttemptResponse.ProtoReflect.Descriptor instead.
+func (*GetGoldAttemptResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_gold_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetGoldAttemptResponse) GetAttempt() *GoldAttempt {
+	if x != nil {
+		return x.Attempt
+	}
+	return nil
+}
+
+func (x *GetGoldAttemptResponse) GetResult() *GoldResult {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+func (x *GetGoldAttemptResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *GetGoldAttemptResponse) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *GetGoldAttemptResponse) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+type ListGoldAttemptsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Empty lists every labeler.
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// 0 lists every gold frame.
+	FrameId int64 `protobuf:"varint,2,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	// Defaults to 20, at most 100.
+	PageSize      int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListGoldAttemptsRequest) Reset() {
+	*x = ListGoldAttemptsRequest{}
+	mi := &file_krill_v1_gold_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListGoldAttemptsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGoldAttemptsRequest) ProtoMessage() {}
+
+func (x *ListGoldAttemptsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_gold_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGoldAttemptsRequest.ProtoReflect.Descriptor instead.
+func (*ListGoldAttemptsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_gold_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListGoldAttemptsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListGoldAttemptsRequest) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+func (x *ListGoldAttemptsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListGoldAttemptsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListGoldAttemptsResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Attempts []*GoldAttempt         `protobuf:"bytes,1,rep,name=attempts,proto3" json:"attempts,omitempty"`
+	// Empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListGoldAttemptsResponse) Reset() {
+	*x = ListGoldAttemptsResponse{}
+	mi := &file_krill_v1_gold_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListGoldAttemptsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGoldAttemptsResponse) ProtoMessage() {}
+
+func (x *ListGoldAttemptsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_gold_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGoldAttemptsResponse.ProtoReflect.Descriptor instead.
+func (*ListGoldAttemptsResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_gold_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListGoldAttemptsResponse) GetAttempts() []*GoldAttempt {
+	if x != nil {
+		return x.Attempts
+	}
+	return nil
+}
+
+func (x *ListGoldAttemptsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
 var File_krill_v1_gold_proto protoreflect.FileDescriptor
 
 const file_krill_v1_gold_proto_rawDesc = "" +
 	"\n" +
-	"\x13krill/v1/gold.proto\x12\bkrill.v1\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/stats.proto\"\xd0\x01\n" +
+	"\x13krill/v1/gold.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/stats.proto\"\xd0\x01\n" +
 	"\aGoldBox\x12\"\n" +
 	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12A\n" +
 	"\n" +
@@ -825,12 +1191,13 @@ const file_krill_v1_gold_proto_rawDesc = "" +
 	"\x05boxes\x18\x02 \x03(\v2\x11.krill.v1.GoldBoxR\x05boxes\"G\n" +
 	"\x17SubmitGoldCheckResponse\x12,\n" +
 	"\x06result\x18\x01 \x01(\v2\x14.krill.v1.GoldResultR\x06result\"\x15\n" +
-	"\x13GetGoldStatsRequest\"\x87\x01\n" +
+	"\x13GetGoldStatsRequest\"\xaa\x01\n" +
 	"\vGoldLabeler\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.krill.v1.ProfileR\x04user\x12\x1a\n" +
 	"\battempts\x18\x02 \x01(\x05R\battempts\x12\x1a\n" +
 	"\baccuracy\x18\x03 \x01(\x01R\baccuracy\x12\x19\n" +
-	"\bmean_iou\x18\x04 \x01(\x01R\ameanIou\"\xf1\x01\n" +
+	"\bmean_iou\x18\x04 \x01(\x01R\ameanIou\x12!\n" +
+	"\fneeds_review\x18\x05 \x01(\bR\vneedsReview\"\xf1\x01\n" +
 	"\tGoldFrame\x12\x19\n" +
 	"\bframe_id\x18\x01 \x01(\x03R\aframeId\x12\x17\n" +
 	"\aclip_id\x18\x02 \x01(\x03R\x06clipId\x12\x14\n" +
@@ -844,12 +1211,43 @@ const file_krill_v1_gold_proto_rawDesc = "" +
 	"mean_score\x18\b \x01(\x01R\tmeanScore\"v\n" +
 	"\x14GetGoldStatsResponse\x121\n" +
 	"\blabelers\x18\x01 \x03(\v2\x15.krill.v1.GoldLabelerR\blabelers\x12+\n" +
-	"\x06frames\x18\x02 \x03(\v2\x13.krill.v1.GoldFrameR\x06frames2\xda\x02\n" +
+	"\x06frames\x18\x02 \x03(\v2\x13.krill.v1.GoldFrameR\x06frames\"\x89\x02\n" +
+	"\vGoldAttempt\x12\x19\n" +
+	"\bframe_id\x18\x01 \x01(\x03R\aframeId\x12%\n" +
+	"\x04user\x18\x02 \x01(\v2\x11.krill.v1.ProfileR\x04user\x12\x17\n" +
+	"\aclip_id\x18\x03 \x01(\x03R\x06clipId\x12\x14\n" +
+	"\x05index\x18\x04 \x01(\x05R\x05index\x12\x1d\n" +
+	"\n" +
+	"video_name\x18\x05 \x01(\tR\tvideoName\x12\x14\n" +
+	"\x05score\x18\x06 \x01(\x01R\x05score\x12\x19\n" +
+	"\bmean_iou\x18\a \x01(\x01R\ameanIou\x129\n" +
+	"\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"K\n" +
+	"\x15GetGoldAttemptRequest\x12\x19\n" +
+	"\bframe_id\x18\x01 \x01(\x03R\aframeId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xb7\x01\n" +
+	"\x16GetGoldAttemptResponse\x12/\n" +
+	"\aattempt\x18\x01 \x01(\v2\x15.krill.v1.GoldAttemptR\aattempt\x12,\n" +
+	"\x06result\x18\x02 \x01(\v2\x14.krill.v1.GoldResultR\x06result\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12\x14\n" +
+	"\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n" +
+	"\x06height\x18\x05 \x01(\x05R\x06height\"\x89\x01\n" +
+	"\x17ListGoldAttemptsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
+	"\bframe_id\x18\x02 \x01(\x03R\aframeId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"u\n" +
+	"\x18ListGoldAttemptsResponse\x121\n" +
+	"\battempts\x18\x01 \x03(\v2\x15.krill.v1.GoldAttemptR\battempts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\x8e\x04\n" +
 	"\vGoldService\x12O\n" +
 	"\fSetGoldFrame\x12\x1d.krill.v1.SetGoldFrameRequest\x1a\x1e.krill.v1.SetGoldFrameResponse\"\x00\x12O\n" +
 	"\fGetGoldCheck\x12\x1d.krill.v1.GetGoldCheckRequest\x1a\x1e.krill.v1.GetGoldCheckResponse\"\x00\x12X\n" +
 	"\x0fSubmitGoldCheck\x12 .krill.v1.SubmitGoldCheckRequest\x1a!.krill.v1.SubmitGoldCheckResponse\"\x00\x12O\n" +
-	"\fGetGoldStats\x12\x1d.krill.v1.GetGoldStatsRequest\x1a\x1e.krill.v1.GetGoldStatsResponse\"\x00B\x8a\x01\n" +
+	"\fGetGoldStats\x12\x1d.krill.v1.GetGoldStatsRequest\x1a\x1e.krill.v1.GetGoldStatsResponse\"\x00\x12U\n" +
+	"\x0eGetGoldAttempt\x12\x1f.krill.v1.GetGoldAttemptRequest\x1a .krill.v1.GetGoldAttemptResponse\"\x00\x12[\n" +
+	"\x10ListGoldAttempts\x12!.krill.v1.ListGoldAttemptsRequest\x1a\".krill.v1.ListGoldAttemptsResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tGoldProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -864,49 +1262,64 @@ func file_krill_v1_gold_proto_rawDescGZIP() []byte {
 	return file_krill_v1_gold_proto_rawDescData
 }
 
-var file_krill_v1_gold_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_krill_v1_gold_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_krill_v1_gold_proto_goTypes = []any{
-	(*GoldBox)(nil),                 // 0: krill.v1.GoldBox
-	(*GoldMatch)(nil),               // 1: krill.v1.GoldMatch
-	(*GoldResult)(nil),              // 2: krill.v1.GoldResult
-	(*SetGoldFrameRequest)(nil),     // 3: krill.v1.SetGoldFrameRequest
-	(*SetGoldFrameResponse)(nil),    // 4: krill.v1.SetGoldFrameResponse
-	(*GetGoldCheckRequest)(nil),     // 5: krill.v1.GetGoldCheckRequest
-	(*GetGoldCheckResponse)(nil),    // 6: krill.v1.GetGoldCheckResponse
-	(*SubmitGoldCheckRequest)(nil),  // 7: krill.v1.SubmitGoldCheckRequest
-	(*SubmitGoldCheckResponse)(nil), // 8: krill.v1.SubmitGoldCheckResponse
-	(*GetGoldStatsRequest)(nil),     // 9: krill.v1.GetGoldStatsRequest
-	(*GoldLabeler)(nil),             // 10: krill.v1.GoldLabeler
-	(*GoldFrame)(nil),               // 11: krill.v1.GoldFrame
-	(*GetGoldStatsResponse)(nil),    // 12: krill.v1.GetGoldStatsResponse
-	nil,                             // 13: krill.v1.GoldBox.AttributesEntry
-	(*Box)(nil),                     // 14: krill.v1.Box
-	(*Profile)(nil),                 // 15: krill.v1.Profile
+	(*GoldBox)(nil),                  // 0: krill.v1.GoldBox
+	(*GoldMatch)(nil),                // 1: krill.v1.GoldMatch
+	(*GoldResult)(nil),               // 2: krill.v1.GoldResult
+	(*SetGoldFrameRequest)(nil),      // 3: krill.v1.SetGoldFrameRequest
+	(*SetGoldFrameResponse)(nil),     // 4: krill.v1.SetGoldFrameResponse
+	(*GetGoldCheckRequest)(nil),      // 5: krill.v1.GetGoldCheckRequest
+	(*GetGoldCheckResponse)(nil),     // 6: krill.v1.GetGoldCheckResponse
+	(*SubmitGoldCheckRequest)(nil),   // 7: krill.v1.SubmitGoldCheckRequest
+	(*SubmitGoldCheckResponse)(nil),  // 8: krill.v1.SubmitGoldCheckResponse
+	(*GetGoldStatsRequest)(nil),      // 9: krill.v1.GetGoldStatsRequest
+	(*GoldLabeler)(nil),              // 10: krill.v1.GoldLabeler
+	(*GoldFrame)(nil),                // 11: krill.v1.GoldFrame
+	(*GetGoldStatsResponse)(nil),     // 12: krill.v1.GetGoldStatsResponse
+	(*GoldAttempt)(nil),              // 13: krill.v1.GoldAttempt
+	(*GetGoldAttemptRequest)(nil),    // 14: krill.v1.GetGoldAttemptRequest
+	(*GetGoldAttemptResponse)(nil),   // 15: krill.v1.GetGoldAttemptResponse
+	(*ListGoldAttemptsRequest)(nil),  // 16: krill.v1.ListGoldAttemptsRequest
+	(*ListGoldAttemptsResponse)(nil), // 17: krill.v1.ListGoldAttemptsResponse
+	nil,                              // 18: krill.v1.GoldBox.AttributesEntry
+	(*Box)(nil),                      // 19: krill.v1.Box
+	(*Profile)(nil),                  // 20: krill.v1.Profile
+	(*timestamppb.Timestamp)(nil),    // 21: google.protobuf.Timestamp
 }
 var file_krill_v1_gold_proto_depIdxs = []int32{
-	13, // 0: krill.v1.GoldBox.attributes:type_name -> krill.v1.GoldBox.AttributesEntry
-	14, // 1: krill.v1.GoldBox.box:type_name -> krill.v1.Box
+	18, // 0: krill.v1.GoldBox.attributes:type_name -> krill.v1.GoldBox.AttributesEntry
+	19, // 1: krill.v1.GoldBox.box:type_name -> krill.v1.Box
 	0,  // 2: krill.v1.GoldResult.reference:type_name -> krill.v1.GoldBox
 	0,  // 3: krill.v1.GoldResult.answer:type_name -> krill.v1.GoldBox
 	1,  // 4: krill.v1.GoldResult.matches:type_name -> krill.v1.GoldMatch
 	0,  // 5: krill.v1.SubmitGoldCheckRequest.boxes:type_name -> krill.v1.GoldBox
 	2,  // 6: krill.v1.SubmitGoldCheckResponse.result:type_name -> krill.v1.GoldResult
-	15, // 7: krill.v1.GoldLabeler.user:type_name -> krill.v1.Profile
+	20, // 7: krill.v1.GoldLabeler.user:type_name -> krill.v1.Profile
 	10, // 8: krill.v1.GetGoldStatsResponse.labelers:type_name -> krill.v1.GoldLabeler
 	11, // 9: krill.v1.GetGoldStatsResponse.frames:type_name -> krill.v1.GoldFrame
-	3,  // 10: krill.v1.GoldService.SetGoldFrame:input_type -> krill.v1.SetGoldFrameRequest
-	5,  // 11: krill.v1.GoldService.GetGoldCheck:input_type -> krill.v1.GetGoldCheckRequest
-	7,  // 12: krill.v1.GoldService.SubmitGoldCheck:input_type -> krill.v1.SubmitGoldCheckRequest
-	9,  // 13: krill.v1.GoldService.GetGoldStats:input_type -> krill.v1.GetGoldStatsRequest
-	4,  // 14: krill.v1.GoldService.SetGoldFrame:output_type -> krill.v1.SetGoldFrameResponse
-	6,  // 15: krill.v1.GoldService.GetGoldCheck:output_type -> krill.v1.GetGoldCheckResponse
-	8,  // 16: krill.v1.GoldService.SubmitGoldCheck:output_type -> krill.v1.SubmitGoldCheckResponse
-	12, // 17: krill.v1.GoldService.GetGoldStats:output_type -> krill.v1.GetGoldStatsResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	20, // 10: krill.v1.GoldAttempt.user:type_name -> krill.v1.Profile
+	21, // 11: krill.v1.GoldAttempt.created_at:type_name -> google.protobuf.Timestamp
+	13, // 12: krill.v1.GetGoldAttemptResponse.attempt:type_name -> krill.v1.GoldAttempt
+	2,  // 13: krill.v1.GetGoldAttemptResponse.result:type_name -> krill.v1.GoldResult
+	13, // 14: krill.v1.ListGoldAttemptsResponse.attempts:type_name -> krill.v1.GoldAttempt
+	3,  // 15: krill.v1.GoldService.SetGoldFrame:input_type -> krill.v1.SetGoldFrameRequest
+	5,  // 16: krill.v1.GoldService.GetGoldCheck:input_type -> krill.v1.GetGoldCheckRequest
+	7,  // 17: krill.v1.GoldService.SubmitGoldCheck:input_type -> krill.v1.SubmitGoldCheckRequest
+	9,  // 18: krill.v1.GoldService.GetGoldStats:input_type -> krill.v1.GetGoldStatsRequest
+	14, // 19: krill.v1.GoldService.GetGoldAttempt:input_type -> krill.v1.GetGoldAttemptRequest
+	16, // 20: krill.v1.GoldService.ListGoldAttempts:input_type -> krill.v1.ListGoldAttemptsRequest
+	4,  // 21: krill.v1.GoldService.SetGoldFrame:output_type -> krill.v1.SetGoldFrameResponse
+	6,  // 22: krill.v1.GoldService.GetGoldCheck:output_type -> krill.v1.GetGoldCheckResponse
+	8,  // 23: krill.v1.GoldService.SubmitGoldCheck:output_type -> krill.v1.SubmitGoldCheckResponse
+	12, // 24: krill.v1.GoldService.GetGoldStats:output_type -> krill.v1.GetGoldStatsResponse
+	15, // 25: krill.v1.GoldService.GetGoldAttempt:output_type -> krill.v1.GetGoldAttemptResponse
+	17, // 26: krill.v1.GoldService.ListGoldAttempts:output_type -> krill.v1.ListGoldAttemptsResponse
+	21, // [21:27] is the sub-list for method output_type
+	15, // [15:21] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_gold_proto_init() }
@@ -922,7 +1335,7 @@ func file_krill_v1_gold_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_gold_proto_rawDesc), len(file_krill_v1_gold_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

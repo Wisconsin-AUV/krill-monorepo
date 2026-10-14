@@ -38,6 +38,7 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    drift = CASE WHEN annotations.drift = 'flagged' THEN 'reviewed' ELSE annotations.drift END,
     updated_by = excluded.updated_by,
     updated_at = now()
 RETURNING *;
@@ -81,3 +82,36 @@ SELECT count(*)::int FROM annotations WHERE frame_id = $1 AND status <> 'rejecte
 -- name: ClearEmptyFrame :exec
 UPDATE frames SET status = 'unlabeled', status_by = NULL, status_at = NULL
 WHERE id = $1 AND status = 'empty';
+
+-- name: ListTypeTracks :many
+-- Each track comes with its first verified box, or its middle box when none
+-- is verified yet.
+SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
+    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
+FROM tracks t
+JOIN clips c ON c.id = t.clip_id
+JOIN label_types lt ON lt.id = t.label_type_id
+JOIN LATERAL (
+    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
+    FROM (
+        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.status,
+            row_number() OVER (ORDER BY f.idx) AS n,
+            count(*) OVER () AS total
+        FROM annotations a
+        JOIN frames f ON f.id = a.frame_id
+        WHERE a.track_id = t.id AND a.status <> 'rejected'
+    ) r
+    ORDER BY (r.status = 'verified') DESC,
+        CASE WHEN r.status = 'verified' THEN r.n ELSE abs(2 * r.n - r.total - 1) END,
+        r.n
+    LIMIT 1
+) b ON true
+WHERE t.label_type_id = sqlc.arg('label_type_id')
+    AND (sqlc.arg('video_id')::bigint = 0 OR c.video_id = sqlc.arg('video_id')::bigint)
+    AND t.id > sqlc.arg('after_id')::bigint
+    AND (NOT sqlc.arg('missing_only')::bool OR EXISTS (
+        SELECT 1 FROM jsonb_array_elements(lt.attributes) d
+        WHERE NOT ((d->'options') @> jsonb_build_array(t.attributes -> (d->>'name')))
+    ))
+ORDER BY t.id
+LIMIT sqlc.arg('lim');

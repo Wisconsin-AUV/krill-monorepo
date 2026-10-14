@@ -42,7 +42,7 @@ func (w *Worker) Timeout(*river.Job[annotation.TrackArgs]) time.Duration { retur
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[annotation.TrackArgs]) error {
 	args := job.Args
-	err := w.track(ctx, job.ID, args)
+	err := w.track(ctx, w.dispatcher.nextID(), args)
 	if err != nil {
 		slog.Error("tracking failed", "track_id", args.TrackID, "frame_id", args.FrameID, "err", err)
 	}
@@ -74,12 +74,20 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 	}
 
 	msg := &krillv1.TrackTask{Id: id, Frames: make([]*krillv1.TaskFrame, len(frames))}
+	if clip.EmbeddedAt.Valid {
+		msg.EmbeddingModel = clip.EmbedModel
+	}
 	for i, f := range frames {
 		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
 		if err != nil {
 			return err
 		}
 		msg.Frames[i] = &krillv1.TaskFrame{Id: f.ID, Url: url}
+		if msg.EmbeddingModel != "" {
+			if msg.Frames[i].EmbeddingUrl, err = w.store.PresignGetInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry); err != nil {
+				return err
+			}
+		}
 	}
 	switch {
 	case args.Point != nil:
@@ -91,18 +99,15 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 		return errors.New("job has no prompt")
 	}
 
-	t := newTask(id, args.TrackID, msg)
-	w.dispatcher.add(t)
-	defer w.dispatcher.remove(id)
+	return run(ctx, w.dispatcher, newTask(id, args.TrackID, msg), pickupTimeout)
+}
 
-	pickup := time.NewTimer(pickupTimeout)
-	defer pickup.Stop()
-	select {
-	case w.dispatcher.queue <- t:
-	case <-pickup.C:
-		return errNoWorker
-	case <-ctx.Done():
-		return ctx.Err()
+// run hands t to the GPU worker and waits for it to finish.
+func run(ctx context.Context, d *Dispatcher, t *task, pickup time.Duration) error {
+	d.add(t)
+	defer d.remove(t.id)
+	if err := d.offer(ctx, t, pickup); err != nil {
+		return err
 	}
 
 	idle := time.NewTimer(idleTimeout)

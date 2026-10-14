@@ -11,6 +11,9 @@ import "krill/v1/user.proto";
 service StatsService {
   rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse) {}
   rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {}
+  // GetDriftStats counts tracker proposals per label type and how many were
+  // flagged as drifted, whether or not a labeler has since looked at them.
+  rpc GetDriftStats(GetDriftStatsRequest) returns (GetDriftStatsResponse) {}
 }
 
 enum Period {
@@ -103,4 +106,17 @@ message GetProfileResponse {
   int64 clips = 8;
   // Boxes by label type, most first.
   repeated LabelTypeCount label_types = 9;
+}
+
+message GetDriftStatsRequest {}
+
+message LabelTypeDrift {
+  int64 label_type_id = 1;
+  int64 proposals = 2;
+  int64 flagged = 3;
+}
+
+message GetDriftStatsResponse {
+  // Only label types with at least one proposal.
+  repeated LabelTypeDrift label_types = 1;
 }

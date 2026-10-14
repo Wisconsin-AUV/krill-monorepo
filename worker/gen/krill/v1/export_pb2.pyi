@@ -38,20 +38,22 @@ class ExportOptions(_message.Message):
     def __init__(self, val_fraction: _Optional[float] = ..., stride: _Optional[int] = ..., dedup: _Optional[bool] = ..., dedup_distance: _Optional[int] = ..., video_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class ExportClassStats(_message.Message):
-    __slots__ = ("id", "name", "train_boxes", "val_boxes", "clips", "videos")
+    __slots__ = ("id", "name", "train_boxes", "val_boxes", "clips", "videos", "test_boxes")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     TRAIN_BOXES_FIELD_NUMBER: _ClassVar[int]
     VAL_BOXES_FIELD_NUMBER: _ClassVar[int]
     CLIPS_FIELD_NUMBER: _ClassVar[int]
     VIDEOS_FIELD_NUMBER: _ClassVar[int]
+    TEST_BOXES_FIELD_NUMBER: _ClassVar[int]
     id: int
     name: str
     train_boxes: int
     val_boxes: int
     clips: int
     videos: int
-    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., clips: _Optional[int] = ..., videos: _Optional[int] = ...) -> None: ...
+    test_boxes: int
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., clips: _Optional[int] = ..., videos: _Optional[int] = ..., test_boxes: _Optional[int] = ...) -> None: ...
 
 class ExportVideoStats(_message.Message):
     __slots__ = ("video_id", "name", "split", "pinned", "images", "boxes")
@@ -70,7 +72,7 @@ class ExportVideoStats(_message.Message):
     def __init__(self, video_id: _Optional[int] = ..., name: _Optional[str] = ..., split: _Optional[str] = ..., pinned: _Optional[bool] = ..., images: _Optional[int] = ..., boxes: _Optional[int] = ...) -> None: ...
 
 class ExportStats(_message.Message):
-    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos")
+    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos", "test_images", "test_boxes")
     TRAIN_IMAGES_FIELD_NUMBER: _ClassVar[int]
     VAL_IMAGES_FIELD_NUMBER: _ClassVar[int]
     TRAIN_BOXES_FIELD_NUMBER: _ClassVar[int]
@@ -83,6 +85,8 @@ class ExportStats(_message.Message):
     DUPLICATE_SKIPPED_FIELD_NUMBER: _ClassVar[int]
     CLASSES_FIELD_NUMBER: _ClassVar[int]
     VIDEOS_FIELD_NUMBER: _ClassVar[int]
+    TEST_IMAGES_FIELD_NUMBER: _ClassVar[int]
+    TEST_BOXES_FIELD_NUMBER: _ClassVar[int]
     train_images: int
     val_images: int
     train_boxes: int
@@ -95,7 +99,9 @@ class ExportStats(_message.Message):
     duplicate_skipped: int
     classes: _containers.RepeatedCompositeFieldContainer[ExportClassStats]
     videos: _containers.RepeatedCompositeFieldContainer[ExportVideoStats]
-    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ...) -> None: ...
+    test_images: int
+    test_boxes: int
+    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ..., test_images: _Optional[int] = ..., test_boxes: _Optional[int] = ...) -> None: ...
 
 class Export(_message.Message):
     __slots__ = ("id", "name", "status", "error", "progress", "options", "stats", "size_bytes", "download_url", "created_at", "finished_at")

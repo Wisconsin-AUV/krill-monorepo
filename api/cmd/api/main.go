@@ -29,6 +29,8 @@ import (
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/queue"
+	"github.com/wauv/krill/api/internal/review"
+	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -101,15 +103,18 @@ func run() error {
 
 	dispatcher := tracker.NewDispatcher()
 	workers := river.NewWorkers()
-	river.AddWorker(workers, ingest.NewWorker(pool, store))
+	river.AddWorker(workers, ingest.NewWorker(pool, store, cfg.EmbedAtIngest))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
+	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
+	river.AddWorker(workers, tracker.NewEmbedWorker(pool, store, dispatcher))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:    {MaxWorkers: 2},
 			ingest.Queue:          {MaxWorkers: 1},
 			annotation.TrackQueue: {MaxWorkers: 1},
+			ingest.EmbedQueue:     {MaxWorkers: 1},
 		},
 		Workers: workers,
 	})
@@ -120,8 +125,12 @@ func run() error {
 		return fmt.Errorf("start jobs: %w", err)
 	}
 
+	goldRouting := review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts}
 	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
-	rpcOpts := connect.WithInterceptors(auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken))
+	rpcOpts := connect.WithInterceptors(
+		rpc.ErrorInterceptor{},
+		auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken),
+	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
@@ -142,16 +151,17 @@ func run() error {
 		mux.HandleFunc("GET /auth/slack/login", slack.Login)
 		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
 	}
-	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, cfg.EmbedAtIngest), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
-	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
-	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store, goldRouting), rpcOpts))
+	mux.Handle(krillv1connect.NewReviewServiceHandler(review.NewService(pool, store), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

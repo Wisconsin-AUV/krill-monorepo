@@ -169,6 +169,14 @@ func (s *Store) PresignGetInternal(ctx context.Context, key string, expiry time.
 	return u.String(), nil
 }
 
+func (s *Store) PresignPutInternal(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	u, err := s.client.PresignedPutObject(ctx, s.bucket, key, expiry)
+	if err != nil {
+		return "", fmt.Errorf("presign put %s: %w", key, err)
+	}
+	return u.String(), nil
+}
+
 // Put uploads r. Pass size -1 when the length is unknown; the object is then
 // sent as a multipart upload.
 func (s *Store) Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error {

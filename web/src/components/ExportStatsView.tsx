@@ -1,11 +1,11 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/16/solid'
 import { Badge } from '@/components/ui/Badge'
+import { Callout } from '@/components/ui/Callout'
 import type { ExportStats } from '@/gen/krill/v1/export_pb'
 import { formatNumber, plural } from '@/lib/format'
 
 function exportWarnings(stats: ExportStats): string[] {
   const warnings: string[] = []
-  const images = stats.trainImages + stats.valImages
+  const images = stats.trainImages + stats.valImages + stats.testImages
   if (images > 0 && stats.valImages === 0)
     warnings.push('No validation images. Pin a video to val or label another video.')
   if (stats.incompleteFrames > 0)
@@ -37,7 +37,8 @@ function Figure({ label, value, detail }: { label: string; value: number; detail
 }
 
 export function ExportStatsView({ stats }: { stats: ExportStats }) {
-  const used = stats.classes.filter((c) => c.trainBoxes + c.valBoxes > 0)
+  const used = stats.classes.filter((c) => c.trainBoxes + c.valBoxes + c.testBoxes > 0)
+  const hasTest = stats.testImages > 0
   const unused = stats.classes.length - used.length
   const warnings = exportWarnings(stats)
   const skipped = [
@@ -50,7 +51,7 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-3 ${hasTest ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
         <Figure
           label="Train images"
           value={stats.trainImages}
@@ -61,6 +62,13 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
           value={stats.valImages}
           detail={plural(stats.valBoxes, 'box', 'boxes')}
         />
+        {hasTest && (
+          <Figure
+            label="Test images"
+            value={stats.testImages}
+            detail={plural(stats.testBoxes, 'box', 'boxes')}
+          />
+        )}
         <Figure label="Negatives" value={stats.negativeImages} detail="Images with no boxes" />
         <Figure label="Classes used" value={used.length} detail={`of ${stats.classes.length}`} />
       </div>
@@ -81,14 +89,13 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
       )}
 
       {warnings.length > 0 && (
-        <ul className="space-y-1.5 rounded-lg bg-amber-50 p-3 ring-1 ring-amber-600/15 dark:bg-amber-400/10 dark:ring-amber-400/20">
-          {warnings.map((w) => (
-            <li key={w} className="flex gap-2 text-sm/6 text-amber-800 dark:text-amber-200">
-              <ExclamationTriangleIcon className="mt-1 size-4 shrink-0 text-amber-500" />
-              {w}
-            </li>
-          ))}
-        </ul>
+        <Callout type="warning">
+          <ul className="space-y-1.5">
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </Callout>
       )}
 
       {used.length > 0 && (
@@ -100,6 +107,7 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
                 <th className="py-1 font-medium">Class</th>
                 <th className="py-1 text-right font-medium">Train</th>
                 <th className="py-1 text-right font-medium">Val</th>
+                {hasTest && <th className="py-1 text-right font-medium">Test</th>}
                 <th className="py-1 text-right font-medium" title="Distinct clips with this class">
                   Clips
                 </th>
@@ -125,6 +133,7 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
                   >
                     {formatNumber(c.valBoxes)}
                   </td>
+                  {hasTest && <td className="py-1.5 text-right">{formatNumber(c.testBoxes)}</td>}
                   <td className="py-1.5 text-right">{c.clips}</td>
                   <td className="py-1.5 text-right">{c.videos}</td>
                 </tr>
@@ -152,7 +161,7 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
                 <span className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
                   {plural(v.images, 'image')} · {plural(v.boxes, 'box', 'boxes')}
                 </span>
-                <Badge color={v.split === 'val' ? 'violet' : 'sky'}>
+                <Badge color={v.split === 'val' ? 'violet' : v.split === 'test' ? 'teal' : 'sky'}>
                   {v.split}
                   {v.pinned && ' · pinned'}
                 </Badge>

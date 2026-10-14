@@ -7,13 +7,13 @@ import { Stat } from '@/components/Stat'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Text } from '@/components/ui/Text'
 import { StatsService, type GetProfileResponse } from '@/gen/krill/v1/stats_pb'
-import { initials, useRoleLabel, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
+import { useRoleLabel, useUser } from '@/lib/auth'
 import { formatNumber, plural } from '@/lib/format'
 import { ordinal, periods, timeZone } from '@/lib/stats'
 
@@ -118,17 +118,12 @@ export function ProfilePage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="text-red-600 dark:text-red-400">
-          Could not load @{username}: {errorMessage(error)}
-        </Text>
+        <QueryError title={`Could not load @${username}`} error={error} />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-5">
-              <Avatar
-                initials={initials(user?.name ?? '')}
-                className="size-16 rounded-full bg-sky-600 [&>span]:text-xl"
-              />
+              <Avatar seed={user?.id ?? ''} className="size-16" />
               <div>
                 <div className="flex items-center gap-3">
                   <Heading>{user?.name}</Heading>

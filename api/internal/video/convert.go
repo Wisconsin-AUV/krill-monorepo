@@ -36,6 +36,7 @@ var splitToProto = map[string]krillv1.SplitAssignment{
 	"auto":  krillv1.SplitAssignment_SPLIT_ASSIGNMENT_AUTO,
 	"train": krillv1.SplitAssignment_SPLIT_ASSIGNMENT_TRAIN,
 	"val":   krillv1.SplitAssignment_SPLIT_ASSIGNMENT_VAL,
+	"test":  krillv1.SplitAssignment_SPLIT_ASSIGNMENT_TEST,
 }
 
 func splitFromProto(s krillv1.SplitAssignment) (string, bool) {
@@ -93,6 +94,7 @@ func (s *Presenter) Clip(ctx context.Context, v db.Video, c db.Clip, st Stats) *
 		ThumbnailUrl:      s.frameURL(ctx, v.ID, c.StartFrame+c.FrameCount/2),
 		LabeledFrameCount: st.LabeledFrames,
 		BoxCount:          st.Boxes,
+		Embedded:          c.EmbeddedAt.Valid,
 	}
 }
 

@@ -56,5 +56,6 @@ func Annotation(a db.Annotation) *krillv1.Annotation {
 		Box:     &krillv1.Box{X: a.X, Y: a.Y, Width: a.Width, Height: a.Height},
 		Source:  sourceToProto[a.Source],
 		Status:  statusToProto[a.Status],
+		Drift:   a.Drift.String == "flagged",
 	}
 }

@@ -8,6 +8,7 @@ export const labelingShortcuts: ShortcutGroup = {
     { keys: ['Shift', 'Click'], label: 'Track a new object through the clip' },
     { keys: ['Shift', 'Drag'], label: 'Draw a box and track it through the clip' },
     { keys: ['R'], label: 'Track the selected box from this frame on' },
+    { keys: ['Shift', 'X'], label: 'Find objects like the selected box and track them' },
     { keys: ['Tab'], label: 'Select next box on frame' },
     { keys: ['Esc'], label: 'Deselect (next box starts a new track)' },
     { keys: ['C'], label: 'Copy boxes from previous frame' },
@@ -25,6 +26,7 @@ export const frameShortcuts: ShortcutGroup = {
     { keys: ['E'], label: 'Mark empty and go to next frame' },
     { keys: ['U'], label: 'Mark unlabeled' },
     { keys: ['D'], label: 'Next frame with a drifted box' },
+    { keys: ['M'], label: 'Flag frame for review or unflag it' },
   ],
 }
 

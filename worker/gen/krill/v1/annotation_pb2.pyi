@@ -82,20 +82,22 @@ class Track(_message.Message):
     def __init__(self, id: _Optional[int] = ..., clip_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class Annotation(_message.Message):
-    __slots__ = ("id", "track_id", "frame_id", "box", "source", "status")
+    __slots__ = ("id", "track_id", "frame_id", "box", "source", "status", "drift")
     ID_FIELD_NUMBER: _ClassVar[int]
     TRACK_ID_FIELD_NUMBER: _ClassVar[int]
     FRAME_ID_FIELD_NUMBER: _ClassVar[int]
     BOX_FIELD_NUMBER: _ClassVar[int]
     SOURCE_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
+    DRIFT_FIELD_NUMBER: _ClassVar[int]
     id: int
     track_id: int
     frame_id: int
     box: Box
     source: AnnotationSource
     status: AnnotationStatus
-    def __init__(self, id: _Optional[int] = ..., track_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., source: _Optional[_Union[AnnotationSource, str]] = ..., status: _Optional[_Union[AnnotationStatus, str]] = ...) -> None: ...
+    drift: bool
+    def __init__(self, id: _Optional[int] = ..., track_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., source: _Optional[_Union[AnnotationSource, str]] = ..., status: _Optional[_Union[AnnotationStatus, str]] = ..., drift: _Optional[bool] = ...) -> None: ...
 
 class CreateTrackRequest(_message.Message):
     __slots__ = ("clip_id", "label_type_id", "attributes", "frame_id", "box")
@@ -249,3 +251,71 @@ class TrackObjectResponse(_message.Message):
     TRACK_FIELD_NUMBER: _ClassVar[int]
     track: Track
     def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ...) -> None: ...
+
+class ListTracksByTypeRequest(_message.Message):
+    __slots__ = ("label_type_id", "video_id", "missing_attributes", "page_size", "page_token")
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    MISSING_ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    label_type_id: int
+    video_id: int
+    missing_attributes: bool
+    page_size: int
+    page_token: str
+    def __init__(self, label_type_id: _Optional[int] = ..., video_id: _Optional[int] = ..., missing_attributes: _Optional[bool] = ..., page_size: _Optional[int] = ..., page_token: _Optional[str] = ...) -> None: ...
+
+class TrackCrop(_message.Message):
+    __slots__ = ("track", "video_id", "frame_id", "frame_index", "box", "frame_url")
+    TRACK_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_INDEX_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    FRAME_URL_FIELD_NUMBER: _ClassVar[int]
+    track: Track
+    video_id: int
+    frame_id: int
+    frame_index: int
+    box: Box
+    frame_url: str
+    def __init__(self, track: _Optional[_Union[Track, _Mapping]] = ..., video_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., frame_index: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., frame_url: _Optional[str] = ...) -> None: ...
+
+class ListTracksByTypeResponse(_message.Message):
+    __slots__ = ("tracks", "next_page_token")
+    TRACKS_FIELD_NUMBER: _ClassVar[int]
+    NEXT_PAGE_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    tracks: _containers.RepeatedCompositeFieldContainer[TrackCrop]
+    next_page_token: str
+    def __init__(self, tracks: _Optional[_Iterable[_Union[TrackCrop, _Mapping]]] = ..., next_page_token: _Optional[str] = ...) -> None: ...
+
+class SearchExemplarRequest(_message.Message):
+    __slots__ = ("track_id", "frame_id")
+    TRACK_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    track_id: int
+    frame_id: int
+    def __init__(self, track_id: _Optional[int] = ..., frame_id: _Optional[int] = ...) -> None: ...
+
+class SearchExemplarResponse(_message.Message):
+    __slots__ = ("search_id",)
+    SEARCH_ID_FIELD_NUMBER: _ClassVar[int]
+    search_id: int
+    def __init__(self, search_id: _Optional[int] = ...) -> None: ...
+
+class GetExemplarSearchRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class GetExemplarSearchResponse(_message.Message):
+    __slots__ = ("done", "error", "track_ids")
+    DONE_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    TRACK_IDS_FIELD_NUMBER: _ClassVar[int]
+    done: bool
+    error: str
+    track_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, done: _Optional[bool] = ..., error: _Optional[str] = ..., track_ids: _Optional[_Iterable[int]] = ...) -> None: ...

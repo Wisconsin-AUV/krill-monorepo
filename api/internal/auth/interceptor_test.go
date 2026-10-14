@@ -112,6 +112,10 @@ func (workerStub) NextTask(context.Context, *krillv1.NextTaskRequest) (*krillv1.
 	return &krillv1.NextTaskResponse{}, nil
 }
 
+func (workerStub) ReportEmbed(context.Context, *krillv1.ReportEmbedRequest) (*krillv1.ReportEmbedResponse, error) {
+	return &krillv1.ReportEmbedResponse{}, nil
+}
+
 func TestInterceptorWorker(t *testing.T) {
 	lookup := func(context.Context, []byte) (db.User, error) { return db.User{Role: "admin"}, nil }
 	tests := []struct {
@@ -140,6 +144,53 @@ func TestInterceptorWorker(t *testing.T) {
 			}
 			client := krillv1connect.NewWorkerServiceClient(srv.Client(), srv.URL, opts...)
 			_, err := client.NextTask(t.Context(), &krillv1.NextTaskRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("NextTask: err = %v, want code %v", err, tt.want)
+			}
+			// Embeddings land in MinIO, so a forged report would mark a clip
+			// embedded with nothing behind it.
+			_, err = client.ReportEmbed(t.Context(), &krillv1.ReportEmbedRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("ReportEmbed: err = %v, want code %v", err, tt.want)
+			}
+		})
+	}
+}
+
+type annotationStub struct {
+	krillv1connect.UnimplementedAnnotationServiceHandler
+}
+
+func (annotationStub) ListTracksByType(context.Context, *krillv1.ListTracksByTypeRequest) (*krillv1.ListTracksByTypeResponse, error) {
+	return &krillv1.ListTracksByTypeResponse{}, nil
+}
+
+func TestListTracksByTypeAccess(t *testing.T) {
+	lookup := func(_ context.Context, hash []byte) (db.User, error) {
+		if string(hash) == string(hashToken("labeler-token")) {
+			return db.User{Role: "labeler"}, nil
+		}
+		return db.User{}, pgx.ErrNoRows
+	}
+	mux := http.NewServeMux()
+	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotationStub{},
+		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	tests := []struct {
+		name string
+		opt  connect.ClientOption
+		want connect.Code
+	}{
+		{"labeler", withCookie("labeler-token"), 0},
+		{"no session", withCookie(""), connect.CodeUnauthenticated},
+		{"worker token", withHeader("Authorization", "Bearer worker-token"), connect.CodeUnauthenticated},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := krillv1connect.NewAnnotationServiceClient(srv.Client(), srv.URL, tt.opt)
+			_, err := client.ListTracksByType(t.Context(), &krillv1.ListTracksByTypeRequest{})
 			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
 				t.Errorf("err = %v, want code %v", err, tt.want)
 			}

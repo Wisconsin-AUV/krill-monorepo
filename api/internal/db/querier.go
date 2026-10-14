@@ -19,6 +19,7 @@ type Querier interface {
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
+	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
@@ -38,6 +39,7 @@ type Querier interface {
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
+	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
@@ -46,6 +48,11 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
+	// Queues the frames the labeler marked done since their gold check before the
+	// one on @gold_frame_id, newest first.
+	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
+	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
@@ -57,11 +64,14 @@ type Querier interface {
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
+	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
+	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByLogin(ctx context.Context, login string) (User, error)
@@ -80,6 +90,7 @@ type Querier interface {
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
 	ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64, error)
+	ListClipOpenReviews(ctx context.Context, clipID int64) ([]ListClipOpenReviewsRow, error)
 	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
@@ -89,13 +100,22 @@ type Querier interface {
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
-	ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error)
+	ListFrameBoxes(ctx context.Context, frameID int64) ([]ListFrameBoxesRow, error)
+	// Matches what the dataset export treats as labels on a done frame, so
+	// tracker proposals the labeler left in place count.
+	ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
+	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
-	ListGoldLabelers(ctx context.Context) ([]ListGoldLabelersRow, error)
+	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
+	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
+	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
+	// Each track comes with its first verified box, or its middle box when none
+	// is verified yet.
+	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	LockUsers(ctx context.Context) error
@@ -108,9 +128,14 @@ type Querier interface {
 	// check does not hand out an easier one.
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
+	ReviewExists(ctx context.Context, id int64) (bool, error)
+	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
+	SetDrift(ctx context.Context, arg SetDriftParams) error
 	// Credit stays with whoever first set the current status.
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error

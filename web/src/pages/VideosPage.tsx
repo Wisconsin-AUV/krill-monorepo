@@ -9,6 +9,7 @@ import { Thumbnail } from '@/components/Thumbnail'
 import { UploadDialog } from '@/components/UploadDialog'
 import { VideoStatusBadge } from '@/components/VideoStatusBadge'
 import { Button } from '@/components/ui/Button'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
@@ -25,7 +26,6 @@ import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useCan } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { formatDuration, formatNumber, formatRelative, plural } from '@/lib/format'
 import { isIngesting, splitLabel } from '@/lib/video'
 
@@ -48,7 +48,7 @@ export function VideosPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Heading>Videos</Heading>
-          <Text className="mt-1">Pool footage to label. Each video is split into short clips.</Text>
+          <Text className="mt-1">Footage to label. Each video is split into short clips.</Text>
         </div>
         {canManage && (
           <Button color="sky" onClick={() => setUploading(true)}>
@@ -75,9 +75,7 @@ export function VideosPage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-4 text-red-600 dark:text-red-400">
-          Could not load videos: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load videos" error={error} className="mt-4" />
       ) : videos.length === 0 ? (
         <div className="mt-4">
           <EmptyState
@@ -85,7 +83,7 @@ export function VideosPage() {
             title="No videos yet"
             description={
               canManage
-                ? 'Upload pool footage to start labeling.'
+                ? 'Upload footage to start labeling.'
                 : 'A developer needs to upload footage before you can label.'
             }
           >

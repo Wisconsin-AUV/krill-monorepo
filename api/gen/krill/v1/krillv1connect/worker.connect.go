@@ -38,6 +38,12 @@ const (
 	// WorkerServiceReportTrackProcedure is the fully-qualified name of the WorkerService's ReportTrack
 	// RPC.
 	WorkerServiceReportTrackProcedure = "/krill.v1.WorkerService/ReportTrack"
+	// WorkerServiceReportExemplarsProcedure is the fully-qualified name of the WorkerService's
+	// ReportExemplars RPC.
+	WorkerServiceReportExemplarsProcedure = "/krill.v1.WorkerService/ReportExemplars"
+	// WorkerServiceReportEmbedProcedure is the fully-qualified name of the WorkerService's ReportEmbed
+	// RPC.
+	WorkerServiceReportEmbedProcedure = "/krill.v1.WorkerService/ReportEmbed"
 	// WorkerServiceFailTaskProcedure is the fully-qualified name of the WorkerService's FailTask RPC.
 	WorkerServiceFailTaskProcedure = "/krill.v1.WorkerService/FailTask"
 )
@@ -50,6 +56,11 @@ type WorkerServiceClient interface {
 	// ReportTrack saves boxes for a track task. Workers report in batches as
 	// they go, and set done on the last one.
 	ReportTrack(context.Context, *v1.ReportTrackRequest) (*v1.ReportTrackResponse, error)
+	// ReportExemplars finishes an exemplar task with every object found.
+	ReportExemplars(context.Context, *v1.ReportExemplarsRequest) (*v1.ReportExemplarsResponse, error)
+	// ReportEmbed finishes an embed task once every frame's embedding is
+	// uploaded.
+	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
 }
 
@@ -76,6 +87,18 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(workerServiceMethods.ByName("ReportTrack")),
 			connect.WithClientOptions(opts...),
 		),
+		reportExemplars: connect.NewClient[v1.ReportExemplarsRequest, v1.ReportExemplarsResponse](
+			httpClient,
+			baseURL+WorkerServiceReportExemplarsProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("ReportExemplars")),
+			connect.WithClientOptions(opts...),
+		),
+		reportEmbed: connect.NewClient[v1.ReportEmbedRequest, v1.ReportEmbedResponse](
+			httpClient,
+			baseURL+WorkerServiceReportEmbedProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("ReportEmbed")),
+			connect.WithClientOptions(opts...),
+		),
 		failTask: connect.NewClient[v1.FailTaskRequest, v1.FailTaskResponse](
 			httpClient,
 			baseURL+WorkerServiceFailTaskProcedure,
@@ -87,9 +110,11 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // workerServiceClient implements WorkerServiceClient.
 type workerServiceClient struct {
-	nextTask    *connect.Client[v1.NextTaskRequest, v1.NextTaskResponse]
-	reportTrack *connect.Client[v1.ReportTrackRequest, v1.ReportTrackResponse]
-	failTask    *connect.Client[v1.FailTaskRequest, v1.FailTaskResponse]
+	nextTask        *connect.Client[v1.NextTaskRequest, v1.NextTaskResponse]
+	reportTrack     *connect.Client[v1.ReportTrackRequest, v1.ReportTrackResponse]
+	reportExemplars *connect.Client[v1.ReportExemplarsRequest, v1.ReportExemplarsResponse]
+	reportEmbed     *connect.Client[v1.ReportEmbedRequest, v1.ReportEmbedResponse]
+	failTask        *connect.Client[v1.FailTaskRequest, v1.FailTaskResponse]
 }
 
 // NextTask calls krill.v1.WorkerService.NextTask.
@@ -104,6 +129,24 @@ func (c *workerServiceClient) NextTask(ctx context.Context, req *v1.NextTaskRequ
 // ReportTrack calls krill.v1.WorkerService.ReportTrack.
 func (c *workerServiceClient) ReportTrack(ctx context.Context, req *v1.ReportTrackRequest) (*v1.ReportTrackResponse, error) {
 	response, err := c.reportTrack.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ReportExemplars calls krill.v1.WorkerService.ReportExemplars.
+func (c *workerServiceClient) ReportExemplars(ctx context.Context, req *v1.ReportExemplarsRequest) (*v1.ReportExemplarsResponse, error) {
+	response, err := c.reportExemplars.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ReportEmbed calls krill.v1.WorkerService.ReportEmbed.
+func (c *workerServiceClient) ReportEmbed(ctx context.Context, req *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error) {
+	response, err := c.reportEmbed.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -127,6 +170,11 @@ type WorkerServiceHandler interface {
 	// ReportTrack saves boxes for a track task. Workers report in batches as
 	// they go, and set done on the last one.
 	ReportTrack(context.Context, *v1.ReportTrackRequest) (*v1.ReportTrackResponse, error)
+	// ReportExemplars finishes an exemplar task with every object found.
+	ReportExemplars(context.Context, *v1.ReportExemplarsRequest) (*v1.ReportExemplarsResponse, error)
+	// ReportEmbed finishes an embed task once every frame's embedding is
+	// uploaded.
+	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
 }
 
@@ -149,6 +197,18 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(workerServiceMethods.ByName("ReportTrack")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workerServiceReportExemplarsHandler := connect.NewUnaryHandlerSimple(
+		WorkerServiceReportExemplarsProcedure,
+		svc.ReportExemplars,
+		connect.WithSchema(workerServiceMethods.ByName("ReportExemplars")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceReportEmbedHandler := connect.NewUnaryHandlerSimple(
+		WorkerServiceReportEmbedProcedure,
+		svc.ReportEmbed,
+		connect.WithSchema(workerServiceMethods.ByName("ReportEmbed")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workerServiceFailTaskHandler := connect.NewUnaryHandlerSimple(
 		WorkerServiceFailTaskProcedure,
 		svc.FailTask,
@@ -161,6 +221,10 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 			workerServiceNextTaskHandler.ServeHTTP(w, r)
 		case WorkerServiceReportTrackProcedure:
 			workerServiceReportTrackHandler.ServeHTTP(w, r)
+		case WorkerServiceReportExemplarsProcedure:
+			workerServiceReportExemplarsHandler.ServeHTTP(w, r)
+		case WorkerServiceReportEmbedProcedure:
+			workerServiceReportEmbedHandler.ServeHTTP(w, r)
 		case WorkerServiceFailTaskProcedure:
 			workerServiceFailTaskHandler.ServeHTTP(w, r)
 		default:
@@ -178,6 +242,14 @@ func (UnimplementedWorkerServiceHandler) NextTask(context.Context, *v1.NextTaskR
 
 func (UnimplementedWorkerServiceHandler) ReportTrack(context.Context, *v1.ReportTrackRequest) (*v1.ReportTrackResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.ReportTrack is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) ReportExemplars(context.Context, *v1.ReportExemplarsRequest) (*v1.ReportExemplarsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.ReportExemplars is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.ReportEmbed is not implemented"))
 }
 
 func (UnimplementedWorkerServiceHandler) FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error) {

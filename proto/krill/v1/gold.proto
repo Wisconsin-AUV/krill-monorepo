@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package krill.v1;
 
+import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
 import "krill/v1/stats.proto";
 
@@ -19,6 +20,11 @@ service GoldService {
   // Each labeler answers a gold frame once.
   rpc SubmitGoldCheck(SubmitGoldCheckRequest) returns (SubmitGoldCheckResponse) {}
   rpc GetGoldStats(GetGoldStatsRequest) returns (GetGoldStatsResponse) {}
+  // GetGoldAttempt is open to reviewers and to the labeler who answered.
+  rpc GetGoldAttempt(GetGoldAttemptRequest) returns (GetGoldAttemptResponse) {}
+  // ListGoldAttempts lists attempts newest first. Labelers who are not
+  // reviewers can only list their own.
+  rpc ListGoldAttempts(ListGoldAttemptsRequest) returns (ListGoldAttemptsResponse) {}
 }
 
 message GoldBox {
@@ -86,6 +92,8 @@ message GoldLabeler {
   double accuracy = 3;
   // Over matched boxes. 0 when nothing matched.
   double mean_iou = 4;
+  // Their recent gold scores are low, so frames they finish go to review.
+  bool needs_review = 5;
 }
 
 message GoldFrame {
@@ -106,4 +114,48 @@ message GetGoldStatsResponse {
   repeated GoldLabeler labelers = 1;
   // Newest first.
   repeated GoldFrame frames = 2;
+}
+
+// GoldAttempt is one labeler's answer to one gold frame.
+message GoldAttempt {
+  int64 frame_id = 1;
+  Profile user = 2;
+  int64 clip_id = 3;
+  // Index of the frame within the video.
+  int32 index = 4;
+  string video_name = 5;
+  double score = 6;
+  // Over matched boxes. 0 when nothing matched.
+  double mean_iou = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetGoldAttemptRequest {
+  int64 frame_id = 1;
+  string user_id = 2;
+}
+
+message GetGoldAttemptResponse {
+  GoldAttempt attempt = 1;
+  GoldResult result = 2;
+  // Presigned MinIO URL.
+  string url = 3;
+  int32 width = 4;
+  int32 height = 5;
+}
+
+message ListGoldAttemptsRequest {
+  // Empty lists every labeler.
+  string user_id = 1;
+  // 0 lists every gold frame.
+  int64 frame_id = 2;
+  // Defaults to 20, at most 100.
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListGoldAttemptsResponse {
+  repeated GoldAttempt attempts = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
 }

@@ -374,13 +374,16 @@ func (x *Track) GetAttributes() map[string]string {
 }
 
 type Annotation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	TrackId       int64                  `protobuf:"varint,2,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
-	FrameId       int64                  `protobuf:"varint,3,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
-	Box           *Box                   `protobuf:"bytes,4,opt,name=box,proto3" json:"box,omitempty"`
-	Source        AnnotationSource       `protobuf:"varint,5,opt,name=source,proto3,enum=krill.v1.AnnotationSource" json:"source,omitempty"`
-	Status        AnnotationStatus       `protobuf:"varint,6,opt,name=status,proto3,enum=krill.v1.AnnotationStatus" json:"status,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Id      int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TrackId int64                  `protobuf:"varint,2,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	FrameId int64                  `protobuf:"varint,3,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	Box     *Box                   `protobuf:"bytes,4,opt,name=box,proto3" json:"box,omitempty"`
+	Source  AnnotationSource       `protobuf:"varint,5,opt,name=source,proto3,enum=krill.v1.AnnotationSource" json:"source,omitempty"`
+	Status  AnnotationStatus       `protobuf:"varint,6,opt,name=status,proto3,enum=krill.v1.AnnotationStatus" json:"status,omitempty"`
+	// The tracker's box jumped in size or position from the track's previous
+	// box, and no labeler has accepted or edited it yet.
+	Drift         bool `protobuf:"varint,7,opt,name=drift,proto3" json:"drift,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -455,6 +458,13 @@ func (x *Annotation) GetStatus() AnnotationStatus {
 		return x.Status
 	}
 	return AnnotationStatus_ANNOTATION_STATUS_UNSPECIFIED
+}
+
+func (x *Annotation) GetDrift() bool {
+	if x != nil {
+		return x.Drift
+	}
+	return false
 }
 
 type CreateTrackRequest struct {
@@ -1341,6 +1351,426 @@ func (x *TrackObjectResponse) GetTrack() *Track {
 	return nil
 }
 
+type ListTracksByTypeRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	// 0 lists every video.
+	VideoId int64 `protobuf:"varint,2,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	// Only tracks with at least one attribute unset.
+	MissingAttributes bool `protobuf:"varint,3,opt,name=missing_attributes,json=missingAttributes,proto3" json:"missing_attributes,omitempty"`
+	// Defaults to 60, at most 200.
+	PageSize      int32  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTracksByTypeRequest) Reset() {
+	*x = ListTracksByTypeRequest{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTracksByTypeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTracksByTypeRequest) ProtoMessage() {}
+
+func (x *ListTracksByTypeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTracksByTypeRequest.ProtoReflect.Descriptor instead.
+func (*ListTracksByTypeRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListTracksByTypeRequest) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+func (x *ListTracksByTypeRequest) GetVideoId() int64 {
+	if x != nil {
+		return x.VideoId
+	}
+	return 0
+}
+
+func (x *ListTracksByTypeRequest) GetMissingAttributes() bool {
+	if x != nil {
+		return x.MissingAttributes
+	}
+	return false
+}
+
+func (x *ListTracksByTypeRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListTracksByTypeRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type TrackCrop struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Track   *Track                 `protobuf:"bytes,1,opt,name=track,proto3" json:"track,omitempty"`
+	VideoId int64                  `protobuf:"varint,2,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	// The track's first verified box, or its middle box when none is verified.
+	FrameId    int64 `protobuf:"varint,3,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	FrameIndex int32 `protobuf:"varint,4,opt,name=frame_index,json=frameIndex,proto3" json:"frame_index,omitempty"`
+	Box        *Box  `protobuf:"bytes,5,opt,name=box,proto3" json:"box,omitempty"`
+	// Presigned MinIO URL of the whole frame.
+	FrameUrl      string `protobuf:"bytes,6,opt,name=frame_url,json=frameUrl,proto3" json:"frame_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrackCrop) Reset() {
+	*x = TrackCrop{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrackCrop) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrackCrop) ProtoMessage() {}
+
+func (x *TrackCrop) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrackCrop.ProtoReflect.Descriptor instead.
+func (*TrackCrop) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *TrackCrop) GetTrack() *Track {
+	if x != nil {
+		return x.Track
+	}
+	return nil
+}
+
+func (x *TrackCrop) GetVideoId() int64 {
+	if x != nil {
+		return x.VideoId
+	}
+	return 0
+}
+
+func (x *TrackCrop) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+func (x *TrackCrop) GetFrameIndex() int32 {
+	if x != nil {
+		return x.FrameIndex
+	}
+	return 0
+}
+
+func (x *TrackCrop) GetBox() *Box {
+	if x != nil {
+		return x.Box
+	}
+	return nil
+}
+
+func (x *TrackCrop) GetFrameUrl() string {
+	if x != nil {
+		return x.FrameUrl
+	}
+	return ""
+}
+
+type ListTracksByTypeResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Tracks []*TrackCrop           `protobuf:"bytes,1,rep,name=tracks,proto3" json:"tracks,omitempty"`
+	// Empty on the last page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTracksByTypeResponse) Reset() {
+	*x = ListTracksByTypeResponse{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTracksByTypeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTracksByTypeResponse) ProtoMessage() {}
+
+func (x *ListTracksByTypeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTracksByTypeResponse.ProtoReflect.Descriptor instead.
+func (*ListTracksByTypeResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ListTracksByTypeResponse) GetTracks() []*TrackCrop {
+	if x != nil {
+		return x.Tracks
+	}
+	return nil
+}
+
+func (x *ListTracksByTypeResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type SearchExemplarRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TrackId       int64                  `protobuf:"varint,1,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	FrameId       int64                  `protobuf:"varint,2,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchExemplarRequest) Reset() {
+	*x = SearchExemplarRequest{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchExemplarRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchExemplarRequest) ProtoMessage() {}
+
+func (x *SearchExemplarRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchExemplarRequest.ProtoReflect.Descriptor instead.
+func (*SearchExemplarRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SearchExemplarRequest) GetTrackId() int64 {
+	if x != nil {
+		return x.TrackId
+	}
+	return 0
+}
+
+func (x *SearchExemplarRequest) GetFrameId() int64 {
+	if x != nil {
+		return x.FrameId
+	}
+	return 0
+}
+
+type SearchExemplarResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SearchId      int64                  `protobuf:"varint,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchExemplarResponse) Reset() {
+	*x = SearchExemplarResponse{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchExemplarResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchExemplarResponse) ProtoMessage() {}
+
+func (x *SearchExemplarResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchExemplarResponse.ProtoReflect.Descriptor instead.
+func (*SearchExemplarResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SearchExemplarResponse) GetSearchId() int64 {
+	if x != nil {
+		return x.SearchId
+	}
+	return 0
+}
+
+type GetExemplarSearchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExemplarSearchRequest) Reset() {
+	*x = GetExemplarSearchRequest{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExemplarSearchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExemplarSearchRequest) ProtoMessage() {}
+
+func (x *GetExemplarSearchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExemplarSearchRequest.ProtoReflect.Descriptor instead.
+func (*GetExemplarSearchRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GetExemplarSearchRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type GetExemplarSearchResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Done  bool                   `protobuf:"varint,1,opt,name=done,proto3" json:"done,omitempty"`
+	// Set when the search failed.
+	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// Tracks created for the objects found.
+	TrackIds      []int64 `protobuf:"varint,3,rep,packed,name=track_ids,json=trackIds,proto3" json:"track_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExemplarSearchResponse) Reset() {
+	*x = GetExemplarSearchResponse{}
+	mi := &file_krill_v1_annotation_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExemplarSearchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExemplarSearchResponse) ProtoMessage() {}
+
+func (x *GetExemplarSearchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_annotation_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExemplarSearchResponse.ProtoReflect.Descriptor instead.
+func (*GetExemplarSearchResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_annotation_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetExemplarSearchResponse) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
+func (x *GetExemplarSearchResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *GetExemplarSearchResponse) GetTrackIds() []int64 {
+	if x != nil {
+		return x.TrackIds
+	}
+	return nil
+}
+
 var File_krill_v1_annotation_proto protoreflect.FileDescriptor
 
 const file_krill_v1_annotation_proto_rawDesc = "" +
@@ -1363,7 +1793,7 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdb\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf1\x01\n" +
 	"\n" +
 	"Annotation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
@@ -1371,7 +1801,8 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\bframe_id\x18\x03 \x01(\x03R\aframeId\x12\x1f\n" +
 	"\x03box\x18\x04 \x01(\v2\r.krill.v1.BoxR\x03box\x122\n" +
 	"\x06source\x18\x05 \x01(\x0e2\x1a.krill.v1.AnnotationSourceR\x06source\x122\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1a.krill.v1.AnnotationStatusR\x06status\"\x9a\x02\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1a.krill.v1.AnnotationStatusR\x06status\x12\x14\n" +
+	"\x05drift\x18\a \x01(\bR\x05drift\"\x9a\x02\n" +
 	"\x12CreateTrackRequest\x12\x17\n" +
 	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\x12\"\n" +
 	"\rlabel_type_id\x18\x02 \x01(\x03R\vlabelTypeId\x12L\n" +
@@ -1442,7 +1873,36 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
 	"\x06prompt\"<\n" +
 	"\x13TrackObjectResponse\x12%\n" +
-	"\x05track\x18\x01 \x01(\v2\x0f.krill.v1.TrackR\x05track*y\n" +
+	"\x05track\x18\x01 \x01(\v2\x0f.krill.v1.TrackR\x05track\"\xc3\x01\n" +
+	"\x17ListTracksByTypeRequest\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x19\n" +
+	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12-\n" +
+	"\x12missing_attributes\x18\x03 \x01(\bR\x11missingAttributes\x12\x1b\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x05 \x01(\tR\tpageToken\"\xc7\x01\n" +
+	"\tTrackCrop\x12%\n" +
+	"\x05track\x18\x01 \x01(\v2\x0f.krill.v1.TrackR\x05track\x12\x19\n" +
+	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12\x19\n" +
+	"\bframe_id\x18\x03 \x01(\x03R\aframeId\x12\x1f\n" +
+	"\vframe_index\x18\x04 \x01(\x05R\n" +
+	"frameIndex\x12\x1f\n" +
+	"\x03box\x18\x05 \x01(\v2\r.krill.v1.BoxR\x03box\x12\x1b\n" +
+	"\tframe_url\x18\x06 \x01(\tR\bframeUrl\"o\n" +
+	"\x18ListTracksByTypeResponse\x12+\n" +
+	"\x06tracks\x18\x01 \x03(\v2\x13.krill.v1.TrackCropR\x06tracks\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"M\n" +
+	"\x15SearchExemplarRequest\x12\x19\n" +
+	"\btrack_id\x18\x01 \x01(\x03R\atrackId\x12\x19\n" +
+	"\bframe_id\x18\x02 \x01(\x03R\aframeId\"5\n" +
+	"\x16SearchExemplarResponse\x12\x1b\n" +
+	"\tsearch_id\x18\x01 \x01(\x03R\bsearchId\"*\n" +
+	"\x18GetExemplarSearchRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"b\n" +
+	"\x19GetExemplarSearchResponse\x12\x12\n" +
+	"\x04done\x18\x01 \x01(\bR\x04done\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\x12\x1b\n" +
+	"\ttrack_ids\x18\x03 \x03(\x03R\btrackIds*y\n" +
 	"\vFrameStatus\x12\x1c\n" +
 	"\x18FRAME_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16FRAME_STATUS_UNLABELED\x10\x01\x12\x18\n" +
@@ -1458,7 +1918,7 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x1dANNOTATION_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aANNOTATION_STATUS_PROPOSED\x10\x01\x12\x1e\n" +
 	"\x1aANNOTATION_STATUS_VERIFIED\x10\x02\x12\x1e\n" +
-	"\x1aANNOTATION_STATUS_REJECTED\x10\x032\xf1\x04\n" +
+	"\x1aANNOTATION_STATUS_REJECTED\x10\x032\x85\a\n" +
 	"\x11AnnotationService\x12L\n" +
 	"\vCreateTrack\x12\x1c.krill.v1.CreateTrackRequest\x1a\x1d.krill.v1.CreateTrackResponse\"\x00\x12L\n" +
 	"\vUpdateTrack\x12\x1c.krill.v1.UpdateTrackRequest\x1a\x1d.krill.v1.UpdateTrackResponse\"\x00\x12L\n" +
@@ -1467,7 +1927,10 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\tDeleteBox\x12\x1a.krill.v1.DeleteBoxRequest\x1a\x1b.krill.v1.DeleteBoxResponse\"\x00\x12F\n" +
 	"\tCopyBoxes\x12\x1a.krill.v1.CopyBoxesRequest\x1a\x1b.krill.v1.CopyBoxesResponse\"\x00\x12U\n" +
 	"\x0eSetFrameStatus\x12\x1f.krill.v1.SetFrameStatusRequest\x1a .krill.v1.SetFrameStatusResponse\"\x00\x12L\n" +
-	"\vTrackObject\x12\x1c.krill.v1.TrackObjectRequest\x1a\x1d.krill.v1.TrackObjectResponse\"\x00B\x90\x01\n" +
+	"\vTrackObject\x12\x1c.krill.v1.TrackObjectRequest\x1a\x1d.krill.v1.TrackObjectResponse\"\x00\x12[\n" +
+	"\x10ListTracksByType\x12!.krill.v1.ListTracksByTypeRequest\x1a\".krill.v1.ListTracksByTypeResponse\"\x00\x12U\n" +
+	"\x0eSearchExemplar\x12\x1f.krill.v1.SearchExemplarRequest\x1a .krill.v1.SearchExemplarResponse\"\x00\x12^\n" +
+	"\x11GetExemplarSearch\x12\".krill.v1.GetExemplarSearchRequest\x1a#.krill.v1.GetExemplarSearchResponse\"\x00B\x90\x01\n" +
 	"\fcom.krill.v1B\x0fAnnotationProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -1483,77 +1946,93 @@ func file_krill_v1_annotation_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_annotation_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_krill_v1_annotation_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_krill_v1_annotation_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_krill_v1_annotation_proto_goTypes = []any{
-	(FrameStatus)(0),               // 0: krill.v1.FrameStatus
-	(AnnotationSource)(0),          // 1: krill.v1.AnnotationSource
-	(AnnotationStatus)(0),          // 2: krill.v1.AnnotationStatus
-	(*Box)(nil),                    // 3: krill.v1.Box
-	(*Point)(nil),                  // 4: krill.v1.Point
-	(*Track)(nil),                  // 5: krill.v1.Track
-	(*Annotation)(nil),             // 6: krill.v1.Annotation
-	(*CreateTrackRequest)(nil),     // 7: krill.v1.CreateTrackRequest
-	(*CreateTrackResponse)(nil),    // 8: krill.v1.CreateTrackResponse
-	(*UpdateTrackRequest)(nil),     // 9: krill.v1.UpdateTrackRequest
-	(*UpdateTrackResponse)(nil),    // 10: krill.v1.UpdateTrackResponse
-	(*DeleteTrackRequest)(nil),     // 11: krill.v1.DeleteTrackRequest
-	(*DeleteTrackResponse)(nil),    // 12: krill.v1.DeleteTrackResponse
-	(*SetBoxRequest)(nil),          // 13: krill.v1.SetBoxRequest
-	(*SetBoxResponse)(nil),         // 14: krill.v1.SetBoxResponse
-	(*DeleteBoxRequest)(nil),       // 15: krill.v1.DeleteBoxRequest
-	(*DeleteBoxResponse)(nil),      // 16: krill.v1.DeleteBoxResponse
-	(*CopyBoxesRequest)(nil),       // 17: krill.v1.CopyBoxesRequest
-	(*CopyBoxesResponse)(nil),      // 18: krill.v1.CopyBoxesResponse
-	(*SetFrameStatusRequest)(nil),  // 19: krill.v1.SetFrameStatusRequest
-	(*SetFrameStatusResponse)(nil), // 20: krill.v1.SetFrameStatusResponse
-	(*TrackObjectRequest)(nil),     // 21: krill.v1.TrackObjectRequest
-	(*TrackObjectResponse)(nil),    // 22: krill.v1.TrackObjectResponse
-	nil,                            // 23: krill.v1.Track.AttributesEntry
-	nil,                            // 24: krill.v1.CreateTrackRequest.AttributesEntry
-	nil,                            // 25: krill.v1.UpdateTrackRequest.AttributesEntry
-	nil,                            // 26: krill.v1.TrackObjectRequest.AttributesEntry
+	(FrameStatus)(0),                  // 0: krill.v1.FrameStatus
+	(AnnotationSource)(0),             // 1: krill.v1.AnnotationSource
+	(AnnotationStatus)(0),             // 2: krill.v1.AnnotationStatus
+	(*Box)(nil),                       // 3: krill.v1.Box
+	(*Point)(nil),                     // 4: krill.v1.Point
+	(*Track)(nil),                     // 5: krill.v1.Track
+	(*Annotation)(nil),                // 6: krill.v1.Annotation
+	(*CreateTrackRequest)(nil),        // 7: krill.v1.CreateTrackRequest
+	(*CreateTrackResponse)(nil),       // 8: krill.v1.CreateTrackResponse
+	(*UpdateTrackRequest)(nil),        // 9: krill.v1.UpdateTrackRequest
+	(*UpdateTrackResponse)(nil),       // 10: krill.v1.UpdateTrackResponse
+	(*DeleteTrackRequest)(nil),        // 11: krill.v1.DeleteTrackRequest
+	(*DeleteTrackResponse)(nil),       // 12: krill.v1.DeleteTrackResponse
+	(*SetBoxRequest)(nil),             // 13: krill.v1.SetBoxRequest
+	(*SetBoxResponse)(nil),            // 14: krill.v1.SetBoxResponse
+	(*DeleteBoxRequest)(nil),          // 15: krill.v1.DeleteBoxRequest
+	(*DeleteBoxResponse)(nil),         // 16: krill.v1.DeleteBoxResponse
+	(*CopyBoxesRequest)(nil),          // 17: krill.v1.CopyBoxesRequest
+	(*CopyBoxesResponse)(nil),         // 18: krill.v1.CopyBoxesResponse
+	(*SetFrameStatusRequest)(nil),     // 19: krill.v1.SetFrameStatusRequest
+	(*SetFrameStatusResponse)(nil),    // 20: krill.v1.SetFrameStatusResponse
+	(*TrackObjectRequest)(nil),        // 21: krill.v1.TrackObjectRequest
+	(*TrackObjectResponse)(nil),       // 22: krill.v1.TrackObjectResponse
+	(*ListTracksByTypeRequest)(nil),   // 23: krill.v1.ListTracksByTypeRequest
+	(*TrackCrop)(nil),                 // 24: krill.v1.TrackCrop
+	(*ListTracksByTypeResponse)(nil),  // 25: krill.v1.ListTracksByTypeResponse
+	(*SearchExemplarRequest)(nil),     // 26: krill.v1.SearchExemplarRequest
+	(*SearchExemplarResponse)(nil),    // 27: krill.v1.SearchExemplarResponse
+	(*GetExemplarSearchRequest)(nil),  // 28: krill.v1.GetExemplarSearchRequest
+	(*GetExemplarSearchResponse)(nil), // 29: krill.v1.GetExemplarSearchResponse
+	nil,                               // 30: krill.v1.Track.AttributesEntry
+	nil,                               // 31: krill.v1.CreateTrackRequest.AttributesEntry
+	nil,                               // 32: krill.v1.UpdateTrackRequest.AttributesEntry
+	nil,                               // 33: krill.v1.TrackObjectRequest.AttributesEntry
 }
 var file_krill_v1_annotation_proto_depIdxs = []int32{
-	23, // 0: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
+	30, // 0: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
 	3,  // 1: krill.v1.Annotation.box:type_name -> krill.v1.Box
 	1,  // 2: krill.v1.Annotation.source:type_name -> krill.v1.AnnotationSource
 	2,  // 3: krill.v1.Annotation.status:type_name -> krill.v1.AnnotationStatus
-	24, // 4: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
+	31, // 4: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
 	3,  // 5: krill.v1.CreateTrackRequest.box:type_name -> krill.v1.Box
 	5,  // 6: krill.v1.CreateTrackResponse.track:type_name -> krill.v1.Track
 	6,  // 7: krill.v1.CreateTrackResponse.annotation:type_name -> krill.v1.Annotation
-	25, // 8: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
+	32, // 8: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
 	5,  // 9: krill.v1.UpdateTrackResponse.track:type_name -> krill.v1.Track
 	3,  // 10: krill.v1.SetBoxRequest.box:type_name -> krill.v1.Box
 	6,  // 11: krill.v1.SetBoxResponse.annotation:type_name -> krill.v1.Annotation
 	6,  // 12: krill.v1.CopyBoxesResponse.annotations:type_name -> krill.v1.Annotation
 	0,  // 13: krill.v1.SetFrameStatusRequest.status:type_name -> krill.v1.FrameStatus
 	0,  // 14: krill.v1.SetFrameStatusResponse.status:type_name -> krill.v1.FrameStatus
-	26, // 15: krill.v1.TrackObjectRequest.attributes:type_name -> krill.v1.TrackObjectRequest.AttributesEntry
+	33, // 15: krill.v1.TrackObjectRequest.attributes:type_name -> krill.v1.TrackObjectRequest.AttributesEntry
 	4,  // 16: krill.v1.TrackObjectRequest.point:type_name -> krill.v1.Point
 	3,  // 17: krill.v1.TrackObjectRequest.box:type_name -> krill.v1.Box
 	5,  // 18: krill.v1.TrackObjectResponse.track:type_name -> krill.v1.Track
-	7,  // 19: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
-	9,  // 20: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
-	11, // 21: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
-	13, // 22: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
-	15, // 23: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
-	17, // 24: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
-	19, // 25: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
-	21, // 26: krill.v1.AnnotationService.TrackObject:input_type -> krill.v1.TrackObjectRequest
-	8,  // 27: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
-	10, // 28: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
-	12, // 29: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
-	14, // 30: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
-	16, // 31: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
-	18, // 32: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
-	20, // 33: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
-	22, // 34: krill.v1.AnnotationService.TrackObject:output_type -> krill.v1.TrackObjectResponse
-	27, // [27:35] is the sub-list for method output_type
-	19, // [19:27] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	5,  // 19: krill.v1.TrackCrop.track:type_name -> krill.v1.Track
+	3,  // 20: krill.v1.TrackCrop.box:type_name -> krill.v1.Box
+	24, // 21: krill.v1.ListTracksByTypeResponse.tracks:type_name -> krill.v1.TrackCrop
+	7,  // 22: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
+	9,  // 23: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
+	11, // 24: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
+	13, // 25: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
+	15, // 26: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
+	17, // 27: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
+	19, // 28: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
+	21, // 29: krill.v1.AnnotationService.TrackObject:input_type -> krill.v1.TrackObjectRequest
+	23, // 30: krill.v1.AnnotationService.ListTracksByType:input_type -> krill.v1.ListTracksByTypeRequest
+	26, // 31: krill.v1.AnnotationService.SearchExemplar:input_type -> krill.v1.SearchExemplarRequest
+	28, // 32: krill.v1.AnnotationService.GetExemplarSearch:input_type -> krill.v1.GetExemplarSearchRequest
+	8,  // 33: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
+	10, // 34: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
+	12, // 35: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
+	14, // 36: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
+	16, // 37: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
+	18, // 38: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
+	20, // 39: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
+	22, // 40: krill.v1.AnnotationService.TrackObject:output_type -> krill.v1.TrackObjectResponse
+	25, // 41: krill.v1.AnnotationService.ListTracksByType:output_type -> krill.v1.ListTracksByTypeResponse
+	27, // 42: krill.v1.AnnotationService.SearchExemplar:output_type -> krill.v1.SearchExemplarResponse
+	29, // 43: krill.v1.AnnotationService.GetExemplarSearch:output_type -> krill.v1.GetExemplarSearchResponse
+	33, // [33:44] is the sub-list for method output_type
+	22, // [22:33] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_annotation_proto_init() }
@@ -1572,7 +2051,7 @@ func file_krill_v1_annotation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_annotation_proto_rawDesc), len(file_krill_v1_annotation_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   24,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

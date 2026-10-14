@@ -1,5 +1,6 @@
 import { Alert, AlertActions, AlertDescription, AlertTitle } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 
 export function ConfirmAlert({
   open,
@@ -9,6 +10,7 @@ export function ConfirmAlert({
   description,
   confirmLabel,
   busy = false,
+  error,
 }: {
   open: boolean
   onClose: () => void
@@ -17,11 +19,13 @@ export function ConfirmAlert({
   description: string
   confirmLabel: string
   busy?: boolean
+  error?: unknown
 }) {
   return (
     <Alert open={open} onClose={onClose}>
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>{description}</AlertDescription>
+      <FormError error={error} className="mt-4" />
       <AlertActions>
         <Button plain onClick={onClose} disabled={busy}>
           Cancel

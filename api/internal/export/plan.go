@@ -8,11 +8,13 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/taxonomy"
+	"github.com/wauv/krill/api/internal/video"
 )
 
 const (
 	splitTrain = "train"
 	splitVal   = "val"
+	splitTest  = video.SplitTest
 	splitAuto  = "auto"
 )
 
@@ -176,17 +178,24 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 			if len(it.Boxes) == 0 {
 				stats.NegativeImages++
 			}
-			if split == splitVal {
+			switch split {
+			case splitVal:
 				stats.ValImages++
-			} else {
+			case splitTest:
+				stats.TestImages++
+			default:
 				stats.TrainImages++
 			}
 			for _, b := range it.Boxes {
 				cs := classStats[b.Class]
-				if split == splitVal {
+				switch split {
+				case splitVal:
 					stats.ValBoxes++
 					cs.ValBoxes++
-				} else {
+				case splitTest:
+					stats.TestBoxes++
+					cs.TestBoxes++
+				default:
 					stats.TrainBoxes++
 					cs.TrainBoxes++
 				}
@@ -208,11 +217,16 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 // unpinned videos, largest first, while they fit under the target share. If
 // that leaves val empty, the smallest unpinned video goes to val so there is
 // always something to validate on when there are at least two videos.
+// Held-out test videos are left out of the share entirely.
 func assignSplits(plans []videoPlan, valFraction float64) map[int64]string {
 	out := map[int64]string{}
 	total, val, withImages := 0, 0, 0
 	var auto []videoPlan
 	for _, vp := range plans {
+		if video.HeldOut(vp.video.Split) {
+			out[vp.video.ID] = splitTest
+			continue
+		}
 		n := len(vp.items)
 		total += n
 		if n > 0 {

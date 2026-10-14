@@ -22,7 +22,7 @@ export function RequireAuth() {
   if (error) {
     return (
       <div className="flex h-svh flex-col items-center justify-center gap-4 p-6 text-center">
-        <Text>Could not reach Krill: {errorMessage(error)}</Text>
+        <Text>Could not load Krill: {errorMessage(error)}</Text>
         <Button outline onClick={() => refreshSession()}>
           Try again
         </Button>

@@ -5,6 +5,7 @@ import { AppChrome, AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
 import { AccountPage } from '@/pages/AccountPage'
+import { AttributesPage } from '@/pages/AttributesPage'
 import { ExportsPage } from '@/pages/ExportsPage'
 import { GoldPage } from '@/pages/GoldPage'
 import { HomePage } from '@/pages/HomePage'
@@ -14,6 +15,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFound } from '@/pages/NotFound'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { ReviewPage } from '@/pages/ReviewPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VideosPage } from '@/pages/VideosPage'
@@ -48,12 +50,18 @@ export const router = createBrowserRouter([
               import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldCheckPage })),
           },
           {
+            path: 'gold/attempts/:frameId/:userId',
+            lazy: () =>
+              import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldAttemptPage })),
+          },
+          {
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },
               { path: 'videos', element: <VideosPage /> },
               { path: 'videos/:id', element: <VideoPage /> },
               { path: 'account', element: <AccountPage /> },
+              { path: 'attributes', element: <AttributesPage /> },
               { path: 'leaderboard', element: <LeaderboardPage /> },
               { path: 'people/:username', element: <ProfilePage /> },
               {
@@ -66,7 +74,10 @@ export const router = createBrowserRouter([
               },
               {
                 element: <RequirePermission permission={Permission.REVIEW_LABELS} />,
-                children: [{ path: 'gold', element: <GoldPage /> }],
+                children: [
+                  { path: 'gold', element: <GoldPage /> },
+                  { path: 'review', element: <ReviewPage /> },
+                ],
               },
               {
                 element: <RequirePermission permission={Permission.MANAGE_USERS} />,

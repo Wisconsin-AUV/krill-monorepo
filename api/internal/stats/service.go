@@ -143,3 +143,15 @@ func (s *Service) GetProfile(ctx context.Context, req *krillv1.GetProfileRequest
 	}
 	return out, nil
 }
+
+func (s *Service) GetDriftStats(ctx context.Context, _ *krillv1.GetDriftStatsRequest) (*krillv1.GetDriftStatsResponse, error) {
+	rows, err := s.q.DriftByLabelType(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "count drift flags")
+	}
+	out := &krillv1.GetDriftStatsResponse{LabelTypes: make([]*krillv1.LabelTypeDrift, len(rows))}
+	for i, r := range rows {
+		out.LabelTypes[i] = &krillv1.LabelTypeDrift{LabelTypeId: r.LabelTypeID, Proposals: r.Proposals, Flagged: r.Flagged}
+	}
+	return out, nil
+}

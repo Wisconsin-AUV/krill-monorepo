@@ -33,6 +33,18 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     updated_at = now()
 WHERE annotations.status = 'proposed';
 
+-- name: ListTrackBoxes :many
+SELECT a.id, a.x, a.y, a.width, a.height, a.status, a.drift
+FROM annotations a
+JOIN frames f ON f.id = a.frame_id
+WHERE a.track_id = $1
+ORDER BY f.idx;
+
+-- name: SetDrift :exec
+UPDATE annotations SET
+    drift = CASE WHEN id = ANY(sqlc.arg('flagged_ids')::bigint[]) THEN 'flagged' ELSE 'ok' END
+WHERE id = ANY(sqlc.arg('ids')::bigint[]) AND status = 'proposed';
+
 -- name: DeleteTrackIfEmpty :execrows
 DELETE FROM tracks t
 WHERE t.id = $1 AND NOT EXISTS (SELECT 1 FROM annotations a WHERE a.track_id = t.id);
@@ -40,6 +52,15 @@ WHERE t.id = $1 AND NOT EXISTS (SELECT 1 FROM annotations a WHERE a.track_id = t
 -- name: AcceptFrameProposals :exec
 UPDATE annotations SET
     status = 'verified',
+    drift = CASE WHEN drift = 'flagged' THEN 'reviewed' ELSE drift END,
     updated_by = sqlc.arg('user_id')::uuid,
     updated_at = now()
 WHERE frame_id = sqlc.arg('frame_id') AND status = 'proposed';
+
+-- name: GetTrackBox :one
+SELECT x, y, width, height FROM annotations
+WHERE track_id = $1 AND frame_id = $2 AND status <> 'rejected';
+
+-- name: ListFrameBoxes :many
+SELECT x, y, width, height FROM annotations
+WHERE frame_id = $1 AND status <> 'rejected';

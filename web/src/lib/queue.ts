@@ -22,7 +22,7 @@ export function useClaimNextClip() {
     onSuccess: ({ clipId, goldFrameId }) => {
       if (goldFrameId) navigate(`/check/${goldFrameId}`)
       else if (clipId) navigate(`/clips/${clipId}`)
-      else flash.success('Nothing left to label', 'Every clip is finished or being labeled.')
+      else flash.info('Nothing left to label', 'Every clip is finished or being labeled.')
     },
     onError: (err) => flash.error('Could not get the next clip', err),
   })

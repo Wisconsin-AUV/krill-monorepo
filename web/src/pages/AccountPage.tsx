@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
@@ -22,14 +23,14 @@ function Section({
   children,
 }: {
   title: string
-  description: React.ReactNode
+  description?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <section className="grid gap-x-8 gap-y-6 border-t border-zinc-950/5 py-10 sm:grid-cols-2 dark:border-white/5">
       <div className="space-y-1">
         <Subheading>{title}</Subheading>
-        <Text>{description}</Text>
+        {description && <Text>{description}</Text>}
       </div>
       <div>{children}</div>
     </section>
@@ -43,7 +44,6 @@ function ProfileForm({ user }: { user: User }) {
       await refreshSession()
       flash.success('Profile saved')
     },
-    onError: (err) => flash.error('Could not save profile', err),
   })
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }))
@@ -91,6 +91,7 @@ function ProfileForm({ user }: { user: User }) {
             required
           />
         </Field>
+        <FormError error={update.error} />
       </FieldGroup>
       <div className="mt-8 flex justify-end">
         <Button type="submit" color="sky" disabled={!changed || update.isPending}>
@@ -179,7 +180,6 @@ function PasswordForm({ user }: { user: User }) {
       await refreshSession()
       flash.success('Password changed', 'Other devices were signed out.')
     },
-    onError: (err) => flash.error('Could not change password', err),
   })
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -212,7 +212,7 @@ function PasswordForm({ user }: { user: User }) {
           <Label>New password</Label>
           <PasswordInput value={form.next} onChange={set('next')} check={check} />
         </Field>
-        <Field>
+        <Field error={mismatch ? 'Passwords do not match' : undefined}>
           <Label>Confirm new password</Label>
           <PasswordInput
             value={form.confirm}
@@ -222,6 +222,7 @@ function PasswordForm({ user }: { user: User }) {
             invalid={mismatch}
           />
         </Field>
+        <FormError error={change.error} />
       </FieldGroup>
       <div className="mt-8 flex justify-end">
         <Button
@@ -244,28 +245,20 @@ export function AccountPage() {
   return (
     <PageContentBlock title="Account · Krill">
       <Heading>Account</Heading>
-      <Text className="mt-1">Your profile and how you sign in.</Text>
 
       <div className="mt-8">
-        <Section title="Profile" description="Your username or email works for signing in.">
+        <Section title="Profile">
           <ProfileForm key={user.id + user.name + user.username + user.email} user={user} />
         </Section>
-        <Section
-          title="Role"
-          description="What you can do in Krill. Ask an admin if you need more access."
-        >
+        <Section title="Role">
           <RoleSummary user={user} permissions={data?.allPermissions ?? []} />
         </Section>
-        <Section title="Sign-in methods" description="Ways you can sign in to this account.">
+        <Section title="Sign-in methods">
           <SignInMethods user={user} slackEnabled={data?.slackEnabled ?? false} />
         </Section>
         <Section
           title={user.hasPassword ? 'Change password' : 'Set a password'}
-          description={
-            user.hasPassword
-              ? 'Changing it signs you out on other devices.'
-              : 'Set a password to sign in with your username or email as well as Slack.'
-          }
+          description={user.hasPassword ? 'Changing it signs you out on other devices.' : undefined}
         >
           <PasswordForm user={user} />
         </Section>

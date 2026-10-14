@@ -81,7 +81,8 @@ func (VideoStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 // SplitAssignment pins a video to a dataset split. Export balances AUTO
-// videos between train and val.
+// videos between train and val. TEST videos are held out: they never join
+// the auto balance and must never be pre-labeled by a model.
 type SplitAssignment int32
 
 const (
@@ -89,6 +90,7 @@ const (
 	SplitAssignment_SPLIT_ASSIGNMENT_AUTO        SplitAssignment = 1
 	SplitAssignment_SPLIT_ASSIGNMENT_TRAIN       SplitAssignment = 2
 	SplitAssignment_SPLIT_ASSIGNMENT_VAL         SplitAssignment = 3
+	SplitAssignment_SPLIT_ASSIGNMENT_TEST        SplitAssignment = 4
 )
 
 // Enum value maps for SplitAssignment.
@@ -98,12 +100,14 @@ var (
 		1: "SPLIT_ASSIGNMENT_AUTO",
 		2: "SPLIT_ASSIGNMENT_TRAIN",
 		3: "SPLIT_ASSIGNMENT_VAL",
+		4: "SPLIT_ASSIGNMENT_TEST",
 	}
 	SplitAssignment_value = map[string]int32{
 		"SPLIT_ASSIGNMENT_UNSPECIFIED": 0,
 		"SPLIT_ASSIGNMENT_AUTO":        1,
 		"SPLIT_ASSIGNMENT_TRAIN":       2,
 		"SPLIT_ASSIGNMENT_VAL":         3,
+		"SPLIT_ASSIGNMENT_TEST":        4,
 	}
 )
 
@@ -338,7 +342,9 @@ type Clip struct {
 	LabeledFrameCount int32                  `protobuf:"varint,9,opt,name=labeled_frame_count,json=labeledFrameCount,proto3" json:"labeled_frame_count,omitempty"`
 	BoxCount          int32                  `protobuf:"varint,10,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
 	// Unset when nobody has claimed the clip.
-	Claim         *ClipClaim `protobuf:"bytes,11,opt,name=claim,proto3" json:"claim,omitempty"`
+	Claim *ClipClaim `protobuf:"bytes,11,opt,name=claim,proto3" json:"claim,omitempty"`
+	// The SAM image embeddings of the clip's frames are stored.
+	Embedded      bool `protobuf:"varint,12,opt,name=embedded,proto3" json:"embedded,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -448,6 +454,13 @@ func (x *Clip) GetClaim() *ClipClaim {
 		return x.Claim
 	}
 	return nil
+}
+
+func (x *Clip) GetEmbedded() bool {
+	if x != nil {
+		return x.Embedded
+	}
+	return false
 }
 
 // ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
@@ -872,9 +885,11 @@ func (x *GetVideoRequest) GetId() int64 {
 }
 
 type GetVideoResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Video         *Video                 `protobuf:"bytes,1,opt,name=video,proto3" json:"video,omitempty"`
-	Clips         []*Clip                `protobuf:"bytes,2,rep,name=clips,proto3" json:"clips,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Video *Video                 `protobuf:"bytes,1,opt,name=video,proto3" json:"video,omitempty"`
+	Clips []*Clip                `protobuf:"bytes,2,rep,name=clips,proto3" json:"clips,omitempty"`
+	// Clips get SAM embeddings after ingest.
+	EmbedAtIngest bool `protobuf:"varint,3,opt,name=embed_at_ingest,json=embedAtIngest,proto3" json:"embed_at_ingest,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -921,6 +936,13 @@ func (x *GetVideoResponse) GetClips() []*Clip {
 		return x.Clips
 	}
 	return nil
+}
+
+func (x *GetVideoResponse) GetEmbedAtIngest() bool {
+	if x != nil {
+		return x.EmbedAtIngest
+	}
+	return false
 }
 
 type UpdateVideoRequest struct {
@@ -1145,7 +1167,7 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12.\n" +
 	"\x13labeled_frame_count\x18\x12 \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
-	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xe2\x02\n" +
+	"\tbox_count\x18\x13 \x01(\x05R\bboxCount\"\xfe\x02\n" +
 	"\x04Clip\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\bvideo_id\x18\x02 \x01(\x03R\avideoId\x12\x14\n" +
@@ -1161,7 +1183,8 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x13labeled_frame_count\x18\t \x01(\x05R\x11labeledFrameCount\x12\x1b\n" +
 	"\tbox_count\x18\n" +
 	" \x01(\x05R\bboxCount\x12)\n" +
-	"\x05claim\x18\v \x01(\v2\x13.krill.v1.ClipClaimR\x05claim\"\x83\x01\n" +
+	"\x05claim\x18\v \x01(\v2\x13.krill.v1.ClipClaimR\x05claim\x12\x1a\n" +
+	"\bembedded\x18\f \x01(\bR\bembedded\"\x83\x01\n" +
 	"\tClipClaim\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.krill.v1.ProfileR\x04user\x127\n" +
 	"\tactive_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bactiveAt\x12\x16\n" +
@@ -1187,10 +1210,11 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x12ListVideosResponse\x12'\n" +
 	"\x06videos\x18\x01 \x03(\v2\x0f.krill.v1.VideoR\x06videos\"!\n" +
 	"\x0fGetVideoRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"_\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x87\x01\n" +
 	"\x10GetVideoResponse\x12%\n" +
 	"\x05video\x18\x01 \x01(\v2\x0f.krill.v1.VideoR\x05video\x12$\n" +
-	"\x05clips\x18\x02 \x03(\v2\x0e.krill.v1.ClipR\x05clips\"\xab\x01\n" +
+	"\x05clips\x18\x02 \x03(\v2\x0e.krill.v1.ClipR\x05clips\x12&\n" +
+	"\x0fembed_at_ingest\x18\x03 \x01(\bR\rembedAtIngest\"\xab\x01\n" +
 	"\x12UpdateVideoRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n" +
@@ -1210,12 +1234,13 @@ const file_krill_v1_video_proto_rawDesc = "" +
 	"\x13VIDEO_STATUS_QUEUED\x10\x02\x12\x1b\n" +
 	"\x17VIDEO_STATUS_PROCESSING\x10\x03\x12\x16\n" +
 	"\x12VIDEO_STATUS_READY\x10\x04\x12\x17\n" +
-	"\x13VIDEO_STATUS_FAILED\x10\x05*\x84\x01\n" +
+	"\x13VIDEO_STATUS_FAILED\x10\x05*\x9f\x01\n" +
 	"\x0fSplitAssignment\x12 \n" +
 	"\x1cSPLIT_ASSIGNMENT_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15SPLIT_ASSIGNMENT_AUTO\x10\x01\x12\x1a\n" +
 	"\x16SPLIT_ASSIGNMENT_TRAIN\x10\x02\x12\x18\n" +
-	"\x14SPLIT_ASSIGNMENT_VAL\x10\x032\xd6\x03\n" +
+	"\x14SPLIT_ASSIGNMENT_VAL\x10\x03\x12\x19\n" +
+	"\x15SPLIT_ASSIGNMENT_TEST\x10\x042\xd6\x03\n" +
 	"\fVideoService\x12L\n" +
 	"\vCreateVideo\x12\x1c.krill.v1.CreateVideoRequest\x1a\x1d.krill.v1.CreateVideoResponse\"\x00\x12L\n" +
 	"\vStartIngest\x12\x1c.krill.v1.StartIngestRequest\x1a\x1d.krill.v1.StartIngestResponse\"\x00\x12I\n" +

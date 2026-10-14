@@ -750,6 +750,147 @@ func (x *GetProfileResponse) GetLabelTypes() []*LabelTypeCount {
 	return nil
 }
 
+type GetDriftStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDriftStatsRequest) Reset() {
+	*x = GetDriftStatsRequest{}
+	mi := &file_krill_v1_stats_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDriftStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDriftStatsRequest) ProtoMessage() {}
+
+func (x *GetDriftStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_stats_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDriftStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetDriftStatsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_stats_proto_rawDescGZIP(), []int{10}
+}
+
+type LabelTypeDrift struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId   int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	Proposals     int64                  `protobuf:"varint,2,opt,name=proposals,proto3" json:"proposals,omitempty"`
+	Flagged       int64                  `protobuf:"varint,3,opt,name=flagged,proto3" json:"flagged,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LabelTypeDrift) Reset() {
+	*x = LabelTypeDrift{}
+	mi := &file_krill_v1_stats_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LabelTypeDrift) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LabelTypeDrift) ProtoMessage() {}
+
+func (x *LabelTypeDrift) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_stats_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LabelTypeDrift.ProtoReflect.Descriptor instead.
+func (*LabelTypeDrift) Descriptor() ([]byte, []int) {
+	return file_krill_v1_stats_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LabelTypeDrift) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+func (x *LabelTypeDrift) GetProposals() int64 {
+	if x != nil {
+		return x.Proposals
+	}
+	return 0
+}
+
+func (x *LabelTypeDrift) GetFlagged() int64 {
+	if x != nil {
+		return x.Flagged
+	}
+	return 0
+}
+
+type GetDriftStatsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Only label types with at least one proposal.
+	LabelTypes    []*LabelTypeDrift `protobuf:"bytes,1,rep,name=label_types,json=labelTypes,proto3" json:"label_types,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDriftStatsResponse) Reset() {
+	*x = GetDriftStatsResponse{}
+	mi := &file_krill_v1_stats_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDriftStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDriftStatsResponse) ProtoMessage() {}
+
+func (x *GetDriftStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_stats_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDriftStatsResponse.ProtoReflect.Descriptor instead.
+func (*GetDriftStatsResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_stats_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetDriftStatsResponse) GetLabelTypes() []*LabelTypeDrift {
+	if x != nil {
+		return x.LabelTypes
+	}
+	return nil
+}
+
 var File_krill_v1_stats_proto protoreflect.FileDescriptor
 
 const file_krill_v1_stats_proto_rawDesc = "" +
@@ -804,6 +945,14 @@ const file_krill_v1_stats_proto_rawDesc = "" +
 	"\bbest_day\x18\a \x01(\v2\x19.krill.v1.ContributionDayR\abestDay\x12\x14\n" +
 	"\x05clips\x18\b \x01(\x03R\x05clips\x129\n" +
 	"\vlabel_types\x18\t \x03(\v2\x18.krill.v1.LabelTypeCountR\n" +
+	"labelTypes\"\x16\n" +
+	"\x14GetDriftStatsRequest\"l\n" +
+	"\x0eLabelTypeDrift\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x1c\n" +
+	"\tproposals\x18\x02 \x01(\x03R\tproposals\x12\x18\n" +
+	"\aflagged\x18\x03 \x01(\x03R\aflagged\"R\n" +
+	"\x15GetDriftStatsResponse\x129\n" +
+	"\vlabel_types\x18\x01 \x03(\v2\x18.krill.v1.LabelTypeDriftR\n" +
 	"labelTypes*h\n" +
 	"\x06Period\x12\x16\n" +
 	"\x12PERIOD_UNSPECIFIED\x10\x00\x12\x0e\n" +
@@ -811,11 +960,12 @@ const file_krill_v1_stats_proto_rawDesc = "" +
 	"PERIOD_DAY\x10\x01\x12\x0f\n" +
 	"\vPERIOD_WEEK\x10\x02\x12\x10\n" +
 	"\fPERIOD_MONTH\x10\x03\x12\x13\n" +
-	"\x0fPERIOD_ALL_TIME\x10\x042\xb0\x01\n" +
+	"\x0fPERIOD_ALL_TIME\x10\x042\x84\x02\n" +
 	"\fStatsService\x12U\n" +
 	"\x0eGetLeaderboard\x12\x1f.krill.v1.GetLeaderboardRequest\x1a .krill.v1.GetLeaderboardResponse\"\x00\x12I\n" +
 	"\n" +
-	"GetProfile\x12\x1b.krill.v1.GetProfileRequest\x1a\x1c.krill.v1.GetProfileResponse\"\x00B\x8b\x01\n" +
+	"GetProfile\x12\x1b.krill.v1.GetProfileRequest\x1a\x1c.krill.v1.GetProfileResponse\"\x00\x12R\n" +
+	"\rGetDriftStats\x12\x1e.krill.v1.GetDriftStatsRequest\x1a\x1f.krill.v1.GetDriftStatsResponse\"\x00B\x8b\x01\n" +
 	"\fcom.krill.v1B\n" +
 	"StatsProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
@@ -832,7 +982,7 @@ func file_krill_v1_stats_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_stats_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_krill_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_krill_v1_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_krill_v1_stats_proto_goTypes = []any{
 	(Period)(0),                    // 0: krill.v1.Period
 	(*Profile)(nil),                // 1: krill.v1.Profile
@@ -845,17 +995,20 @@ var file_krill_v1_stats_proto_goTypes = []any{
 	(*ContributionDay)(nil),        // 8: krill.v1.ContributionDay
 	(*LabelTypeCount)(nil),         // 9: krill.v1.LabelTypeCount
 	(*GetProfileResponse)(nil),     // 10: krill.v1.GetProfileResponse
-	(Role)(0),                      // 11: krill.v1.Role
-	(*timestamppb.Timestamp)(nil),  // 12: google.protobuf.Timestamp
+	(*GetDriftStatsRequest)(nil),   // 11: krill.v1.GetDriftStatsRequest
+	(*LabelTypeDrift)(nil),         // 12: krill.v1.LabelTypeDrift
+	(*GetDriftStatsResponse)(nil),  // 13: krill.v1.GetDriftStatsResponse
+	(Role)(0),                      // 14: krill.v1.Role
+	(*timestamppb.Timestamp)(nil),  // 15: google.protobuf.Timestamp
 }
 var file_krill_v1_stats_proto_depIdxs = []int32{
-	11, // 0: krill.v1.Profile.role:type_name -> krill.v1.Role
-	12, // 1: krill.v1.Profile.created_at:type_name -> google.protobuf.Timestamp
+	14, // 0: krill.v1.Profile.role:type_name -> krill.v1.Role
+	15, // 1: krill.v1.Profile.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 2: krill.v1.LeaderboardEntry.user:type_name -> krill.v1.Profile
 	2,  // 3: krill.v1.LeaderboardEntry.contributions:type_name -> krill.v1.Contributions
 	0,  // 4: krill.v1.GetLeaderboardRequest.period:type_name -> krill.v1.Period
 	3,  // 5: krill.v1.GetLeaderboardResponse.entries:type_name -> krill.v1.LeaderboardEntry
-	12, // 6: krill.v1.GetLeaderboardResponse.since:type_name -> google.protobuf.Timestamp
+	15, // 6: krill.v1.GetLeaderboardResponse.since:type_name -> google.protobuf.Timestamp
 	2,  // 7: krill.v1.GetLeaderboardResponse.team:type_name -> krill.v1.Contributions
 	0,  // 8: krill.v1.PeriodStats.period:type_name -> krill.v1.Period
 	2,  // 9: krill.v1.PeriodStats.contributions:type_name -> krill.v1.Contributions
@@ -864,15 +1017,18 @@ var file_krill_v1_stats_proto_depIdxs = []int32{
 	8,  // 12: krill.v1.GetProfileResponse.days:type_name -> krill.v1.ContributionDay
 	8,  // 13: krill.v1.GetProfileResponse.best_day:type_name -> krill.v1.ContributionDay
 	9,  // 14: krill.v1.GetProfileResponse.label_types:type_name -> krill.v1.LabelTypeCount
-	4,  // 15: krill.v1.StatsService.GetLeaderboard:input_type -> krill.v1.GetLeaderboardRequest
-	6,  // 16: krill.v1.StatsService.GetProfile:input_type -> krill.v1.GetProfileRequest
-	5,  // 17: krill.v1.StatsService.GetLeaderboard:output_type -> krill.v1.GetLeaderboardResponse
-	10, // 18: krill.v1.StatsService.GetProfile:output_type -> krill.v1.GetProfileResponse
-	17, // [17:19] is the sub-list for method output_type
-	15, // [15:17] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	12, // 15: krill.v1.GetDriftStatsResponse.label_types:type_name -> krill.v1.LabelTypeDrift
+	4,  // 16: krill.v1.StatsService.GetLeaderboard:input_type -> krill.v1.GetLeaderboardRequest
+	6,  // 17: krill.v1.StatsService.GetProfile:input_type -> krill.v1.GetProfileRequest
+	11, // 18: krill.v1.StatsService.GetDriftStats:input_type -> krill.v1.GetDriftStatsRequest
+	5,  // 19: krill.v1.StatsService.GetLeaderboard:output_type -> krill.v1.GetLeaderboardResponse
+	10, // 20: krill.v1.StatsService.GetProfile:output_type -> krill.v1.GetProfileResponse
+	13, // 21: krill.v1.StatsService.GetDriftStats:output_type -> krill.v1.GetDriftStatsResponse
+	19, // [19:22] is the sub-list for method output_type
+	16, // [16:19] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_stats_proto_init() }
@@ -887,7 +1043,7 @@ func file_krill_v1_stats_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_stats_proto_rawDesc), len(file_krill_v1_stats_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -3,6 +3,7 @@ syntax = "proto3";
 package krill.v1;
 
 import "krill/v1/annotation.proto";
+import "krill/v1/review.proto";
 import "krill/v1/video.proto";
 
 service ClipService {
@@ -20,6 +21,8 @@ message Frame {
   FrameStatus status = 5;
   // Only set for callers who can review labels.
   bool gold = 6;
+  // The frame's open review, if it has one.
+  Review review = 7;
 }
 
 message GetClipRequest {

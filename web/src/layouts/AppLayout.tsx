@@ -5,7 +5,9 @@ import {
   BookOpenIcon,
   ChartBarIcon,
   FilmIcon,
+  FlagIcon,
   HomeIcon,
+  Squares2X2Icon,
   StarIcon,
   TagIcon,
   TrophyIcon,
@@ -14,6 +16,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
+import { Badge } from '@/components/ui/Badge'
 import {
   Dropdown,
   DropdownButton,
@@ -23,7 +26,7 @@ import {
   DropdownLabel,
   DropdownMenu,
 } from '@/components/ui/Dropdown'
-import FlashMessageRender from '@/components/ui/FlashMessageRender'
+import { FlashMessageRender } from '@/components/ui/FlashMessageRender'
 import {
   Navbar,
   NavbarDivider,
@@ -46,8 +49,9 @@ import { StackedLayout } from '@/components/ui/StackedLayout'
 import { UploadTray } from '@/components/UploadTray'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { HealthService } from '@/gen/krill/v1/health_pb'
+import { ReviewService } from '@/gen/krill/v1/review_pb'
 import { Permission, type User } from '@/gen/krill/v1/user_pb'
-import { can, initials, useRoleLabel, useUser } from '@/lib/auth'
+import { can, useRoleLabel, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { GUIDELINE_URL } from '@/lib/links'
 import { queryClient } from '@/lib/queryClient'
@@ -67,6 +71,13 @@ const navItems = [
     icon: FilmIcon,
     permission: Permission.MANAGE_VIDEOS,
     match: (p: string) => p.startsWith('/videos'),
+  },
+  {
+    label: 'Attributes',
+    to: '/attributes',
+    icon: Squares2X2Icon,
+    permission: Permission.LABEL,
+    match: (p: string) => p.startsWith('/attributes'),
   },
   {
     label: 'Leaderboard',
@@ -97,6 +108,13 @@ const navItems = [
     match: (p: string) => p.startsWith('/gold'),
   },
   {
+    label: 'Review',
+    to: '/review',
+    icon: FlagIcon,
+    permission: Permission.REVIEW_LABELS,
+    match: (p: string) => p.startsWith('/review'),
+  },
+  {
     label: 'Users',
     to: '/users',
     icon: UsersIcon,
@@ -106,7 +124,7 @@ const navItems = [
 ]
 
 function UserAvatar({ user }: { user: User }) {
-  return <Avatar initials={initials(user.name)} className="rounded-full bg-sky-600" />
+  return <Avatar seed={user.id} />
 }
 
 function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top start' }) {
@@ -159,7 +177,7 @@ export function AppChrome() {
   return (
     <>
       <ProgressBar />
-      <FlashMessageRender byKey="global" />
+      <FlashMessageRender />
       <Outlet />
       <UploadTray />
     </>
@@ -170,6 +188,12 @@ export function AppLayout() {
   const { pathname } = useLocation()
   const user = useUser()
   const items = navItems.filter((i) => can(user, i.permission))
+  const { data: reviews } = useQuery(
+    ReviewService.method.countReviews,
+    {},
+    { enabled: can(user, Permission.REVIEW_LABELS) },
+  )
+  const counts: Record<string, number> = { '/review': reviews?.count ?? 0 }
 
   return (
     <>
@@ -185,6 +209,7 @@ export function AppLayout() {
                 <NavbarItem key={to} to={to} current={match(pathname)}>
                   <Icon data-slot="icon" />
                   <NavbarLabel>{label}</NavbarLabel>
+                  {counts[to] > 0 && <Badge>{counts[to]}</Badge>}
                 </NavbarItem>
               ))}
             </NavbarSection>
@@ -219,6 +244,7 @@ export function AppLayout() {
                   <SidebarItem key={to} to={to} current={match(pathname)}>
                     <Icon data-slot="icon" />
                     <SidebarLabel>{label}</SidebarLabel>
+                    {counts[to] > 0 && <Badge className="ml-auto">{counts[to]}</Badge>}
                   </SidebarItem>
                 ))}
               </SidebarSection>

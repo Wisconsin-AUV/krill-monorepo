@@ -38,12 +38,6 @@ export function useRoleLabel(): (role: Role) => string {
   return (role) => roles.find((r) => r.role === role)?.label ?? ''
 }
 
-export function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] ?? '?')
-  return letters.slice(0, 2).toUpperCase()
-}
-
 // Only same-origin paths, so ?next= can't send someone to another site.
 export function safeNext(next: string | null): string {
   return next && /^\/(?![/\\])/.test(next) ? next : '/'

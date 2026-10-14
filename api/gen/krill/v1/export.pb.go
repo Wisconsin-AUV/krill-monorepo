@@ -169,6 +169,7 @@ type ExportClassStats struct {
 	// counts overstate variety because tracked frames are near-identical.
 	Clips         int32 `protobuf:"varint,5,opt,name=clips,proto3" json:"clips,omitempty"`
 	Videos        int32 `protobuf:"varint,6,opt,name=videos,proto3" json:"videos,omitempty"`
+	TestBoxes     int32 `protobuf:"varint,7,opt,name=test_boxes,json=testBoxes,proto3" json:"test_boxes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,11 +246,18 @@ func (x *ExportClassStats) GetVideos() int32 {
 	return 0
 }
 
+func (x *ExportClassStats) GetTestBoxes() int32 {
+	if x != nil {
+		return x.TestBoxes
+	}
+	return 0
+}
+
 type ExportVideoStats struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	VideoId int64                  `protobuf:"varint,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
 	Name    string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// "train" or "val".
+	// "train", "val", or "test".
 	Split         string `protobuf:"bytes,3,opt,name=split,proto3" json:"split,omitempty"`
 	Pinned        bool   `protobuf:"varint,4,opt,name=pinned,proto3" json:"pinned,omitempty"`
 	Images        int32  `protobuf:"varint,5,opt,name=images,proto3" json:"images,omitempty"`
@@ -349,6 +357,8 @@ type ExportStats struct {
 	DuplicateSkipped int32               `protobuf:"varint,10,opt,name=duplicate_skipped,json=duplicateSkipped,proto3" json:"duplicate_skipped,omitempty"`
 	Classes          []*ExportClassStats `protobuf:"bytes,11,rep,name=classes,proto3" json:"classes,omitempty"`
 	Videos           []*ExportVideoStats `protobuf:"bytes,12,rep,name=videos,proto3" json:"videos,omitempty"`
+	TestImages       int32               `protobuf:"varint,13,opt,name=test_images,json=testImages,proto3" json:"test_images,omitempty"`
+	TestBoxes        int32               `protobuf:"varint,14,opt,name=test_boxes,json=testBoxes,proto3" json:"test_boxes,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -465,6 +475,20 @@ func (x *ExportStats) GetVideos() []*ExportVideoStats {
 		return x.Videos
 	}
 	return nil
+}
+
+func (x *ExportStats) GetTestImages() int32 {
+	if x != nil {
+		return x.TestImages
+	}
+	return 0
+}
+
+func (x *ExportStats) GetTestBoxes() int32 {
+	if x != nil {
+		return x.TestBoxes
+	}
+	return 0
 }
 
 type Export struct {
@@ -946,7 +970,7 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\x06stride\x18\x02 \x01(\x05R\x06stride\x12\x14\n" +
 	"\x05dedup\x18\x03 \x01(\bR\x05dedup\x12%\n" +
 	"\x0ededup_distance\x18\x04 \x01(\x05R\rdedupDistance\x12\x1b\n" +
-	"\tvideo_ids\x18\x05 \x03(\x03R\bvideoIds\"\xa2\x01\n" +
+	"\tvideo_ids\x18\x05 \x03(\x03R\bvideoIds\"\xc1\x01\n" +
 	"\x10ExportClassStats\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
@@ -954,14 +978,16 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"trainBoxes\x12\x1b\n" +
 	"\tval_boxes\x18\x04 \x01(\x05R\bvalBoxes\x12\x14\n" +
 	"\x05clips\x18\x05 \x01(\x05R\x05clips\x12\x16\n" +
-	"\x06videos\x18\x06 \x01(\x05R\x06videos\"\x9d\x01\n" +
+	"\x06videos\x18\x06 \x01(\x05R\x06videos\x12\x1d\n" +
+	"\n" +
+	"test_boxes\x18\a \x01(\x05R\ttestBoxes\"\x9d\x01\n" +
 	"\x10ExportVideoStats\x12\x19\n" +
 	"\bvideo_id\x18\x01 \x01(\x03R\avideoId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n" +
 	"\x06pinned\x18\x04 \x01(\bR\x06pinned\x12\x16\n" +
 	"\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n" +
-	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\xf9\x03\n" +
+	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\xb9\x04\n" +
 	"\vExportStats\x12!\n" +
 	"\ftrain_images\x18\x01 \x01(\x05R\vtrainImages\x12\x1d\n" +
 	"\n" +
@@ -977,7 +1003,11 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\x11duplicate_skipped\x18\n" +
 	" \x01(\x05R\x10duplicateSkipped\x124\n" +
 	"\aclasses\x18\v \x03(\v2\x1a.krill.v1.ExportClassStatsR\aclasses\x122\n" +
-	"\x06videos\x18\f \x03(\v2\x1a.krill.v1.ExportVideoStatsR\x06videos\"\xa8\x03\n" +
+	"\x06videos\x18\f \x03(\v2\x1a.krill.v1.ExportVideoStatsR\x06videos\x12\x1f\n" +
+	"\vtest_images\x18\r \x01(\x05R\n" +
+	"testImages\x12\x1d\n" +
+	"\n" +
+	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\"\xa8\x03\n" +
 	"\x06Export\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +

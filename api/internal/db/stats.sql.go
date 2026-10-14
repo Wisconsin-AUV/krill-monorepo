@@ -12,6 +12,43 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const driftByLabelType = `-- name: DriftByLabelType :many
+SELECT
+    t.label_type_id,
+    count(*)::bigint AS proposals,
+    count(*) FILTER (WHERE a.drift <> 'ok')::bigint AS flagged
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+WHERE a.drift IS NOT NULL
+GROUP BY t.label_type_id
+`
+
+type DriftByLabelTypeRow struct {
+	LabelTypeID int64 `json:"label_type_id"`
+	Proposals   int64 `json:"proposals"`
+	Flagged     int64 `json:"flagged"`
+}
+
+func (q *Queries) DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error) {
+	rows, err := q.db.Query(ctx, driftByLabelType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DriftByLabelTypeRow
+	for rows.Next() {
+		var i DriftByLabelTypeRow
+		if err := rows.Scan(&i.LabelTypeID, &i.Proposals, &i.Flagged); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE username = $1
 `

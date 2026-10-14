@@ -1,3 +1,4 @@
+import io
 import warnings
 from collections.abc import Iterable, Iterator
 from typing import Any
@@ -8,12 +9,18 @@ from torch.nn.attention import SDPBackend, sdpa_kernel
 from transformers import (
     Sam2VideoModel,
     Sam2VideoProcessor,
+    Sam3Model,
+    Sam3Processor,
     Sam3TrackerVideoModel,
     Sam3TrackerVideoProcessor,
 )
 
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, PointPrompt, Prompt, mask_box
+from krill_worker.track import Box, Embedding, PointPrompt, Prompt, mask_box
+
+# Score a found object needs to be proposed. Labelers delete false positives,
+# so this leans toward recall.
+EXEMPLAR_THRESHOLD = 0.4
 
 
 def attention_implementation(device: str) -> str:
@@ -43,33 +50,76 @@ class SamTracker:
         processor_cls = Sam3TrackerVideoProcessor if sam3 else Sam2VideoProcessor
         self.model_id = model_id
         self.device = device
+        # SAM 2.1 only segments what it is pointed at. SAM 3 can also find
+        # every object that matches a visual exemplar.
+        self.supports_exemplars = sam3
+        self._attn = attention_implementation(device)
+        self._detector: Any = None
+        self._detector_processor: Any = None
         self.model = model_cls.from_pretrained(
-            model_id, dtype=torch.float16, attn_implementation=attention_implementation(device)
+            model_id, dtype=torch.float16, attn_implementation=self._attn
         )
         self.model = self.model.to(device).eval()
         self.processor = processor_cls.from_pretrained(model_id)
         config = self.model.config
         self.memory_frames = max(config.num_maskmem, config.max_object_pointers_in_encoder)
+        self._position_embeddings: list[Any] | None = None
 
     def warm_up(self) -> None:
-        """Track a blank clip so ROCm compiles its kernels before the first real click."""
+        """Embed and track a blank clip so ROCm compiles its kernels before the first click."""
         frame = np.zeros((576, 1024, 3), dtype=np.uint8)
-        for _ in self.track([frame, frame], PointPrompt(0.5, 0.5)):
+        embedding = self.load_embedding(self.embed(frame))
+        for _ in self.track([(frame, embedding), (frame, None)], PointPrompt(0.5, 0.5)):
             pass
 
-    def track(self, frames: Iterable[Frame], prompt: Prompt) -> Iterator[Box | None]:
+    def embed(self, frame: Frame) -> bytes:
+        """Serialize the frame's image features as the tracker's vision cache expects them."""
+        inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
+        with torch.inference_mode():
+            out = self.model.get_image_features(
+                inputs.pixel_values.to(torch.float16), return_dict=True
+            )
+        # Position embeddings depend only on the input size, which the
+        # processor fixes, so they are kept once in memory instead of in every
+        # file where they would be five times the size of the features.
+        if self._position_embeddings is None:
+            self._position_embeddings = list(out.fpn_position_encoding)
+        feats = [
+            f.to("cpu").clone(memory_format=torch.contiguous_format) for f in out.fpn_hidden_states
+        ]
+        buf = io.BytesIO()
+        torch.save({"model": self.model_id, "vision_feats": feats}, buf)
+        return buf.getvalue()
+
+    def load_embedding(self, data: bytes) -> Embedding:
+        payload = torch.load(io.BytesIO(data), map_location="cpu", weights_only=True)
+        if payload["model"] != self.model_id:
+            raise ValueError(f"embedding is from {payload['model']}, not {self.model_id}")
+        feats: Embedding = payload["vision_feats"]
+        return feats
+
+    def track(
+        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+    ) -> Iterator[Box | None]:
         """Yield the object's box on each frame, or None where it is not visible.
 
-        The prompt is on the first frame.
+        The prompt is on the first frame. Frames with an embedding skip the
+        image encoder.
         """
         session = self.processor.init_video_session(
             inference_device=self.device, dtype=torch.float16
         )
-        for i, frame in enumerate(frames):
+        for i, (frame, embedding) in enumerate(frames):
             inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
             size = frame.shape[:2]
             if i == 0:
                 self._add_prompt(session, prompt, size)
+            if embedding is not None and self._position_embeddings is not None:
+                # The model reads the cache before running its image encoder.
+                session.cache.cache_vision_features(
+                    i,
+                    {"vision_feats": embedding, "vision_pos_embeds": self._position_embeddings},
+                )
             with torch.inference_mode():
                 out = self.model(
                     inference_session=session, frame=inputs.pixel_values[0].to(torch.float16)
@@ -77,6 +127,45 @@ class SamTracker:
             self._forget(session, i)
             masks = self.processor.post_process_masks([out.pred_masks], original_sizes=[size])[0]
             yield mask_box(masks[0, 0].cpu().numpy())
+
+    def find_similar(self, frame: Frame, box: Box) -> list[Box]:
+        """Return every object on the frame like the one in box, most confident first."""
+        if not self.supports_exemplars:
+            raise ValueError(f"{self.model_id} cannot search by exemplar")
+        if self._detector is None:
+            # Loaded on first use so a worker that never gets an exemplar
+            # task keeps the card's memory for tracking.
+            detector = Sam3Model.from_pretrained(
+                self.model_id, dtype=torch.float16, attn_implementation=self._attn
+            )
+            self._detector = detector.to(self.device).eval()
+            self._detector_processor = Sam3Processor.from_pretrained(self.model_id)
+        h, w = frame.shape[:2]
+        x, y, bw, bh = box
+        inputs = self._detector_processor(
+            images=frame,
+            input_boxes=[[[x * w, y * h, (x + bw) * w, (y + bh) * h]]],
+            input_boxes_labels=[[1]],
+            return_tensors="pt",
+        ).to(self.device)
+        with torch.inference_mode():
+            out = self._detector(
+                pixel_values=inputs.pixel_values.to(torch.float16),
+                input_ids=inputs.input_ids,
+                attention_mask=inputs.attention_mask,
+                input_boxes=inputs.input_boxes.to(torch.float16),
+                input_boxes_labels=inputs.input_boxes_labels,
+            )
+        found = self._detector_processor.post_process_object_detection(
+            out, threshold=EXEMPLAR_THRESHOLD, target_sizes=[(h, w)]
+        )[0]
+        scores = found["scores"].float().cpu().numpy()
+        boxes = found["boxes"].float().cpu().numpy()
+        out_boxes: list[Box] = []
+        for i in np.argsort(-scores):
+            x0, y0, x1, y1 = (float(v) for v in boxes[i])
+            out_boxes.append((x0 / w, y0 / h, (x1 - x0) / w, (y1 - y0) / h))
+        return out_boxes
 
     def _forget(self, session: Any, frame_idx: int) -> None:
         """Drop state the model no longer reads so memory stays flat on long clips.

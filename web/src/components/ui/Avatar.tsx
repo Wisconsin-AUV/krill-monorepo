@@ -1,33 +1,20 @@
-import React, { useState } from 'react'
+import BoringAvatar from 'boring-avatars'
+import React from 'react'
+
+const COLORS = ['#0c4a6e', '#0284c7', '#38bdf8', '#bae6fd', '#f59e0b']
 
 interface AvatarProps {
-  src?: string
-  initials?: string
+  seed: string
   className?: string
-  alt?: string
   style?: React.CSSProperties
 }
 
-export const Avatar: React.FC<AvatarProps> = ({ src, initials, className, alt = '', style }) => {
-  const [imgError, setImgError] = useState(false)
-  const showImg = src && !imgError
-
-  return (
-    <span
-      data-slot="avatar"
-      className={`inline-flex items-center justify-center overflow-hidden ${className ?? ''}`}
-      style={style}
-    >
-      {showImg ? (
-        <img
-          src={src}
-          alt={alt}
-          className="h-full w-full object-cover"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <span className="text-xs leading-none font-semibold text-white">{initials}</span>
-      )}
-    </span>
-  )
-}
+export const Avatar: React.FC<AvatarProps> = ({ seed, className, style }) => (
+  <span
+    data-slot="avatar"
+    className={`inline-flex overflow-hidden rounded-full ${className ?? ''}`}
+    style={style}
+  >
+    <BoringAvatar name={seed} variant="beam" colors={COLORS} size="100%" />
+  </span>
+)

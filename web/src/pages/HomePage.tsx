@@ -9,14 +9,14 @@ import { Stat } from '@/components/Stat'
 import { Thumbnail } from '@/components/Thumbnail'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
+import { QueryError } from '@/components/ui/Callout'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Text } from '@/components/ui/Text'
 import { QueueService, type GetQueueResponse, type OpenClip } from '@/gen/krill/v1/queue_pb'
 import { Period, StatsService } from '@/gen/krill/v1/stats_pb'
-import { initials, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
+import { useUser } from '@/lib/auth'
 import { formatNumber, plural } from '@/lib/format'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { ordinal, profilePath, timeZone } from '@/lib/stats'
@@ -114,10 +114,7 @@ function WeekBoard() {
                 <span className="w-4 text-right text-zinc-500 tabular-nums dark:text-zinc-400">
                   {e.rank}
                 </span>
-                <Avatar
-                  initials={initials(e.user?.name ?? '')}
-                  className="size-6 rounded-full bg-sky-600 [&>span]:text-[10px]"
-                />
+                <Avatar seed={e.user?.id ?? ''} className="size-6" />
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {e.user?.id === me?.id ? 'You' : e.user?.name}
                 </span>
@@ -267,9 +264,7 @@ export function HomePage() {
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-4 text-red-600 dark:text-red-400">
-          Could not load your queue: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load your queue" error={error} className="mt-4" />
       ) : (
         <>
           <div className="mt-8 grid gap-10 lg:grid-cols-3">

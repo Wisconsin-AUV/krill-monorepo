@@ -57,6 +57,15 @@ const (
 	// AnnotationServiceTrackObjectProcedure is the fully-qualified name of the AnnotationService's
 	// TrackObject RPC.
 	AnnotationServiceTrackObjectProcedure = "/krill.v1.AnnotationService/TrackObject"
+	// AnnotationServiceListTracksByTypeProcedure is the fully-qualified name of the AnnotationService's
+	// ListTracksByType RPC.
+	AnnotationServiceListTracksByTypeProcedure = "/krill.v1.AnnotationService/ListTracksByType"
+	// AnnotationServiceSearchExemplarProcedure is the fully-qualified name of the AnnotationService's
+	// SearchExemplar RPC.
+	AnnotationServiceSearchExemplarProcedure = "/krill.v1.AnnotationService/SearchExemplar"
+	// AnnotationServiceGetExemplarSearchProcedure is the fully-qualified name of the
+	// AnnotationService's GetExemplarSearch RPC.
+	AnnotationServiceGetExemplarSearchProcedure = "/krill.v1.AnnotationService/GetExemplarSearch"
 )
 
 // AnnotationServiceClient is a client for the krill.v1.AnnotationService service.
@@ -79,6 +88,14 @@ type AnnotationServiceClient interface {
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added
 	// to the track as proposals while tracking runs.
 	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
+	// ListTracksByType lists tracks of one type across clips, each with one box
+	// to crop, ordered by track id.
+	ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error)
+	// SearchExemplar uses the track's box on a frame as an exemplar. The GPU
+	// worker finds the other objects like it on the frame, and each becomes a
+	// new track of the same type that is tracked through the rest of the clip.
+	SearchExemplar(context.Context, *v1.SearchExemplarRequest) (*v1.SearchExemplarResponse, error)
+	GetExemplarSearch(context.Context, *v1.GetExemplarSearchRequest) (*v1.GetExemplarSearchResponse, error)
 }
 
 // NewAnnotationServiceClient constructs a client for the krill.v1.AnnotationService service. By
@@ -140,19 +157,40 @@ func NewAnnotationServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
 			connect.WithClientOptions(opts...),
 		),
+		listTracksByType: connect.NewClient[v1.ListTracksByTypeRequest, v1.ListTracksByTypeResponse](
+			httpClient,
+			baseURL+AnnotationServiceListTracksByTypeProcedure,
+			connect.WithSchema(annotationServiceMethods.ByName("ListTracksByType")),
+			connect.WithClientOptions(opts...),
+		),
+		searchExemplar: connect.NewClient[v1.SearchExemplarRequest, v1.SearchExemplarResponse](
+			httpClient,
+			baseURL+AnnotationServiceSearchExemplarProcedure,
+			connect.WithSchema(annotationServiceMethods.ByName("SearchExemplar")),
+			connect.WithClientOptions(opts...),
+		),
+		getExemplarSearch: connect.NewClient[v1.GetExemplarSearchRequest, v1.GetExemplarSearchResponse](
+			httpClient,
+			baseURL+AnnotationServiceGetExemplarSearchProcedure,
+			connect.WithSchema(annotationServiceMethods.ByName("GetExemplarSearch")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // annotationServiceClient implements AnnotationServiceClient.
 type annotationServiceClient struct {
-	createTrack    *connect.Client[v1.CreateTrackRequest, v1.CreateTrackResponse]
-	updateTrack    *connect.Client[v1.UpdateTrackRequest, v1.UpdateTrackResponse]
-	deleteTrack    *connect.Client[v1.DeleteTrackRequest, v1.DeleteTrackResponse]
-	setBox         *connect.Client[v1.SetBoxRequest, v1.SetBoxResponse]
-	deleteBox      *connect.Client[v1.DeleteBoxRequest, v1.DeleteBoxResponse]
-	copyBoxes      *connect.Client[v1.CopyBoxesRequest, v1.CopyBoxesResponse]
-	setFrameStatus *connect.Client[v1.SetFrameStatusRequest, v1.SetFrameStatusResponse]
-	trackObject    *connect.Client[v1.TrackObjectRequest, v1.TrackObjectResponse]
+	createTrack       *connect.Client[v1.CreateTrackRequest, v1.CreateTrackResponse]
+	updateTrack       *connect.Client[v1.UpdateTrackRequest, v1.UpdateTrackResponse]
+	deleteTrack       *connect.Client[v1.DeleteTrackRequest, v1.DeleteTrackResponse]
+	setBox            *connect.Client[v1.SetBoxRequest, v1.SetBoxResponse]
+	deleteBox         *connect.Client[v1.DeleteBoxRequest, v1.DeleteBoxResponse]
+	copyBoxes         *connect.Client[v1.CopyBoxesRequest, v1.CopyBoxesResponse]
+	setFrameStatus    *connect.Client[v1.SetFrameStatusRequest, v1.SetFrameStatusResponse]
+	trackObject       *connect.Client[v1.TrackObjectRequest, v1.TrackObjectResponse]
+	listTracksByType  *connect.Client[v1.ListTracksByTypeRequest, v1.ListTracksByTypeResponse]
+	searchExemplar    *connect.Client[v1.SearchExemplarRequest, v1.SearchExemplarResponse]
+	getExemplarSearch *connect.Client[v1.GetExemplarSearchRequest, v1.GetExemplarSearchResponse]
 }
 
 // CreateTrack calls krill.v1.AnnotationService.CreateTrack.
@@ -227,6 +265,33 @@ func (c *annotationServiceClient) TrackObject(ctx context.Context, req *v1.Track
 	return nil, err
 }
 
+// ListTracksByType calls krill.v1.AnnotationService.ListTracksByType.
+func (c *annotationServiceClient) ListTracksByType(ctx context.Context, req *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error) {
+	response, err := c.listTracksByType.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SearchExemplar calls krill.v1.AnnotationService.SearchExemplar.
+func (c *annotationServiceClient) SearchExemplar(ctx context.Context, req *v1.SearchExemplarRequest) (*v1.SearchExemplarResponse, error) {
+	response, err := c.searchExemplar.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetExemplarSearch calls krill.v1.AnnotationService.GetExemplarSearch.
+func (c *annotationServiceClient) GetExemplarSearch(ctx context.Context, req *v1.GetExemplarSearchRequest) (*v1.GetExemplarSearchResponse, error) {
+	response, err := c.getExemplarSearch.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AnnotationServiceHandler is an implementation of the krill.v1.AnnotationService service.
 type AnnotationServiceHandler interface {
 	// CreateTrack starts a track with its first box.
@@ -247,6 +312,14 @@ type AnnotationServiceHandler interface {
 	// tracks it through the rest of the clip on the GPU worker. Boxes are added
 	// to the track as proposals while tracking runs.
 	TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error)
+	// ListTracksByType lists tracks of one type across clips, each with one box
+	// to crop, ordered by track id.
+	ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error)
+	// SearchExemplar uses the track's box on a frame as an exemplar. The GPU
+	// worker finds the other objects like it on the frame, and each becomes a
+	// new track of the same type that is tracked through the rest of the clip.
+	SearchExemplar(context.Context, *v1.SearchExemplarRequest) (*v1.SearchExemplarResponse, error)
+	GetExemplarSearch(context.Context, *v1.GetExemplarSearchRequest) (*v1.GetExemplarSearchResponse, error)
 }
 
 // NewAnnotationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -304,6 +377,24 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 		connect.WithSchema(annotationServiceMethods.ByName("TrackObject")),
 		connect.WithHandlerOptions(opts...),
 	)
+	annotationServiceListTracksByTypeHandler := connect.NewUnaryHandlerSimple(
+		AnnotationServiceListTracksByTypeProcedure,
+		svc.ListTracksByType,
+		connect.WithSchema(annotationServiceMethods.ByName("ListTracksByType")),
+		connect.WithHandlerOptions(opts...),
+	)
+	annotationServiceSearchExemplarHandler := connect.NewUnaryHandlerSimple(
+		AnnotationServiceSearchExemplarProcedure,
+		svc.SearchExemplar,
+		connect.WithSchema(annotationServiceMethods.ByName("SearchExemplar")),
+		connect.WithHandlerOptions(opts...),
+	)
+	annotationServiceGetExemplarSearchHandler := connect.NewUnaryHandlerSimple(
+		AnnotationServiceGetExemplarSearchProcedure,
+		svc.GetExemplarSearch,
+		connect.WithSchema(annotationServiceMethods.ByName("GetExemplarSearch")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.AnnotationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AnnotationServiceCreateTrackProcedure:
@@ -322,6 +413,12 @@ func NewAnnotationServiceHandler(svc AnnotationServiceHandler, opts ...connect.H
 			annotationServiceSetFrameStatusHandler.ServeHTTP(w, r)
 		case AnnotationServiceTrackObjectProcedure:
 			annotationServiceTrackObjectHandler.ServeHTTP(w, r)
+		case AnnotationServiceListTracksByTypeProcedure:
+			annotationServiceListTracksByTypeHandler.ServeHTTP(w, r)
+		case AnnotationServiceSearchExemplarProcedure:
+			annotationServiceSearchExemplarHandler.ServeHTTP(w, r)
+		case AnnotationServiceGetExemplarSearchProcedure:
+			annotationServiceGetExemplarSearchHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -361,4 +458,16 @@ func (UnimplementedAnnotationServiceHandler) SetFrameStatus(context.Context, *v1
 
 func (UnimplementedAnnotationServiceHandler) TrackObject(context.Context, *v1.TrackObjectRequest) (*v1.TrackObjectResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.TrackObject is not implemented"))
+}
+
+func (UnimplementedAnnotationServiceHandler) ListTracksByType(context.Context, *v1.ListTracksByTypeRequest) (*v1.ListTracksByTypeResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.ListTracksByType is not implemented"))
+}
+
+func (UnimplementedAnnotationServiceHandler) SearchExemplar(context.Context, *v1.SearchExemplarRequest) (*v1.SearchExemplarResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.SearchExemplar is not implemented"))
+}
+
+func (UnimplementedAnnotationServiceHandler) GetExemplarSearch(context.Context, *v1.GetExemplarSearchRequest) (*v1.GetExemplarSearchResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AnnotationService.GetExemplarSearch is not implemented"))
 }

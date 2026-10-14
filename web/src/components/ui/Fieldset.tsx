@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import { clsx } from 'clsx'
 import type React from 'react'
+import { FieldInvalid } from './fieldInvalid'
 
 export function Fieldset({
   className,
@@ -36,21 +37,31 @@ export function FieldGroup({ className, ...props }: React.ComponentPropsWithoutR
 
 export function Field({
   className,
+  error,
+  children,
   ...props
-}: { className?: string } & Omit<Headless.FieldProps, 'as' | 'className'>) {
+}: { className?: string; error?: string; children: React.ReactNode } & Omit<
+  Headless.FieldProps,
+  'as' | 'className' | 'children'
+>) {
   return (
-    <Headless.Field
-      {...props}
-      className={clsx(
-        className,
-        '[&>[data-slot=label]+[data-slot=control]]:mt-3',
-        '[&>[data-slot=label]+[data-slot=description]]:mt-1',
-        '[&>[data-slot=description]+[data-slot=control]]:mt-3',
-        '[&>[data-slot=control]+[data-slot=description]]:mt-3',
-        '[&>[data-slot=control]+[data-slot=error]]:mt-3',
-        '*:data-[slot=label]:font-medium',
-      )}
-    />
+    <FieldInvalid.Provider value={Boolean(error)}>
+      <Headless.Field
+        {...props}
+        className={clsx(
+          className,
+          '[&>[data-slot=label]+[data-slot=control]]:mt-3',
+          '[&>[data-slot=label]+[data-slot=description]]:mt-1',
+          '[&>[data-slot=description]+[data-slot=control]]:mt-3',
+          '[&>[data-slot=control]+[data-slot=description]]:mt-3',
+          '[&>[data-slot=control]+[data-slot=error]]:mt-3',
+          '*:data-[slot=label]:font-medium',
+        )}
+      >
+        {children}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+      </Headless.Field>
+    </FieldInvalid.Provider>
   )
 }
 
@@ -103,7 +114,7 @@ export function Description({
   )
 }
 
-export function ErrorMessage({
+function ErrorMessage({
   className,
   ...props
 }: { className?: string } & Omit<Headless.DescriptionProps, 'as' | 'className'>) {

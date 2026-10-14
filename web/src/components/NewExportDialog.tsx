@@ -4,21 +4,15 @@ import { keepPreviousData } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ExportStatsView } from '@/components/ExportStatsView'
 import { Button } from '@/components/ui/Button'
+import { FormError } from '@/components/ui/Callout'
 import { Checkbox, CheckboxField } from '@/components/ui/Checkbox'
-import {
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/Dialog'
-import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
+import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Select } from '@/components/ui/Select'
 import { ExportOptionsSchema, ExportService } from '@/gen/krill/v1/export_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
-import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -72,11 +66,10 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
       flash.success('Export queued', 'The download appears here when it is ready.')
       onClose()
     },
-    onError: (err) => flash.error('Could not create export', err),
   })
 
   const stats = preview.data?.stats
-  const images = stats ? stats.trainImages + stats.valImages : 0
+  const images = stats ? stats.trainImages + stats.valImages + stats.testImages : 0
 
   function toggleVideo(id: bigint, on: boolean) {
     const next = on ? [...selected, id] : selected.filter((v) => v !== id)
@@ -91,10 +84,6 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
       }}
     >
       <DialogTitle>New export</DialogTitle>
-      <DialogDescription>
-        A YOLO dataset zip with images, labels, data.yaml, and a manifest. Train and val are split
-        by video.
-      </DialogDescription>
       <DialogBody className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <FieldGroup>
           <Field>
@@ -103,9 +92,6 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
           </Field>
           <Field>
             <Label>Validation share</Label>
-            <Description>
-              Videos pinned to a split keep it. The rest are balanced toward this share.
-            </Description>
             <Select value={valFraction} onChange={(e) => setValFraction(Number(e.target.value))}>
               {valOptions.map((v) => (
                 <option key={v} value={v}>
@@ -128,9 +114,6 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
             <CheckboxField>
               <Checkbox checked={dedup} onChange={setDedup} color="sky" />
               <Label>Drop near-duplicate frames</Label>
-              <Description>
-                Compares each frame's perceptual hash with the last one kept.
-              </Description>
             </CheckboxField>
             {dedup && (
               <Select
@@ -167,6 +150,7 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </Fieldset>
+          <FormError error={createExport.error} />
         </FieldGroup>
 
         <div className="min-w-0">
@@ -175,9 +159,7 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
             {preview.isFetching && <LoadingSpinner />}
           </div>
           {preview.error ? (
-            <p className="text-sm/6 text-red-600 dark:text-red-400">
-              {errorMessage(preview.error)}
-            </p>
+            <FormError error={preview.error} />
           ) : stats ? (
             <ExportStatsView stats={stats} />
           ) : (

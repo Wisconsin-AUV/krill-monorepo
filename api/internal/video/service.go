@@ -34,15 +34,16 @@ const (
 
 type Service struct {
 	krillv1connect.UnimplementedVideoServiceHandler
-	pool  *pgxpool.Pool
-	q     *db.Queries
-	store *storage.Store
-	jobs  *river.Client[pgx.Tx]
+	pool          *pgxpool.Pool
+	q             *db.Queries
+	store         *storage.Store
+	jobs          *river.Client[pgx.Tx]
+	embedAtIngest bool
 	*Presenter
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs, Presenter: NewPresenter(store)}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], embedAtIngest bool) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs, embedAtIngest: embedAtIngest, Presenter: NewPresenter(store)}
 }
 
 func (s *Service) CreateVideo(ctx context.Context, req *krillv1.CreateVideoRequest) (*krillv1.CreateVideoResponse, error) {
@@ -180,7 +181,8 @@ func (s *Service) GetVideo(ctx context.Context, req *krillv1.GetVideoRequest) (*
 			LabeledFrames: stats.LabeledFrameCount,
 			Boxes:         stats.BoxCount,
 		}),
-		Clips: out,
+		Clips:         out,
+		EmbedAtIngest: s.embedAtIngest,
 	}, nil
 }
 

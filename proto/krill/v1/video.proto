@@ -28,12 +28,14 @@ enum VideoStatus {
 }
 
 // SplitAssignment pins a video to a dataset split. Export balances AUTO
-// videos between train and val.
+// videos between train and val. TEST videos are held out: they never join
+// the auto balance and must never be pre-labeled by a model.
 enum SplitAssignment {
   SPLIT_ASSIGNMENT_UNSPECIFIED = 0;
   SPLIT_ASSIGNMENT_AUTO = 1;
   SPLIT_ASSIGNMENT_TRAIN = 2;
   SPLIT_ASSIGNMENT_VAL = 3;
+  SPLIT_ASSIGNMENT_TEST = 4;
 }
 
 message Video {
@@ -74,6 +76,8 @@ message Clip {
   int32 box_count = 10;
   // Unset when nobody has claimed the clip.
   ClipClaim claim = 11;
+  // The SAM image embeddings of the clip's frames are stored.
+  bool embedded = 12;
 }
 
 // ClipClaim is who is labeling a clip. Claims are soft: anyone can still open
@@ -125,6 +129,8 @@ message GetVideoRequest {
 message GetVideoResponse {
   Video video = 1;
   repeated Clip clips = 2;
+  // Clips get SAM embeddings after ingest.
+  bool embed_at_ingest = 3;
 }
 
 message UpdateVideoRequest {

@@ -6,6 +6,8 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Annotation, FrameStatus, Track } from "./annotation_pb";
 import { file_krill_v1_annotation } from "./annotation_pb";
+import type { Review } from "./review_pb";
+import { file_krill_v1_review } from "./review_pb";
 import type { Clip, Video } from "./video_pb";
 import { file_krill_v1_video } from "./video_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -14,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/clip.proto.
  */
 export const file_krill_v1_clip: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSJ6CgVGcmFtZRIKCgJpZBgBIAEoAxINCgVpbmRleBgCIAEoBRIUCgx0aW1lc3RhbXBfbXMYAyABKAMSCwoDdXJsGAQgASgJEiUKBnN0YXR1cxgFIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzEgwKBGdvbGQYBiABKAgiHAoOR2V0Q2xpcFJlcXVlc3QSCgoCaWQYASABKAMiiAIKD0dldENsaXBSZXNwb25zZRIeCgV2aWRlbxgBIAEoCzIPLmtyaWxsLnYxLlZpZGVvEhwKBGNsaXAYAiABKAsyDi5rcmlsbC52MS5DbGlwEh8KBmZyYW1lcxgDIAMoCzIPLmtyaWxsLnYxLkZyYW1lEhgKEHByZXZpb3VzX2NsaXBfaWQYBCABKAMSFAoMbmV4dF9jbGlwX2lkGAUgASgDEh8KBnRyYWNrcxgGIAMoCzIPLmtyaWxsLnYxLlRyYWNrEikKC2Fubm90YXRpb25zGAcgAygLMhQua3JpbGwudjEuQW5ub3RhdGlvbhIaChJ0cmFja2luZ190cmFja19pZHMYCCADKAMyTwoLQ2xpcFNlcnZpY2USQAoHR2V0Q2xpcBIYLmtyaWxsLnYxLkdldENsaXBSZXF1ZXN0Ghkua3JpbGwudjEuR2V0Q2xpcFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJQ2xpcFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation, file_krill_v1_video]);
+  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSKcAQoFRnJhbWUSCgoCaWQYASABKAMSDQoFaW5kZXgYAiABKAUSFAoMdGltZXN0YW1wX21zGAMgASgDEgsKA3VybBgEIAEoCRIlCgZzdGF0dXMYBSABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cxIMCgRnb2xkGAYgASgIEiAKBnJldmlldxgHIAEoCzIQLmtyaWxsLnYxLlJldmlldyIcCg5HZXRDbGlwUmVxdWVzdBIKCgJpZBgBIAEoAyKIAgoPR2V0Q2xpcFJlc3BvbnNlEh4KBXZpZGVvGAEgASgLMg8ua3JpbGwudjEuVmlkZW8SHAoEY2xpcBgCIAEoCzIOLmtyaWxsLnYxLkNsaXASHwoGZnJhbWVzGAMgAygLMg8ua3JpbGwudjEuRnJhbWUSGAoQcHJldmlvdXNfY2xpcF9pZBgEIAEoAxIUCgxuZXh0X2NsaXBfaWQYBSABKAMSHwoGdHJhY2tzGAYgAygLMg8ua3JpbGwudjEuVHJhY2sSKQoLYW5ub3RhdGlvbnMYByADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uEhoKEnRyYWNraW5nX3RyYWNrX2lkcxgIIAMoAzJPCgtDbGlwU2VydmljZRJACgdHZXRDbGlwEhgua3JpbGwudjEuR2V0Q2xpcFJlcXVlc3QaGS5rcmlsbC52MS5HZXRDbGlwUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglDbGlwUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_annotation, file_krill_v1_review, file_krill_v1_video]);
 
 /**
  * @generated from message krill.v1.Frame
@@ -55,6 +57,13 @@ export type Frame = Message<"krill.v1.Frame"> & {
    * @generated from field: bool gold = 6;
    */
   gold: boolean;
+
+  /**
+   * The frame's open review, if it has one.
+   *
+   * @generated from field: krill.v1.Review review = 7;
+   */
+  review?: Review | undefined;
 };
 
 /**

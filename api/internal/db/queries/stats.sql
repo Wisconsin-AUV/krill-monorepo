@@ -55,3 +55,13 @@ FROM (
     UNION ALL
     SELECT clip_id FROM frames WHERE status_by = sqlc.arg('user_id')::uuid
 ) c;
+
+-- name: DriftByLabelType :many
+SELECT
+    t.label_type_id,
+    count(*)::bigint AS proposals,
+    count(*) FILTER (WHERE a.drift <> 'ok')::bigint AS flagged
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+WHERE a.drift IS NOT NULL
+GROUP BY t.label_type_id;

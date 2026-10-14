@@ -21,6 +21,42 @@ func (q *Queries) DeleteGoldFrame(ctx context.Context, frameID int64) error {
 	return err
 }
 
+const enqueueDoneSinceGoldCheck = `-- name: EnqueueDoneSinceGoldCheck :execrows
+INSERT INTO reviews (frame_id, reason)
+SELECT f.id, $1::text
+FROM frames f
+WHERE f.status_by = $2::uuid
+    AND f.status_at > coalesce(
+        (SELECT max(created_at) FROM gold_attempts WHERE user_id = $2::uuid AND frame_id <> $3::bigint),
+        '-infinity'::timestamptz
+    )
+ORDER BY f.status_at DESC
+LIMIT $4::int
+ON CONFLICT (frame_id) WHERE resolved_at IS NULL DO NOTHING
+`
+
+type EnqueueDoneSinceGoldCheckParams struct {
+	Reason      string    `json:"reason"`
+	UserID      uuid.UUID `json:"user_id"`
+	GoldFrameID int64     `json:"gold_frame_id"`
+	Lim         int32     `json:"lim"`
+}
+
+// Queues the frames the labeler marked done since their gold check before the
+// one on @gold_frame_id, newest first.
+func (q *Queries) EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error) {
+	result, err := q.db.Exec(ctx, enqueueDoneSinceGoldCheck,
+		arg.Reason,
+		arg.UserID,
+		arg.GoldFrameID,
+		arg.Lim,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const framesSinceGoldCheck = `-- name: FramesSinceGoldCheck :one
 SELECT count(*)::int
 FROM frames
@@ -36,6 +72,71 @@ func (q *Queries) FramesSinceGoldCheck(ctx context.Context, userID uuid.UUID) (i
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const getGoldAttempt = `-- name: GetGoldAttempt :one
+SELECT
+    ga.frame_id, ga.boxes, ga.matched, ga.iou_sum, ga.score, ga.created_at,
+    g.boxes AS reference, f.clip_id, f.idx, f.video_id, v.name AS video_name, v.width, v.height,
+    u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
+FROM gold_attempts ga
+JOIN gold_frames g ON g.frame_id = ga.frame_id
+JOIN frames f ON f.id = ga.frame_id
+JOIN videos v ON v.id = f.video_id
+JOIN users u ON u.id = ga.user_id
+WHERE ga.frame_id = $1 AND ga.user_id = $2
+`
+
+type GetGoldAttemptParams struct {
+	FrameID int64     `json:"frame_id"`
+	UserID  uuid.UUID `json:"user_id"`
+}
+
+type GetGoldAttemptRow struct {
+	FrameID       int64              `json:"frame_id"`
+	Boxes         []byte             `json:"boxes"`
+	Matched       int32              `json:"matched"`
+	IouSum        float64            `json:"iou_sum"`
+	Score         float64            `json:"score"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Reference     []byte             `json:"reference"`
+	ClipID        int64              `json:"clip_id"`
+	Idx           int32              `json:"idx"`
+	VideoID       int64              `json:"video_id"`
+	VideoName     string             `json:"video_name"`
+	Width         int32              `json:"width"`
+	Height        int32              `json:"height"`
+	UserID        uuid.UUID          `json:"user_id"`
+	Name          string             `json:"name"`
+	Username      string             `json:"username"`
+	Role          string             `json:"role"`
+	UserCreatedAt pgtype.Timestamptz `json:"user_created_at"`
+}
+
+func (q *Queries) GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error) {
+	row := q.db.QueryRow(ctx, getGoldAttempt, arg.FrameID, arg.UserID)
+	var i GetGoldAttemptRow
+	err := row.Scan(
+		&i.FrameID,
+		&i.Boxes,
+		&i.Matched,
+		&i.IouSum,
+		&i.Score,
+		&i.CreatedAt,
+		&i.Reference,
+		&i.ClipID,
+		&i.Idx,
+		&i.VideoID,
+		&i.VideoName,
+		&i.Width,
+		&i.Height,
+		&i.UserID,
+		&i.Name,
+		&i.Username,
+		&i.Role,
+		&i.UserCreatedAt,
+	)
+	return i, err
 }
 
 const getGoldFrame = `-- name: GetGoldFrame :one
@@ -167,15 +268,15 @@ func (q *Queries) ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64
 	return items, nil
 }
 
-const listFrameVerifiedBoxes = `-- name: ListFrameVerifiedBoxes :many
+const listFrameGoldBoxes = `-- name: ListFrameGoldBoxes :many
 SELECT t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
-WHERE a.frame_id = $1 AND a.status = 'verified'
+WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id
 `
 
-type ListFrameVerifiedBoxesRow struct {
+type ListFrameGoldBoxesRow struct {
 	LabelTypeID int64   `json:"label_type_id"`
 	Attributes  []byte  `json:"attributes"`
 	X           float64 `json:"x"`
@@ -184,15 +285,17 @@ type ListFrameVerifiedBoxesRow struct {
 	Height      float64 `json:"height"`
 }
 
-func (q *Queries) ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error) {
-	rows, err := q.db.Query(ctx, listFrameVerifiedBoxes, frameID)
+// Matches what the dataset export treats as labels on a done frame, so
+// tracker proposals the labeler left in place count.
+func (q *Queries) ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listFrameGoldBoxes, frameID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListFrameVerifiedBoxesRow
+	var items []ListFrameGoldBoxesRow
 	for rows.Next() {
-		var i ListFrameVerifiedBoxesRow
+		var i ListFrameGoldBoxesRow
 		if err := rows.Scan(
 			&i.LabelTypeID,
 			&i.Attributes,
@@ -200,6 +303,92 @@ func (q *Queries) ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]
 			&i.Y,
 			&i.Width,
 			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGoldAttempts = `-- name: ListGoldAttempts :many
+SELECT
+    ga.frame_id, ga.matched, ga.iou_sum, ga.score, ga.created_at,
+    f.clip_id, f.idx, v.name AS video_name,
+    u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
+FROM gold_attempts ga
+JOIN frames f ON f.id = ga.frame_id
+JOIN videos v ON v.id = f.video_id
+JOIN users u ON u.id = ga.user_id
+WHERE ($1::uuid IS NULL OR ga.user_id = $1::uuid)
+    AND ($2::bigint IS NULL OR ga.frame_id = $2::bigint)
+    AND (
+        $3::timestamptz IS NULL
+        OR (ga.created_at, ga.frame_id, ga.user_id)
+            < ($3::timestamptz, $4::bigint, $5::uuid)
+    )
+ORDER BY ga.created_at DESC, ga.frame_id DESC, ga.user_id DESC
+LIMIT $6::int
+`
+
+type ListGoldAttemptsParams struct {
+	UserID        pgtype.UUID        `json:"user_id"`
+	FrameID       pgtype.Int8        `json:"frame_id"`
+	BeforeAt      pgtype.Timestamptz `json:"before_at"`
+	BeforeFrameID pgtype.Int8        `json:"before_frame_id"`
+	BeforeUserID  pgtype.UUID        `json:"before_user_id"`
+	Lim           int32              `json:"lim"`
+}
+
+type ListGoldAttemptsRow struct {
+	FrameID       int64              `json:"frame_id"`
+	Matched       int32              `json:"matched"`
+	IouSum        float64            `json:"iou_sum"`
+	Score         float64            `json:"score"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	ClipID        int64              `json:"clip_id"`
+	Idx           int32              `json:"idx"`
+	VideoName     string             `json:"video_name"`
+	UserID        uuid.UUID          `json:"user_id"`
+	Name          string             `json:"name"`
+	Username      string             `json:"username"`
+	Role          string             `json:"role"`
+	UserCreatedAt pgtype.Timestamptz `json:"user_created_at"`
+}
+
+func (q *Queries) ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error) {
+	rows, err := q.db.Query(ctx, listGoldAttempts,
+		arg.UserID,
+		arg.FrameID,
+		arg.BeforeAt,
+		arg.BeforeFrameID,
+		arg.BeforeUserID,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGoldAttemptsRow
+	for rows.Next() {
+		var i ListGoldAttemptsRow
+		if err := rows.Scan(
+			&i.FrameID,
+			&i.Matched,
+			&i.IouSum,
+			&i.Score,
+			&i.CreatedAt,
+			&i.ClipID,
+			&i.Idx,
+			&i.VideoName,
+			&i.UserID,
+			&i.Name,
+			&i.Username,
+			&i.Role,
+			&i.UserCreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -272,27 +461,33 @@ SELECT
     sum(ga.correct)::bigint AS correct,
     sum(ga.reference_count + ga.answer_count - ga.matched)::bigint AS scored,
     sum(ga.matched)::bigint AS matched,
-    sum(ga.iou_sum)::float8 AS iou_sum
+    sum(ga.iou_sum)::float8 AS iou_sum,
+    (
+        SELECT avg(r.score) FROM (
+            SELECT score FROM gold_attempts WHERE user_id = u.id ORDER BY created_at DESC LIMIT $1::int
+        ) r
+    )::float8 AS recent_score
 FROM gold_attempts ga
 JOIN users u ON u.id = ga.user_id
 GROUP BY u.id
 `
 
 type ListGoldLabelersRow struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
-	Username  string             `json:"username"`
-	Role      string             `json:"role"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	Attempts  int32              `json:"attempts"`
-	Correct   int64              `json:"correct"`
-	Scored    int64              `json:"scored"`
-	Matched   int64              `json:"matched"`
-	IouSum    float64            `json:"iou_sum"`
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Username    string             `json:"username"`
+	Role        string             `json:"role"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	Attempts    int32              `json:"attempts"`
+	Correct     int64              `json:"correct"`
+	Scored      int64              `json:"scored"`
+	Matched     int64              `json:"matched"`
+	IouSum      float64            `json:"iou_sum"`
+	RecentScore float64            `json:"recent_score"`
 }
 
-func (q *Queries) ListGoldLabelers(ctx context.Context) ([]ListGoldLabelersRow, error) {
-	rows, err := q.db.Query(ctx, listGoldLabelers)
+func (q *Queries) ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error) {
+	rows, err := q.db.Query(ctx, listGoldLabelers, recent)
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +506,7 @@ func (q *Queries) ListGoldLabelers(ctx context.Context) ([]ListGoldLabelersRow, 
 			&i.Scored,
 			&i.Matched,
 			&i.IouSum,
+			&i.RecentScore,
 		); err != nil {
 			return nil, err
 		}
@@ -350,4 +546,31 @@ func (q *Queries) NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, e
 	var frame_id int64
 	err := row.Scan(&frame_id)
 	return frame_id, err
+}
+
+const recentGoldScore = `-- name: RecentGoldScore :one
+SELECT
+    (SELECT count(*) FROM gold_attempts WHERE user_id = $1::uuid)::int AS attempts,
+    coalesce((
+        SELECT avg(r.score) FROM (
+            SELECT score FROM gold_attempts WHERE user_id = $1::uuid ORDER BY created_at DESC LIMIT $2::int
+        ) r
+    ), 0)::float8 AS recent_score
+`
+
+type RecentGoldScoreParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Recent int32     `json:"recent"`
+}
+
+type RecentGoldScoreRow struct {
+	Attempts    int32   `json:"attempts"`
+	RecentScore float64 `json:"recent_score"`
+}
+
+func (q *Queries) RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error) {
+	row := q.db.QueryRow(ctx, recentGoldScore, arg.UserID, arg.Recent)
+	var i RecentGoldScoreRow
+	err := row.Scan(&i.Attempts, &i.RecentScore)
+	return i, err
 }

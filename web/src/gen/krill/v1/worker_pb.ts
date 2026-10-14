@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/worker.proto.
  */
 export const file_krill_v1_worker: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCI2ChBOZXh0VGFza1Jlc3BvbnNlEiIKBXRyYWNrGAEgASgLMhMua3JpbGwudjEuVHJhY2tUYXNrIiQKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkihgEKCVRyYWNrVGFzaxIKCgJpZBgBIAEoAxIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSIAoFcG9pbnQYAyABKAsyDy5rcmlsbC52MS5Qb2ludEgAEhwKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveEgAQggKBnByb21wdCI6CgpUcmFja2VkQm94EhAKCGZyYW1lX2lkGAEgASgDEhoKA2JveBgCIAEoCzINLmtyaWxsLnYxLkJveCJnChJSZXBvcnRUcmFja1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVtb2RlbBgCIAEoCRIjCgVib3hlcxgDIAMoCzIULmtyaWxsLnYxLlRyYWNrZWRCb3gSDAoEZG9uZRgEIAEoCCIVChNSZXBvcnRUcmFja1Jlc3BvbnNlIjEKD0ZhaWxUYXNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBWVycm9yGAIgASgJIhIKEEZhaWxUYXNrUmVzcG9uc2Uy5wEKDVdvcmtlclNlcnZpY2USQwoITmV4dFRhc2sSGS5rcmlsbC52MS5OZXh0VGFza1JlcXVlc3QaGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIgASTAoLUmVwb3J0VHJhY2sSHC5rcmlsbC52MS5SZXBvcnRUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5SZXBvcnRUcmFja1Jlc3BvbnNlIgASQwoIRmFpbFRhc2sSGS5rcmlsbC52MS5GYWlsVGFza1JlcXVlc3QaGi5rcmlsbC52MS5GYWlsVGFza1Jlc3BvbnNlIgBCjAEKDGNvbS5rcmlsbC52MUILV29ya2VyUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_annotation]);
+  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCKSAQoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIAEIGCgR0YXNrIjsKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSFQoNZW1iZWRkaW5nX3VybBgDIAEoCSKfAQoJVHJhY2tUYXNrEgoKAmlkGAEgASgDEiMKBmZyYW1lcxgCIAMoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIgCgVwb2ludBgDIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94SAASFwoPZW1iZWRkaW5nX21vZGVsGAUgASgJQggKBnByb21wdCI9CglFbWJlZFRhc2sSCgoCaWQYASABKAMSJAoGZnJhbWVzGAIgAygLMhQua3JpbGwudjEuRW1iZWRGcmFtZSI5CgpFbWJlZEZyYW1lEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRISCgp1cGxvYWRfdXJsGAMgASgJIloKDEV4ZW1wbGFyVGFzaxIKCgJpZBgBIAEoAxIiCgVmcmFtZRgCIAEoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoKVHJhY2tlZEJveBIQCghmcmFtZV9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giZwoSUmVwb3J0VHJhY2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSIwoFYm94ZXMYAyADKAsyFC5rcmlsbC52MS5UcmFja2VkQm94EgwKBGRvbmUYBCABKAgiFQoTUmVwb3J0VHJhY2tSZXNwb25zZSJWChZSZXBvcnRFeGVtcGxhcnNSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSHAoFYm94ZXMYAyADKAsyDS5rcmlsbC52MS5Cb3giGQoXUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiNAoSUmVwb3J0RW1iZWRSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkiFQoTUmVwb3J0RW1iZWRSZXNwb25zZSIxCg9GYWlsVGFza1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVlcnJvchgCIAEoCSISChBGYWlsVGFza1Jlc3BvbnNlMo8DCg1Xb3JrZXJTZXJ2aWNlEkMKCE5leHRUYXNrEhkua3JpbGwudjEuTmV4dFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuTmV4dFRhc2tSZXNwb25zZSIAEkwKC1JlcG9ydFRyYWNrEhwua3JpbGwudjEuUmVwb3J0VHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0VHJhY2tSZXNwb25zZSIAElgKD1JlcG9ydEV4ZW1wbGFycxIgLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1JlcXVlc3QaIS5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXNwb25zZSIAEkwKC1JlcG9ydEVtYmVkEhwua3JpbGwudjEuUmVwb3J0RW1iZWRSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0RW1iZWRSZXNwb25zZSIAEkMKCEZhaWxUYXNrEhkua3JpbGwudjEuRmFpbFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuRmFpbFRhc2tSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC1dvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation]);
 
 /**
  * @generated from message krill.v1.NextTaskRequest
@@ -32,9 +32,27 @@ export const NextTaskRequestSchema: GenMessage<NextTaskRequest> = /*@__PURE__*/
  */
 export type NextTaskResponse = Message<"krill.v1.NextTaskResponse"> & {
   /**
-   * @generated from field: krill.v1.TrackTask track = 1;
+   * @generated from oneof krill.v1.NextTaskResponse.task
    */
-  track?: TrackTask | undefined;
+  task: {
+    /**
+     * @generated from field: krill.v1.TrackTask track = 1;
+     */
+    value: TrackTask;
+    case: "track";
+  } | {
+    /**
+     * @generated from field: krill.v1.ExemplarTask exemplar = 2;
+     */
+    value: ExemplarTask;
+    case: "exemplar";
+  } | {
+    /**
+     * @generated from field: krill.v1.EmbedTask embed = 3;
+     */
+    value: EmbedTask;
+    case: "embed";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -59,6 +77,14 @@ export type TaskFrame = Message<"krill.v1.TaskFrame"> & {
    * @generated from field: string url = 2;
    */
   url: string;
+
+  /**
+   * Presigned URL of the frame's image embedding. Empty when the clip has
+   * none.
+   *
+   * @generated from field: string embedding_url = 3;
+   */
+  embeddingUrl: string;
 };
 
 /**
@@ -100,6 +126,14 @@ export type TrackTask = Message<"krill.v1.TrackTask"> & {
     value: Box;
     case: "box";
   } | { case: undefined; value?: undefined };
+
+  /**
+   * Model that computed the frames' embeddings. Workers running a different
+   * model ignore them.
+   *
+   * @generated from field: string embedding_model = 5;
+   */
+  embeddingModel: string;
 };
 
 /**
@@ -108,6 +142,90 @@ export type TrackTask = Message<"krill.v1.TrackTask"> & {
  */
 export const TrackTaskSchema: GenMessage<TrackTask> = /*@__PURE__*/
   messageDesc(file_krill_v1_worker, 3);
+
+/**
+ * EmbedTask computes the SAM image embedding of each frame.
+ *
+ * @generated from message krill.v1.EmbedTask
+ */
+export type EmbedTask = Message<"krill.v1.EmbedTask"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: repeated krill.v1.EmbedFrame frames = 2;
+   */
+  frames: EmbedFrame[];
+};
+
+/**
+ * Describes the message krill.v1.EmbedTask.
+ * Use `create(EmbedTaskSchema)` to create a new message.
+ */
+export const EmbedTaskSchema: GenMessage<EmbedTask> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 4);
+
+/**
+ * @generated from message krill.v1.EmbedFrame
+ */
+export type EmbedFrame = Message<"krill.v1.EmbedFrame"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * Presigned URL for the worker to GET the frame.
+   *
+   * @generated from field: string url = 2;
+   */
+  url: string;
+
+  /**
+   * Presigned URL for the worker to PUT the embedding.
+   *
+   * @generated from field: string upload_url = 3;
+   */
+  uploadUrl: string;
+};
+
+/**
+ * Describes the message krill.v1.EmbedFrame.
+ * Use `create(EmbedFrameSchema)` to create a new message.
+ */
+export const EmbedFrameSchema: GenMessage<EmbedFrame> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 5);
+
+/**
+ * ExemplarTask finds every object on a frame that looks like the one in box.
+ *
+ * @generated from message krill.v1.ExemplarTask
+ */
+export type ExemplarTask = Message<"krill.v1.ExemplarTask"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: krill.v1.TaskFrame frame = 2;
+   */
+  frame?: TaskFrame | undefined;
+
+  /**
+   * @generated from field: krill.v1.Box box = 3;
+   */
+  box?: Box | undefined;
+};
+
+/**
+ * Describes the message krill.v1.ExemplarTask.
+ * Use `create(ExemplarTaskSchema)` to create a new message.
+ */
+export const ExemplarTaskSchema: GenMessage<ExemplarTask> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 6);
 
 /**
  * @generated from message krill.v1.TrackedBox
@@ -129,7 +247,7 @@ export type TrackedBox = Message<"krill.v1.TrackedBox"> & {
  * Use `create(TrackedBoxSchema)` to create a new message.
  */
 export const TrackedBoxSchema: GenMessage<TrackedBox> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 4);
+  messageDesc(file_krill_v1_worker, 7);
 
 /**
  * @generated from message krill.v1.ReportTrackRequest
@@ -163,7 +281,7 @@ export type ReportTrackRequest = Message<"krill.v1.ReportTrackRequest"> & {
  * Use `create(ReportTrackRequestSchema)` to create a new message.
  */
 export const ReportTrackRequestSchema: GenMessage<ReportTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 5);
+  messageDesc(file_krill_v1_worker, 8);
 
 /**
  * @generated from message krill.v1.ReportTrackResponse
@@ -176,7 +294,84 @@ export type ReportTrackResponse = Message<"krill.v1.ReportTrackResponse"> & {
  * Use `create(ReportTrackResponseSchema)` to create a new message.
  */
 export const ReportTrackResponseSchema: GenMessage<ReportTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 6);
+  messageDesc(file_krill_v1_worker, 9);
+
+/**
+ * @generated from message krill.v1.ReportExemplarsRequest
+ */
+export type ReportExemplarsRequest = Message<"krill.v1.ReportExemplarsRequest"> & {
+  /**
+   * @generated from field: int64 task_id = 1;
+   */
+  taskId: bigint;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+
+  /**
+   * May include the exemplar itself.
+   *
+   * @generated from field: repeated krill.v1.Box boxes = 3;
+   */
+  boxes: Box[];
+};
+
+/**
+ * Describes the message krill.v1.ReportExemplarsRequest.
+ * Use `create(ReportExemplarsRequestSchema)` to create a new message.
+ */
+export const ReportExemplarsRequestSchema: GenMessage<ReportExemplarsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 10);
+
+/**
+ * @generated from message krill.v1.ReportExemplarsResponse
+ */
+export type ReportExemplarsResponse = Message<"krill.v1.ReportExemplarsResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.ReportExemplarsResponse.
+ * Use `create(ReportExemplarsResponseSchema)` to create a new message.
+ */
+export const ReportExemplarsResponseSchema: GenMessage<ReportExemplarsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 11);
+
+/**
+ * @generated from message krill.v1.ReportEmbedRequest
+ */
+export type ReportEmbedRequest = Message<"krill.v1.ReportEmbedRequest"> & {
+  /**
+   * @generated from field: int64 task_id = 1;
+   */
+  taskId: bigint;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+};
+
+/**
+ * Describes the message krill.v1.ReportEmbedRequest.
+ * Use `create(ReportEmbedRequestSchema)` to create a new message.
+ */
+export const ReportEmbedRequestSchema: GenMessage<ReportEmbedRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 12);
+
+/**
+ * @generated from message krill.v1.ReportEmbedResponse
+ */
+export type ReportEmbedResponse = Message<"krill.v1.ReportEmbedResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.ReportEmbedResponse.
+ * Use `create(ReportEmbedResponseSchema)` to create a new message.
+ */
+export const ReportEmbedResponseSchema: GenMessage<ReportEmbedResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 13);
 
 /**
  * @generated from message krill.v1.FailTaskRequest
@@ -198,7 +393,7 @@ export type FailTaskRequest = Message<"krill.v1.FailTaskRequest"> & {
  * Use `create(FailTaskRequestSchema)` to create a new message.
  */
 export const FailTaskRequestSchema: GenMessage<FailTaskRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 7);
+  messageDesc(file_krill_v1_worker, 14);
 
 /**
  * @generated from message krill.v1.FailTaskResponse
@@ -211,7 +406,7 @@ export type FailTaskResponse = Message<"krill.v1.FailTaskResponse"> & {
  * Use `create(FailTaskResponseSchema)` to create a new message.
  */
 export const FailTaskResponseSchema: GenMessage<FailTaskResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 8);
+  messageDesc(file_krill_v1_worker, 15);
 
 /**
  * WorkerService is called by the GPU worker. Requests carry the shared worker
@@ -241,6 +436,27 @@ export const WorkerService: GenService<{
     methodKind: "unary";
     input: typeof ReportTrackRequestSchema;
     output: typeof ReportTrackResponseSchema;
+  },
+  /**
+   * ReportExemplars finishes an exemplar task with every object found.
+   *
+   * @generated from rpc krill.v1.WorkerService.ReportExemplars
+   */
+  reportExemplars: {
+    methodKind: "unary";
+    input: typeof ReportExemplarsRequestSchema;
+    output: typeof ReportExemplarsResponseSchema;
+  },
+  /**
+   * ReportEmbed finishes an embed task once every frame's embedding is
+   * uploaded.
+   *
+   * @generated from rpc krill.v1.WorkerService.ReportEmbed
+   */
+  reportEmbed: {
+    methodKind: "unary";
+    input: typeof ReportEmbedRequestSchema;
+    output: typeof ReportEmbedResponseSchema;
   },
   /**
    * @generated from rpc krill.v1.WorkerService.FailTask

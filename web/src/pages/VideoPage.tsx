@@ -4,7 +4,6 @@ import {
   ArrowPathIcon,
   ChevronLeftIcon,
   EllipsisHorizontalIcon,
-  ExclamationTriangleIcon,
   PencilSquareIcon,
   TrashIcon,
 } from '@heroicons/react/20/solid'
@@ -17,6 +16,7 @@ import { SegmentedTabs } from '@/components/SegmentedTabs'
 import { Thumbnail } from '@/components/Thumbnail'
 import { VideoStatusBadge } from '@/components/VideoStatusBadge'
 import { Button } from '@/components/ui/Button'
+import { Callout, QueryError } from '@/components/ui/Callout'
 import {
   DescriptionDetails,
   DescriptionList,
@@ -36,7 +36,6 @@ import { Text } from '@/components/ui/Text'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -114,8 +113,11 @@ export function VideoPage() {
     { id },
     {
       enabled: id !== undefined,
-      refetchInterval: (q) =>
-        q.state.data?.video && isIngesting(q.state.data.video) ? 1500 : false,
+      refetchInterval: (q) => {
+        const d = q.state.data
+        if (d?.video && isIngesting(d.video)) return 1500
+        return d?.embedAtIngest && d.clips.some((c) => !c.embedded) ? 5000 : false
+      },
     },
   )
   const retry = useMutation(VideoService.method.startIngest, {
@@ -128,7 +130,6 @@ export function VideoPage() {
       flash.success('Video deleted')
       navigate('/videos')
     },
-    onError: (err) => flash.error('Could not delete video', err),
   })
 
   if (id === undefined) return <NotFound />
@@ -142,9 +143,7 @@ export function VideoPage() {
   if (error || !data.video) {
     return error && error.code !== 5 ? (
       <PageContentBlock>
-        <Text className="text-red-600 dark:text-red-400">
-          Could not load video: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load video" error={error} />
       </PageContentBlock>
     ) : (
       <NotFound />
@@ -202,26 +201,23 @@ export function VideoPage() {
       </div>
 
       {video.status === VideoStatus.FAILED && (
-        <div className="mt-6 flex gap-3 rounded-xl bg-red-50 p-4 ring-1 ring-red-600/10 dark:bg-red-500/10 dark:ring-red-500/20">
-          <ExclamationTriangleIcon className="size-5 shrink-0 text-red-500" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm/6 font-medium text-red-800 dark:text-red-300">
-              Frame extraction failed
-            </p>
-            <p className="mt-1 text-sm/6 break-words text-red-700 dark:text-red-400">
-              {video.error}
-            </p>
-          </div>
-          {canManage && (
-            <Button
-              color="red"
-              onClick={() => retry.mutate({ videoId: video.id })}
-              disabled={retry.isPending}
-            >
-              Retry
-            </Button>
-          )}
-        </div>
+        <Callout
+          className="mt-6"
+          title="Frame extraction failed"
+          action={
+            canManage && (
+              <Button
+                color="red"
+                onClick={() => retry.mutate({ videoId: video.id })}
+                disabled={retry.isPending}
+              >
+                Retry
+              </Button>
+            )
+          }
+        >
+          {video.error}
+        </Callout>
       )}
 
       {video.status === VideoStatus.UPLOADING && (
@@ -268,6 +264,15 @@ export function VideoPage() {
             <DescriptionDetails className="tabular-nums">
               {formatNumber(video.frameCount)} at {formatFps(video.fps)}
             </DescriptionDetails>
+            {data.embedAtIngest && (
+              <>
+                <DescriptionTerm>Embedded</DescriptionTerm>
+                <DescriptionDetails className="tabular-nums">
+                  {formatNumber(data.clips.filter((c) => c.embedded).length)} of{' '}
+                  {plural(data.clips.length, 'clip')}
+                </DescriptionDetails>
+              </>
+            )}
             <DescriptionTerm>Labeled</DescriptionTerm>
             <DescriptionDetails className="tabular-nums">
               {plural(video.labeledFrameCount, 'frame')} done ·{' '}
@@ -317,9 +322,13 @@ export function VideoPage() {
       <EditVideoDialog video={video} open={editing} onClose={() => setEditing(false)} />
       <ConfirmAlert
         open={deleting}
-        onClose={() => setDeleting(false)}
+        onClose={() => {
+          setDeleting(false)
+          remove.reset()
+        }}
         onConfirm={() => remove.mutate({ id: video.id })}
         busy={remove.isPending}
+        error={remove.error}
         title={`Delete ${video.name}?`}
         description="This removes the video, its frames, and every label on them. It cannot be undone."
         confirmLabel="Delete video"

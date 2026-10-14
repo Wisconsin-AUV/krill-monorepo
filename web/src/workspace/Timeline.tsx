@@ -12,10 +12,12 @@ export function Timeline({
   frameClass,
   trackClass,
   flagged,
+  marked,
 }: {
   frameClass?: (position: number) => string | undefined
   trackClass?: (position: number) => string | undefined
   flagged?: (position: number) => boolean
+  marked?: (position: number) => boolean
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -103,6 +105,17 @@ export function Timeline({
             ))}
           </div>
         )}
+        {marked &&
+          frames.map(
+            (f, i) =>
+              marked(i) && (
+                <div
+                  key={String(f.id)}
+                  className="pointer-events-none absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-amber-400"
+                  style={{ left: center(i) }}
+                />
+              ),
+          )}
         {trackClass && (
           <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
             {frames.map((f, i) => (

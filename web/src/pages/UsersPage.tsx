@@ -13,6 +13,7 @@ import { PasswordInput } from '@/components/PasswordInput'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { FormError, QueryError } from '@/components/ui/Callout'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import {
   Dropdown,
@@ -34,10 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
-import { Text } from '@/components/ui/Text'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
-import { initials, useRoles, useUser } from '@/lib/auth'
-import { errorMessage } from '@/lib/errors'
+import { useRoles, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { formatRelative } from '@/lib/format'
 import { usePasswordCheck } from '@/lib/password'
@@ -52,11 +51,14 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
       setPassword('')
       onClose()
     },
-    onError: (err) => flash.error('Could not set password', err),
   })
+  const close = () => {
+    set.reset()
+    onClose()
+  }
 
   return (
-    <Dialog open={user !== null} onClose={onClose} size="md">
+    <Dialog open={user !== null} onClose={close} size="md">
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -78,9 +80,10 @@ function PasswordDialog({ user, onClose }: { user: User | null; onClose: () => v
             <Description>Share it with them directly. They can change it later.</Description>
             <PasswordInput value={password} onChange={setPassword} check={check} />
           </Field>
+          <FormError error={set.error} className="mt-6" />
         </DialogBody>
         <DialogActions>
-          <Button plain onClick={onClose}>
+          <Button plain onClick={close}>
             Cancel
           </Button>
           <Button type="submit" color="sky" disabled={set.isPending || !check.ok}>
@@ -109,28 +112,18 @@ export function UsersPage() {
       await invalidateService(UserService)
       setDeleting(null)
     },
-    onError: (err) => {
-      setDeleting(null)
-      flash.error('Could not delete user', err)
-    },
   })
 
   return (
     <PageContentBlock title="Users · Krill">
       <Heading>Users</Heading>
-      <Text className="mt-1">
-        Each role has everything the role below it has. Everyone can see what their role allows on
-        their Account page.
-      </Text>
 
       {isPending ? (
         <div className="flex justify-center py-16">
           <LoadingSpinner />
         </div>
       ) : error ? (
-        <Text className="mt-8 text-red-600 dark:text-red-400">
-          Could not load users: {errorMessage(error)}
-        </Text>
+        <QueryError title="Could not load users" error={error} className="mt-8" />
       ) : (
         <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
           <TableHead>
@@ -152,14 +145,7 @@ export function UsersPage() {
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar
-                        initials={initials(u.name)}
-                        className={
-                          u.disabled
-                            ? 'size-8 rounded-full bg-zinc-400'
-                            : 'size-8 rounded-full bg-sky-600'
-                        }
-                      />
+                      <Avatar seed={u.id} className={u.disabled ? 'size-8 grayscale' : 'size-8'} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 font-medium text-zinc-950 dark:text-white">
                           {u.name}
@@ -236,9 +222,13 @@ export function UsersPage() {
       <PasswordDialog user={settingPassword} onClose={() => setSettingPassword(null)} />
       <ConfirmAlert
         open={deleting !== null}
-        onClose={() => setDeleting(null)}
+        onClose={() => {
+          setDeleting(null)
+          remove.reset()
+        }}
         onConfirm={() => deleting && remove.mutate({ id: deleting.id })}
         busy={remove.isPending}
+        error={remove.error}
         title={`Delete ${deleting?.name ?? ''}?`}
         description="Their labels stay. Disable the account instead if they might come back."
         confirmLabel="Delete user"

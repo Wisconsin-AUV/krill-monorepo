@@ -24,14 +24,17 @@ type Annotation struct {
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	CreatedBy    pgtype.UUID        `json:"created_by"`
 	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+	Drift        pgtype.Text        `json:"drift"`
 }
 
 type Clip struct {
-	ID         int64 `json:"id"`
-	VideoID    int64 `json:"video_id"`
-	Idx        int32 `json:"idx"`
-	StartFrame int32 `json:"start_frame"`
-	FrameCount int32 `json:"frame_count"`
+	ID         int64              `json:"id"`
+	VideoID    int64              `json:"video_id"`
+	Idx        int32              `json:"idx"`
+	StartFrame int32              `json:"start_frame"`
+	FrameCount int32              `json:"frame_count"`
+	EmbeddedAt pgtype.Timestamptz `json:"embedded_at"`
+	EmbedModel string             `json:"embed_model"`
 }
 
 type ClipClaim struct {
@@ -102,6 +105,17 @@ type LabelType struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	Title       string             `json:"title"`
 	Guideline   string             `json:"guideline"`
+}
+
+type Review struct {
+	ID         int64              `json:"id"`
+	FrameID    int64              `json:"frame_id"`
+	Reason     string             `json:"reason"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ResolvedBy pgtype.UUID        `json:"resolved_by"`
+	ResolvedAt pgtype.Timestamptz `json:"resolved_at"`
+	Resolution pgtype.Text        `json:"resolution"`
 }
 
 type Session struct {

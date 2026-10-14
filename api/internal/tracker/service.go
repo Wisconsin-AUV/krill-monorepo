@@ -22,31 +22,33 @@ var errUnknownTask = connect.NewError(connect.CodeNotFound, errors.New("task is 
 
 type Service struct {
 	krillv1connect.UnimplementedWorkerServiceHandler
+	pool       *pgxpool.Pool
 	q          *db.Queries
 	dispatcher *Dispatcher
 }
 
 func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher) *Service {
-	return &Service{q: db.New(pool), dispatcher: dispatcher}
+	return &Service{pool: pool, q: db.New(pool), dispatcher: dispatcher}
 }
 
 func (s *Service) NextTask(ctx context.Context, _ *krillv1.NextTaskRequest) (*krillv1.NextTaskResponse, error) {
-	timer := time.NewTimer(pollTimeout)
-	defer timer.Stop()
-	select {
-	case t := <-s.dispatcher.queue:
-		return &krillv1.NextTaskResponse{Track: t.msg}, nil
-	case <-timer.C:
-		return &krillv1.NextTaskResponse{}, nil
-	case <-ctx.Done():
-		return nil, connect.NewError(connect.CodeCanceled, ctx.Err())
+	t, err := s.dispatcher.next(ctx, pollTimeout)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeCanceled, err)
 	}
+	if t == nil {
+		return &krillv1.NextTaskResponse{}, nil
+	}
+	return t.msg, nil
 }
 
 func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackRequest) (*krillv1.ReportTrackResponse, error) {
 	t, ok := s.dispatcher.get(req.GetTaskId())
 	if !ok {
 		return nil, errUnknownTask
+	}
+	if t.msg.GetTrack() == nil {
+		return nil, rpc.Invalid("task %d is not a track task", t.id)
 	}
 	n := len(req.GetBoxes())
 	p := db.UpsertProposalsParams{
@@ -74,7 +76,7 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		p.Heights = append(p.Heights, h)
 	}
 	if len(p.FrameIds) > 0 {
-		if _, err := s.q.UpsertProposals(ctx, p); err != nil {
+		if err := s.saveProposals(ctx, p); err != nil {
 			// Usually the track was deleted while tracking ran.
 			t.finish(err)
 			return nil, rpc.Internal(err, "save boxes")
@@ -86,6 +88,98 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		t.touch()
 	}
 	return &krillv1.ReportTrackResponse{}, nil
+}
+
+func (s *Service) saveProposals(ctx context.Context, p db.UpsertProposalsParams) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	if _, err := q.UpsertProposals(ctx, p); err != nil {
+		return err
+	}
+	boxes, err := q.ListTrackBoxes(ctx, p.TrackID)
+	if err != nil {
+		return err
+	}
+	if d := staleDrift(boxes); len(d.Ids) > 0 {
+		if err := q.SetDrift(ctx, d); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+// staleDrift compares each proposal with the track's box on the frame before
+// it, whoever drew that one, and returns the proposals whose stored flag is
+// out of date.
+func staleDrift(boxes []db.ListTrackBoxesRow) db.SetDriftParams {
+	var p db.SetDriftParams
+	var prev annotation.Rect
+	for i, b := range boxes {
+		cur := annotation.Rect{X: b.X, Y: b.Y, W: b.Width, H: b.Height}
+		flagged := i > 0 && annotation.Drifted(prev, cur)
+		prev = cur
+		if b.Status != "proposed" {
+			continue
+		}
+		want := "ok"
+		if flagged {
+			want = "flagged"
+		}
+		if b.Drift.String == want {
+			continue
+		}
+		p.Ids = append(p.Ids, b.ID)
+		if flagged {
+			p.FlaggedIds = append(p.FlaggedIds, b.ID)
+		}
+	}
+	return p
+}
+
+func (s *Service) ReportExemplars(_ context.Context, req *krillv1.ReportExemplarsRequest) (*krillv1.ReportExemplarsResponse, error) {
+	t, ok := s.dispatcher.get(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	if t.msg.GetExemplar() == nil {
+		return nil, rpc.Invalid("task %d is not an exemplar task", t.id)
+	}
+	res := exemplarResult{model: req.GetModel(), boxes: make([]annotation.Box, 0, len(req.GetBoxes()))}
+	for i, b := range req.GetBoxes() {
+		x, y, w, h, err := annotation.ClampBox(b)
+		if err != nil {
+			return nil, rpc.Invalid("box %d: %s", i, err)
+		}
+		res.boxes = append(res.boxes, annotation.Box{X: x, Y: y, Width: w, Height: h})
+	}
+	select {
+	case t.found <- res:
+	default:
+		return nil, rpc.Invalid("task %d was already reported", t.id)
+	}
+	t.finish(nil)
+	return &krillv1.ReportExemplarsResponse{}, nil
+}
+
+func (s *Service) ReportEmbed(_ context.Context, req *krillv1.ReportEmbedRequest) (*krillv1.ReportEmbedResponse, error) {
+	t, ok := s.dispatcher.get(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	if t.msg.GetEmbed() == nil {
+		return nil, rpc.Invalid("task %d is not an embed task", t.id)
+	}
+	if req.GetModel() == "" {
+		return nil, rpc.Invalid("model is required")
+	}
+	model := req.GetModel()
+	t.model.Store(&model)
+	t.finish(nil)
+	return &krillv1.ReportEmbedResponse{}, nil
 }
 
 func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*krillv1.FailTaskResponse, error) {
