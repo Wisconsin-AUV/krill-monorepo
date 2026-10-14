@@ -54,33 +54,58 @@ func (w *EmbedWorker) Work(ctx context.Context, job *river.Job[ingest.EmbedArgs]
 	}
 
 	var model string
-	for start := 0; start < len(frames); start += embedChunk {
-		chunk := frames[start:min(start+embedChunk, len(frames))]
-		msg := &krillv1.EmbedTask{Id: w.dispatcher.nextID(), Frames: make([]*krillv1.EmbedFrame, len(chunk))}
-		for i, f := range chunk {
-			get, err := w.store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
-			if err != nil {
-				return err
-			}
-			put, err := w.store.PresignPutInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry)
-			if err != nil {
-				return err
-			}
-			msg.Frames[i] = &krillv1.EmbedFrame{Id: f.ID, Url: get, UploadUrl: put}
+	for switches := 0; ; switches++ {
+		model, err = w.embed(ctx, job.ID, clip.VideoID, frames)
+		if !errors.Is(err, errModelSwitched) || switches == maxModelSwitches {
+			break
 		}
-		t := newEmbedTask(msg.GetId(), msg)
-		if err := run(ctx, w.dispatcher, t, embedPickupTimeout); err != nil {
-			return fmt.Errorf("embed frames %d to %d: %w", chunk[0].Idx, chunk[len(chunk)-1].Idx, err)
-		}
-		got := *t.model.Load()
-		if model != "" && got != model {
-			return fmt.Errorf("GPU worker switched from %s to %s mid-clip", model, got)
-		}
-		model = got
+		// A clip's embeddings must all come from one model, so a change of
+		// the SAM model setting mid-clip starts the clip over.
+		slog.Info("embedding clip again after a model switch", "clip_id", clipID, "err", err)
+	}
+	if err != nil {
+		return err
 	}
 	if err := q.SetClipEmbedded(ctx, db.SetClipEmbeddedParams{ID: clipID, EmbedModel: model}); err != nil {
 		return fmt.Errorf("mark clip embedded: %w", err)
 	}
 	slog.Info("clip embedded", "clip_id", clipID, "frames", len(frames), "model", model)
 	return nil
+}
+
+var errModelSwitched = errors.New("GPU worker switched models mid-clip")
+
+// maxModelSwitches gives up on workers that disagree on the model, which
+// happens when one pins its own.
+const maxModelSwitches = 2
+
+// embed embeds every frame in chunks and returns the model that did.
+func (w *EmbedWorker) embed(ctx context.Context, jobID, videoID int64, frames []db.Frame) (string, error) {
+	var model string
+	for start := 0; start < len(frames); start += embedChunk {
+		chunk := frames[start:min(start+embedChunk, len(frames))]
+		msg := &krillv1.EmbedTask{Id: w.dispatcher.nextID(), Frames: make([]*krillv1.EmbedFrame, len(chunk))}
+		for i, f := range chunk {
+			get, err := w.store.PresignGetInternal(ctx, storage.FrameKey(videoID, f.Idx), frameURLExpiry)
+			if err != nil {
+				return "", err
+			}
+			put, err := w.store.PresignPutInternal(ctx, storage.EmbeddingKey(videoID, f.Idx), frameURLExpiry)
+			if err != nil {
+				return "", err
+			}
+			msg.Frames[i] = &krillv1.EmbedFrame{Id: f.ID, Url: get, UploadUrl: put}
+		}
+		t := newEmbedTask(msg.GetId(), msg)
+		t.jobID = jobID
+		if err := run(ctx, w.dispatcher, t, embedPickupTimeout); err != nil {
+			return "", fmt.Errorf("embed frames %d to %d: %w", chunk[0].Idx, chunk[len(chunk)-1].Idx, err)
+		}
+		got := *t.model.Load()
+		if model != "" && got != model {
+			return "", fmt.Errorf("%w from %s to %s", errModelSwitched, model, got)
+		}
+		model = got
+	}
+	return model, nil
 }

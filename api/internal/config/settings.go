@@ -110,7 +110,7 @@ var Settings = []Setting{
 		Key:         "KRILL_WORKER_TOKEN",
 		Group:       "GPU worker",
 		Label:       "Worker token",
-		Description: "Must match the worker's KRILL_WORKER_TOKEN. Empty turns the worker off.",
+		Description: "Must match the worker's KRILL_WORKER_TOKEN. Tokens made under Worker tokens work too.",
 		Kind:        KindSecret,
 	},
 	{
@@ -160,6 +160,21 @@ var Settings = []Setting{
 	{Key: "KRILL_S3_BUCKET", Group: "Storage", Label: "Bucket", Default: "krill", EnvOnly: true},
 	{Key: "KRILL_S3_ACCESS_KEY", Group: "Storage", Label: "Access key", Kind: KindSecret, EnvOnly: true},
 	{Key: "KRILL_S3_SECRET_KEY", Group: "Storage", Label: "Secret key", Kind: KindSecret, EnvOnly: true},
+	{
+		Key:         "KRILL_SAM_MODEL",
+		Group:       "GPU worker",
+		Label:       "SAM model",
+		Description: "Only SAM 3 finds similar objects, and it needs HF_TOKEN on the worker. A worker's own KRILL_SAM_MODEL wins.",
+		Kind:        KindChoice,
+		Choices: []Choice{
+			{"facebook/sam2.1-hiera-tiny", "SAM 2.1 tiny"},
+			{"facebook/sam2.1-hiera-small", "SAM 2.1 small"},
+			{"facebook/sam2.1-hiera-base-plus", "SAM 2.1 base plus"},
+			{"facebook/sam2.1-hiera-large", "SAM 2.1 large"},
+			{"facebook/sam3", "SAM 3"},
+		},
+		Default: "facebook/sam2.1-hiera-small",
+	},
 }
 
 var (

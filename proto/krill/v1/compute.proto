@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+import "krill/v1/worker.proto";
+
+// ComputeService backs the admin panel's job queue, GPU worker controls, and
+// worker tokens.
+service ComputeService {
+  // ListJobs returns background jobs newest first.
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+  // RetryJob runs a failed, cancelled, or retrying job again now.
+  rpc RetryJob(RetryJobRequest) returns (RetryJobResponse) {}
+  // CancelJob stops a queued or running job. A GPU worker running its task
+  // drops it on its next heartbeat.
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse) {}
+  // SetJobPriority reorders a job that has not started.
+  rpc SetJobPriority(SetJobPriorityRequest) returns (SetJobPriorityResponse) {}
+  // ControlWorker sends a command with the worker's next heartbeat.
+  rpc ControlWorker(ControlWorkerRequest) returns (ControlWorkerResponse) {}
+  rpc ListWorkerTokens(ListWorkerTokensRequest) returns (ListWorkerTokensResponse) {}
+  // CreateWorkerToken returns the token, which is never shown again.
+  rpc CreateWorkerToken(CreateWorkerTokenRequest) returns (CreateWorkerTokenResponse) {}
+  // RevokeWorkerToken rejects the token from the next request on.
+  rpc RevokeWorkerToken(RevokeWorkerTokenRequest) returns (RevokeWorkerTokenResponse) {}
+}
+
+enum JobState {
+  JOB_STATE_UNSPECIFIED = 0;
+  // Waiting to start, including jobs scheduled for later.
+  JOB_STATE_QUEUED = 1;
+  JOB_STATE_RUNNING = 2;
+  // Failed and waiting to try again.
+  JOB_STATE_RETRYABLE = 3;
+  // Failed on its last attempt.
+  JOB_STATE_FAILED = 4;
+  JOB_STATE_CANCELLED = 5;
+  JOB_STATE_COMPLETED = 6;
+}
+
+message Job {
+  int64 id = 1;
+  // ingest, embed, track, exemplar, export, or another job kind.
+  string kind = 2;
+  string queue = 3;
+  JobState state = 4;
+  // 1 runs first and 4 last.
+  int32 priority = 5;
+  int32 attempt = 6;
+  int32 max_attempts = 7;
+  // What the job works on, like "harbour.mp4 · Clip 3". Empty when it was
+  // deleted.
+  string target = 8;
+  // The job's arguments as JSON.
+  string args = 9;
+  // Oldest first.
+  repeated JobError errors = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp scheduled_at = 12;
+  // When the latest attempt started.
+  google.protobuf.Timestamp attempted_at = 13;
+  google.protobuf.Timestamp finalized_at = 14;
+  // Unset when the job started on its own or the account was deleted.
+  Profile started_by = 15;
+  // Set while the job's GPU task is waiting for or running on a worker.
+  GpuTask gpu = 16;
+  // Cancelling was asked for and the job has not stopped yet.
+  bool cancelling = 17;
+}
+
+message JobError {
+  google.protobuf.Timestamp at = 1;
+  int32 attempt = 2;
+  string message = 3;
+}
+
+message GpuTask {
+  int64 id = 1;
+  // Unset while the task waits for a worker.
+  google.protobuf.Timestamp picked_at = 2;
+  // The worker that reports running it.
+  string worker_id = 3;
+  string worker_hostname = 4;
+}
+
+message JobCount {
+  string kind = 1;
+  JobState state = 2;
+  int32 count = 3;
+}
+
+message ListJobsRequest {
+  // Empty lists every kind.
+  repeated string kinds = 1;
+  // Empty lists every state.
+  repeated JobState states = 2;
+  // Defaults to 50, at most 200.
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
+  // Jobs by kind and state, ignoring the filters.
+  repeated JobCount counts = 3;
+}
+
+message RetryJobRequest {
+  int64 id = 1;
+}
+
+message RetryJobResponse {
+  Job job = 1;
+}
+
+message CancelJobRequest {
+  int64 id = 1;
+}
+
+message CancelJobResponse {
+  Job job = 1;
+}
+
+message SetJobPriorityRequest {
+  int64 id = 1;
+  // From 1 to 4.
+  int32 priority = 2;
+}
+
+message SetJobPriorityResponse {
+  Job job = 1;
+}
+
+// WorkerModel is the SAM model on a GPU worker.
+message WorkerModel {
+  ModelLoadState state = 1;
+  string error = 2;
+  uint64 memory_allocated_bytes = 3;
+  uint64 memory_reserved_bytes = 4;
+  // The worker's own KRILL_SAM_MODEL picks the model, not the setting.
+  bool pinned = 5;
+  bool supports_exemplars = 6;
+  // SAM models already downloaded to the worker.
+  repeated string cached = 7;
+  // A command sent to the worker that it has not finished.
+  WorkerAction pending_action = 8;
+}
+
+message ControlWorkerRequest {
+  string worker_id = 1;
+  WorkerAction action = 2;
+}
+
+message ControlWorkerResponse {}
+
+message WorkerToken {
+  int64 id = 1;
+  string name = 2;
+  // Unset when the account was deleted.
+  Profile created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp last_used_at = 5;
+  google.protobuf.Timestamp revoked_at = 6;
+  // Online workers using it.
+  int32 workers = 7;
+}
+
+message ListWorkerTokensRequest {}
+
+message ListWorkerTokensResponse {
+  // Active tokens first, then revoked ones, each newest first.
+  repeated WorkerToken tokens = 1;
+  // KRILL_WORKER_TOKEN is set, so workers may also use it.
+  bool env_token = 2;
+  // Online workers using KRILL_WORKER_TOKEN.
+  int32 env_token_workers = 3;
+}
+
+message CreateWorkerTokenRequest {
+  string name = 1;
+}
+
+message CreateWorkerTokenResponse {
+  WorkerToken token = 1;
+  // The token to give the worker as KRILL_WORKER_TOKEN.
+  string secret = 2;
+}
+
+message RevokeWorkerTokenRequest {
+  int64 id = 1;
+}
+
+message RevokeWorkerTokenResponse {
+  WorkerToken token = 1;
+}

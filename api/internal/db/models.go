@@ -241,3 +241,13 @@ type Video struct {
 	FrameCount     int32              `json:"frame_count"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 }
+
+type WorkerToken struct {
+	ID         int64              `json:"id"`
+	Name       string             `json:"name"`
+	TokenHash  []byte             `json:"token_hash"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+}

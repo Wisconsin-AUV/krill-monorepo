@@ -42,6 +42,13 @@ const (
 	SessionRevoke       = "session.revoke"
 	UserMerge           = "user.merge"
 	UserPasswordReset   = "user.password_reset"
+	JobRetry            = "job.retry"
+	JobCancel           = "job.cancel"
+	JobPriority         = "job.priority"
+	WorkerWarmUp        = "worker.warm_up"
+	WorkerUnload        = "worker.unload"
+	WorkerTokenCreate   = "worker_token.create" //nolint:gosec // an action name, not a credential
+	WorkerTokenRevoke   = "worker_token.revoke"
 )
 
 const (
@@ -56,6 +63,9 @@ const (
 
 	TargetApprovedEmail = "approved_email"
 	TargetInvite        = "invite"
+	TargetJob           = "job"
+	TargetWorker        = "worker"
+	TargetWorkerToken   = "worker_token"
 )
 
 type Entry struct {

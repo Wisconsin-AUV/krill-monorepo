@@ -153,4 +153,13 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.InviteServiceAddApprovedEmailsProcedure:   manageUsers,
 	krillv1connect.InviteServiceRemoveApprovedEmailProcedure: manageUsers,
 	krillv1connect.InviteServiceCheckInviteProcedure:         public,
+
+	krillv1connect.ComputeServiceListJobsProcedure:          manageSystem,
+	krillv1connect.ComputeServiceRetryJobProcedure:          manageSystem,
+	krillv1connect.ComputeServiceCancelJobProcedure:         manageSystem,
+	krillv1connect.ComputeServiceSetJobPriorityProcedure:    manageSystem,
+	krillv1connect.ComputeServiceControlWorkerProcedure:     manageSystem,
+	krillv1connect.ComputeServiceListWorkerTokensProcedure:  manageSystem,
+	krillv1connect.ComputeServiceCreateWorkerTokenProcedure: manageSystem,
+	krillv1connect.ComputeServiceRevokeWorkerTokenProcedure: manageSystem,
 }

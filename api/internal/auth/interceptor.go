@@ -22,12 +22,14 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 type Interceptor struct {
 	lookup         SessionLookup
 	workerToken    func() string
+	workerTokens   WorkerTokenLookup
 	verifiedEmail  func() bool
 	clientIPHeader func() string
 }
 
 // NewInterceptor returns an interceptor that also accepts workerToken as a
-// bearer token on worker procedures. An empty token turns them off.
+// bearer token on worker procedures. An empty token accepts none, unless
+// AcceptWorkerTokens adds saved ones.
 func NewInterceptor(lookup SessionLookup, workerToken func() string) *Interceptor {
 	return &Interceptor{
 		lookup:         lookup,
@@ -41,6 +43,13 @@ func NewInterceptor(lookup SessionLookup, workerToken func() string) *Intercepto
 // procedures that verify it while required returns true.
 func (i *Interceptor) RequireVerifiedEmail(required func() bool) *Interceptor {
 	i.verifiedEmail = required
+	return i
+}
+
+// AcceptWorkerTokens also accepts the saved worker tokens lookup finds on
+// worker procedures.
+func (i *Interceptor) AcceptWorkerTokens(lookup WorkerTokenLookup) *Interceptor {
+	i.workerTokens = lookup
 	return i
 }
 
@@ -84,10 +93,11 @@ func (i *Interceptor) authorize(ctx context.Context, procedure, peer string, h h
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s has no access policy", procedure))
 	}
 	if need == worker {
-		if !i.isWorker(h) {
-			return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid worker token"))
+		w, err := i.worker(ctx, h)
+		if err != nil {
+			return ctx, err
 		}
-		return ctx, nil
+		return context.WithValue(ctx, workerKey{}, w), nil
 	}
 	if token := tokenFromHeader(h); token != "" {
 		hash := hashToken(token)
@@ -118,8 +128,27 @@ func (i *Interceptor) authorize(ctx context.Context, procedure, peer string, h h
 	return ctx, nil
 }
 
-func (i *Interceptor) isWorker(h http.Header) bool {
+var errBadWorkerToken = connect.NewError(connect.CodeUnauthenticated, errors.New("invalid worker token"))
+
+func (i *Interceptor) worker(ctx context.Context, h http.Header) (Worker, error) {
 	token, ok := strings.CutPrefix(h.Get("Authorization"), "Bearer ")
-	want := i.workerToken()
-	return ok && want != "" && subtle.ConstantTimeCompare([]byte(token), []byte(want)) == 1
+	if !ok || token == "" {
+		return Worker{}, errBadWorkerToken
+	}
+	if want := i.workerToken(); want != "" && subtle.ConstantTimeCompare([]byte(token), []byte(want)) == 1 {
+		return Worker{TokenName: EnvWorkerToken}, nil
+	}
+	if i.workerTokens == nil {
+		return Worker{}, errBadWorkerToken
+	}
+	// Saved tokens are found by hash, so lookup timing says nothing about
+	// the token itself.
+	t, err := i.workerTokens(ctx, hashToken(token))
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return Worker{}, errBadWorkerToken
+	case err != nil:
+		return Worker{}, connect.NewError(connect.CodeInternal, fmt.Errorf("load worker token: %w", err))
+	}
+	return Worker{TokenID: t.ID, TokenName: t.Name}, nil
 }

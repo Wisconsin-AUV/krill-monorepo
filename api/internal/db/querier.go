@@ -22,6 +22,7 @@ type Querier interface {
 	ClearPassword(ctx context.Context, id uuid.UUID) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountActiveSessions(ctx context.Context) ([]CountActiveSessionsRow, error)
+	CountActiveWorkerTokens(ctx context.Context) (int64, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountEmailCodeAttempt(ctx context.Context, arg CountEmailCodeAttemptParams) error
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
@@ -40,6 +41,7 @@ type Querier interface {
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	CreateWorkerToken(ctx context.Context, arg CreateWorkerTokenParams) (WorkerToken, error)
 	DatabaseSize(ctx context.Context) (int64, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClip(ctx context.Context, id int64) (int32, error)
@@ -100,6 +102,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
+	GetWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
 	InsertAuditEntry(ctx context.Context, arg InsertAuditEntryParams) error
 	InsertBoxEvents(ctx context.Context, arg InsertBoxEventsParams) error
@@ -156,6 +159,12 @@ type Querier interface {
 	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
 	ListInviteUses(ctx context.Context, inviteIds []int64) ([]ListInviteUsesRow, error)
 	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
+	ListJobClips(ctx context.Context, ids []int64) ([]ListJobClipsRow, error)
+	ListJobDatasets(ctx context.Context, ids []int64) ([]ListJobDatasetsRow, error)
+	ListJobFrames(ctx context.Context, ids []int64) ([]ListJobFramesRow, error)
+	ListJobStarters(ctx context.Context, ids []uuid.UUID) ([]User, error)
+	// Names for the targets of background jobs in the admin panel.
+	ListJobVideos(ctx context.Context, ids []int64) ([]ListJobVideosRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
@@ -170,6 +179,7 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	ListWorkerTokens(ctx context.Context) ([]ListWorkerTokensRow, error)
 	LockApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
 	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
@@ -202,9 +212,14 @@ type Querier interface {
 	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
 	ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error)
 	RemoveApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
+	// RequeueDataset readies a failed export for its job to run again.
+	RequeueDataset(ctx context.Context, id int64) (int64, error)
+	// RequeueIngest readies a failed ingest for its job to run again.
+	RequeueIngest(ctx context.Context, id int64) (int64, error)
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
 	RevokeInvite(ctx context.Context, id int64) (Invite, error)
+	RevokeWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
 	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
@@ -237,6 +252,9 @@ type Querier interface {
 	// Counts a use only while the invite is live. The row stays locked until the
 	// sign-up commits, so two sign-ups can't share the last use.
 	UseInvite(ctx context.Context, tokenHash []byte) (Invite, error)
+	// UseWorkerToken returns the active token with the hash. last_used_at is
+	// only written once a minute, since workers call several times a minute.
+	UseWorkerToken(ctx context.Context, tokenHash []byte) (UseWorkerTokenRow, error)
 	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)

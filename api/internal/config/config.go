@@ -52,10 +52,11 @@ type Config struct {
 	SlackClientID     string
 	SlackClientSecret string
 	SlackTeamID       string
-	// WorkerToken authenticates the GPU worker. Empty turns worker RPCs off.
+	// WorkerToken authenticates GPU workers, as do tokens saved in the
+	// database.
 	WorkerToken string
 	// EmbedAtIngest has the GPU worker compute SAM image embeddings for every
-	// clip after ingest. It is off when WorkerToken is empty.
+	// clip after ingest, as long as some worker token exists.
 	EmbedAtIngest bool
 	// ClientIPHeader is trusted for the client's address when set. Only set it
 	// when every request comes through the proxy that writes it.
@@ -70,6 +71,9 @@ type Config struct {
 	// StuckClaimDays is how long a claimed clip goes without edits before the
 	// admin panel lists it as stuck.
 	StuckClaimDays int
+	// SamModel is the Hugging Face model GPU workers track with, unless a
+	// worker pins its own.
+	SamModel string
 }
 
 // Lookup returns a setting's raw value, or false when nothing sets it and
@@ -132,6 +136,7 @@ func Parse(lookup Lookup) (Config, error) {
 		GoldReviewMinAttempts: p.int("KRILL_GOLD_REVIEW_MIN_ATTEMPTS"),
 		UpdateCheck:           p.bool("KRILL_UPDATE_CHECK"),
 		StuckClaimDays:        p.int("KRILL_STUCK_CLAIM_DAYS"),
+		SamModel:              p.choice("KRILL_SAM_MODEL"),
 	}
 	if p.err != nil {
 		return Config{}, p.err
@@ -139,7 +144,6 @@ func Parse(lookup Lookup) (Config, error) {
 	if cfg.TeamName == "" {
 		cfg.TeamName = defaults["KRILL_TEAM_NAME"]
 	}
-	cfg.EmbedAtIngest = cfg.EmbedAtIngest && cfg.WorkerToken != ""
 	if cfg.S3PublicEndpoint == "" {
 		cfg.S3PublicEndpoint = cfg.S3Endpoint
 	}

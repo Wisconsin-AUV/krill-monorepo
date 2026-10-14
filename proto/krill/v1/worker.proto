@@ -6,8 +6,8 @@ import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
 import "krill/v1/system.proto";
 
-// WorkerService is called by the GPU worker. Requests carry the shared worker
-// token instead of a user session.
+// WorkerService is called by the GPU worker. Requests carry a worker token
+// instead of a user session.
 service WorkerService {
   // NextTask waits up to 30 seconds for work and returns no task if none
   // arrives.
@@ -129,6 +129,52 @@ message HeartbeatRequest {
   repeated GpuStats gpus = 8;
   // The task being worked on, or 0 when idle.
   int64 task_id = 9;
+  ModelLoadState model_state = 30;
+  // Why the model failed to load.
+  string model_error = 31;
+  // Torch memory once the model loaded and warmed up.
+  uint64 model_memory_allocated_bytes = 32;
+  uint64 model_memory_reserved_bytes = 33;
+  // Set when the worker's own KRILL_SAM_MODEL picks the model, which then
+  // ignores HeartbeatResponse.model.
+  string pinned_model = 34;
+  // SAM models already downloaded to the worker.
+  repeated string cached_models = 35;
+  // The last command the worker finished, so the API stops sending it.
+  uint64 command_id = 36;
+  // Whether the model can run exemplar tasks.
+  bool supports_exemplars = 37;
 }
 
-message HeartbeatResponse {}
+enum ModelLoadState {
+  MODEL_LOAD_STATE_UNSPECIFIED = 0;
+  // Nothing is loaded. The next task loads the model.
+  MODEL_LOAD_STATE_UNLOADED = 1;
+  MODEL_LOAD_STATE_LOADING = 2;
+  MODEL_LOAD_STATE_READY = 3;
+  MODEL_LOAD_STATE_ERROR = 4;
+}
+
+message HeartbeatResponse {
+  // The SAM model to switch to between tasks. Empty leaves the worker's
+  // default.
+  string model = 30;
+  // Sent in every response until the worker reports its id.
+  WorkerCommand command = 31;
+  // A task the API no longer waits on, such as a cancelled job. The worker
+  // stops it without reporting a failure.
+  int64 cancel_task_id = 32;
+}
+
+message WorkerCommand {
+  uint64 id = 1;
+  WorkerAction action = 2;
+}
+
+enum WorkerAction {
+  WORKER_ACTION_UNSPECIFIED = 0;
+  // Load the model and compile its kernels now instead of on the next task.
+  WORKER_ACTION_WARM_UP = 1;
+  // Free the GPU memory. The next task loads the model again.
+  WORKER_ACTION_UNLOAD = 2;
+}

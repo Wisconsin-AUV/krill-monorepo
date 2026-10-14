@@ -20,7 +20,7 @@ just up
 
 Build the worker for CUDA Nvidia with `just build-worker-cuda`.
 
-The GPU worker authenticates with `KRILL_WORKER_TOKEN`, which must be set for both the API and the worker. It runs SAM 2.1 by default. To use SAM 3, request access to [facebook/sam3](https://huggingface.co/facebook/sam3), then set `HF_TOKEN` and `KRILL_SAM_MODEL=facebook/sam3`.
+The GPU worker authenticates with `KRILL_WORKER_TOKEN`, which must be set for both the API and the worker, or with a worker token created in the admin panel. It runs SAM 2.1 by default. To use SAM 3, request access to [facebook/sam3](https://huggingface.co/facebook/sam3), set `HF_TOKEN` on the worker, and pick SAM 3 under Settings in the admin panel.
 
 The API image bundles the web app, so the full stack is served from `:8080`. Browsers load frames straight from MinIO on `:9000`, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach. When the app is served over HTTPS, MinIO needs its own HTTPS hostname too, for example a second Cloudflare Tunnel route to `:9000`.
 
@@ -29,6 +29,10 @@ The API image bundles the web app, so the full stack is served from `:8080`. Bro
 Admins open the admin panel from the shield in the top bar. It shows the running version and what changed in newer releases, checks the database, storage, GPU worker, email, and Slack, and charts CPU, memory, and GPU use for the API and each worker.
 
 Its Settings page edits every `KRILL_` variable except the ones the API needs to start or to be reached: the database, storage, listen address, public URL, and web directory. Saved settings apply without a restart. A variable set in the environment overrides the saved value and locks it in the panel, and an empty variable counts as unset.
+
+The SAM model setting applies to every worker between tasks. A worker started with its own `KRILL_SAM_MODEL` keeps that model, and the Compute page shows it as pinned.
+
+To rotate a worker token, create a new one under Worker tokens, set it as the worker's `KRILL_WORKER_TOKEN` and restart the worker, then revoke the old one once the Compute page shows the worker on the new token. Revoked tokens stop working on the next request. The API's own `KRILL_WORKER_TOKEN` stays valid until it is cleared.
 
 ## Accounts
 

@@ -78,7 +78,7 @@ services:
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"
       KRILL_API_URL: http://api:8080
       KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
-      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-facebook/sam2.1-hiera-small}
+      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-}
       HF_TOKEN: ${HF_TOKEN:-}
     devices:
       - /dev/kfd

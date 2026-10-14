@@ -22,6 +22,8 @@ const (
 type task struct {
 	id       int64
 	priority priority
+	// jobID is the River job the task belongs to.
+	jobID int64
 	// trackID is 0 for exemplar and embed tasks.
 	trackID int64
 	msg     *krillv1.NextTaskResponse
@@ -235,6 +237,7 @@ func (d *Dispatcher) Queue() (waitingInteractive, waitingBackground int) {
 // TaskInfo describes a task a worker is running.
 type TaskInfo struct {
 	ID        int64
+	JobID     int64
 	Kind      string
 	Frames    int
 	StartedAt time.Time
@@ -248,7 +251,24 @@ func (d *Dispatcher) Running(id int64) (TaskInfo, bool) {
 	if !ok || t.pickedAt.IsZero() {
 		return TaskInfo{}, false
 	}
-	info := TaskInfo{ID: id, StartedAt: t.pickedAt}
+	return t.info(), true
+}
+
+// Jobs describes every task waiting for or running on a worker, by River job.
+// StartedAt is zero while a task waits.
+func (d *Dispatcher) Jobs() map[int64]TaskInfo {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	out := make(map[int64]TaskInfo, len(d.running))
+	for _, t := range d.running {
+		out[t.jobID] = t.info()
+	}
+	return out
+}
+
+// info needs d.mu held, since take writes pickedAt.
+func (t *task) info() TaskInfo {
+	info := TaskInfo{ID: t.id, JobID: t.jobID, StartedAt: t.pickedAt}
 	switch m := t.msg.GetTask().(type) {
 	case *krillv1.NextTaskResponse_Track:
 		info.Kind, info.Frames = "track", len(m.Track.GetFrames())
@@ -257,5 +277,5 @@ func (d *Dispatcher) Running(id int64) (TaskInfo, bool) {
 	case *krillv1.NextTaskResponse_Embed:
 		info.Kind, info.Frames = "embed", len(m.Embed.GetFrames())
 	}
-	return info, true
+	return info
 }

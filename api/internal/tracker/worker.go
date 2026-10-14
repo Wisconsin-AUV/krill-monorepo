@@ -42,7 +42,7 @@ func (w *Worker) Timeout(*river.Job[annotation.TrackArgs]) time.Duration { retur
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[annotation.TrackArgs]) error {
 	args := job.Args
-	err := w.track(ctx, w.dispatcher.nextID(), args)
+	err := w.track(ctx, w.dispatcher.nextID(), job.ID, args)
 	if err != nil {
 		slog.Error("tracking failed", "track_id", args.TrackID, "frame_id", args.FrameID, "err", err)
 	}
@@ -55,7 +55,7 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[annotation.TrackArgs])
 	return err
 }
 
-func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs) error {
+func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.TrackArgs) error {
 	q := db.New(w.pool)
 	frame, err := q.GetFrame(ctx, args.FrameID)
 	if err != nil {
@@ -99,7 +99,9 @@ func (w *Worker) track(ctx context.Context, id int64, args annotation.TrackArgs)
 		return errors.New("job has no prompt")
 	}
 
-	return run(ctx, w.dispatcher, newTask(id, args.TrackID, msg), pickupTimeout)
+	t := newTask(id, args.TrackID, msg)
+	t.jobID = jobID
+	return run(ctx, w.dispatcher, t, pickupTimeout)
 }
 
 // run hands t to the GPU worker and waits for it to finish.

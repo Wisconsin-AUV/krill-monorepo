@@ -19,6 +19,7 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivermigrate"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/admin"
@@ -36,6 +37,7 @@ import (
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/insight"
 	"github.com/wauv/krill/api/internal/invite"
+	"github.com/wauv/krill/api/internal/jobmeta"
 	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
@@ -155,8 +157,14 @@ func run() error {
 	dispatcher := tracker.NewDispatcher()
 	nodes := compute.NewRegistry()
 	go nodes.SampleAPI(ctx, version)
+	embedAtIngest := func() bool {
+		if !live.Load().cfg.EmbedAtIngest {
+			return false
+		}
+		return workersEnabled(pool, live.Load().cfg.WorkerToken)
+	}
 	workers := river.NewWorkers()
-	river.AddWorker(workers, ingest.NewWorker(pool, store, func() bool { return live.Load().cfg.EmbedAtIngest }))
+	river.AddWorker(workers, ingest.NewWorker(pool, store, embedAtIngest))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
@@ -169,7 +177,8 @@ func run() error {
 			annotation.TrackQueue: {MaxWorkers: 1},
 			ingest.EmbedQueue:     {MaxWorkers: 1},
 		},
-		Workers: workers,
+		Workers:    workers,
+		Middleware: []rivertype.Middleware{&jobmeta.StartedBy{}},
 	})
 	if err != nil {
 		return fmt.Errorf("create job client: %w", err)
@@ -183,7 +192,8 @@ func run() error {
 		rpc.ErrorInterceptor{},
 		auth.NewInterceptor(auth.LookupSessions(db.New(pool)), func() string { return live.Load().cfg.WorkerToken }).
 			RequireVerifiedEmail(func() bool { return live.Load().auth.RequireVerifiedEmail }).
-			TrustClientIPHeader(func() string { return live.Load().cfg.ClientIPHeader }),
+			TrustClientIPHeader(func() string { return live.Load().cfg.ClientIPHeader }).
+			AcceptWorkerTokens(db.New(pool).UseWorkerToken),
 	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
@@ -192,12 +202,13 @@ func run() error {
 	slack := auth.NewSlack(pool, func() auth.SlackConfig { return live.Load().slack }, cookies)
 	mux.HandleFunc("GET /auth/slack/login", slack.Login)
 	mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
-	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, func() bool { return live.Load().cfg.EmbedAtIngest }), rpcOpts))
+	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, embedAtIngest), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
-	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes), rpcOpts))
+	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes).
+		WithModel(func() string { return live.Load().cfg.SamModel }), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool, authService), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
@@ -220,6 +231,13 @@ func run() error {
 	mux.Handle(krillv1connect.NewInviteServiceHandler(invite.NewService(pool, func() invite.Options {
 		rt := live.Load()
 		return invite.Options{Mailer: rt.auth.Mailer, PublicURL: cfg.PublicURL, TeamName: rt.cfg.TeamName}
+	}), rpcOpts))
+	mux.Handle(krillv1connect.NewComputeServiceHandler(admin.NewComputeService(admin.ComputeDeps{
+		Pool:       pool,
+		Jobs:       jobs,
+		Settings:   settingsStore,
+		Nodes:      nodes,
+		Dispatcher: dispatcher,
 	}), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
@@ -257,6 +275,22 @@ func run() error {
 		return fmt.Errorf("stop jobs: %w", err)
 	}
 	return nil
+}
+
+// workersEnabled reports whether any GPU worker can authenticate, so jobs
+// only wait on workers that could exist.
+func workersEnabled(pool *pgxpool.Pool, envToken string) bool {
+	if envToken != "" {
+		return true
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	n, err := db.New(pool).CountActiveWorkerTokens(ctx)
+	if err != nil {
+		slog.Warn("count worker tokens", "err", err)
+		return false
+	}
+	return n > 0
 }
 
 // runtime is what the services need from one version of the config.

@@ -84,7 +84,7 @@ func (s *Service) GetStatus(ctx context.Context, req *krillv1.GetStatusRequest) 
 	checks := []*krillv1.ServiceCheck{
 		s.checkDatabase(ctx),
 		s.checkStorage(ctx),
-		s.checkWorker(cfg),
+		s.checkWorker(ctx, cfg),
 		checkEmail(cfg),
 		checkSlack(cfg),
 	}
@@ -146,10 +146,16 @@ func round(d time.Duration) time.Duration {
 	return d.Round(time.Millisecond)
 }
 
-func (s *Service) checkWorker(cfg config.Config) *krillv1.ServiceCheck {
+func (s *Service) checkWorker(ctx context.Context, cfg config.Config) *krillv1.ServiceCheck {
 	const name = "GPU worker"
 	if cfg.WorkerToken == "" {
-		return check(name, off, "No worker token, so tracking and embeddings are off")
+		saved, err := s.q.CountActiveWorkerTokens(ctx)
+		if err != nil {
+			return check(name, failed, "%s", err)
+		}
+		if saved == 0 {
+			return check(name, off, "No worker token, so tracking and embeddings are off")
+		}
 	}
 	var online []compute.Worker
 	for _, w := range s.nodes.Workers() {
@@ -292,7 +298,10 @@ func (s *Service) GetCompute(ctx context.Context, _ *krillv1.GetComputeRequest) 
 			StartedAt: ts(t.StartedAt),
 		}
 	})
-	interactive, background := s.dispatcher.Queue()
+	interactive, background, err := gpuBacklog(ctx, s.pool, s.dispatcher)
+	if err != nil {
+		return nil, rpc.Internal(err, "count GPU jobs")
+	}
 	storage := &krillv1.ObjectStorage{}
 	if u, err := s.store.Usage(ctx); err != nil {
 		storage.Error = err.Error()
@@ -307,5 +316,6 @@ func (s *Service) GetCompute(ctx context.Context, _ *krillv1.GetComputeRequest) 
 			Background:  int32(background),  //nolint:gosec // queue lengths fit in int32
 		},
 		SampleIntervalSeconds: int32(compute.Interval / time.Second),
+		SamModel:              s.settings.Config().SamModel,
 	}, nil
 }
