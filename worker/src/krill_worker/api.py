@@ -64,5 +64,5 @@ class Api:
         req = worker_pb2.FailTaskRequest(task_id=task_id, error=error)
         self._call("FailTask", req, worker_pb2.FailTaskResponse)
 
-    def heartbeat(self, req: worker_pb2.HeartbeatRequest) -> None:
-        self._call("Heartbeat", req, worker_pb2.HeartbeatResponse)
+    def heartbeat(self, req: worker_pb2.HeartbeatRequest) -> worker_pb2.HeartbeatResponse:
+        return self._call("Heartbeat", req, worker_pb2.HeartbeatResponse)

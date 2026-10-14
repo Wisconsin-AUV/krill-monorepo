@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import time
@@ -5,8 +6,7 @@ import urllib.request
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import Future, ThreadPoolExecutor
-from contextlib import nullcontext
-from typing import Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 import cv2
 import numpy as np
@@ -15,14 +15,13 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.heartbeat import Heartbeat
+from krill_worker.models import ModelLoadError, Models
 from krill_worker.prelabelers import Frame
 from krill_worker.stats import accelerator, gpu_stats
 from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt, drop_cut_off
 
 log = logging.getLogger(__name__)
 
-
-DEFAULT_MODEL = "facebook/sam2.1-hiera-small"
 # SAM resizes to about 1024 pixels, so larger frames only cost decode time.
 MAX_SIDE = 1024
 REPORT_EVERY = 2.0
@@ -87,7 +86,17 @@ def prefetch(fn: Callable[[T], R], items: Iterable[T]) -> Iterator[R]:
             yield pending.popleft().result()
 
 
-def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
+class TaskCancelledError(Exception):
+    """The API stopped waiting on the task, so its results would be thrown away."""
+
+
+def never() -> bool:
+    return False
+
+
+def run_track(
+    api: Api, tracker: Tracker, task: worker_pb2.TrackTask, cancelled: Callable[[], bool] = never
+) -> None:
     prompt: Prompt
     if task.HasField("point"):
         prompt = PointPrompt(task.point.x, task.point.y)
@@ -113,6 +122,8 @@ def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
     batch: list[worker_pb2.TrackedBox] = []
     found = 0
     for frame_id, box in zip(ids, drop_cut_off(tracker.track(frames, prompt)), strict=True):
+        if cancelled():
+            raise TaskCancelledError
         if box is not None:
             x, y, w, h = box
             box_msg = annotation_pb2.Box(x=x, y=y, width=w, height=h)
@@ -139,7 +150,7 @@ def run_exemplar(api: Api, tracker: Tracker, task: worker_pb2.ExemplarTask) -> N
     if not tracker.supports_exemplars:
         raise ValueError(
             f"Finding similar objects needs a SAM 3 model, but the GPU worker runs "
-            f"{tracker.model_id}. Set KRILL_SAM_MODEL to a SAM 3 model."
+            f"{tracker.model_id}. Choose SAM 3 as the SAM model in the admin panel."
         )
     start = time.monotonic()
     frame = decode_frame(fetch(task.frame.url))
@@ -158,14 +169,16 @@ def run_embed(
     tracker: Tracker,
     task: worker_pb2.EmbedTask,
     put: Callable[[str, bytes], None] = upload,
+    cancelled: Callable[[], bool] = never,
 ) -> None:
     start = time.monotonic()
     frames = prefetch(lambda f: decode_frame(fetch(f.url)), task.frames)
     with ThreadPoolExecutor(4) as uploads:
-        pending = [
-            uploads.submit(put, f.upload_url, tracker.embed(frame))
-            for f, frame in zip(task.frames, frames, strict=True)
-        ]
+        pending = []
+        for f, frame in zip(task.frames, frames, strict=True):
+            if cancelled():
+                raise TaskCancelledError
+            pending.append(uploads.submit(put, f.upload_url, tracker.embed(frame)))
         for p in pending:
             p.result()
     api.report_embed(worker_pb2.ReportEmbedRequest(task_id=task.id, model=tracker.model_id))
@@ -177,42 +190,59 @@ def run_embed(
     )
 
 
+Task = worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask
+
+
 def run_task(
     api: Api,
     tracker: Tracker,
     res: worker_pb2.NextTaskResponse,
-    heartbeat: Heartbeat | None = None,
+    cancelled: Callable[[], bool] = never,
 ) -> None:
     kind = res.WhichOneof("task")
     if kind is None:
         return
-    task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask = getattr(res, kind)
-    with heartbeat.working(task.id) if heartbeat else nullcontext():
-        _run_task(api, tracker, kind, res, task)
-
-
-def _run_task(
-    api: Api,
-    tracker: Tracker,
-    kind: str,
-    res: worker_pb2.NextTaskResponse,
-    task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask,
-) -> None:
+    task: Task = getattr(res, kind)
     try:
         if kind == "track":
-            run_track(api, tracker, res.track)
+            run_track(api, tracker, res.track, cancelled)
         elif kind == "exemplar":
             run_exemplar(api, tracker, res.exemplar)
         else:
-            run_embed(api, tracker, res.embed)
+            run_embed(api, tracker, res.embed, cancelled=cancelled)
+    except TaskCancelledError:
+        log.info("stopped task %d", task.id)
     except ApiError as e:
         log.warning("task %d dropped by the API: %s", task.id, e)
     except Exception as e:
         log.exception("task %d failed", task.id)
+        fail(api, task.id, str(e))
+
+
+def fail(api: Api, task_id: int, error: str) -> None:
+    try:
+        api.fail_task(task_id, error)
+    except (ApiError, OSError):
+        log.exception("report failure for task %d", task_id)
+
+
+def serve(
+    api: Api,
+    models: Models[Any],
+    heartbeat: Heartbeat,
+    res: worker_pb2.NextTaskResponse,
+) -> None:
+    """Run the task with the loaded model, loading it first after an unload."""
+    kind = res.WhichOneof("task")
+    if kind is None:
+        return
+    task: Task = getattr(res, kind)
+    with heartbeat.working(task.id):
         try:
-            api.fail_task(task.id, str(e))
-        except (ApiError, OSError):
-            log.exception("report failure for task %d", task.id)
+            models.run(lambda tracker: run_task(api, tracker, res, heartbeat.cancelled))
+        except ModelLoadError as e:
+            log.exception("task %d failed", task.id)
+            fail(api, task.id, str(e))
 
 
 def main() -> None:
@@ -224,23 +254,44 @@ def main() -> None:
 
     from krill_worker.sam import SamTracker
 
+    def load(model_id: str) -> SamTracker:
+        tracker = SamTracker(model_id)
+        tracker.warm_up()
+        return tracker
+
+    def memory() -> tuple[int, int]:
+        if not torch.cuda.is_available():
+            return 0, 0
+        return torch.cuda.memory_allocated(), torch.cuda.memory_reserved()
+
+    def release() -> None:
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     api = Api(
         os.environ.get("KRILL_API_URL", "http://localhost:8080"), os.environ["KRILL_WORKER_TOKEN"]
     )
-    tracker = SamTracker(os.environ.get("KRILL_SAM_MODEL", DEFAULT_MODEL))
-    tracker.warm_up()
-    log.info("loaded %s", tracker.model_id)
-    heartbeat = Heartbeat(api, tracker.model_id, accelerator(torch), lambda: gpu_stats(torch))
+    pinned = os.environ.get("KRILL_SAM_MODEL", "").strip()
+    models = Models(load, pinned, memory, release)
+    heartbeat = Heartbeat(api, models, accelerator(torch), lambda: gpu_stats(torch))
+    # One heartbeat first, so the worker loads the model the API asks for.
+    try:
+        heartbeat.beat()
+    except (ApiError, OSError) as e:
+        log.warning("first heartbeat failed, loading %s: %s", models.wanted, e)
     heartbeat.start()
+    models.warm_up()
 
     while True:
+        models.sync()
         try:
             res = api.next_task()
         except (ApiError, OSError) as e:
             log.warning("poll failed, retrying in %.0fs: %s", RETRY_DELAY, e)
             time.sleep(RETRY_DELAY)
             continue
-        run_task(api, tracker, res, heartbeat)
+        serve(api, models, heartbeat, res)
 
 
 if __name__ == "__main__":

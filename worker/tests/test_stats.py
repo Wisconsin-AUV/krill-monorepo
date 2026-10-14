@@ -4,6 +4,7 @@ from typing import Any
 
 from krill_worker import stats
 from krill_worker.heartbeat import Heartbeat
+from krill_worker.models import Models
 
 
 def write(path: Path, value: str) -> None:
@@ -67,7 +68,8 @@ def test_rocm_without_amdsmi_falls_back_to_sysfs(tmp_path: Path, monkeypatch: An
 
 
 def test_heartbeat_reports_the_running_task() -> None:
-    hb = Heartbeat(None, "facebook/sam2.1-hiera-small", "CPU", lambda: [])  # type: ignore[arg-type]
+    models = Models(lambda m: SimpleNamespace(model_id=m))
+    hb = Heartbeat(None, models, "CPU", lambda: [])  # type: ignore[arg-type]
     with hb.working(42):
         assert hb.request().task_id == 42
     req = hb.request()
