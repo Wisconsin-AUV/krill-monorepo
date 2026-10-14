@@ -234,6 +234,20 @@ func (q *Queries) NextClip(ctx context.Context, arg NextClipParams) (int64, erro
 	return id, err
 }
 
+const refreshClipClaim = `-- name: RefreshClipClaim :exec
+UPDATE clip_claims SET active_at = now() WHERE clip_id = $1 AND user_id = $2
+`
+
+type RefreshClipClaimParams struct {
+	ClipID int64     `json:"clip_id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error {
+	_, err := q.db.Exec(ctx, refreshClipClaim, arg.ClipID, arg.UserID)
+	return err
+}
+
 const releaseClipClaim = `-- name: ReleaseClipClaim :exec
 DELETE FROM clip_claims WHERE clip_id = $1 AND user_id = $2
 `
@@ -245,5 +259,20 @@ type ReleaseClipClaimParams struct {
 
 func (q *Queries) ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error {
 	_, err := q.db.Exec(ctx, releaseClipClaim, arg.ClipID, arg.UserID)
+	return err
+}
+
+const takeClip = `-- name: TakeClip :exec
+INSERT INTO clip_claims (clip_id, user_id) VALUES ($1, $2)
+ON CONFLICT (clip_id) DO UPDATE SET user_id = excluded.user_id, active_at = now()
+`
+
+type TakeClipParams struct {
+	ClipID int64     `json:"clip_id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) TakeClip(ctx context.Context, arg TakeClipParams) error {
+	_, err := q.db.Exec(ctx, takeClip, arg.ClipID, arg.UserID)
 	return err
 }

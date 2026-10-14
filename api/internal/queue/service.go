@@ -101,14 +101,18 @@ func (s *Service) ClaimNextClip(ctx context.Context, req *krillv1.ClaimNextClipR
 	if err != nil {
 		return nil, rpc.Internal(err, "list open clips")
 	}
-	if len(open) > 0 {
-		id := open[0].Clip.ID
-		if _, err := s.q.ClaimClip(ctx, db.ClaimClipParams{
-			ClipID: id, UserID: me, StaleBefore: video.StaleBefore(time.Now()),
-		}); err != nil {
+	// An open clip whose claim went stale may have been taken by someone else
+	// since it was listed.
+	for _, r := range open {
+		n, err := s.q.ClaimClip(ctx, db.ClaimClipParams{
+			ClipID: r.Clip.ID, UserID: me, StaleBefore: video.StaleBefore(time.Now()),
+		})
+		if err != nil {
 			return nil, rpc.Internal(err, "claim clip")
 		}
-		return &krillv1.ClaimNextClipResponse{ClipId: id}, nil
+		if n > 0 {
+			return &krillv1.ClaimNextClipResponse{ClipId: r.Clip.ID}, nil
+		}
 	}
 
 	for range claimAttempts {

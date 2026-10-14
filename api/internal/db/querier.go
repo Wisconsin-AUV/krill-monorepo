@@ -139,6 +139,7 @@ type Querier interface {
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
+	RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
@@ -157,6 +158,7 @@ type Querier interface {
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
 	StartDataset(ctx context.Context, id int64) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	TakeClip(ctx context.Context, arg TakeClipParams) error
 	TouchLogin(ctx context.Context, id uuid.UUID) error
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
