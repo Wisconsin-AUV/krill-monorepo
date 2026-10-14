@@ -1,6 +1,6 @@
 [project]
 name = "krill-worker"
-version = "0.1.0"
+version = "0.2.0"
 description = "GPU worker for the Krill labeling tool: SAM, YOLO, and classic CV pre-labelers."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
