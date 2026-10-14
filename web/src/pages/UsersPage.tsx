@@ -36,7 +36,7 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { UserService, type Role, type User } from '@/gen/krill/v1/user_pb'
-import { initials, useRoles, useUser } from '@/lib/auth'
+import { useRoles, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { formatRelative } from '@/lib/format'
 import { usePasswordCheck } from '@/lib/password'
@@ -145,14 +145,7 @@ export function UsersPage() {
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar
-                        initials={initials(u.name)}
-                        className={
-                          u.disabled
-                            ? 'size-8 rounded-full bg-zinc-400'
-                            : 'size-8 rounded-full bg-sky-600'
-                        }
-                      />
+                      <Avatar seed={u.id} className={u.disabled ? 'size-8 grayscale' : 'size-8'} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 font-medium text-zinc-950 dark:text-white">
                           {u.name}

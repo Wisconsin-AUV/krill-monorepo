@@ -51,7 +51,7 @@ import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { HealthService } from '@/gen/krill/v1/health_pb'
 import { ReviewService } from '@/gen/krill/v1/review_pb'
 import { Permission, type User } from '@/gen/krill/v1/user_pb'
-import { can, initials, useRoleLabel, useUser } from '@/lib/auth'
+import { can, useRoleLabel, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { GUIDELINE_URL } from '@/lib/links'
 import { queryClient } from '@/lib/queryClient'
@@ -124,7 +124,7 @@ const navItems = [
 ]
 
 function UserAvatar({ user }: { user: User }) {
-  return <Avatar initials={initials(user.name)} className="rounded-full bg-sky-600" />
+  return <Avatar seed={user.id} />
 }
 
 function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top start' }) {

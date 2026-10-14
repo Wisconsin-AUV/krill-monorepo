@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { StatsService, type LeaderboardEntry } from '@/gen/krill/v1/stats_pb'
-import { initials, useUser } from '@/lib/auth'
+import { useUser } from '@/lib/auth'
 import { formatNumber, plural } from '@/lib/format'
 import { ordinal, periodFromKey, periods, profilePath, timeZone } from '@/lib/stats'
 
@@ -53,10 +53,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
           to={profilePath(e.user?.username ?? '')}
           className="flex items-center gap-4 rounded-xl border border-zinc-950/10 p-4 hover:bg-zinc-950/[2.5%] dark:border-white/10 dark:hover:bg-white/[2.5%]"
         >
-          <Avatar
-            initials={initials(e.user?.name ?? '')}
-            className="size-12 shrink-0 rounded-full bg-sky-600"
-          />
+          <Avatar seed={e.user?.id ?? ''} className="size-12 shrink-0" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <RankBadge rank={e.rank} />
@@ -157,10 +154,7 @@ export function LeaderboardPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar
-                            initials={initials(e.user?.name ?? '')}
-                            className="size-8 rounded-full bg-sky-600"
-                          />
+                          <Avatar seed={e.user?.id ?? ''} className="size-8" />
                           <div>
                             <div className="flex items-center gap-2 font-medium text-zinc-950 dark:text-white">
                               {e.user?.name}
