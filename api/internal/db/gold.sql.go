@@ -268,15 +268,15 @@ func (q *Queries) ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64
 	return items, nil
 }
 
-const listFrameVerifiedBoxes = `-- name: ListFrameVerifiedBoxes :many
+const listFrameGoldBoxes = `-- name: ListFrameGoldBoxes :many
 SELECT t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
-WHERE a.frame_id = $1 AND a.status = 'verified'
+WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id
 `
 
-type ListFrameVerifiedBoxesRow struct {
+type ListFrameGoldBoxesRow struct {
 	LabelTypeID int64   `json:"label_type_id"`
 	Attributes  []byte  `json:"attributes"`
 	X           float64 `json:"x"`
@@ -285,15 +285,17 @@ type ListFrameVerifiedBoxesRow struct {
 	Height      float64 `json:"height"`
 }
 
-func (q *Queries) ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error) {
-	rows, err := q.db.Query(ctx, listFrameVerifiedBoxes, frameID)
+// Matches what the dataset export treats as labels on a done frame, so
+// tracker proposals the labeler left in place count.
+func (q *Queries) ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listFrameGoldBoxes, frameID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListFrameVerifiedBoxesRow
+	var items []ListFrameGoldBoxesRow
 	for rows.Next() {
-		var i ListFrameVerifiedBoxesRow
+		var i ListFrameGoldBoxesRow
 		if err := rows.Scan(
 			&i.LabelTypeID,
 			&i.Attributes,

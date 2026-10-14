@@ -1,8 +1,10 @@
--- name: ListFrameVerifiedBoxes :many
+-- name: ListFrameGoldBoxes :many
+-- Matches what the dataset export treats as labels on a done frame, so
+-- tracker proposals the labeler left in place count.
 SELECT t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
-WHERE a.frame_id = $1 AND a.status = 'verified'
+WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id;
 
 -- name: InsertGoldFrame :exec

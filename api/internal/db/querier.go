@@ -101,7 +101,9 @@ type Querier interface {
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
 	ListFrameBoxes(ctx context.Context, frameID int64) ([]ListFrameBoxesRow, error)
-	ListFrameVerifiedBoxes(ctx context.Context, frameID int64) ([]ListFrameVerifiedBoxesRow, error)
+	// Matches what the dataset export treats as labels on a done frame, so
+	// tracker proposals the labeler left in place count.
+	ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
 	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
