@@ -1,0 +1,12 @@
+Verification code
+
+Enter this code in Krill to verify {{.Email}}:
+
+{{.Code}}
+
+It expires in {{.Minutes}} minutes. To protect your account, don't share it.
+
+Didn't request this?
+This code was requested from {{.IP}} ({{.Device}}) at {{.Time}}. If you didn't sign up for Krill, you can ignore this email.
+
+© {{.Year}} {{.Team}}
