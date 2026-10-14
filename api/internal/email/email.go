@@ -32,7 +32,7 @@ type Sender interface {
 }
 
 // Code fills in the templates for an emailed code. Email is for verification
-// and Username for password resets.
+// and Username for the others.
 type Code struct {
 	Code     string
 	Minutes  int
@@ -51,6 +51,10 @@ func VerifyEmail(to string, c Code) (Message, error) {
 
 func ResetPassword(to string, c Code) (Message, error) {
 	return render(to, c.Code+" is your Krill password reset code", "reset-password", c)
+}
+
+func SignInCode(to string, c Code) (Message, error) {
+	return render(to, c.Code+" is your Krill sign-in code", "sign-in-code", c)
 }
 
 func render(to, subject, name string, data any) (Message, error) {

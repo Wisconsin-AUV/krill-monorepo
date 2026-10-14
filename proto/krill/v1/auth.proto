@@ -26,6 +26,9 @@ service AuthService {
   rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {}
   // ResetPassword signs out every session and signs the caller in.
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
+  // RequestSignInCode responds the same whether or not the account exists.
+  rpc RequestSignInCode(RequestSignInCodeRequest) returns (RequestSignInCodeResponse) {}
+  rpc SignInWithCode(SignInWithCodeRequest) returns (SignInWithCodeResponse) {}
 }
 
 message GetSessionRequest {}
@@ -42,7 +45,8 @@ message GetSessionResponse {
   repeated RoleInfo roles = 6;
   // Accounts must verify their email before using the app.
   bool email_verification_required = 7;
-  bool password_reset_enabled = 8;
+  // The API can email sign-in and password reset codes.
+  bool email_codes_enabled = 8;
 }
 
 message LoginRequest {
@@ -117,5 +121,21 @@ message ResetPasswordRequest {
 }
 
 message ResetPasswordResponse {
+  User user = 1;
+}
+
+message RequestSignInCodeRequest {
+  // A username or an email.
+  string login = 1;
+}
+
+message RequestSignInCodeResponse {}
+
+message SignInWithCodeRequest {
+  string login = 1;
+  string code = 2;
+}
+
+message SignInWithCodeResponse {
   User user = 1;
 }

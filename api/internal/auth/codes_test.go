@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -230,6 +231,68 @@ func TestResetPassword(t *testing.T) {
 	if ok, err := CheckPassword(got.PasswordHash.String, password); err != nil || !ok {
 		t.Error("password not set")
 	}
+}
+
+func TestSignInWithCode(t *testing.T) {
+	s, mail := testService(t)
+	u := testUser(t, s, false)
+
+	if _, err := s.RequestSignInCode(t.Context(), &krillv1.RequestSignInCodeRequest{Login: u.Email}); err != nil {
+		t.Fatal(err)
+	}
+	code := mail.code(t, u.Email)
+	// A second request within the cooldown answers the same and sends nothing.
+	if _, err := s.RequestSignInCode(t.Context(), &krillv1.RequestSignInCodeRequest{Login: u.Email}); err != nil {
+		t.Fatal(err)
+	}
+	mail.empty(t)
+
+	res, err := s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: u.Username, Code: code})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.GetUser().GetId() != u.ID.String() || !res.GetUser().GetEmailVerified() {
+		t.Errorf("user = %v", res.GetUser())
+	}
+	_, err = s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: u.Username, Code: code})
+	wantCode(t, err, connect.CodeInvalidArgument)
+}
+
+func TestCodesDontRevealAccounts(t *testing.T) {
+	s, mail := testService(t)
+	u := testUser(t, s, true)
+	missing := "nobody-" + u.Username
+
+	for _, login := range []string{u.Username, missing} {
+		if _, err := s.RequestSignInCode(t.Context(), &krillv1.RequestSignInCodeRequest{Login: login}); err != nil {
+			t.Errorf("request for %s: %v", login, err)
+		}
+	}
+	code := mail.code(t, u.Email)
+	mail.empty(t)
+
+	_, wrong := s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: u.Username, Code: otherCode(code)})
+	_, unknown := s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: missing, Code: code})
+	if wrong == nil || unknown == nil || wrong.Error() != unknown.Error() {
+		t.Errorf("wrong code: %v, unknown account: %v", wrong, unknown)
+	}
+}
+
+func TestWrongCodesLockOutTheClient(t *testing.T) {
+	s, mail := testService(t)
+	u := testUser(t, s, true)
+	if _, err := s.RequestSignInCode(t.Context(), &krillv1.RequestSignInCodeRequest{Login: u.Username}); err != nil {
+		t.Fatal(err)
+	}
+	code := mail.code(t, u.Email)
+
+	// Guessing across made-up accounts counts the same as guessing one.
+	for i := range 10 {
+		_, err := s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: fmt.Sprintf("nobody%d", i), Code: code})
+		wantCode(t, err, connect.CodeInvalidArgument)
+	}
+	_, err := s.SignInWithCode(t.Context(), &krillv1.SignInWithCodeRequest{Login: u.Username, Code: code})
+	wantCode(t, err, connect.CodeResourceExhausted)
 }
 
 func TestDescribeDevice(t *testing.T) {

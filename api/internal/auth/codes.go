@@ -32,6 +32,7 @@ const (
 
 	purposeVerify = "verify_email"
 	purposeReset  = "reset_password"
+	purposeSignIn = "sign_in"
 )
 
 var (
@@ -100,6 +101,10 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 	if s.opts.Mailer == nil {
 		return errNoEmail
 	}
+	account := u.ID.String()
+	if blocked, wait := s.sendLimit.blocked(account); blocked {
+		return tooMany("codes sent to this account", wait)
+	}
 	code, err := newCode()
 	if err != nil {
 		return rpc.Internal(err, "issue code")
@@ -135,8 +140,11 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 		Username: u.Username,
 	}
 	render := email.VerifyEmail
-	if purpose == purposeReset {
+	switch purpose {
+	case purposeReset:
 		render = email.ResetPassword
+	case purposeSignIn:
+		render = email.SignInCode
 	}
 	msg, err := render(to, data)
 	if err != nil {
@@ -146,6 +154,7 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 		slog.Error("send email", "purpose", purpose, "err", err)
 		return connect.NewError(connect.CodeAborted, errors.New("could not send the email; try again"))
 	}
+	s.sendLimit.fail(account)
 	return nil
 }
 
@@ -230,121 +239,178 @@ func (s *Service) VerifyEmail(ctx context.Context, req *krillv1.VerifyEmailReque
 }
 
 func (s *Service) RequestPasswordReset(ctx context.Context, req *krillv1.RequestPasswordResetRequest) (*krillv1.RequestPasswordResetResponse, error) {
-	if s.opts.Mailer == nil {
-		return nil, errNoEmail
-	}
-	if err := s.checkResetLimit(ctx); err != nil {
+	if err := s.requestCode(ctx, req.GetLogin(), purposeReset); err != nil {
 		return nil, err
 	}
-	s.resetLimit.fail(s.clientIP(ctx))
-
-	login := strings.ToLower(strings.TrimSpace(req.GetLogin()))
-	user, err := s.q.GetUserByLogin(ctx, login)
-	if errors.Is(err, pgx.ErrNoRows) || err == nil && user.Disabled {
-		return &krillv1.RequestPasswordResetResponse{}, nil
-	}
-	if err != nil {
-		return nil, rpc.Internal(err, "load user")
-	}
-	// Sending in the background keeps the response time the same whether or
-	// not the account exists.
-	from := s.origin(ctx)
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
-	go func() {
-		defer cancel()
-		if err := s.sendResetCode(ctx, user, from); err != nil && !errors.Is(err, errCooldown) {
-			slog.Error("send password reset", "err", err)
-		}
-	}()
 	return &krillv1.RequestPasswordResetResponse{}, nil
 }
 
-func (s *Service) sendResetCode(ctx context.Context, user db.User, from origin) error {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	if err := s.sendCode(ctx, s.q.WithTx(tx), user, user.Email, purposeReset, true, from); err != nil {
-		return err
-	}
-	return tx.Commit(ctx)
-}
-
 func (s *Service) ResetPassword(ctx context.Context, req *krillv1.ResetPasswordRequest) (*krillv1.ResetPasswordResponse, error) {
-	if err := s.checkResetLimit(ctx); err != nil {
+	if err := s.checkCodeFailLimit(ctx); err != nil {
 		return nil, err
 	}
 	// Checked first so a weak password doesn't use up a guess.
 	if err := ValidatePassword(req.GetNewPassword()); err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
-	fail := func() error {
-		s.resetLimit.fail(s.clientIP(ctx))
-		return errBadCode
-	}
-	code, ok := normalizeCode(req.GetCode())
-	if !ok {
-		return nil, fail()
-	}
-	login := strings.ToLower(strings.TrimSpace(req.GetLogin()))
-	user, err := s.q.GetUserByLogin(ctx, login)
-	if errors.Is(err, pgx.ErrNoRows) || err == nil && user.Disabled {
-		return nil, fail()
-	}
-	if err != nil {
-		return nil, rpc.Internal(err, "load user")
-	}
+	// Hashed before looking up the account, which takes long enough that
+	// skipping it for unknown accounts would give them away.
 	hash, err := HashPassword(req.GetNewPassword())
 	if err != nil {
 		return nil, rpc.Internal(err, "hash password")
 	}
-
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return nil, rpc.Internal(err, "begin")
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	q := s.q.WithTx(tx)
-	sentTo, ok, err := checkCode(ctx, q, user.ID, purposeReset, code)
-	if err != nil {
-		return nil, rpc.Internal(err, "check code")
-	}
-	if !ok || sentTo != user.Email {
-		if err := tx.Commit(ctx); err != nil {
-			return nil, rpc.Internal(err, "commit")
+	user, err := s.redeemCode(ctx, req.GetLogin(), req.GetCode(), purposeReset, func(q *db.Queries, id uuid.UUID) error {
+		if _, err := q.SetUserPassword(ctx, db.SetUserPasswordParams{ID: id, PasswordHash: text(hash)}); err != nil {
+			return fmt.Errorf("set password: %w", err)
 		}
-		return nil, fail()
-	}
-	if _, err := q.SetUserPassword(ctx, db.SetUserPasswordParams{ID: user.ID, PasswordHash: text(hash)}); err != nil {
-		return nil, rpc.Internal(err, "set password")
-	}
-	// The code proves the email is theirs.
-	if user, err = q.MarkEmailVerified(ctx, user.ID); err != nil {
-		return nil, rpc.Internal(err, "verify email")
-	}
-	if err := q.DeleteUserSessions(ctx, user.ID); err != nil {
-		return nil, rpc.Internal(err, "delete sessions")
-	}
-	cookie, err := s.opts.Cookies.StartSession(ctx, q, user.ID)
+		if err := q.DeleteUserSessions(ctx, id); err != nil {
+			return fmt.Errorf("delete sessions: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, rpc.Internal(err, "start session")
+		return nil, err
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return nil, rpc.Internal(err, "commit")
-	}
-	s.accountLimit.clear(login)
-	setCookie(ctx, cookie)
 	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
 	return &krillv1.ResetPasswordResponse{User: ToProto(user)}, nil
 }
 
-func (s *Service) checkResetLimit(ctx context.Context) error {
-	if blocked, wait := s.resetLimit.blocked(s.clientIP(ctx)); blocked {
-		return connect.NewError(connect.CodeResourceExhausted,
-			fmt.Errorf("too many password reset attempts; try again in %d minutes", int(math.Ceil(wait.Minutes()))))
+func (s *Service) RequestSignInCode(ctx context.Context, req *krillv1.RequestSignInCodeRequest) (*krillv1.RequestSignInCodeResponse, error) {
+	if err := s.requestCode(ctx, req.GetLogin(), purposeSignIn); err != nil {
+		return nil, err
+	}
+	return &krillv1.RequestSignInCodeResponse{}, nil
+}
+
+func (s *Service) SignInWithCode(ctx context.Context, req *krillv1.SignInWithCodeRequest) (*krillv1.SignInWithCodeResponse, error) {
+	user, err := s.redeemCode(ctx, req.GetLogin(), req.GetCode(), purposeSignIn, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &krillv1.SignInWithCodeResponse{User: ToProto(user)}, nil
+}
+
+// requestCode emails a password reset or sign-in code to the account. It
+// responds the same whether or not the account exists, and sends in the
+// background so the response time doesn't say either.
+func (s *Service) requestCode(ctx context.Context, login, purpose string) error {
+	if s.opts.Mailer == nil {
+		return errNoEmail
+	}
+	ip := s.clientIP(ctx)
+	if blocked, wait := s.requestLimit.blocked(ip); blocked {
+		return tooMany("code requests", wait)
+	}
+	s.requestLimit.fail(ip)
+
+	user, err := s.q.GetUserByLogin(ctx, strings.ToLower(strings.TrimSpace(login)))
+	if errors.Is(err, pgx.ErrNoRows) || err == nil && user.Disabled {
+		return nil
+	}
+	if err != nil {
+		return rpc.Internal(err, "load user")
+	}
+	from := s.origin(ctx)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	go func() {
+		defer cancel()
+		err := s.sendAlone(ctx, user, purpose, from)
+		// Hitting a limit here is expected from someone spamming the form.
+		if err != nil && connect.CodeOf(err) != connect.CodeResourceExhausted {
+			slog.Error("send code", "purpose", purpose, "err", err)
+		}
+	}()
+	return nil
+}
+
+func (s *Service) sendAlone(ctx context.Context, user db.User, purpose string, from origin) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if err := s.sendCode(ctx, s.q.WithTx(tx), user, user.Email, purpose, true, from); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// redeemCode checks a code sent by requestCode and signs the account in,
+// running then first in the same transaction. Every failure looks the same,
+// so it can't tell anyone whether the account exists.
+func (s *Service) redeemCode(ctx context.Context, login, rawCode, purpose string, then func(q *db.Queries, id uuid.UUID) error) (db.User, error) {
+	if err := s.checkCodeFailLimit(ctx); err != nil {
+		return db.User{}, err
+	}
+	ip := s.clientIP(ctx)
+	fail := func() (db.User, error) {
+		s.codeFailLimit.fail(ip)
+		return db.User{}, errBadCode
+	}
+	code, ok := normalizeCode(rawCode)
+	if !ok {
+		return fail()
+	}
+	login = strings.ToLower(strings.TrimSpace(login))
+	user, err := s.q.GetUserByLogin(ctx, login)
+	known := err == nil && !user.Disabled
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return db.User{}, rpc.Internal(err, "load user")
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return db.User{}, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	// An unknown account still looks for a code, so it takes as long as a
+	// wrong guess on a real one.
+	id := uuid.Nil
+	if known {
+		id = user.ID
+	}
+	sentTo, ok, err := checkCode(ctx, q, id, purpose, code)
+	if err != nil {
+		return db.User{}, rpc.Internal(err, "check code")
+	}
+	if !known || !ok || sentTo != user.Email {
+		if err := tx.Commit(ctx); err != nil {
+			return db.User{}, rpc.Internal(err, "commit")
+		}
+		return fail()
+	}
+	if then != nil {
+		if err := then(q, user.ID); err != nil {
+			return db.User{}, rpc.Internal(err, "use code")
+		}
+	}
+	// The code proves the email is theirs.
+	if user, err = q.MarkEmailVerified(ctx, user.ID); err != nil {
+		return db.User{}, rpc.Internal(err, "verify email")
+	}
+	cookie, err := s.opts.Cookies.StartSession(ctx, q, user.ID)
+	if err != nil {
+		return db.User{}, rpc.Internal(err, "start session")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return db.User{}, rpc.Internal(err, "commit")
+	}
+	s.accountLimit.clear(login)
+	setCookie(ctx, cookie)
+	return user, nil
+}
+
+func (s *Service) checkCodeFailLimit(ctx context.Context) error {
+	if blocked, wait := s.codeFailLimit.blocked(s.clientIP(ctx)); blocked {
+		return tooMany("wrong codes", wait)
 	}
 	return nil
+}
+
+func tooMany(what string, wait time.Duration) error {
+	return connect.NewError(connect.CodeResourceExhausted,
+		fmt.Errorf("too many %s; try again in %d minutes", what, int(math.Ceil(wait.Minutes()))))
 }
 
 // describeDevice names the browser and OS in a User-Agent, such as "Firefox

@@ -108,12 +108,16 @@ function ProfileForm({ user }: { user: User }) {
 
 function PendingEmail({ user }: { user: User }) {
   const [code, setCode] = useState('')
+  const [shake, setShake] = useState(0)
   const verify = useMutation(AuthService.method.verifyEmail, {
     onSuccess: async () => {
       await refreshSession()
       flash.success('Email changed')
     },
-    onError: () => setCode(''),
+    onError: () => {
+      setCode('')
+      setShake((n) => n + 1)
+    },
   })
   const resend = useMutation(AuthService.method.sendVerificationCode, {
     onSuccess: () => flash.success('Code sent'),
@@ -135,7 +139,7 @@ function PendingEmail({ user }: { user: User }) {
         <Description>
           Enter the code sent to <Strong>{user.pendingEmail}</Strong>.
         </Description>
-        <CodeInput value={code} onChange={setCode} />
+        <CodeInput value={code} onChange={setCode} shake={shake} />
       </Field>
       <FormError error={verify.error ?? resend.error ?? cancel.error} />
       <div className="flex items-center justify-end gap-6">

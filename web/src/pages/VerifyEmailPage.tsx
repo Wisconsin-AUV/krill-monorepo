@@ -2,11 +2,13 @@ import { useMutation } from '@connectrpc/connect-query'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { CODE_LENGTH, CodeInput } from '@/components/auth/CodeInput'
+import { useCodeSubmit } from '@/components/auth/useCodeSubmit'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
 import { Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Strong, Text, TextButton } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
@@ -17,7 +19,6 @@ import { queryClient } from '@/lib/queryClient'
 export function VerifyEmailPage() {
   const user = useUser()
   const navigate = useNavigate()
-  const [code, setCode] = useState('')
   const [editing, setEditing] = useState(false)
   const [email, setEmail] = useState('')
 
@@ -25,14 +26,12 @@ export function VerifyEmailPage() {
   const resend = useMutation(AuthService.method.sendVerificationCode, {
     onSuccess: () => flash.success('Code sent'),
   })
-  const verify = useMutation(AuthService.method.verifyEmail, {
-    onSuccess: () => refreshSession(),
-    onError: () => setCode(''),
-  })
+  const verify = useMutation(AuthService.method.verifyEmail)
+  const entry = useCodeSubmit((code) => verify.mutateAsync({ code }), refreshSession)
   const update = useMutation(AuthService.method.updateProfile, {
     onSuccess: async () => {
       setEditing(false)
-      setCode('')
+      entry.setCode('')
       await refreshSession()
     },
   })
@@ -91,7 +90,7 @@ export function VerifyEmailPage() {
         className="grid grid-cols-1 gap-8"
         onSubmit={(e) => {
           e.preventDefault()
-          verify.mutate({ code })
+          void entry.submit()
         }}
       >
         <div className="space-y-2 text-center">
@@ -103,21 +102,22 @@ export function VerifyEmailPage() {
         <FormError error={verify.error ?? resend.error ?? send.error} />
         <Field>
           <Label>Code</Label>
-          <CodeInput
-            value={code}
-            onChange={(value) => {
-              setCode(value)
-              if (value.length === CODE_LENGTH && !verify.isPending) verify.mutate({ code: value })
-            }}
-          />
+          <CodeInput shake={entry.shake} value={entry.code} onChange={entry.autoSubmit} />
         </Field>
         <Button
           type="submit"
           color="sky"
           className="w-full"
-          disabled={code.length !== CODE_LENGTH || verify.isPending}
+          disabled={entry.code.length !== CODE_LENGTH || entry.submitting}
         >
-          Verify
+          {entry.submitting ? (
+            <>
+              <LoadingSpinner className="my-1 size-4" />
+              <span className="sr-only">Verifying</span>
+            </>
+          ) : (
+            'Verify'
+          )}
         </Button>
         <div className="flex justify-between">
           <TextButton onClick={() => resend.mutate({ resend: true })} disabled={resend.isPending}>

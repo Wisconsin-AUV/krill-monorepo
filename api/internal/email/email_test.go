@@ -18,6 +18,7 @@ func TestTemplatesFillEveryField(t *testing.T) {
 	for name, build := range map[string]func(string, Code) (Message, error){
 		"verify": VerifyEmail,
 		"reset":  ResetPassword,
+		"signin": SignInCode,
 	} {
 		m, err := build("bucky@wisc.edu", c)
 		if err != nil {

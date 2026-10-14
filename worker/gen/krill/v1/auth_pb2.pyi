@@ -12,7 +12,7 @@ class GetSessionRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class GetSessionResponse(_message.Message):
-    __slots__ = ("user", "slack_enabled", "signup_enabled", "team_name", "all_permissions", "roles", "email_verification_required", "password_reset_enabled")
+    __slots__ = ("user", "slack_enabled", "signup_enabled", "team_name", "all_permissions", "roles", "email_verification_required", "email_codes_enabled")
     USER_FIELD_NUMBER: _ClassVar[int]
     SLACK_ENABLED_FIELD_NUMBER: _ClassVar[int]
     SIGNUP_ENABLED_FIELD_NUMBER: _ClassVar[int]
@@ -20,7 +20,7 @@ class GetSessionResponse(_message.Message):
     ALL_PERMISSIONS_FIELD_NUMBER: _ClassVar[int]
     ROLES_FIELD_NUMBER: _ClassVar[int]
     EMAIL_VERIFICATION_REQUIRED_FIELD_NUMBER: _ClassVar[int]
-    PASSWORD_RESET_ENABLED_FIELD_NUMBER: _ClassVar[int]
+    EMAIL_CODES_ENABLED_FIELD_NUMBER: _ClassVar[int]
     user: _user_pb2.User
     slack_enabled: bool
     signup_enabled: bool
@@ -28,8 +28,8 @@ class GetSessionResponse(_message.Message):
     all_permissions: _containers.RepeatedCompositeFieldContainer[_user_pb2.PermissionInfo]
     roles: _containers.RepeatedCompositeFieldContainer[_user_pb2.RoleInfo]
     email_verification_required: bool
-    password_reset_enabled: bool
-    def __init__(self, user: _Optional[_Union[_user_pb2.User, _Mapping]] = ..., slack_enabled: _Optional[bool] = ..., signup_enabled: _Optional[bool] = ..., team_name: _Optional[str] = ..., all_permissions: _Optional[_Iterable[_Union[_user_pb2.PermissionInfo, _Mapping]]] = ..., roles: _Optional[_Iterable[_Union[_user_pb2.RoleInfo, _Mapping]]] = ..., email_verification_required: _Optional[bool] = ..., password_reset_enabled: _Optional[bool] = ...) -> None: ...
+    email_codes_enabled: bool
+    def __init__(self, user: _Optional[_Union[_user_pb2.User, _Mapping]] = ..., slack_enabled: _Optional[bool] = ..., signup_enabled: _Optional[bool] = ..., team_name: _Optional[str] = ..., all_permissions: _Optional[_Iterable[_Union[_user_pb2.PermissionInfo, _Mapping]]] = ..., roles: _Optional[_Iterable[_Union[_user_pb2.RoleInfo, _Mapping]]] = ..., email_verification_required: _Optional[bool] = ..., email_codes_enabled: _Optional[bool] = ...) -> None: ...
 
 class LoginRequest(_message.Message):
     __slots__ = ("login", "password")
@@ -142,6 +142,30 @@ class ResetPasswordRequest(_message.Message):
     def __init__(self, login: _Optional[str] = ..., code: _Optional[str] = ..., new_password: _Optional[str] = ...) -> None: ...
 
 class ResetPasswordResponse(_message.Message):
+    __slots__ = ("user",)
+    USER_FIELD_NUMBER: _ClassVar[int]
+    user: _user_pb2.User
+    def __init__(self, user: _Optional[_Union[_user_pb2.User, _Mapping]] = ...) -> None: ...
+
+class RequestSignInCodeRequest(_message.Message):
+    __slots__ = ("login",)
+    LOGIN_FIELD_NUMBER: _ClassVar[int]
+    login: str
+    def __init__(self, login: _Optional[str] = ...) -> None: ...
+
+class RequestSignInCodeResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class SignInWithCodeRequest(_message.Message):
+    __slots__ = ("login", "code")
+    LOGIN_FIELD_NUMBER: _ClassVar[int]
+    CODE_FIELD_NUMBER: _ClassVar[int]
+    login: str
+    code: str
+    def __init__(self, login: _Optional[str] = ..., code: _Optional[str] = ...) -> None: ...
+
+class SignInWithCodeResponse(_message.Message):
     __slots__ = ("user",)
     USER_FIELD_NUMBER: _ClassVar[int]
     user: _user_pb2.User

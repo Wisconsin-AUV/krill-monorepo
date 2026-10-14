@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { render } from 'react-email'
 import ResetPassword, { resetPasswordText } from '../src/reset-password'
+import SignInCode, { signInCodeText } from '../src/sign-in-code'
 import VerifyEmail, { verifyEmailText } from '../src/verify-email'
 
 // The API fills these in with Go's html/template and text/template, so the
@@ -13,10 +14,11 @@ const shared = {
   year: '{{.Year}}',
 }
 const verify = { ...shared, email: '{{.Email}}' }
-const reset = { ...shared, username: '{{.Username}}' }
+const account = { ...shared, username: '{{.Username}}' }
 const templates = {
   'verify-email': [<VerifyEmail {...verify} />, verifyEmailText(verify)],
-  'reset-password': [<ResetPassword {...reset} />, resetPasswordText(reset)],
+  'reset-password': [<ResetPassword {...account} />, resetPasswordText(account)],
+  'sign-in-code': [<SignInCode {...account} />, signInCodeText(account)],
 } as const
 
 const out = new URL('../../api/internal/email/templates/', import.meta.url)

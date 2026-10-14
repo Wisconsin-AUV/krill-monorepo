@@ -3,14 +3,21 @@ import { ChevronLeftIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { CODE_LENGTH, CodeInput } from '@/components/auth/CodeInput'
+import { useCodeSubmit } from '@/components/auth/useCodeSubmit'
 import { LastUsedBadge } from '@/components/auth/LastUsedBadge'
 import { OrDivider } from '@/components/auth/OrDivider'
-import { fadeWithPassword, revealPassword } from '@/components/auth/motion'
+import {
+  atLeastContinue,
+  CONTINUE_MS,
+  fadeWithPassword,
+  revealPassword,
+} from '@/components/auth/motion'
 import { SlackButton } from '@/components/auth/SlackButton'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
-import { Field, LabelRow } from '@/components/ui/Fieldset'
+import { Field, Label, LabelRow } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -19,8 +26,7 @@ import { Strong, Text, TextButton, TextLink } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import { lastLoginMethod, refreshSession, useSession, withNext } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
-
-const CONTINUE_MS = 350
+import { flash } from '@/lib/flash'
 
 export function LoginPage() {
   const { data } = useSession()
@@ -28,7 +34,7 @@ export function LoginPage() {
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
 
-  const [step, setStep] = useState<'login' | 'password'>('login')
+  const [step, setStep] = useState<'login' | 'password' | 'code'>('login')
   const [continuing, setContinuing] = useState(false)
   const [error, setError] = useState<string | null>(params.get('error'))
   const [wrong, setWrong] = useState(false)
@@ -46,6 +52,22 @@ export function LoginPage() {
       passwordRef.current?.select()
     },
   })
+
+  const requestCode = useMutation(AuthService.method.requestSignInCode)
+  const [sendingCode, setSendingCode] = useState(false)
+
+  async function emailCode() {
+    setSendingCode(true)
+    try {
+      await atLeastContinue(requestCode.mutateAsync({ login }))
+      setError(null)
+      setStep('code')
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setSendingCode(false)
+    }
+  }
 
   useEffect(() => {
     if (!params.has('error')) return
@@ -80,6 +102,7 @@ export function LoginPage() {
   }
 
   const onPasswordStep = step === 'password'
+  if (step === 'code') return <CodeSignIn login={login} onBack={() => setStep('password')} />
 
   return (
     <PageContentBlock title="Sign in · Krill" width="w-full max-w-sm">
@@ -118,7 +141,7 @@ export function LoginPage() {
               <Field>
                 <LabelRow
                   action={
-                    data?.passwordResetEnabled && (
+                    data?.emailCodesEnabled && (
                       <TextLink
                         to={`/reset-password?login=${encodeURIComponent(login)}`}
                         className="text-sm/6"
@@ -170,11 +193,30 @@ export function LoginPage() {
         <AnimatePresence initial={false}>
           {onPasswordStep && (
             <motion.div key="other-methods" {...fadeWithPassword} className="grid gap-8">
-              <OrDivider />
-              <Button type="button" outline className="w-full">
-                <EnvelopeIcon data-slot="icon" />
-                Email sign-in code
-              </Button>
+              {data?.emailCodesEnabled && (
+                <>
+                  <OrDivider />
+                  <Button
+                    type="button"
+                    outline
+                    className="w-full"
+                    onClick={emailCode}
+                    disabled={sendingCode}
+                  >
+                    {sendingCode ? (
+                      <>
+                        <LoadingSpinner className="my-1 size-4" />
+                        <span className="sr-only">Sending code</span>
+                      </>
+                    ) : (
+                      <>
+                        <EnvelopeIcon data-slot="icon" />
+                        Email sign-in code
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
               <TextButton onClick={back} className="mt-8 flex items-center justify-center gap-1">
                 <ChevronLeftIcon className="size-4" />
                 Change method
@@ -190,6 +232,57 @@ export function LoginPage() {
             </TextLink>
           </Text>
         )}
+      </form>
+    </PageContentBlock>
+  )
+}
+
+function CodeSignIn({ login, onBack }: { login: string; onBack: () => void }) {
+  const signIn = useMutation(AuthService.method.signInWithCode)
+  const entry = useCodeSubmit((code) => signIn.mutateAsync({ login, code }), refreshSession)
+  const resend = useMutation(AuthService.method.requestSignInCode, {
+    onSuccess: () => flash.success('Code requested'),
+  })
+
+  return (
+    <PageContentBlock title="Sign in · Krill" width="w-full max-w-sm">
+      <form
+        className="grid grid-cols-1 gap-8"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void entry.submit()
+        }}
+      >
+        <div className="space-y-2 text-center">
+          <Heading>Check your email</Heading>
+          <Text>If that account exists, we emailed it a sign-in code.</Text>
+        </div>
+        <FormError error={signIn.error ?? resend.error} />
+        <Field>
+          <Label>Code</Label>
+          <CodeInput shake={entry.shake} value={entry.code} onChange={entry.autoSubmit} />
+        </Field>
+        <Button
+          type="submit"
+          color="sky"
+          className="w-full"
+          disabled={entry.code.length !== CODE_LENGTH || entry.submitting}
+        >
+          {entry.submitting ? (
+            <>
+              <LoadingSpinner className="my-1 size-4" />
+              <span className="sr-only">Signing in</span>
+            </>
+          ) : (
+            'Sign in'
+          )}
+        </Button>
+        <div className="flex justify-between">
+          <TextButton onClick={() => resend.mutate({ login })} disabled={resend.isPending}>
+            Send a new code
+          </TextButton>
+          <TextButton onClick={onBack}>Use password</TextButton>
+        </div>
       </form>
     </PageContentBlock>
   )

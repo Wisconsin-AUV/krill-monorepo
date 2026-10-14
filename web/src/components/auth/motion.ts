@@ -1,3 +1,12 @@
+// How long a step's button spins before the next step shows, so it doesn't
+// snap past before anyone sees it worked.
+export const CONTINUE_MS = 350
+
+export async function atLeastContinue<T>(work: Promise<T>): Promise<T> {
+  const [result] = await Promise.all([work, new Promise((r) => setTimeout(r, CONTINUE_MS))])
+  return result
+}
+
 // The password slot opens with the field hidden, then the field fades in.
 // Anything else that appears with it takes its space at once and fades in
 // at the same moment.

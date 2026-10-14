@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/auth.proto.
  */
 export const file_krill_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCKPAgoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8SIwobZW1haWxfdmVyaWZpY2F0aW9uX3JlcXVpcmVkGAcgASgIEh4KFnBhc3N3b3JkX3Jlc2V0X2VuYWJsZWQYCCABKAgiLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIi0KG1NlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBIOCgZyZXNlbmQYASABKAgiHgocU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIiChJWZXJpZnlFbWFpbFJlcXVlc3QSDAoEY29kZRgBIAEoCSIzChNWZXJpZnlFbWFpbFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiwKG1JlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBINCgVsb2dpbhgBIAEoCSIeChxSZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIkkKFFJlc2V0UGFzc3dvcmRSZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEgwKBGNvZGUYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIjUKFVJlc2V0UGFzc3dvcmRSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlcjK3BgoLQXV0aFNlcnZpY2USSQoKR2V0U2Vzc2lvbhIbLmtyaWxsLnYxLkdldFNlc3Npb25SZXF1ZXN0Ghwua3JpbGwudjEuR2V0U2Vzc2lvblJlc3BvbnNlIgASOgoFTG9naW4SFi5rcmlsbC52MS5Mb2dpblJlcXVlc3QaFy5rcmlsbC52MS5Mb2dpblJlc3BvbnNlIgASQwoIUmVnaXN0ZXISGS5rcmlsbC52MS5SZWdpc3RlclJlcXVlc3QaGi5rcmlsbC52MS5SZWdpc3RlclJlc3BvbnNlIgASPQoGTG9nb3V0Ehcua3JpbGwudjEuTG9nb3V0UmVxdWVzdBoYLmtyaWxsLnYxLkxvZ291dFJlc3BvbnNlIgASUgoNVXBkYXRlUHJvZmlsZRIeLmtyaWxsLnYxLlVwZGF0ZVByb2ZpbGVSZXF1ZXN0Gh8ua3JpbGwudjEuVXBkYXRlUHJvZmlsZVJlc3BvbnNlIgASVQoOQ2hhbmdlUGFzc3dvcmQSHy5rcmlsbC52MS5DaGFuZ2VQYXNzd29yZFJlcXVlc3QaIC5rcmlsbC52MS5DaGFuZ2VQYXNzd29yZFJlc3BvbnNlIgASZwoUU2VuZFZlcmlmaWNhdGlvbkNvZGUSJS5rcmlsbC52MS5TZW5kVmVyaWZpY2F0aW9uQ29kZVJlcXVlc3QaJi5rcmlsbC52MS5TZW5kVmVyaWZpY2F0aW9uQ29kZVJlc3BvbnNlIgASTAoLVmVyaWZ5RW1haWwSHC5rcmlsbC52MS5WZXJpZnlFbWFpbFJlcXVlc3QaHS5rcmlsbC52MS5WZXJpZnlFbWFpbFJlc3BvbnNlIgASZwoUUmVxdWVzdFBhc3N3b3JkUmVzZXQSJS5rcmlsbC52MS5SZXF1ZXN0UGFzc3dvcmRSZXNldFJlcXVlc3QaJi5rcmlsbC52MS5SZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIgASUgoNUmVzZXRQYXNzd29yZBIeLmtyaWxsLnYxLlJlc2V0UGFzc3dvcmRSZXF1ZXN0Gh8ua3JpbGwudjEuUmVzZXRQYXNzd29yZFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJQXV0aFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_user]);
+  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCKMAgoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8SIwobZW1haWxfdmVyaWZpY2F0aW9uX3JlcXVpcmVkGAcgASgIEhsKE2VtYWlsX2NvZGVzX2VuYWJsZWQYCCABKAgiLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIi0KG1NlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBIOCgZyZXNlbmQYASABKAgiHgocU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIiChJWZXJpZnlFbWFpbFJlcXVlc3QSDAoEY29kZRgBIAEoCSIzChNWZXJpZnlFbWFpbFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiwKG1JlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBINCgVsb2dpbhgBIAEoCSIeChxSZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIkkKFFJlc2V0UGFzc3dvcmRSZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEgwKBGNvZGUYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIjUKFVJlc2V0UGFzc3dvcmRSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIpChhSZXF1ZXN0U2lnbkluQ29kZVJlcXVlc3QSDQoFbG9naW4YASABKAkiGwoZUmVxdWVzdFNpZ25JbkNvZGVSZXNwb25zZSI0ChVTaWduSW5XaXRoQ29kZVJlcXVlc3QSDQoFbG9naW4YASABKAkSDAoEY29kZRgCIAEoCSI2ChZTaWduSW5XaXRoQ29kZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyMu4HCgtBdXRoU2VydmljZRJJCgpHZXRTZXNzaW9uEhsua3JpbGwudjEuR2V0U2Vzc2lvblJlcXVlc3QaHC5rcmlsbC52MS5HZXRTZXNzaW9uUmVzcG9uc2UiABI6CgVMb2dpbhIWLmtyaWxsLnYxLkxvZ2luUmVxdWVzdBoXLmtyaWxsLnYxLkxvZ2luUmVzcG9uc2UiABJDCghSZWdpc3RlchIZLmtyaWxsLnYxLlJlZ2lzdGVyUmVxdWVzdBoaLmtyaWxsLnYxLlJlZ2lzdGVyUmVzcG9uc2UiABI9CgZMb2dvdXQSFy5rcmlsbC52MS5Mb2dvdXRSZXF1ZXN0Ghgua3JpbGwudjEuTG9nb3V0UmVzcG9uc2UiABJSCg1VcGRhdGVQcm9maWxlEh4ua3JpbGwudjEuVXBkYXRlUHJvZmlsZVJlcXVlc3QaHy5rcmlsbC52MS5VcGRhdGVQcm9maWxlUmVzcG9uc2UiABJVCg5DaGFuZ2VQYXNzd29yZBIfLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVxdWVzdBogLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVzcG9uc2UiABJnChRTZW5kVmVyaWZpY2F0aW9uQ29kZRIlLmtyaWxsLnYxLlNlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBomLmtyaWxsLnYxLlNlbmRWZXJpZmljYXRpb25Db2RlUmVzcG9uc2UiABJMCgtWZXJpZnlFbWFpbBIcLmtyaWxsLnYxLlZlcmlmeUVtYWlsUmVxdWVzdBodLmtyaWxsLnYxLlZlcmlmeUVtYWlsUmVzcG9uc2UiABJnChRSZXF1ZXN0UGFzc3dvcmRSZXNldBIlLmtyaWxsLnYxLlJlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBomLmtyaWxsLnYxLlJlcXVlc3RQYXNzd29yZFJlc2V0UmVzcG9uc2UiABJSCg1SZXNldFBhc3N3b3JkEh4ua3JpbGwudjEuUmVzZXRQYXNzd29yZFJlcXVlc3QaHy5rcmlsbC52MS5SZXNldFBhc3N3b3JkUmVzcG9uc2UiABJeChFSZXF1ZXN0U2lnbkluQ29kZRIiLmtyaWxsLnYxLlJlcXVlc3RTaWduSW5Db2RlUmVxdWVzdBojLmtyaWxsLnYxLlJlcXVlc3RTaWduSW5Db2RlUmVzcG9uc2UiABJVCg5TaWduSW5XaXRoQ29kZRIfLmtyaWxsLnYxLlNpZ25JbldpdGhDb2RlUmVxdWVzdBogLmtyaWxsLnYxLlNpZ25JbldpdGhDb2RlUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglBdXRoUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_user]);
 
 /**
  * @generated from message krill.v1.GetSessionRequest
@@ -75,9 +75,11 @@ export type GetSessionResponse = Message<"krill.v1.GetSessionResponse"> & {
   emailVerificationRequired: boolean;
 
   /**
-   * @generated from field: bool password_reset_enabled = 8;
+   * The API can email sign-in and password reset codes.
+   *
+   * @generated from field: bool email_codes_enabled = 8;
    */
-  passwordResetEnabled: boolean;
+  emailCodesEnabled: boolean;
 };
 
 /**
@@ -426,6 +428,77 @@ export const ResetPasswordResponseSchema: GenMessage<ResetPasswordResponse> = /*
   messageDesc(file_krill_v1_auth, 19);
 
 /**
+ * @generated from message krill.v1.RequestSignInCodeRequest
+ */
+export type RequestSignInCodeRequest = Message<"krill.v1.RequestSignInCodeRequest"> & {
+  /**
+   * A username or an email.
+   *
+   * @generated from field: string login = 1;
+   */
+  login: string;
+};
+
+/**
+ * Describes the message krill.v1.RequestSignInCodeRequest.
+ * Use `create(RequestSignInCodeRequestSchema)` to create a new message.
+ */
+export const RequestSignInCodeRequestSchema: GenMessage<RequestSignInCodeRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 20);
+
+/**
+ * @generated from message krill.v1.RequestSignInCodeResponse
+ */
+export type RequestSignInCodeResponse = Message<"krill.v1.RequestSignInCodeResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.RequestSignInCodeResponse.
+ * Use `create(RequestSignInCodeResponseSchema)` to create a new message.
+ */
+export const RequestSignInCodeResponseSchema: GenMessage<RequestSignInCodeResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 21);
+
+/**
+ * @generated from message krill.v1.SignInWithCodeRequest
+ */
+export type SignInWithCodeRequest = Message<"krill.v1.SignInWithCodeRequest"> & {
+  /**
+   * @generated from field: string login = 1;
+   */
+  login: string;
+
+  /**
+   * @generated from field: string code = 2;
+   */
+  code: string;
+};
+
+/**
+ * Describes the message krill.v1.SignInWithCodeRequest.
+ * Use `create(SignInWithCodeRequestSchema)` to create a new message.
+ */
+export const SignInWithCodeRequestSchema: GenMessage<SignInWithCodeRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 22);
+
+/**
+ * @generated from message krill.v1.SignInWithCodeResponse
+ */
+export type SignInWithCodeResponse = Message<"krill.v1.SignInWithCodeResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message krill.v1.SignInWithCodeResponse.
+ * Use `create(SignInWithCodeResponseSchema)` to create a new message.
+ */
+export const SignInWithCodeResponseSchema: GenMessage<SignInWithCodeResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 23);
+
+/**
  * AuthService signs users in with a session cookie. Slack sign-in is a
  * browser redirect to /auth/slack/login, not an RPC.
  *
@@ -527,6 +600,24 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof ResetPasswordRequestSchema;
     output: typeof ResetPasswordResponseSchema;
+  },
+  /**
+   * RequestSignInCode responds the same whether or not the account exists.
+   *
+   * @generated from rpc krill.v1.AuthService.RequestSignInCode
+   */
+  requestSignInCode: {
+    methodKind: "unary";
+    input: typeof RequestSignInCodeRequestSchema;
+    output: typeof RequestSignInCodeResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.AuthService.SignInWithCode
+   */
+  signInWithCode: {
+    methodKind: "unary";
+    input: typeof SignInWithCodeRequestSchema;
+    output: typeof SignInWithCodeResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_auth, 0);

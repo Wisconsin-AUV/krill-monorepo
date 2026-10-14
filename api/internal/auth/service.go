@@ -32,7 +32,7 @@ type Options struct {
 	// using the app. It needs a Mailer.
 	RequireVerifiedEmail bool
 	// Mailer is nil when the API can't send email, which turns off password
-	// resets.
+	// resets and sign-in codes.
 	Mailer         email.Sender
 	TeamName       string
 	SlackEnabled   bool
@@ -48,18 +48,28 @@ type Service struct {
 	// limit stops one client trying a few passwords across many accounts.
 	accountLimit *failureLimiter
 	ipLimit      *failureLimiter
-	// resetLimit counts password reset requests and wrong reset codes per IP.
-	resetLimit *failureLimiter
+	// Emailed codes are limited per IP for requests and wrong guesses, and per
+	// account for emails sent, so spreading requests over many IPs still
+	// can't flood one inbox.
+	requestLimit  *failureLimiter
+	codeFailLimit *failureLimiter
+	sendLimit     *failureLimiter
+	// signupLimit counts sign-ups that hit an existing account, so sign-up
+	// can't be used to check many emails for accounts.
+	signupLimit *failureLimiter
 }
 
 func NewService(pool *pgxpool.Pool, opts Options) *Service {
 	return &Service{
-		pool:         pool,
-		q:            db.New(pool),
-		opts:         opts,
-		accountLimit: newFailureLimiter(5, 15*time.Minute),
-		ipLimit:      newFailureLimiter(30, 15*time.Minute),
-		resetLimit:   newFailureLimiter(10, 15*time.Minute),
+		pool:          pool,
+		q:             db.New(pool),
+		opts:          opts,
+		accountLimit:  newFailureLimiter(5, 15*time.Minute),
+		ipLimit:       newFailureLimiter(30, 15*time.Minute),
+		requestLimit:  newFailureLimiter(20, 15*time.Minute),
+		codeFailLimit: newFailureLimiter(10, 15*time.Minute),
+		sendLimit:     newFailureLimiter(5, time.Hour),
+		signupLimit:   newFailureLimiter(10, 15*time.Minute),
 	}
 }
 
@@ -78,7 +88,7 @@ func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) 
 		Roles:          RoleInfos(),
 
 		EmailVerificationRequired: s.opts.RequireVerifiedEmail,
-		PasswordResetEnabled:      s.opts.Mailer != nil,
+		EmailCodesEnabled:         s.opts.Mailer != nil,
 	}
 	if sess, ok := SessionFrom(ctx); ok {
 		out.User = ToProto(sess.User)
@@ -167,6 +177,10 @@ func clientIP(peer string, h http.Header, header string) string {
 }
 
 func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*krillv1.RegisterResponse, error) {
+	ip := s.clientIP(ctx)
+	if blocked, wait := s.signupLimit.blocked(ip); blocked {
+		return nil, tooMany("sign-ups with taken details", wait)
+	}
 	p, err := NormalizeProfile(req.GetName(), req.GetUsername(), req.GetEmail())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
@@ -197,6 +211,7 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	})
 	if err != nil {
 		if dup := DuplicateError(err); dup != nil {
+			s.signupLimit.fail(ip)
 			return nil, dup
 		}
 		return nil, rpc.Internal(err, "create user")

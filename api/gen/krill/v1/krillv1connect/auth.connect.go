@@ -58,6 +58,12 @@ const (
 	// AuthServiceResetPasswordProcedure is the fully-qualified name of the AuthService's ResetPassword
 	// RPC.
 	AuthServiceResetPasswordProcedure = "/krill.v1.AuthService/ResetPassword"
+	// AuthServiceRequestSignInCodeProcedure is the fully-qualified name of the AuthService's
+	// RequestSignInCode RPC.
+	AuthServiceRequestSignInCodeProcedure = "/krill.v1.AuthService/RequestSignInCode"
+	// AuthServiceSignInWithCodeProcedure is the fully-qualified name of the AuthService's
+	// SignInWithCode RPC.
+	AuthServiceSignInWithCodeProcedure = "/krill.v1.AuthService/SignInWithCode"
 )
 
 // AuthServiceClient is a client for the krill.v1.AuthService service.
@@ -81,6 +87,9 @@ type AuthServiceClient interface {
 	RequestPasswordReset(context.Context, *v1.RequestPasswordResetRequest) (*v1.RequestPasswordResetResponse, error)
 	// ResetPassword signs out every session and signs the caller in.
 	ResetPassword(context.Context, *v1.ResetPasswordRequest) (*v1.ResetPasswordResponse, error)
+	// RequestSignInCode responds the same whether or not the account exists.
+	RequestSignInCode(context.Context, *v1.RequestSignInCodeRequest) (*v1.RequestSignInCodeResponse, error)
+	SignInWithCode(context.Context, *v1.SignInWithCodeRequest) (*v1.SignInWithCodeResponse, error)
 }
 
 // NewAuthServiceClient constructs a client for the krill.v1.AuthService service. By default, it
@@ -154,6 +163,18 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("ResetPassword")),
 			connect.WithClientOptions(opts...),
 		),
+		requestSignInCode: connect.NewClient[v1.RequestSignInCodeRequest, v1.RequestSignInCodeResponse](
+			httpClient,
+			baseURL+AuthServiceRequestSignInCodeProcedure,
+			connect.WithSchema(authServiceMethods.ByName("RequestSignInCode")),
+			connect.WithClientOptions(opts...),
+		),
+		signInWithCode: connect.NewClient[v1.SignInWithCodeRequest, v1.SignInWithCodeResponse](
+			httpClient,
+			baseURL+AuthServiceSignInWithCodeProcedure,
+			connect.WithSchema(authServiceMethods.ByName("SignInWithCode")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -169,6 +190,8 @@ type authServiceClient struct {
 	verifyEmail          *connect.Client[v1.VerifyEmailRequest, v1.VerifyEmailResponse]
 	requestPasswordReset *connect.Client[v1.RequestPasswordResetRequest, v1.RequestPasswordResetResponse]
 	resetPassword        *connect.Client[v1.ResetPasswordRequest, v1.ResetPasswordResponse]
+	requestSignInCode    *connect.Client[v1.RequestSignInCodeRequest, v1.RequestSignInCodeResponse]
+	signInWithCode       *connect.Client[v1.SignInWithCodeRequest, v1.SignInWithCodeResponse]
 }
 
 // GetSession calls krill.v1.AuthService.GetSession.
@@ -261,6 +284,24 @@ func (c *authServiceClient) ResetPassword(ctx context.Context, req *v1.ResetPass
 	return nil, err
 }
 
+// RequestSignInCode calls krill.v1.AuthService.RequestSignInCode.
+func (c *authServiceClient) RequestSignInCode(ctx context.Context, req *v1.RequestSignInCodeRequest) (*v1.RequestSignInCodeResponse, error) {
+	response, err := c.requestSignInCode.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SignInWithCode calls krill.v1.AuthService.SignInWithCode.
+func (c *authServiceClient) SignInWithCode(ctx context.Context, req *v1.SignInWithCodeRequest) (*v1.SignInWithCodeResponse, error) {
+	response, err := c.signInWithCode.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AuthServiceHandler is an implementation of the krill.v1.AuthService service.
 type AuthServiceHandler interface {
 	// GetSession returns the signed-in user, or no user when signed out.
@@ -282,6 +323,9 @@ type AuthServiceHandler interface {
 	RequestPasswordReset(context.Context, *v1.RequestPasswordResetRequest) (*v1.RequestPasswordResetResponse, error)
 	// ResetPassword signs out every session and signs the caller in.
 	ResetPassword(context.Context, *v1.ResetPasswordRequest) (*v1.ResetPasswordResponse, error)
+	// RequestSignInCode responds the same whether or not the account exists.
+	RequestSignInCode(context.Context, *v1.RequestSignInCodeRequest) (*v1.RequestSignInCodeResponse, error)
+	SignInWithCode(context.Context, *v1.SignInWithCodeRequest) (*v1.SignInWithCodeResponse, error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -351,6 +395,18 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("ResetPassword")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceRequestSignInCodeHandler := connect.NewUnaryHandlerSimple(
+		AuthServiceRequestSignInCodeProcedure,
+		svc.RequestSignInCode,
+		connect.WithSchema(authServiceMethods.ByName("RequestSignInCode")),
+		connect.WithHandlerOptions(opts...),
+	)
+	authServiceSignInWithCodeHandler := connect.NewUnaryHandlerSimple(
+		AuthServiceSignInWithCodeProcedure,
+		svc.SignInWithCode,
+		connect.WithSchema(authServiceMethods.ByName("SignInWithCode")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceGetSessionProcedure:
@@ -373,6 +429,10 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 			authServiceRequestPasswordResetHandler.ServeHTTP(w, r)
 		case AuthServiceResetPasswordProcedure:
 			authServiceResetPasswordHandler.ServeHTTP(w, r)
+		case AuthServiceRequestSignInCodeProcedure:
+			authServiceRequestSignInCodeHandler.ServeHTTP(w, r)
+		case AuthServiceSignInWithCodeProcedure:
+			authServiceSignInWithCodeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -420,4 +480,12 @@ func (UnimplementedAuthServiceHandler) RequestPasswordReset(context.Context, *v1
 
 func (UnimplementedAuthServiceHandler) ResetPassword(context.Context, *v1.ResetPasswordRequest) (*v1.ResetPasswordResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AuthService.ResetPassword is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) RequestSignInCode(context.Context, *v1.RequestSignInCodeRequest) (*v1.RequestSignInCodeResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AuthService.RequestSignInCode is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) SignInWithCode(context.Context, *v1.SignInWithCodeRequest) (*v1.SignInWithCodeResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.AuthService.SignInWithCode is not implemented"))
 }

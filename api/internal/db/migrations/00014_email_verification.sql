@@ -8,7 +8,7 @@ UPDATE users SET email_verified_at = created_at;
 
 CREATE TABLE email_codes (
     user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    purpose text NOT NULL CHECK (purpose IN ('verify_email', 'reset_password')),
+    purpose text NOT NULL CHECK (purpose IN ('verify_email', 'reset_password', 'sign_in')),
     -- The address the code was sent to. Verifying moves the account to it.
     email text NOT NULL,
     -- SHA-256, so reading the table does not reveal live codes.
