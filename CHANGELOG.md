@@ -28,6 +28,10 @@ All notable changes to this project are documented here. The format follows
 - Admins can merge two accounts that belong to the same person. A preview shows what moves, and the kept account gets the other's sign-in methods and the higher role.
 - Each user has a page in the admin panel with their sessions and history.
 - A sessions page shows who is signed in, from which browser and address, and when they were last active, and revokes any session. Everyone can see and revoke their own sessions on the Account page.
+- A jobs page lists every ingest, embedding, tracking, similar-object search, and export with its state, attempts, errors, timing, who started it, and which GPU worker runs it. Admins can retry, cancel, and reprioritize jobs. Cancelling a GPU job stops it on the worker.
+- The SAM model is a setting in the admin panel, from SAM 2.1 tiny to large or SAM 3. Workers switch between tasks unless their own `KRILL_SAM_MODEL` pins one.
+- The compute page shows each worker's model, whether it's loaded, the GPU memory it holds, the models it has downloaded, its token, and its last heartbeat, with buttons to warm the model up or unload it.
+- Worker tokens can be created and revoked in the admin panel, alongside `KRILL_WORKER_TOKEN`, so a worker's token can be rotated without restarting the API.
 
 ### Changed
 
@@ -36,6 +40,8 @@ All notable changes to this project are documented here. The format follows
 - The version moved from the top bar into the help menu.
 - An empty `KRILL_` variable now counts as unset. To accept any email domain from the environment, set `KRILL_EMAIL_VERIFICATION=off`.
 - Docker Compose no longer fills in defaults for settings the admin panel can change.
+- The compute page's queue counts GPU jobs waiting to start, not only the one waiting for a worker.
+- A clip whose embedding is interrupted by a model switch is embedded again with the new model instead of failing.
 
 ## [0.4.0] - 2026-10-14
 

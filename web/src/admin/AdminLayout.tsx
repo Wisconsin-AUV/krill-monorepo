@@ -11,8 +11,10 @@ import {
   CpuChipIcon,
   Cog6ToothIcon,
   HomeIcon,
+  KeyIcon,
   QuestionMarkCircleIcon,
   TicketIcon,
+  QueueListIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
 import { Navigate, Outlet, useLocation } from 'react-router'
@@ -63,6 +65,18 @@ const sections = [
         label: 'Compute',
         to: '/admin/compute',
         icon: CpuChipIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Jobs',
+        to: '/admin/jobs',
+        icon: QueueListIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Worker tokens',
+        to: '/admin/worker-tokens',
+        icon: KeyIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
     ],

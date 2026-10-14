@@ -109,6 +109,17 @@ export const router = createBrowserRouter([
                     lazy: () =>
                       import('@/admin/StuckPage').then((m) => ({ Component: m.StuckPage })),
                   },
+                  {
+                    path: 'jobs',
+                    lazy: () => import('@/admin/JobsPage').then((m) => ({ Component: m.JobsPage })),
+                  },
+                  {
+                    path: 'worker-tokens',
+                    lazy: () =>
+                      import('@/admin/WorkerTokensPage').then((m) => ({
+                        Component: m.WorkerTokensPage,
+                      })),
+                  },
                 ],
               },
               {
