@@ -66,3 +66,13 @@ class ClaimNextClipResponse(_message.Message):
     clip_id: int
     gold_frame_id: int
     def __init__(self, clip_id: _Optional[int] = ..., gold_frame_id: _Optional[int] = ...) -> None: ...
+
+class TakeClipRequest(_message.Message):
+    __slots__ = ("clip_id",)
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    clip_id: int
+    def __init__(self, clip_id: _Optional[int] = ...) -> None: ...
+
+class TakeClipResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

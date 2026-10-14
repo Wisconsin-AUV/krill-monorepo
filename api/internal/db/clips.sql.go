@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const deleteClip = `-- name: DeleteClip :one
+DELETE FROM clips WHERE id = $1 RETURNING idx
+`
+
+func (q *Queries) DeleteClip(ctx context.Context, id int64) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteClip, id)
+	var idx int32
+	err := row.Scan(&idx)
+	return idx, err
+}
+
 const getClip = `-- name: GetClip :one
 SELECT id, video_id, idx, start_frame, frame_count, embedded_at, embed_model FROM clips WHERE id = $1
 `
@@ -99,6 +110,23 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 	return items, nil
 }
 
+const parkClipsAfter = `-- name: ParkClipsAfter :exec
+UPDATE clips SET idx = -idx WHERE video_id = $1 AND idx > $2
+`
+
+type ParkClipsAfterParams struct {
+	VideoID int64 `json:"video_id"`
+	Idx     int32 `json:"idx"`
+}
+
+// The unique (video_id, idx) constraint is checked row by row, so shifting
+// every later clip down by one in a single UPDATE can collide with a row that
+// hasn't moved yet. Parking them at negative indexes first avoids that.
+func (q *Queries) ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error {
+	_, err := q.db.Exec(ctx, parkClipsAfter, arg.VideoID, arg.Idx)
+	return err
+}
+
 const setClipEmbedded = `-- name: SetClipEmbedded :exec
 UPDATE clips SET embedded_at = now(), embed_model = $2 WHERE id = $1
 `
@@ -110,5 +138,28 @@ type SetClipEmbeddedParams struct {
 
 func (q *Queries) SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error {
 	_, err := q.db.Exec(ctx, setClipEmbedded, arg.ID, arg.EmbedModel)
+	return err
+}
+
+const subtractClipFrames = `-- name: SubtractClipFrames :one
+UPDATE videos v SET frame_count = v.frame_count - c.frame_count
+FROM clips c
+WHERE c.id = $1 AND v.id = c.video_id
+RETURNING v.id AS video_id
+`
+
+func (q *Queries) SubtractClipFrames(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRow(ctx, subtractClipFrames, id)
+	var video_id int64
+	err := row.Scan(&video_id)
+	return video_id, err
+}
+
+const unparkClips = `-- name: UnparkClips :exec
+UPDATE clips SET idx = -idx - 1 WHERE video_id = $1 AND idx < 0
+`
+
+func (q *Queries) UnparkClips(ctx context.Context, videoID int64) error {
+	_, err := q.db.Exec(ctx, unparkClips, videoID)
 	return err
 }

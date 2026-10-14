@@ -12,6 +12,8 @@ service QueueService {
   // or claims a new one. New clips are spread across videos so labels cover
   // as much footage as possible.
   rpc ClaimNextClip(ClaimNextClipRequest) returns (ClaimNextClipResponse) {}
+  // TakeClip claims a clip even when someone else is actively labeling it.
+  rpc TakeClip(TakeClipRequest) returns (TakeClipResponse) {}
 }
 
 message GetQueueRequest {}
@@ -57,3 +59,9 @@ message ClaimNextClipResponse {
   // Set when the caller is due a gold check.
   int64 gold_frame_id = 2;
 }
+
+message TakeClipRequest {
+  int64 clip_id = 1;
+}
+
+message TakeClipResponse {}

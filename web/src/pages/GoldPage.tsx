@@ -11,9 +11,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { QueryError } from '@/components/ui/Callout'
 import { Dialog, DialogBody, DialogTitle } from '@/components/ui/Dialog'
-import { Heading, Subheading } from '@/components/ui/Heading'
+import { Subheading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import PageContentBlock from '@/components/ui/PageContentBlock'
 import {
   Table,
   TableBody,
@@ -40,9 +39,7 @@ export function GoldPage() {
   })
 
   return (
-    <PageContentBlock title="Gold · Krill">
-      <Heading>Gold</Heading>
-
+    <>
       {isPending ? (
         <div className="flex justify-center py-16">
           <LoadingSpinner />
@@ -59,7 +56,7 @@ export function GoldPage() {
         </div>
       ) : (
         <>
-          <Subheading className="mt-10">Labelers</Subheading>
+          <Subheading className="mt-8">Labelers</Subheading>
           {data.labelers.length === 0 ? (
             <Text className="mt-2">No checks answered yet.</Text>
           ) : (
@@ -149,7 +146,7 @@ export function GoldPage() {
       <Dialog open={shown !== null} onClose={() => setShown(null)}>
         {shown && <AttemptList filter={shown} />}
       </Dialog>
-    </PageContentBlock>
+    </>
   )
 }
 

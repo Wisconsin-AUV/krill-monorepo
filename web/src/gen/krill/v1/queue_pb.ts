@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/queue.proto.
  */
 export const file_krill_v1_queue: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9xdWV1ZS5wcm90bxIIa3JpbGwudjEiEQoPR2V0UXVldWVSZXF1ZXN0IjwKCE9wZW5DbGlwEhwKBGNsaXAYASABKAsyDi5rcmlsbC52MS5DbGlwEhIKCnZpZGVvX25hbWUYAiABKAkifwoMQ2xpcFByb2dyZXNzEgoKAmlkGAEgASgDEg0KBWluZGV4GAIgASgFEhMKC2ZyYW1lX2NvdW50GAMgASgFEhsKE2xhYmVsZWRfZnJhbWVfY291bnQYBCABKAUSIgoFY2xhaW0YBSABKAsyEy5rcmlsbC52MS5DbGlwQ2xhaW0iUAoNVmlkZW9Qcm9ncmVzcxIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEiUKBWNsaXBzGAMgAygLMhYua3JpbGwudjEuQ2xpcFByb2dyZXNzInwKEEdldFF1ZXVlUmVzcG9uc2USJgoKb3Blbl9jbGlwcxgBIAMoCzISLmtyaWxsLnYxLk9wZW5DbGlwEicKBnZpZGVvcxgCIAMoCzIXLmtyaWxsLnYxLlZpZGVvUHJvZ3Jlc3MSFwoPYXZhaWxhYmxlX2NsaXBzGAMgASgFIi8KFENsYWltTmV4dENsaXBSZXF1ZXN0EhcKD3JlbGVhc2VfY2xpcF9pZBgBIAEoAyI/ChVDbGFpbU5leHRDbGlwUmVzcG9uc2USDwoHY2xpcF9pZBgBIAEoAxIVCg1nb2xkX2ZyYW1lX2lkGAIgASgDMqcBCgxRdWV1ZVNlcnZpY2USQwoIR2V0UXVldWUSGS5rcmlsbC52MS5HZXRRdWV1ZVJlcXVlc3QaGi5rcmlsbC52MS5HZXRRdWV1ZVJlc3BvbnNlIgASUgoNQ2xhaW1OZXh0Q2xpcBIeLmtyaWxsLnYxLkNsYWltTmV4dENsaXBSZXF1ZXN0Gh8ua3JpbGwudjEuQ2xhaW1OZXh0Q2xpcFJlc3BvbnNlIgBCiwEKDGNvbS5rcmlsbC52MUIKUXVldWVQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_krill_v1_video]);
+  fileDesc("ChRrcmlsbC92MS9xdWV1ZS5wcm90bxIIa3JpbGwudjEiEQoPR2V0UXVldWVSZXF1ZXN0IjwKCE9wZW5DbGlwEhwKBGNsaXAYASABKAsyDi5rcmlsbC52MS5DbGlwEhIKCnZpZGVvX25hbWUYAiABKAkifwoMQ2xpcFByb2dyZXNzEgoKAmlkGAEgASgDEg0KBWluZGV4GAIgASgFEhMKC2ZyYW1lX2NvdW50GAMgASgFEhsKE2xhYmVsZWRfZnJhbWVfY291bnQYBCABKAUSIgoFY2xhaW0YBSABKAsyEy5rcmlsbC52MS5DbGlwQ2xhaW0iUAoNVmlkZW9Qcm9ncmVzcxIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEiUKBWNsaXBzGAMgAygLMhYua3JpbGwudjEuQ2xpcFByb2dyZXNzInwKEEdldFF1ZXVlUmVzcG9uc2USJgoKb3Blbl9jbGlwcxgBIAMoCzISLmtyaWxsLnYxLk9wZW5DbGlwEicKBnZpZGVvcxgCIAMoCzIXLmtyaWxsLnYxLlZpZGVvUHJvZ3Jlc3MSFwoPYXZhaWxhYmxlX2NsaXBzGAMgASgFIi8KFENsYWltTmV4dENsaXBSZXF1ZXN0EhcKD3JlbGVhc2VfY2xpcF9pZBgBIAEoAyI/ChVDbGFpbU5leHRDbGlwUmVzcG9uc2USDwoHY2xpcF9pZBgBIAEoAxIVCg1nb2xkX2ZyYW1lX2lkGAIgASgDIiIKD1Rha2VDbGlwUmVxdWVzdBIPCgdjbGlwX2lkGAEgASgDIhIKEFRha2VDbGlwUmVzcG9uc2Uy7AEKDFF1ZXVlU2VydmljZRJDCghHZXRRdWV1ZRIZLmtyaWxsLnYxLkdldFF1ZXVlUmVxdWVzdBoaLmtyaWxsLnYxLkdldFF1ZXVlUmVzcG9uc2UiABJSCg1DbGFpbU5leHRDbGlwEh4ua3JpbGwudjEuQ2xhaW1OZXh0Q2xpcFJlcXVlc3QaHy5rcmlsbC52MS5DbGFpbU5leHRDbGlwUmVzcG9uc2UiABJDCghUYWtlQ2xpcBIZLmtyaWxsLnYxLlRha2VDbGlwUmVxdWVzdBoaLmtyaWxsLnYxLlRha2VDbGlwUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpRdWV1ZVByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_video]);
 
 /**
  * @generated from message krill.v1.GetQueueRequest
@@ -194,6 +194,36 @@ export const ClaimNextClipResponseSchema: GenMessage<ClaimNextClipResponse> = /*
   messageDesc(file_krill_v1_queue, 6);
 
 /**
+ * @generated from message krill.v1.TakeClipRequest
+ */
+export type TakeClipRequest = Message<"krill.v1.TakeClipRequest"> & {
+  /**
+   * @generated from field: int64 clip_id = 1;
+   */
+  clipId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.TakeClipRequest.
+ * Use `create(TakeClipRequestSchema)` to create a new message.
+ */
+export const TakeClipRequestSchema: GenMessage<TakeClipRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_queue, 7);
+
+/**
+ * @generated from message krill.v1.TakeClipResponse
+ */
+export type TakeClipResponse = Message<"krill.v1.TakeClipResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.TakeClipResponse.
+ * Use `create(TakeClipResponseSchema)` to create a new message.
+ */
+export const TakeClipResponseSchema: GenMessage<TakeClipResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_queue, 8);
+
+/**
  * QueueService decides what each labeler works on. Editing a clip also claims
  * it, so clips picked by hand show up here too.
  *
@@ -219,6 +249,16 @@ export const QueueService: GenService<{
     methodKind: "unary";
     input: typeof ClaimNextClipRequestSchema;
     output: typeof ClaimNextClipResponseSchema;
+  },
+  /**
+   * TakeClip claims a clip even when someone else is actively labeling it.
+   *
+   * @generated from rpc krill.v1.QueueService.TakeClip
+   */
+  takeClip: {
+    methodKind: "unary";
+    input: typeof TakeClipRequestSchema;
+    output: typeof TakeClipResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_queue, 0);

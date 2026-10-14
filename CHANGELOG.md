@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-14
+
+### Added
+
+- Developers and admins can delete a clip from the labeling view. The clips after it are renumbered and the next one opens.
+- Opening a clip someone else is labeling asks before taking it over.
+
+### Changed
+
+- Gold is a tab on the Review page, and `/gold` redirects there.
+- SAM tracking is about 40% faster on GPUs without fused attention kernels, such as the RX 6600.
+- The timeline no longer redraws on every playhead or hover move.
+
+### Fixed
+
+- Holding space to mark frames done keeps up instead of trailing the server, and frames that fail to save are reverted.
+- Every label edit keeps the clip claimed, so a clip is no longer handed out while someone is still working on it.
+- Reviewer fixes no longer take a clip from the labeler working on it.
+
 ## [0.3.0] - 2026-10-14
 
 ### Added
@@ -71,7 +90,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Wisconsin-AUV/krill-monorepo/releases/tag/v0.1.0

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { AppChrome, AppLayout } from '@/layouts/AppLayout'
@@ -17,7 +17,7 @@ import { NotFound } from '@/pages/NotFound'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
-import { ReviewPage } from '@/pages/ReviewPage'
+import { FlaggedPage, ReviewPage } from '@/pages/ReviewPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
@@ -83,8 +83,15 @@ export const router = createBrowserRouter([
               {
                 element: <RequirePermission permission={Permission.REVIEW_LABELS} />,
                 children: [
-                  { path: 'gold', element: <GoldPage /> },
-                  { path: 'review', element: <ReviewPage /> },
+                  {
+                    path: 'review',
+                    element: <ReviewPage />,
+                    children: [
+                      { index: true, element: <FlaggedPage /> },
+                      { path: 'gold', element: <GoldPage /> },
+                    ],
+                  },
+                  { path: 'gold', element: <Navigate to="/review/gold" replace /> },
                 ],
               },
               {

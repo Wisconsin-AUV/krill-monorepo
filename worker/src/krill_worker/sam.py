@@ -15,6 +15,7 @@ from transformers import (
     Sam3TrackerVideoProcessor,
 )
 
+from krill_worker import attention
 from krill_worker.prelabelers import Frame
 from krill_worker.track import Box, Embedding, PointPrompt, Prompt, mask_box
 
@@ -24,10 +25,10 @@ EXEMPLAR_THRESHOLD = 0.4
 
 
 def attention_implementation(device: str) -> str:
-    """Pick eager attention when SDPA has no fused kernel for the GPU.
+    """Pick our fp16 attention when SDPA has no fused kernel for the GPU.
 
     SDPA's math fallback upcasts to fp32, which makes SAM's memory attention
-    about half as fast as eager fp16 attention on cards like the RX 6600.
+    about half as fast as fp16 attention on cards like the RX 6600.
     """
     q = torch.zeros(1, 1, 8, 64, device=device, dtype=torch.float16)
     try:
@@ -37,7 +38,7 @@ def attention_implementation(device: str) -> str:
         ):
             torch.nn.functional.scaled_dot_product_attention(q, q, q)
     except RuntimeError:
-        return "eager"
+        return attention.register()
     return "sdpa"
 
 

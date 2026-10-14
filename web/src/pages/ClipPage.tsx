@@ -12,9 +12,11 @@ import {
   QuestionMarkCircleIcon,
   SparklesIcon,
   StarIcon,
+  TrashIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { ConfirmAlert } from '@/components/ConfirmAlert'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/ui/Dropdown'
@@ -51,6 +53,7 @@ import { VideoService } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
+import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { useUIStore } from '@/store/useUIStore'
@@ -195,6 +198,23 @@ export function ClipPage() {
   const toggleCorrected = useUIStore((s) => s.toggleDisplayCorrection)
 
   const canReview = useCan(Permission.REVIEW_LABELS)
+  const [takenClipId, setTakenClipId] = useState<bigint>()
+  const takeClip = useMutation(QueueService.method.takeClip, {
+    onSuccess: (_, { clipId }) => setTakenClipId(clipId),
+  })
+  const canDelete = useCan(Permission.MANAGE_VIDEOS)
+  const [deleting, setDeleting] = useState(false)
+  const deleteClip = useMutation(ClipService.method.deleteClip, {
+    onSuccess: () => {
+      setDeleting(false)
+      flash.success('Clip deleted')
+      const next = data?.nextClipId || data?.previousClipId
+      navigate(next ? `/clips/${next}` : `/videos/${data?.video?.id}`, { replace: true })
+      void invalidateService(ClipService)
+      void invalidateService(VideoService)
+      void invalidateService(QueueService)
+    },
+  })
   const [goldEdits, setGoldEdits] = useState<Record<string, boolean>>({})
   const setGoldFrame = useMutation(GoldService.method.setGoldFrame, {
     onError: (err) => flash.error('Could not update gold frame', err),
@@ -227,6 +247,32 @@ export function ClipPage() {
 
   const review = useMemo(() => reviewTracks(frames, boxes), [frames, boxes])
 
+  const frameBars = useMemo(
+    () =>
+      frames.map((f) => {
+        const byTrack = boxes[idKey(f.id)]
+        return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0).bar
+      }),
+    [frames, boxes, frameStatus],
+  )
+  const selectedBars = useMemo(() => {
+    if (selectedTrackId === null) return undefined
+    const k = idKey(selectedTrackId)
+    return frames.map((f) => (boxes[idKey(f.id)]?.[k] ? 'bg-sky-500 dark:bg-sky-400' : undefined))
+  }, [frames, boxes, selectedTrackId])
+  const driftFlags = useMemo(
+    () => frames.map((f) => review.drift.has(idKey(f.id))),
+    [frames, review],
+  )
+  const reviewMarks = useMemo(
+    () =>
+      frames.map((f) => {
+        const k = idKey(f.id)
+        return !!(k in reviewEdits ? reviewEdits[k] : f.review)
+      }),
+    [frames, reviewEdits],
+  )
+
   const typeCounts = useMemo(() => {
     const counts = new Map<bigint, number>()
     for (const t of Object.values(trackMap))
@@ -243,6 +289,7 @@ export function ClipPage() {
     return st === FrameStatus.LABELED || st === FrameStatus.EMPTY
   }).length
   const finished = frames.length > 0 && doneCount === frames.length
+  const boxCount = Object.values(boxes).reduce((n, byTrack) => n + Object.keys(byTrack).length, 0)
 
   // Releasing the finished clip keeps it out of the caller's open clips.
   const nextFromQueue = () => {
@@ -254,17 +301,22 @@ export function ClipPage() {
     if (clipId) navigate(`/clips/${clipId}`)
   }
 
-  async function mark(next: FrameStatus, advance: boolean) {
-    if (!frame) return
-    if (next === FrameStatus.EMPTY && frameBoxes.length > 0) {
-      flash.info('Frame has boxes', 'Delete them before marking the frame empty.')
+  // Reads the stores directly because key repeat can fire again before React
+  // re-renders, and a stale frame would get marked twice while the one after
+  // it was skipped. A held key only marks frames that have been drawn, so it
+  // can never verify a frame the labeler has not seen.
+  function mark(next: FrameStatus, advance: boolean, e?: KeyboardEvent) {
+    const live = useWorkspaceStore.getState()
+    const f = live.frames[live.index]
+    if (!f || (e?.repeat && f.id !== live.drawnFrameId)) return
+    if (next === FrameStatus.EMPTY && Object.keys(labels().boxes[idKey(f.id)] ?? {}).length > 0) {
+      if (!e?.repeat) flash.info('Frame has boxes', 'Delete them before marking the frame empty.')
       return
     }
-    const ok = await labels().setFrameStatus(frame.id, next)
-    if (ok && advance) {
-      if (index < frames.length - 1) step(1)
-      else flash.info('Last frame of the clip')
-    }
+    void labels().setFrameStatus(f.id, next)
+    if (!advance) return
+    if (live.index < live.frames.length - 1) step(1)
+    else if (!e?.repeat) flash.info('Last frame of the clip')
   }
 
   const isGold = !!frame && (goldEdits[idKey(frame.id)] ?? frame.gold)
@@ -395,9 +447,9 @@ export function ClipPage() {
           d: nextDrift,
           g: toggleGold,
           m: toggleFlag,
-          ' ': () => void mark(FrameStatus.LABELED, true),
-          e: () => void mark(FrameStatus.EMPTY, true),
-          u: () => void mark(FrameStatus.UNLABELED, false),
+          ' ': (e) => mark(FrameStatus.LABELED, true, e),
+          e: (e) => mark(FrameStatus.EMPTY, true, e),
+          u: (e) => mark(FrameStatus.UNLABELED, false, e),
           'mod+z': () => void labels().undo(),
         },
   )
@@ -431,8 +483,8 @@ export function ClipPage() {
 
   const { video, clip } = data
   const zoomPct = fitScale > 0 ? Math.round((view.scale / fitScale) * 100) : 100
-  const selectedKey = selectedTrackId !== null ? idKey(selectedTrackId) : null
-  const otherLabeler = takenByOther(clip.claim, me?.id) ? clip.claim?.user?.name : undefined
+  const otherLabeler =
+    takenByOther(clip.claim, me?.id) && takenClipId !== clip.id ? clip.claim?.user?.name : undefined
 
   const navbar = (
     <Navbar>
@@ -496,7 +548,7 @@ export function ClipPage() {
           plain
           title="Mark empty (E)"
           disabled={switching || frameBoxes.length > 0 || status === FrameStatus.EMPTY}
-          onClick={() => void mark(FrameStatus.EMPTY, true)}
+          onClick={() => mark(FrameStatus.EMPTY, true)}
         >
           <NoSymbolIcon data-slot="icon" />
           Empty
@@ -505,7 +557,7 @@ export function ClipPage() {
           color="emerald"
           disabled={switching}
           title="Mark labeled and continue (Space)"
-          onClick={() => void mark(FrameStatus.LABELED, true)}
+          onClick={() => mark(FrameStatus.LABELED, true)}
         >
           <CheckIcon data-slot="icon" />
           Done
@@ -565,6 +617,15 @@ export function ClipPage() {
         <NavbarItem aria-label="Keyboard shortcuts" onClick={() => setShowHelp(true)}>
           <QuestionMarkCircleIcon data-slot="icon" />
         </NavbarItem>
+        {canDelete && (
+          <NavbarItem
+            aria-label="Delete clip"
+            title="Delete clip"
+            onClick={() => setDeleting(true)}
+          >
+            <TrashIcon data-slot="icon" />
+          </NavbarItem>
+        )}
       </NavbarSection>
     </Navbar>
   )
@@ -587,6 +648,12 @@ export function ClipPage() {
             <QuestionMarkCircleIcon data-slot="icon" />
             <SidebarLabel>Keyboard shortcuts</SidebarLabel>
           </SidebarItem>
+          {canDelete && (
+            <SidebarItem onClick={() => setDeleting(true)}>
+              <TrashIcon data-slot="icon" />
+              <SidebarLabel>Delete clip</SidebarLabel>
+            </SidebarItem>
+          )}
         </SidebarSection>
       </SidebarBody>
     </Sidebar>
@@ -609,22 +676,38 @@ export function ClipPage() {
         </div>
 
         <Timeline
-          frameClass={(i) => {
-            const f = frames[i]
-            const byTrack = boxes[idKey(f.id)]
-            return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0)
-              .bar
+          frameClasses={frameBars}
+          trackClasses={selectedBars}
+          flagged={driftFlags}
+          marked={reviewMarks}
+        />
+        {/* Reviewer edits never take the claim, so they only get the badge. */}
+        <ConfirmAlert
+          open={!!otherLabeler && !canReview && !switching}
+          onClose={() => navigate(`/videos/${video.id}`)}
+          onConfirm={() => takeClip.mutate({ clipId: clip.id })}
+          busy={takeClip.isPending}
+          error={takeClip.error}
+          title="Label this clip anyway?"
+          description={`${otherLabeler} is already working on this clip.`}
+          confirmLabel="Label anyway"
+        />
+        <ConfirmAlert
+          open={deleting}
+          onClose={() => {
+            setDeleting(false)
+            deleteClip.reset()
           }}
-          trackClass={
-            selectedKey
-              ? (i) =>
-                  boxes[idKey(frames[i].id)]?.[selectedKey]
-                    ? 'bg-sky-500 dark:bg-sky-400'
-                    : undefined
-              : undefined
+          onConfirm={() => deleteClip.mutate({ id: clip.id })}
+          busy={deleteClip.isPending}
+          error={deleteClip.error}
+          title={`Delete clip ${clip.index + 1}?`}
+          description={
+            boxCount > 0
+              ? `This removes its frames and ${plural(boxCount, 'box', 'boxes')}. It cannot be undone.`
+              : 'This removes its frames. It cannot be undone.'
           }
-          flagged={(i) => review.drift.has(idKey(frames[i].id))}
-          marked={(i) => !!reviewOf(frames[i])}
+          confirmLabel="Delete clip"
         />
         <ShortcutsDialog
           open={showHelp}

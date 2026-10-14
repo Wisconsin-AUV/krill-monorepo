@@ -263,6 +263,86 @@ func (x *GetClipResponse) GetTrackingTrackIds() []int64 {
 	return nil
 }
 
+type DeleteClipRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteClipRequest) Reset() {
+	*x = DeleteClipRequest{}
+	mi := &file_krill_v1_clip_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteClipRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteClipRequest) ProtoMessage() {}
+
+func (x *DeleteClipRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_clip_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteClipRequest.ProtoReflect.Descriptor instead.
+func (*DeleteClipRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_clip_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DeleteClipRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type DeleteClipResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteClipResponse) Reset() {
+	*x = DeleteClipResponse{}
+	mi := &file_krill_v1_clip_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteClipResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteClipResponse) ProtoMessage() {}
+
+func (x *DeleteClipResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_clip_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteClipResponse.ProtoReflect.Descriptor instead.
+func (*DeleteClipResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_clip_proto_rawDescGZIP(), []int{4}
+}
+
 var File_krill_v1_clip_proto protoreflect.FileDescriptor
 
 const file_krill_v1_clip_proto_rawDesc = "" +
@@ -287,9 +367,14 @@ const file_krill_v1_clip_proto_rawDesc = "" +
 	"nextClipId\x12'\n" +
 	"\x06tracks\x18\x06 \x03(\v2\x0f.krill.v1.TrackR\x06tracks\x126\n" +
 	"\vannotations\x18\a \x03(\v2\x14.krill.v1.AnnotationR\vannotations\x12,\n" +
-	"\x12tracking_track_ids\x18\b \x03(\x03R\x10trackingTrackIds2O\n" +
+	"\x12tracking_track_ids\x18\b \x03(\x03R\x10trackingTrackIds\"#\n" +
+	"\x11DeleteClipRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x14\n" +
+	"\x12DeleteClipResponse2\x9a\x01\n" +
 	"\vClipService\x12@\n" +
-	"\aGetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00B\x8a\x01\n" +
+	"\aGetClip\x12\x18.krill.v1.GetClipRequest\x1a\x19.krill.v1.GetClipResponse\"\x00\x12I\n" +
+	"\n" +
+	"DeleteClip\x12\x1b.krill.v1.DeleteClipRequest\x1a\x1c.krill.v1.DeleteClipResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tClipProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -304,33 +389,37 @@ func file_krill_v1_clip_proto_rawDescGZIP() []byte {
 	return file_krill_v1_clip_proto_rawDescData
 }
 
-var file_krill_v1_clip_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_krill_v1_clip_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_krill_v1_clip_proto_goTypes = []any{
-	(*Frame)(nil),           // 0: krill.v1.Frame
-	(*GetClipRequest)(nil),  // 1: krill.v1.GetClipRequest
-	(*GetClipResponse)(nil), // 2: krill.v1.GetClipResponse
-	(FrameStatus)(0),        // 3: krill.v1.FrameStatus
-	(*Review)(nil),          // 4: krill.v1.Review
-	(*Video)(nil),           // 5: krill.v1.Video
-	(*Clip)(nil),            // 6: krill.v1.Clip
-	(*Track)(nil),           // 7: krill.v1.Track
-	(*Annotation)(nil),      // 8: krill.v1.Annotation
+	(*Frame)(nil),              // 0: krill.v1.Frame
+	(*GetClipRequest)(nil),     // 1: krill.v1.GetClipRequest
+	(*GetClipResponse)(nil),    // 2: krill.v1.GetClipResponse
+	(*DeleteClipRequest)(nil),  // 3: krill.v1.DeleteClipRequest
+	(*DeleteClipResponse)(nil), // 4: krill.v1.DeleteClipResponse
+	(FrameStatus)(0),           // 5: krill.v1.FrameStatus
+	(*Review)(nil),             // 6: krill.v1.Review
+	(*Video)(nil),              // 7: krill.v1.Video
+	(*Clip)(nil),               // 8: krill.v1.Clip
+	(*Track)(nil),              // 9: krill.v1.Track
+	(*Annotation)(nil),         // 10: krill.v1.Annotation
 }
 var file_krill_v1_clip_proto_depIdxs = []int32{
-	3, // 0: krill.v1.Frame.status:type_name -> krill.v1.FrameStatus
-	4, // 1: krill.v1.Frame.review:type_name -> krill.v1.Review
-	5, // 2: krill.v1.GetClipResponse.video:type_name -> krill.v1.Video
-	6, // 3: krill.v1.GetClipResponse.clip:type_name -> krill.v1.Clip
-	0, // 4: krill.v1.GetClipResponse.frames:type_name -> krill.v1.Frame
-	7, // 5: krill.v1.GetClipResponse.tracks:type_name -> krill.v1.Track
-	8, // 6: krill.v1.GetClipResponse.annotations:type_name -> krill.v1.Annotation
-	1, // 7: krill.v1.ClipService.GetClip:input_type -> krill.v1.GetClipRequest
-	2, // 8: krill.v1.ClipService.GetClip:output_type -> krill.v1.GetClipResponse
-	8, // [8:9] is the sub-list for method output_type
-	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	5,  // 0: krill.v1.Frame.status:type_name -> krill.v1.FrameStatus
+	6,  // 1: krill.v1.Frame.review:type_name -> krill.v1.Review
+	7,  // 2: krill.v1.GetClipResponse.video:type_name -> krill.v1.Video
+	8,  // 3: krill.v1.GetClipResponse.clip:type_name -> krill.v1.Clip
+	0,  // 4: krill.v1.GetClipResponse.frames:type_name -> krill.v1.Frame
+	9,  // 5: krill.v1.GetClipResponse.tracks:type_name -> krill.v1.Track
+	10, // 6: krill.v1.GetClipResponse.annotations:type_name -> krill.v1.Annotation
+	1,  // 7: krill.v1.ClipService.GetClip:input_type -> krill.v1.GetClipRequest
+	3,  // 8: krill.v1.ClipService.DeleteClip:input_type -> krill.v1.DeleteClipRequest
+	2,  // 9: krill.v1.ClipService.GetClip:output_type -> krill.v1.GetClipResponse
+	4,  // 10: krill.v1.ClipService.DeleteClip:output_type -> krill.v1.DeleteClipResponse
+	9,  // [9:11] is the sub-list for method output_type
+	7,  // [7:9] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_clip_proto_init() }
@@ -347,7 +436,7 @@ func file_krill_v1_clip_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_clip_proto_rawDesc), len(file_krill_v1_clip_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

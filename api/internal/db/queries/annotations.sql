@@ -14,8 +14,9 @@ UPDATE tracks SET label_type_id = $2, attributes = $3
 WHERE id = $1
 RETURNING *;
 
--- name: DeleteTrack :execrows
-DELETE FROM tracks WHERE id = $1;
+-- name: DeleteTrack :one
+DELETE FROM tracks WHERE id = $1
+RETURNING clip_id;
 
 -- name: ListClipTracks :many
 SELECT * FROM tracks WHERE clip_id = $1 ORDER BY id;
@@ -43,8 +44,9 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     updated_at = now()
 RETURNING *;
 
--- name: DeleteAnnotation :execrows
-DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2;
+-- name: DeleteAnnotation :one
+DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2
+RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = track_id)::bigint AS clip_id;
 
 -- name: CountTrackAnnotations :one
 SELECT count(*)::int FROM annotations WHERE track_id = $1;

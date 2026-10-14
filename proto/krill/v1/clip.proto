@@ -9,6 +9,9 @@ import "krill/v1/video.proto";
 service ClipService {
   // GetClip returns everything the labeling view needs for one clip.
   rpc GetClip(GetClipRequest) returns (GetClipResponse) {}
+  // DeleteClip removes a clip with its frames and labels, and renumbers the
+  // clips after it so the video has no gap.
+  rpc DeleteClip(DeleteClipRequest) returns (DeleteClipResponse) {}
 }
 
 message Frame {
@@ -41,3 +44,9 @@ message GetClipResponse {
   // Tracks the GPU worker has queued or is still tracking.
   repeated int64 tracking_track_ids = 8;
 }
+
+message DeleteClipRequest {
+  int64 id = 1;
+}
+
+message DeleteClipResponse {}

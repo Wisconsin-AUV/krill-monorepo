@@ -4,6 +4,13 @@ INSERT INTO clip_claims (clip_id, user_id) VALUES (@clip_id, @user_id)
 ON CONFLICT (clip_id) DO UPDATE SET user_id = excluded.user_id, active_at = now()
 WHERE clip_claims.user_id = excluded.user_id OR clip_claims.active_at < @stale_before;
 
+-- name: TakeClip :exec
+INSERT INTO clip_claims (clip_id, user_id) VALUES (@clip_id, @user_id)
+ON CONFLICT (clip_id) DO UPDATE SET user_id = excluded.user_id, active_at = now();
+
+-- name: RefreshClipClaim :exec
+UPDATE clip_claims SET active_at = now() WHERE clip_id = @clip_id AND user_id = @user_id;
+
 -- name: ReleaseClipClaim :exec
 DELETE FROM clip_claims WHERE clip_id = @clip_id AND user_id = @user_id;
 
