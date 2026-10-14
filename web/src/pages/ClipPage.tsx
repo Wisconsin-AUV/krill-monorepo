@@ -254,17 +254,22 @@ export function ClipPage() {
     if (clipId) navigate(`/clips/${clipId}`)
   }
 
-  async function mark(next: FrameStatus, advance: boolean) {
-    if (!frame) return
-    if (next === FrameStatus.EMPTY && frameBoxes.length > 0) {
-      flash.info('Frame has boxes', 'Delete them before marking the frame empty.')
+  // Reads the stores directly because key repeat can fire again before React
+  // re-renders, and a stale frame would get marked twice while the one after
+  // it was skipped. A held key only marks frames that have been drawn, so it
+  // can never verify a frame the labeler has not seen.
+  function mark(next: FrameStatus, advance: boolean, e?: KeyboardEvent) {
+    const live = useWorkspaceStore.getState()
+    const f = live.frames[live.index]
+    if (!f || (e?.repeat && f.id !== live.drawnFrameId)) return
+    if (next === FrameStatus.EMPTY && Object.keys(labels().boxes[idKey(f.id)] ?? {}).length > 0) {
+      if (!e?.repeat) flash.info('Frame has boxes', 'Delete them before marking the frame empty.')
       return
     }
-    const ok = await labels().setFrameStatus(frame.id, next)
-    if (ok && advance) {
-      if (index < frames.length - 1) step(1)
-      else flash.info('Last frame of the clip')
-    }
+    void labels().setFrameStatus(f.id, next)
+    if (!advance) return
+    if (live.index < live.frames.length - 1) step(1)
+    else if (!e?.repeat) flash.info('Last frame of the clip')
   }
 
   const isGold = !!frame && (goldEdits[idKey(frame.id)] ?? frame.gold)
@@ -395,9 +400,9 @@ export function ClipPage() {
           d: nextDrift,
           g: toggleGold,
           m: toggleFlag,
-          ' ': () => void mark(FrameStatus.LABELED, true),
-          e: () => void mark(FrameStatus.EMPTY, true),
-          u: () => void mark(FrameStatus.UNLABELED, false),
+          ' ': (e) => mark(FrameStatus.LABELED, true, e),
+          e: (e) => mark(FrameStatus.EMPTY, true, e),
+          u: (e) => mark(FrameStatus.UNLABELED, false, e),
           'mod+z': () => void labels().undo(),
         },
   )
@@ -496,7 +501,7 @@ export function ClipPage() {
           plain
           title="Mark empty (E)"
           disabled={switching || frameBoxes.length > 0 || status === FrameStatus.EMPTY}
-          onClick={() => void mark(FrameStatus.EMPTY, true)}
+          onClick={() => mark(FrameStatus.EMPTY, true)}
         >
           <NoSymbolIcon data-slot="icon" />
           Empty
@@ -505,7 +510,7 @@ export function ClipPage() {
           color="emerald"
           disabled={switching}
           title="Mark labeled and continue (Space)"
-          onClick={() => void mark(FrameStatus.LABELED, true)}
+          onClick={() => mark(FrameStatus.LABELED, true)}
         >
           <CheckIcon data-slot="icon" />
           Done

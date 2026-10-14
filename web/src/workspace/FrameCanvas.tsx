@@ -32,6 +32,7 @@ export function FrameCanvas({
   const setStageSize = useWorkspaceStore((s) => s.setStageSize)
   const setView = useWorkspaceStore((s) => s.setView)
   const zoomAt = useWorkspaceStore((s) => s.zoomAt)
+  const setDrawnFrameId = useWorkspaceStore((s) => s.setDrawnFrameId)
   const [shown, setShown] = useState<CanvasImageSource | null>(null)
   const pan = useRef<{ x: number; y: number } | null>(null)
 
@@ -44,16 +45,20 @@ export function FrameCanvas({
 
   useEffect(() => {
     const source = fixed ?? entry
-    if (!source) return
+    if (!source || !frame) return
     let live = true
     source.ready.then(
-      (img) => live && setShown(img),
+      (img) => {
+        if (!live) return
+        setShown(img)
+        setDrawnFrameId(frame.id)
+      },
       () => undefined,
     )
     return () => {
       live = false
     }
-  }, [entry, fixed])
+  }, [frame, entry, fixed, setDrawnFrameId])
 
   useEffect(() => {
     for (let i = index + 1; i <= index + PRELOAD_AHEAD && i < frames.length; i++) {

@@ -169,17 +169,24 @@ export const useLabelStore = create<LabelState>((set, get) => {
     }
   }
 
-  function acceptProposals(frameId: bigint) {
+  function acceptProposals(frameId: bigint): Annotation[] {
+    const accepted: Annotation[] = []
     set((s) => {
       const byTrack = s.boxes[key(frameId)]
       if (!byTrack) return {}
       const frame: Record<Key, Annotation> = {}
       for (const [t, a] of Object.entries(byTrack)) {
-        frame[t] =
-          a.status === AnnotationStatus.PROPOSED ? { ...a, status: AnnotationStatus.VERIFIED } : a
+        if (a.status !== AnnotationStatus.PROPOSED) {
+          frame[t] = a
+          continue
+        }
+        const verified = { ...a, status: AnnotationStatus.VERIFIED }
+        accepted.push(verified)
+        frame[t] = verified
       }
-      return { boxes: { ...s.boxes, [key(frameId)]: frame } }
+      return accepted.length > 0 ? { boxes: { ...s.boxes, [key(frameId)]: frame } } : {}
     })
+    return accepted
   }
 
   function pushUndo(entry: UndoEntry) {
@@ -488,21 +495,34 @@ export const useLabelStore = create<LabelState>((set, get) => {
       return copied ?? 0
     },
 
+    // Applied before the server answers so holding space to verify is not
+    // throttled by the round-trip.
     setFrameStatus: async (frameId, status) => {
-      const prev = get().frameStatus[key(frameId)] ?? FrameStatus.UNLABELED
+      const k = key(frameId)
+      const prev = get().frameStatus[k] ?? FrameStatus.UNLABELED
+      set((s) => ({ frameStatus: { ...s.frameStatus, [k]: status } }))
+      const accepted = status === FrameStatus.LABELED ? acceptProposals(frameId) : []
+      const undo: UndoEntry = {
+        label: 'Undo frame status',
+        run: () =>
+          enqueue(async () => {
+            const r = await get().backend.setFrameStatus({ frameId, status: prev })
+            set((s) => ({ frameStatus: { ...s.frameStatus, [k]: r.status } }))
+          }),
+      }
+      if (prev !== status) pushUndo(undo)
       const ok = await withPending('Could not update frame', async () => {
-        const res = await get().backend.setFrameStatus({ frameId, status })
-        set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: res.status } }))
-        if (res.status === FrameStatus.LABELED) acceptProposals(frameId)
-        if (prev !== res.status) {
-          pushUndo({
-            label: 'Undo frame status',
-            run: () =>
-              enqueue(async () => {
-                const r = await get().backend.setFrameStatus({ frameId, status: prev })
-                set((s) => ({ frameStatus: { ...s.frameStatus, [key(frameId)]: r.status } }))
-              }),
-          })
+        try {
+          await get().backend.setFrameStatus({ frameId, status })
+        } catch (err) {
+          if (get().frameStatus[k] === status)
+            set((s) => ({ frameStatus: { ...s.frameStatus, [k]: prev } }))
+          for (const a of accepted) {
+            if (get().boxes[k]?.[key(a.trackId)] === a)
+              putBox({ ...a, status: AnnotationStatus.PROPOSED })
+          }
+          set((s) => ({ undoStack: s.undoStack.filter((e) => e !== undo) }))
+          throw err
         }
         return true
       })
