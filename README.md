@@ -28,6 +28,8 @@ The API image bundles the web app, so the full stack is served from `:8080`. Bro
 
 Admins open the admin panel from the shield in the top bar. It shows the running version and what changed in newer releases, checks the database, storage, GPU worker, email, and Slack, and charts CPU, memory, and GPU use for the API and each worker.
 
+Its Database page backs the database up to MinIO under `backups/`, by hand or daily at the hour `KRILL_BACKUP_SCHEDULE` sets in the API's time zone (UTC in Docker), keeping the newest `KRILL_BACKUP_KEEP` scheduled ones. Backups need `pg_dump` at least as new as the database, which the API image has. To restore one, download it and run `pg_restore --clean --if-exists -d "$KRILL_DATABASE_URL" krill-....dump` with the API stopped.
+
 Its Settings page edits every `KRILL_` variable except the ones the API needs to start or to be reached: the database, storage, listen address, public URL, and web directory. Saved settings apply without a restart. A variable set in the environment overrides the saved value and locks it in the panel, and an empty variable counts as unset.
 
 The SAM model setting applies to every worker between tasks. A worker started with its own `KRILL_SAM_MODEL` keeps that model, and the Compute page shows it as pinned.

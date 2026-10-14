@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/storage.proto";
+
+// DatabaseService describes the database and backs it up to the bucket with
+// pg_dump.
+service DatabaseService {
+  rpc GetDatabase(GetDatabaseRequest) returns (GetDatabaseResponse) {}
+  // ListBackups returns backups newest first.
+  rpc ListBackups(ListBackupsRequest) returns (ListBackupsResponse) {}
+  // CreateBackup queues a backup, or fails with FailedPrecondition while one
+  // is queued or running.
+  rpc CreateBackup(CreateBackupRequest) returns (CreateBackupResponse) {}
+  // GetBackupDownload returns a link to the dump that works for a few minutes.
+  rpc GetBackupDownload(GetBackupDownloadRequest) returns (GetBackupDownloadResponse) {}
+  rpc DeleteBackup(DeleteBackupRequest) returns (DeleteBackupResponse) {}
+}
+
+message GetDatabaseRequest {}
+
+message TableStats {
+  string schema = 1;
+  string name = 2;
+  int64 rows = 3;
+  // From the planner's statistics instead of counted.
+  bool rows_estimated = 4;
+  // Including indexes and TOAST.
+  uint64 total_bytes = 5;
+  uint64 index_bytes = 6;
+}
+
+message GetDatabaseResponse {
+  uint64 size_bytes = 1;
+  string server_version = 2;
+  // Goose migrations applied, and the newest this build has.
+  int64 schema_version = 3;
+  int64 latest_schema_version = 4;
+  int64 river_version = 5;
+  int64 latest_river_version = 6;
+  // Largest first.
+  repeated TableStats tables = 7;
+}
+
+message Backup {
+  int64 id = 1;
+  JobStatus status = 2;
+  // Made by the schedule instead of a person.
+  bool scheduled = 3;
+  // Empty for scheduled backups and deleted accounts.
+  string created_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  uint64 size_bytes = 7;
+  string error = 8;
+  // The file name a download saves as.
+  string filename = 9;
+}
+
+message BackupSchedule {
+  // Hour of the day in the API's time zone, or -1 when scheduled backups are
+  // off.
+  int32 hour = 1;
+  // Scheduled backups kept. Manual ones are kept until deleted.
+  int32 keep = 2;
+  google.protobuf.Timestamp next_at = 3;
+  // Like UTC or America/Chicago.
+  string time_zone = 4;
+}
+
+message ListBackupsRequest {}
+
+message ListBackupsResponse {
+  repeated Backup backups = 1;
+  BackupSchedule schedule = 2;
+  // Why backups can't run, such as pg_dump missing. Empty when they can.
+  string unavailable = 3;
+}
+
+message CreateBackupRequest {}
+
+message CreateBackupResponse {
+  Backup backup = 1;
+}
+
+message GetBackupDownloadRequest {
+  int64 id = 1;
+}
+
+message GetBackupDownloadResponse {
+  string url = 1;
+}
+
+message DeleteBackupRequest {
+  int64 id = 1;
+}
+
+message DeleteBackupResponse {}

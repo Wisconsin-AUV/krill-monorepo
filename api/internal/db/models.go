@@ -49,6 +49,18 @@ type AuditLog struct {
 	Ip         string             `json:"ip"`
 }
 
+type Backup struct {
+	ID         int64              `json:"id"`
+	Status     string             `json:"status"`
+	Scheduled  bool               `json:"scheduled"`
+	ObjectKey  string             `json:"object_key"`
+	SizeBytes  int64              `json:"size_bytes"`
+	Error      string             `json:"error"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+}
+
 type BoxEvent struct {
 	ID          int64              `json:"id"`
 	Kind        string             `json:"kind"`
@@ -199,6 +211,43 @@ type Setting struct {
 	Value     string             `json:"value"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
+type StorageOrphan struct {
+	ScanID     int64              `json:"scan_id"`
+	Key        string             `json:"key"`
+	UploadID   string             `json:"upload_id"`
+	Kind       string             `json:"kind"`
+	SizeBytes  int64              `json:"size_bytes"`
+	ModifiedAt pgtype.Timestamptz `json:"modified_at"`
+}
+
+type StorageScan struct {
+	ID                int64              `json:"id"`
+	Status            string             `json:"status"`
+	Error             string             `json:"error"`
+	CreatedBy         pgtype.UUID        `json:"created_by"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	FinishedAt        pgtype.Timestamptz `json:"finished_at"`
+	Categories        []byte             `json:"categories"`
+	CleanupStatus     string             `json:"cleanup_status"`
+	CleanupError      string             `json:"cleanup_error"`
+	CleanupBy         pgtype.UUID        `json:"cleanup_by"`
+	CleanupFinishedAt pgtype.Timestamptz `json:"cleanup_finished_at"`
+	DeletedObjects    int64              `json:"deleted_objects"`
+	DeletedBytes      int64              `json:"deleted_bytes"`
+	SkippedObjects    int64              `json:"skipped_objects"`
+}
+
+type StorageScanVideo struct {
+	ScanID         int64 `json:"scan_id"`
+	VideoID        int64 `json:"video_id"`
+	FrameBytes     int64 `json:"frame_bytes"`
+	Frames         int64 `json:"frames"`
+	EmbeddingBytes int64 `json:"embedding_bytes"`
+	Embeddings     int64 `json:"embeddings"`
+	SourceBytes    int64 `json:"source_bytes"`
+	OrphanBytes    int64 `json:"orphan_bytes"`
 }
 
 type Track struct {

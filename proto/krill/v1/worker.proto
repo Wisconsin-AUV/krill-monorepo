@@ -4,6 +4,7 @@ package krill.v1;
 
 import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
+import "krill/v1/log.proto";
 import "krill/v1/system.proto";
 
 // WorkerService is called by the GPU worker. Requests carry a worker token
@@ -129,6 +130,9 @@ message HeartbeatRequest {
   repeated GpuStats gpus = 8;
   // The task being worked on, or 0 when idle.
   int64 task_id = 9;
+  // Log records not yet sent, oldest first. A worker resends them until a
+  // heartbeat succeeds, so the API skips seqs it already has.
+  repeated LogRecord logs = 20;
   ModelLoadState model_state = 30;
   // Why the model failed to load.
   string model_error = 31;

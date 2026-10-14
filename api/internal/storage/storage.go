@@ -200,6 +200,22 @@ func (s *Store) Put(ctx context.Context, key string, r io.Reader, size int64, co
 	return nil
 }
 
+// streamPartSize bounds the memory PutStream buffers. minio-go's default for
+// an unknown size is over 500 MiB a part.
+const streamPartSize = 64 << 20
+
+// PutStream uploads r, whose length is unknown, in parts of streamPartSize.
+func (s *Store) PutStream(ctx context.Context, key string, r io.Reader, contentType string) error {
+	_, err := s.client.PutObject(ctx, s.bucket, key, r, -1, minio.PutObjectOptions{
+		ContentType: contentType,
+		PartSize:    streamPartSize,
+	})
+	if err != nil {
+		return fmt.Errorf("put %s: %w", key, err)
+	}
+	return nil
+}
+
 func (s *Store) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
 	if err != nil {

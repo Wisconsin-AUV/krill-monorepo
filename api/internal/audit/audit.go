@@ -49,6 +49,11 @@ const (
 	WorkerUnload        = "worker.unload"
 	WorkerTokenCreate   = "worker_token.create" //nolint:gosec // an action name, not a credential
 	WorkerTokenRevoke   = "worker_token.revoke"
+	StorageScan         = "storage.scan"
+	StorageCleanup      = "storage.cleanup"
+	BackupCreate        = "backup.create"
+	BackupDownload      = "backup.download"
+	BackupDelete        = "backup.delete"
 )
 
 const (
@@ -66,6 +71,8 @@ const (
 	TargetJob           = "job"
 	TargetWorker        = "worker"
 	TargetWorkerToken   = "worker_token"
+	TargetScan          = "storage_scan"
+	TargetBackup        = "backup"
 )
 
 type Entry struct {

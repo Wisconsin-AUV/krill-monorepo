@@ -51,6 +51,9 @@ var userRefs = []userRef{
 	{table: "box_events", column: "user_id", label: "Box decisions"},
 	{table: "box_events", column: "labeler_id", label: "Corrections received"},
 	{table: "worker_tokens", column: "created_by", label: "Worker tokens created"},
+	{table: "storage_scans", column: "created_by", label: "Storage scans started"},
+	{table: "storage_scans", column: "cleanup_by", label: "Storage cleanups"},
+	{table: "backups", column: "created_by", label: "Backups made"},
 	// Whoever is signed in as the source signs in again as the target, so a
 	// mistaken merge doesn't hand them the target's account.
 	{table: "sessions", column: "user_id", drop: true},

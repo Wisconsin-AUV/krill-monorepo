@@ -15,6 +15,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/auth"
+	"github.com/wauv/krill/api/internal/backup"
 	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
@@ -87,6 +88,7 @@ func (s *Service) GetStatus(ctx context.Context, req *krillv1.GetStatusRequest) 
 		s.checkWorker(ctx, cfg),
 		checkEmail(cfg),
 		checkSlack(cfg),
+		backup.Check(ctx, s.q, cfg, time.Now()),
 	}
 	return &krillv1.GetStatusResponse{
 		Version:   <-version,

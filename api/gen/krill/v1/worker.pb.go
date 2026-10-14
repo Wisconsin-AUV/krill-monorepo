@@ -1053,7 +1053,10 @@ type HeartbeatRequest struct {
 	Host        *HostStats             `protobuf:"bytes,7,opt,name=host,proto3" json:"host,omitempty"`
 	Gpus        []*GpuStats            `protobuf:"bytes,8,rep,name=gpus,proto3" json:"gpus,omitempty"`
 	// The task being worked on, or 0 when idle.
-	TaskId     int64          `protobuf:"varint,9,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	TaskId int64 `protobuf:"varint,9,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// Log records not yet sent, oldest first. A worker resends them until a
+	// heartbeat succeeds, so the API skips seqs it already has.
+	Logs       []*LogRecord   `protobuf:"bytes,20,rep,name=logs,proto3" json:"logs,omitempty"`
 	ModelState ModelLoadState `protobuf:"varint,30,opt,name=model_state,json=modelState,proto3,enum=krill.v1.ModelLoadState" json:"model_state,omitempty"`
 	// Why the model failed to load.
 	ModelError string `protobuf:"bytes,31,opt,name=model_error,json=modelError,proto3" json:"model_error,omitempty"`
@@ -1164,6 +1167,13 @@ func (x *HeartbeatRequest) GetTaskId() int64 {
 		return x.TaskId
 	}
 	return 0
+}
+
+func (x *HeartbeatRequest) GetLogs() []*LogRecord {
+	if x != nil {
+		return x.Logs
+	}
+	return nil
 }
 
 func (x *HeartbeatRequest) GetModelState() ModelLoadState {
@@ -1343,7 +1353,7 @@ var File_krill_v1_worker_proto protoreflect.FileDescriptor
 
 const file_krill_v1_worker_proto_rawDesc = "" +
 	"\n" +
-	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
+	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x12krill/v1/log.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
 	"\x0fNextTaskRequest\"\xaa\x01\n" +
 	"\x10NextTaskResponse\x12+\n" +
 	"\x05track\x18\x01 \x01(\v2\x13.krill.v1.TrackTaskH\x00R\x05track\x124\n" +
@@ -1396,7 +1406,7 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x0fFailTaskRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\"\x12\n" +
-	"\x10FailTaskResponse\"\xb8\x05\n" +
+	"\x10FailTaskResponse\"\xe1\x05\n" +
 	"\x10HeartbeatRequest\x12\x1f\n" +
 	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\x12\x1a\n" +
@@ -1408,7 +1418,8 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"started_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12'\n" +
 	"\x04host\x18\a \x01(\v2\x13.krill.v1.HostStatsR\x04host\x12&\n" +
 	"\x04gpus\x18\b \x03(\v2\x12.krill.v1.GpuStatsR\x04gpus\x12\x17\n" +
-	"\atask_id\x18\t \x01(\x03R\x06taskId\x129\n" +
+	"\atask_id\x18\t \x01(\x03R\x06taskId\x12'\n" +
+	"\x04logs\x18\x14 \x03(\v2\x13.krill.v1.LogRecordR\x04logs\x129\n" +
 	"\vmodel_state\x18\x1e \x01(\x0e2\x18.krill.v1.ModelLoadStateR\n" +
 	"modelState\x12\x1f\n" +
 	"\vmodel_error\x18\x1f \x01(\tR\n" +
@@ -1487,6 +1498,7 @@ var file_krill_v1_worker_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),   // 23: google.protobuf.Timestamp
 	(*HostStats)(nil),               // 24: krill.v1.HostStats
 	(*GpuStats)(nil),                // 25: krill.v1.GpuStats
+	(*LogRecord)(nil),               // 26: krill.v1.LogRecord
 }
 var file_krill_v1_worker_proto_depIdxs = []int32{
 	5,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
@@ -1504,26 +1516,27 @@ var file_krill_v1_worker_proto_depIdxs = []int32{
 	23, // 12: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
 	24, // 13: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
 	25, // 14: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
-	0,  // 15: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
-	20, // 16: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
-	1,  // 17: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
-	2,  // 18: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
-	10, // 19: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
-	12, // 20: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
-	14, // 21: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
-	16, // 22: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
-	18, // 23: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
-	3,  // 24: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
-	11, // 25: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
-	13, // 26: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
-	15, // 27: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
-	17, // 28: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
-	19, // 29: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
-	24, // [24:30] is the sub-list for method output_type
-	18, // [18:24] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	26, // 15: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
+	0,  // 16: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
+	20, // 17: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
+	1,  // 18: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
+	2,  // 19: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
+	10, // 20: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
+	12, // 21: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
+	14, // 22: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
+	16, // 23: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
+	18, // 24: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
+	3,  // 25: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
+	11, // 26: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
+	13, // 27: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
+	15, // 28: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
+	17, // 29: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
+	19, // 30: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
+	25, // [25:31] is the sub-list for method output_type
+	19, // [19:25] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_worker_proto_init() }
@@ -1532,6 +1545,7 @@ func file_krill_v1_worker_proto_init() {
 		return
 	}
 	file_krill_v1_annotation_proto_init()
+	file_krill_v1_log_proto_init()
 	file_krill_v1_system_proto_init()
 	file_krill_v1_worker_proto_msgTypes[1].OneofWrappers = []any{
 		(*NextTaskResponse_Track)(nil),

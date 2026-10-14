@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// StorageService breaks down what the bucket holds and cleans up objects no
+// database row refers to.
+service StorageService {
+  // GetStorageReport returns the latest scan.
+  rpc GetStorageReport(GetStorageReportRequest) returns (GetStorageReportResponse) {}
+  // ScanStorage queues a scan, or fails with FailedPrecondition while a scan
+  // or cleanup is queued or running.
+  rpc ScanStorage(ScanStorageRequest) returns (ScanStorageResponse) {}
+  // CleanUpStorage deletes the latest scan's orphans that still have no row
+  // and haven't changed since.
+  rpc CleanUpStorage(CleanUpStorageRequest) returns (CleanUpStorageResponse) {}
+}
+
+enum ObjectKind {
+  OBJECT_KIND_UNSPECIFIED = 0;
+  // Uploaded videos.
+  OBJECT_KIND_SOURCE = 1;
+  OBJECT_KIND_FRAME = 2;
+  OBJECT_KIND_EMBEDDING = 3;
+  OBJECT_KIND_EXPORT = 4;
+  OBJECT_KIND_LABEL_EXAMPLE = 5;
+  OBJECT_KIND_BACKUP = 6;
+  // Unfinished multipart uploads.
+  OBJECT_KIND_UPLOAD = 7;
+  // Keys Krill doesn't write. Never orphans.
+  OBJECT_KIND_OTHER = 8;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_QUEUED = 1;
+  JOB_STATUS_RUNNING = 2;
+  JOB_STATUS_DONE = 3;
+  JOB_STATUS_FAILED = 4;
+}
+
+message ObjectCategory {
+  ObjectKind kind = 1;
+  uint64 bytes = 2;
+  int64 objects = 3;
+  // Objects with no row, included in bytes and objects.
+  uint64 orphan_bytes = 4;
+  int64 orphan_objects = 5;
+  // Rows whose object is gone.
+  int64 missing_objects = 6;
+  // A few of the missing keys.
+  repeated string missing_samples = 7;
+}
+
+message VideoUsage {
+  int64 video_id = 1;
+  // Empty when the video was deleted.
+  string name = 2;
+  uint64 frame_bytes = 3;
+  int64 frames = 4;
+  uint64 embedding_bytes = 5;
+  int64 embeddings = 6;
+  uint64 source_bytes = 7;
+  uint64 orphan_bytes = 8;
+}
+
+message Orphan {
+  string key = 1;
+  ObjectKind kind = 2;
+  uint64 bytes = 3;
+  google.protobuf.Timestamp modified_at = 4;
+}
+
+message StorageCleanup {
+  JobStatus status = 1;
+  // Empty when the account was deleted.
+  string requested_by = 2;
+  google.protobuf.Timestamp finished_at = 3;
+  int64 deleted_objects = 4;
+  uint64 deleted_bytes = 5;
+  // Orphans that gained a row, changed, or were already gone.
+  int64 skipped_objects = 6;
+  string error = 7;
+}
+
+message StorageScan {
+  int64 id = 1;
+  JobStatus status = 2;
+  string error = 3;
+  // Empty when the account was deleted.
+  string requested_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  repeated ObjectCategory categories = 7;
+  // Largest first.
+  repeated VideoUsage videos = 8;
+  // Unset until someone cleans up after this scan.
+  StorageCleanup cleanup = 9;
+}
+
+message GetStorageReportRequest {}
+
+message GetStorageReportResponse {
+  // Unset before the first scan.
+  StorageScan scan = 1;
+  // The latest finished scan, when scan is still queued or running.
+  StorageScan previous = 2;
+  // The largest orphans of the scan shown.
+  repeated Orphan orphans = 3;
+}
+
+message ScanStorageRequest {}
+
+message ScanStorageResponse {
+  StorageScan scan = 1;
+}
+
+message CleanUpStorageRequest {
+  // The scan the admin confirmed, so a newer scan isn't cleaned up unseen.
+  int64 scan_id = 1;
+}
+
+message CleanUpStorageResponse {
+  StorageScan scan = 1;
+}

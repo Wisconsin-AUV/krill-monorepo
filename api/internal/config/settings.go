@@ -1,5 +1,10 @@
 package config
 
+import (
+	"fmt"
+	"strconv"
+)
+
 type Kind int
 
 const (
@@ -151,6 +156,23 @@ var Settings = []Setting{
 		Kind:        KindInt,
 		Default:     "3",
 	},
+	{
+		Key:         "KRILL_BACKUP_SCHEDULE",
+		Group:       "Backups",
+		Label:       "Daily backup",
+		Description: "Back up the database with pg_dump at this hour, in the API's time zone.",
+		Kind:        KindChoice,
+		Choices:     backupHours(),
+		Default:     BackupOff,
+	},
+	{
+		Key:         "KRILL_BACKUP_KEEP",
+		Group:       "Backups",
+		Label:       "Backups kept",
+		Description: "Older scheduled backups are deleted. Backups made by hand are kept.",
+		Kind:        KindInt,
+		Default:     "7",
+	},
 	{Key: "KRILL_PUBLIC_URL", Group: "Server", Label: "Public URL", Default: "http://localhost:8080", EnvOnly: true},
 	{Key: "KRILL_API_ADDR", Group: "Server", Label: "Listen address", Default: ":8080", EnvOnly: true},
 	{Key: "KRILL_DATABASE_URL", Group: "Server", Label: "Database URL", Kind: KindSecret, EnvOnly: true},
@@ -175,6 +197,17 @@ var Settings = []Setting{
 		},
 		Default: "facebook/sam2.1-hiera-small",
 	},
+}
+
+// BackupOff is KRILL_BACKUP_SCHEDULE's value for no scheduled backups.
+const BackupOff = "off"
+
+func backupHours() []Choice {
+	out := []Choice{{BackupOff, "Off"}}
+	for h := range 24 {
+		out = append(out, Choice{strconv.Itoa(h), fmt.Sprintf("%02d:00", h)})
+	}
+	return out
 }
 
 var (

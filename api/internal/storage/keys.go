@@ -39,3 +39,9 @@ func DatasetKey(id int64) string {
 func LabelExamplesPrefix(labelTypeID int64) string {
 	return fmt.Sprintf("label-types/%d/examples/", labelTypeID)
 }
+
+const BackupsPrefix = "backups/"
+
+func BackupKey(name string) string {
+	return BackupsPrefix + name
+}

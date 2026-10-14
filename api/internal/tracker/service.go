@@ -14,6 +14,7 @@ import (
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/logs"
 	"github.com/wauv/krill/api/internal/rpc"
 )
 
@@ -29,6 +30,7 @@ type Service struct {
 	dispatcher *Dispatcher
 	nodes      *compute.Registry
 	model      func() string
+	logs       *logs.Hub
 }
 
 func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher, nodes *compute.Registry) *Service {
@@ -39,6 +41,12 @@ func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher, nodes *compute.Regis
 // returns.
 func (s *Service) WithModel(model func() string) *Service {
 	s.model = model
+	return s
+}
+
+// WithLogs keeps the log records workers send with heartbeats in hub.
+func (s *Service) WithLogs(hub *logs.Hub) *Service {
+	s.logs = hub
 	return s
 }
 
@@ -228,6 +236,9 @@ func (s *Service) Heartbeat(ctx context.Context, req *krillv1.HeartbeatRequest) 
 		TokenName: token.TokenName,
 		CommandID: req.GetCommandId(),
 	})
+	if s.logs != nil {
+		s.logs.RecordWorker(req.GetInstanceId(), req.GetHostname(), req.GetLogs())
+	}
 	res := &krillv1.HeartbeatResponse{Command: cmd}
 	if s.model != nil {
 		res.Model = s.model()

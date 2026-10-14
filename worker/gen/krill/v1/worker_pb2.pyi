@@ -2,6 +2,7 @@ import datetime
 
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from krill.v1 import annotation_pb2 as _annotation_pb2
+from krill.v1 import log_pb2 as _log_pb2
 from krill.v1 import system_pb2 as _system_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -163,7 +164,7 @@ class FailTaskResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class HeartbeatRequest(_message.Message):
-    __slots__ = ("instance_id", "hostname", "version", "model", "accelerator", "started_at", "host", "gpus", "task_id", "model_state", "model_error", "model_memory_allocated_bytes", "model_memory_reserved_bytes", "pinned_model", "cached_models", "command_id", "supports_exemplars")
+    __slots__ = ("instance_id", "hostname", "version", "model", "accelerator", "started_at", "host", "gpus", "task_id", "logs", "model_state", "model_error", "model_memory_allocated_bytes", "model_memory_reserved_bytes", "pinned_model", "cached_models", "command_id", "supports_exemplars")
     INSTANCE_ID_FIELD_NUMBER: _ClassVar[int]
     HOSTNAME_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
@@ -173,6 +174,7 @@ class HeartbeatRequest(_message.Message):
     HOST_FIELD_NUMBER: _ClassVar[int]
     GPUS_FIELD_NUMBER: _ClassVar[int]
     TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    LOGS_FIELD_NUMBER: _ClassVar[int]
     MODEL_STATE_FIELD_NUMBER: _ClassVar[int]
     MODEL_ERROR_FIELD_NUMBER: _ClassVar[int]
     MODEL_MEMORY_ALLOCATED_BYTES_FIELD_NUMBER: _ClassVar[int]
@@ -190,6 +192,7 @@ class HeartbeatRequest(_message.Message):
     host: _system_pb2.HostStats
     gpus: _containers.RepeatedCompositeFieldContainer[_system_pb2.GpuStats]
     task_id: int
+    logs: _containers.RepeatedCompositeFieldContainer[_log_pb2.LogRecord]
     model_state: ModelLoadState
     model_error: str
     model_memory_allocated_bytes: int
@@ -198,7 +201,7 @@ class HeartbeatRequest(_message.Message):
     cached_models: _containers.RepeatedScalarFieldContainer[str]
     command_id: int
     supports_exemplars: bool
-    def __init__(self, instance_id: _Optional[str] = ..., hostname: _Optional[str] = ..., version: _Optional[str] = ..., model: _Optional[str] = ..., accelerator: _Optional[str] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., host: _Optional[_Union[_system_pb2.HostStats, _Mapping]] = ..., gpus: _Optional[_Iterable[_Union[_system_pb2.GpuStats, _Mapping]]] = ..., task_id: _Optional[int] = ..., model_state: _Optional[_Union[ModelLoadState, str]] = ..., model_error: _Optional[str] = ..., model_memory_allocated_bytes: _Optional[int] = ..., model_memory_reserved_bytes: _Optional[int] = ..., pinned_model: _Optional[str] = ..., cached_models: _Optional[_Iterable[str]] = ..., command_id: _Optional[int] = ..., supports_exemplars: _Optional[bool] = ...) -> None: ...
+    def __init__(self, instance_id: _Optional[str] = ..., hostname: _Optional[str] = ..., version: _Optional[str] = ..., model: _Optional[str] = ..., accelerator: _Optional[str] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., host: _Optional[_Union[_system_pb2.HostStats, _Mapping]] = ..., gpus: _Optional[_Iterable[_Union[_system_pb2.GpuStats, _Mapping]]] = ..., task_id: _Optional[int] = ..., logs: _Optional[_Iterable[_Union[_log_pb2.LogRecord, _Mapping]]] = ..., model_state: _Optional[_Union[ModelLoadState, str]] = ..., model_error: _Optional[str] = ..., model_memory_allocated_bytes: _Optional[int] = ..., model_memory_reserved_bytes: _Optional[int] = ..., pinned_model: _Optional[str] = ..., cached_models: _Optional[_Iterable[str]] = ..., command_id: _Optional[int] = ..., supports_exemplars: _Optional[bool] = ...) -> None: ...
 
 class HeartbeatResponse(_message.Message):
     __slots__ = ("model", "command", "cancel_task_id")

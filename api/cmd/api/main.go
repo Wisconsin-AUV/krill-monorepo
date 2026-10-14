@@ -26,6 +26,7 @@ import (
 	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
+	"github.com/wauv/krill/api/internal/backup"
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/config"
@@ -38,12 +39,14 @@ import (
 	"github.com/wauv/krill/api/internal/insight"
 	"github.com/wauv/krill/api/internal/invite"
 	"github.com/wauv/krill/api/internal/jobmeta"
+	"github.com/wauv/krill/api/internal/logs"
 	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/settings"
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/storagescan"
 	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/tracker"
 	"github.com/wauv/krill/api/internal/user"
@@ -85,16 +88,17 @@ func main() {
 	if version == "dev" {
 		version = commitVersion()
 	}
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logHub := logs.NewHub()
+	logger := slog.New(logs.NewHandler(slog.NewJSONHandler(os.Stdout, nil), logHub.API()))
 	slog.SetDefault(logger)
 
-	if err := run(); err != nil {
+	if err := run(logHub); err != nil {
 		slog.Error("api exited", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(logHub *logs.Hub) error {
 	// Everything else can be saved in the database, so it is parsed once
 	// the database is reachable.
 	databaseURL, ok := config.Env("KRILL_DATABASE_URL")
@@ -142,6 +146,16 @@ func run() error {
 	} else if n > 0 {
 		slog.Warn("marked interrupted exports as failed", "count", n)
 	}
+	if n, err := db.New(pool).FailInterruptedStorageScans(ctx); err != nil {
+		return fmt.Errorf("fail interrupted storage scans: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted storage scans as failed", "count", n)
+	}
+	if n, err := db.New(pool).FailInterruptedBackups(ctx); err != nil {
+		return fmt.Errorf("fail interrupted backups: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted backups as failed", "count", n)
+	}
 
 	store, err := storage.New(ctx, storage.Config{
 		Endpoint:       cfg.S3Endpoint,
@@ -169,6 +183,11 @@ func run() error {
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewEmbedWorker(pool, store, dispatcher))
+	liveConfig := func() config.Config { return live.Load().cfg }
+	river.AddWorker(workers, storagescan.NewScanWorker(pool, store))
+	river.AddWorker(workers, storagescan.NewCleanupWorker(pool, store))
+	river.AddWorker(workers, backup.NewWorker(pool, store, databaseURL, liveConfig))
+	river.AddWorker(workers, backup.NewScheduleWorker(pool, liveConfig))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
@@ -176,9 +195,16 @@ func run() error {
 			ingest.Queue:          {MaxWorkers: 1},
 			annotation.TrackQueue: {MaxWorkers: 1},
 			ingest.EmbedQueue:     {MaxWorkers: 1},
+			storagescan.Queue:     {MaxWorkers: 1},
+			backup.Queue:          {MaxWorkers: 1},
 		},
 		Workers:    workers,
 		Middleware: []rivertype.Middleware{&jobmeta.StartedBy{}},
+		PeriodicJobs: []*river.PeriodicJob{
+			river.NewPeriodicJob(river.PeriodicInterval(backup.ScheduleInterval), func() (river.JobArgs, *river.InsertOpts) {
+				return backup.ScheduleArgs{}, nil
+			}, &river.PeriodicJobOpts{RunOnStart: true}),
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("create job client: %w", err)
@@ -208,7 +234,8 @@ func run() error {
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes).
-		WithModel(func() string { return live.Load().cfg.SamModel }), rpcOpts))
+		WithModel(func() string { return live.Load().cfg.SamModel }).
+		WithLogs(logHub), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool, authService), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
@@ -239,6 +266,9 @@ func run() error {
 		Nodes:      nodes,
 		Dispatcher: dispatcher,
 	}), rpcOpts))
+	mux.Handle(krillv1connect.NewStorageServiceHandler(storagescan.NewService(pool, jobs), rpcOpts))
+	mux.Handle(krillv1connect.NewDatabaseServiceHandler(backup.NewService(pool, store, jobs, liveConfig), rpcOpts))
+	mux.Handle(krillv1connect.NewLogServiceHandler(logs.NewService(logHub), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

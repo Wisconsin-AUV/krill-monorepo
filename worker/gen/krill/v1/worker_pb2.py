@@ -24,10 +24,11 @@ _sym_db = _symbol_database.Default()
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 from krill.v1 import annotation_pb2 as krill_dot_v1_dot_annotation__pb2
+from krill.v1 import log_pb2 as krill_dot_v1_dot_log__pb2
 from krill.v1 import system_pb2 as krill_dot_v1_dot_system__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/worker.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x15krill/v1/system.proto\"\x11\n\x0fNextTaskRequest\"\xaa\x01\n\x10NextTaskResponse\x12+\n\x05track\x18\x01 \x01(\x0b\x32\x13.krill.v1.TrackTaskH\x00R\x05track\x12\x34\n\x08\x65xemplar\x18\x02 \x01(\x0b\x32\x16.krill.v1.ExemplarTaskH\x00R\x08\x65xemplar\x12+\n\x05\x65mbed\x18\x03 \x01(\x0b\x32\x13.krill.v1.EmbedTaskH\x00R\x05\x65mbedB\x06\n\x04task\"R\n\tTaskFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12#\n\rembedding_url\x18\x03 \x01(\tR\x0c\x65mbeddingUrl\"\xc7\x01\n\tTrackTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.TaskFrameR\x06\x66rames\x12\'\n\x05point\x18\x03 \x01(\x0b\x32\x0f.krill.v1.PointH\x00R\x05point\x12!\n\x03\x62ox\x18\x04 \x01(\x0b\x32\r.krill.v1.BoxH\x00R\x03\x62ox\x12\'\n\x0f\x65mbedding_model\x18\x05 \x01(\tR\x0e\x65mbeddingModelB\x08\n\x06prompt\"I\n\tEmbedTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12,\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x14.krill.v1.EmbedFrameR\x06\x66rames\"M\n\nEmbedFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n\nupload_url\x18\x03 \x01(\tR\tuploadUrl\"j\n\x0c\x45xemplarTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12)\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x13.krill.v1.TaskFrameR\x05\x66rame\x12\x1f\n\x03\x62ox\x18\x03 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"H\n\nTrackedBox\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x1f\n\x03\x62ox\x18\x02 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"\x83\x01\n\x12ReportTrackRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12*\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\x14.krill.v1.TrackedBoxR\x05\x62oxes\x12\x12\n\x04\x64one\x18\x04 \x01(\x08R\x04\x64one\"\x15\n\x13ReportTrackResponse\"l\n\x16ReportExemplarsRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12#\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\r.krill.v1.BoxR\x05\x62oxes\"\x19\n\x17ReportExemplarsResponse\"C\n\x12ReportEmbedRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\"\x15\n\x13ReportEmbedResponse\"@\n\x0f\x46\x61ilTaskRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05\x65rror\x18\x02 \x01(\tR\x05\x65rror\"\x12\n\x10\x46\x61ilTaskResponse\"\xb8\x05\n\x10HeartbeatRequest\x12\x1f\n\x0binstance_id\x18\x01 \x01(\tR\ninstanceId\x12\x1a\n\x08hostname\x18\x02 \x01(\tR\x08hostname\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version\x12\x14\n\x05model\x18\x04 \x01(\tR\x05model\x12 \n\x0b\x61\x63\x63\x65lerator\x18\x05 \x01(\tR\x0b\x61\x63\x63\x65lerator\x12\x39\n\nstarted_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tstartedAt\x12\'\n\x04host\x18\x07 \x01(\x0b\x32\x13.krill.v1.HostStatsR\x04host\x12&\n\x04gpus\x18\x08 \x03(\x0b\x32\x12.krill.v1.GpuStatsR\x04gpus\x12\x17\n\x07task_id\x18\t \x01(\x03R\x06taskId\x12\x39\n\x0bmodel_state\x18\x1e \x01(\x0e\x32\x18.krill.v1.ModelLoadStateR\nmodelState\x12\x1f\n\x0bmodel_error\x18\x1f \x01(\tR\nmodelError\x12?\n\x1cmodel_memory_allocated_bytes\x18  \x01(\x04R\x19modelMemoryAllocatedBytes\x12=\n\x1bmodel_memory_reserved_bytes\x18! \x01(\x04R\x18modelMemoryReservedBytes\x12!\n\x0cpinned_model\x18\" \x01(\tR\x0bpinnedModel\x12#\n\rcached_models\x18# \x03(\tR\x0c\x63\x61\x63hedModels\x12\x1d\n\ncommand_id\x18$ \x01(\x04R\tcommandId\x12-\n\x12supports_exemplars\x18% \x01(\x08R\x11supportsExemplars\"\x82\x01\n\x11HeartbeatResponse\x12\x14\n\x05model\x18\x1e \x01(\tR\x05model\x12\x31\n\x07\x63ommand\x18\x1f \x01(\x0b\x32\x17.krill.v1.WorkerCommandR\x07\x63ommand\x12$\n\x0e\x63\x61ncel_task_id\x18  \x01(\x03R\x0c\x63\x61ncelTaskId\"O\n\rWorkerCommand\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12.\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x16.krill.v1.WorkerActionR\x06\x61\x63tion*\xa7\x01\n\x0eModelLoadState\x12 \n\x1cMODEL_LOAD_STATE_UNSPECIFIED\x10\x00\x12\x1d\n\x19MODEL_LOAD_STATE_UNLOADED\x10\x01\x12\x1c\n\x18MODEL_LOAD_STATE_LOADING\x10\x02\x12\x1a\n\x16MODEL_LOAD_STATE_READY\x10\x03\x12\x1a\n\x16MODEL_LOAD_STATE_ERROR\x10\x04*b\n\x0cWorkerAction\x12\x1d\n\x19WORKER_ACTION_UNSPECIFIED\x10\x00\x12\x19\n\x15WORKER_ACTION_WARM_UP\x10\x01\x12\x18\n\x14WORKER_ACTION_UNLOAD\x10\x02\x32\xd7\x03\n\rWorkerService\x12\x43\n\x08NextTask\x12\x19.krill.v1.NextTaskRequest\x1a\x1a.krill.v1.NextTaskResponse\"\x00\x12L\n\x0bReportTrack\x12\x1c.krill.v1.ReportTrackRequest\x1a\x1d.krill.v1.ReportTrackResponse\"\x00\x12X\n\x0fReportExemplars\x12 .krill.v1.ReportExemplarsRequest\x1a!.krill.v1.ReportExemplarsResponse\"\x00\x12L\n\x0bReportEmbed\x12\x1c.krill.v1.ReportEmbedRequest\x1a\x1d.krill.v1.ReportEmbedResponse\"\x00\x12\x43\n\x08\x46\x61ilTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00\x12\x46\n\tHeartbeat\x12\x1a.krill.v1.HeartbeatRequest\x1a\x1b.krill.v1.HeartbeatResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0bWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/worker.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x12krill/v1/log.proto\x1a\x15krill/v1/system.proto\"\x11\n\x0fNextTaskRequest\"\xaa\x01\n\x10NextTaskResponse\x12+\n\x05track\x18\x01 \x01(\x0b\x32\x13.krill.v1.TrackTaskH\x00R\x05track\x12\x34\n\x08\x65xemplar\x18\x02 \x01(\x0b\x32\x16.krill.v1.ExemplarTaskH\x00R\x08\x65xemplar\x12+\n\x05\x65mbed\x18\x03 \x01(\x0b\x32\x13.krill.v1.EmbedTaskH\x00R\x05\x65mbedB\x06\n\x04task\"R\n\tTaskFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12#\n\rembedding_url\x18\x03 \x01(\tR\x0c\x65mbeddingUrl\"\xc7\x01\n\tTrackTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.TaskFrameR\x06\x66rames\x12\'\n\x05point\x18\x03 \x01(\x0b\x32\x0f.krill.v1.PointH\x00R\x05point\x12!\n\x03\x62ox\x18\x04 \x01(\x0b\x32\r.krill.v1.BoxH\x00R\x03\x62ox\x12\'\n\x0f\x65mbedding_model\x18\x05 \x01(\tR\x0e\x65mbeddingModelB\x08\n\x06prompt\"I\n\tEmbedTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12,\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x14.krill.v1.EmbedFrameR\x06\x66rames\"M\n\nEmbedFrame\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n\nupload_url\x18\x03 \x01(\tR\tuploadUrl\"j\n\x0c\x45xemplarTask\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12)\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x13.krill.v1.TaskFrameR\x05\x66rame\x12\x1f\n\x03\x62ox\x18\x03 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"H\n\nTrackedBox\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x1f\n\x03\x62ox\x18\x02 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\"\x83\x01\n\x12ReportTrackRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12*\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\x14.krill.v1.TrackedBoxR\x05\x62oxes\x12\x12\n\x04\x64one\x18\x04 \x01(\x08R\x04\x64one\"\x15\n\x13ReportTrackResponse\"l\n\x16ReportExemplarsRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\x12#\n\x05\x62oxes\x18\x03 \x03(\x0b\x32\r.krill.v1.BoxR\x05\x62oxes\"\x19\n\x17ReportExemplarsResponse\"C\n\x12ReportEmbedRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05model\x18\x02 \x01(\tR\x05model\"\x15\n\x13ReportEmbedResponse\"@\n\x0f\x46\x61ilTaskRequest\x12\x17\n\x07task_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n\x05\x65rror\x18\x02 \x01(\tR\x05\x65rror\"\x12\n\x10\x46\x61ilTaskResponse\"\xe1\x05\n\x10HeartbeatRequest\x12\x1f\n\x0binstance_id\x18\x01 \x01(\tR\ninstanceId\x12\x1a\n\x08hostname\x18\x02 \x01(\tR\x08hostname\x12\x18\n\x07version\x18\x03 \x01(\tR\x07version\x12\x14\n\x05model\x18\x04 \x01(\tR\x05model\x12 \n\x0b\x61\x63\x63\x65lerator\x18\x05 \x01(\tR\x0b\x61\x63\x63\x65lerator\x12\x39\n\nstarted_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tstartedAt\x12\'\n\x04host\x18\x07 \x01(\x0b\x32\x13.krill.v1.HostStatsR\x04host\x12&\n\x04gpus\x18\x08 \x03(\x0b\x32\x12.krill.v1.GpuStatsR\x04gpus\x12\x17\n\x07task_id\x18\t \x01(\x03R\x06taskId\x12\'\n\x04logs\x18\x14 \x03(\x0b\x32\x13.krill.v1.LogRecordR\x04logs\x12\x39\n\x0bmodel_state\x18\x1e \x01(\x0e\x32\x18.krill.v1.ModelLoadStateR\nmodelState\x12\x1f\n\x0bmodel_error\x18\x1f \x01(\tR\nmodelError\x12?\n\x1cmodel_memory_allocated_bytes\x18  \x01(\x04R\x19modelMemoryAllocatedBytes\x12=\n\x1bmodel_memory_reserved_bytes\x18! \x01(\x04R\x18modelMemoryReservedBytes\x12!\n\x0cpinned_model\x18\" \x01(\tR\x0bpinnedModel\x12#\n\rcached_models\x18# \x03(\tR\x0c\x63\x61\x63hedModels\x12\x1d\n\ncommand_id\x18$ \x01(\x04R\tcommandId\x12-\n\x12supports_exemplars\x18% \x01(\x08R\x11supportsExemplars\"\x82\x01\n\x11HeartbeatResponse\x12\x14\n\x05model\x18\x1e \x01(\tR\x05model\x12\x31\n\x07\x63ommand\x18\x1f \x01(\x0b\x32\x17.krill.v1.WorkerCommandR\x07\x63ommand\x12$\n\x0e\x63\x61ncel_task_id\x18  \x01(\x03R\x0c\x63\x61ncelTaskId\"O\n\rWorkerCommand\x12\x0e\n\x02id\x18\x01 \x01(\x04R\x02id\x12.\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x16.krill.v1.WorkerActionR\x06\x61\x63tion*\xa7\x01\n\x0eModelLoadState\x12 \n\x1cMODEL_LOAD_STATE_UNSPECIFIED\x10\x00\x12\x1d\n\x19MODEL_LOAD_STATE_UNLOADED\x10\x01\x12\x1c\n\x18MODEL_LOAD_STATE_LOADING\x10\x02\x12\x1a\n\x16MODEL_LOAD_STATE_READY\x10\x03\x12\x1a\n\x16MODEL_LOAD_STATE_ERROR\x10\x04*b\n\x0cWorkerAction\x12\x1d\n\x19WORKER_ACTION_UNSPECIFIED\x10\x00\x12\x19\n\x15WORKER_ACTION_WARM_UP\x10\x01\x12\x18\n\x14WORKER_ACTION_UNLOAD\x10\x02\x32\xd7\x03\n\rWorkerService\x12\x43\n\x08NextTask\x12\x19.krill.v1.NextTaskRequest\x1a\x1a.krill.v1.NextTaskResponse\"\x00\x12L\n\x0bReportTrack\x12\x1c.krill.v1.ReportTrackRequest\x1a\x1d.krill.v1.ReportTrackResponse\"\x00\x12X\n\x0fReportExemplars\x12 .krill.v1.ReportExemplarsRequest\x1a!.krill.v1.ReportExemplarsResponse\"\x00\x12L\n\x0bReportEmbed\x12\x1c.krill.v1.ReportEmbedRequest\x1a\x1d.krill.v1.ReportEmbedResponse\"\x00\x12\x43\n\x08\x46\x61ilTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00\x12\x46\n\tHeartbeat\x12\x1a.krill.v1.HeartbeatRequest\x1a\x1b.krill.v1.HeartbeatResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0bWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,48 +36,48 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'krill.v1.worker_pb2', _glob
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.krill.v1B\013WorkerProtoP\001Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\242\002\003KXX\252\002\010Krill.V1\312\002\010Krill\\V1\342\002\024Krill\\V1\\GPBMetadata\352\002\tKrill::V1'
-  _globals['_MODELLOADSTATE']._serialized_start=2318
-  _globals['_MODELLOADSTATE']._serialized_end=2485
-  _globals['_WORKERACTION']._serialized_start=2487
-  _globals['_WORKERACTION']._serialized_end=2585
-  _globals['_NEXTTASKREQUEST']._serialized_start=118
-  _globals['_NEXTTASKREQUEST']._serialized_end=135
-  _globals['_NEXTTASKRESPONSE']._serialized_start=138
-  _globals['_NEXTTASKRESPONSE']._serialized_end=308
-  _globals['_TASKFRAME']._serialized_start=310
-  _globals['_TASKFRAME']._serialized_end=392
-  _globals['_TRACKTASK']._serialized_start=395
-  _globals['_TRACKTASK']._serialized_end=594
-  _globals['_EMBEDTASK']._serialized_start=596
-  _globals['_EMBEDTASK']._serialized_end=669
-  _globals['_EMBEDFRAME']._serialized_start=671
-  _globals['_EMBEDFRAME']._serialized_end=748
-  _globals['_EXEMPLARTASK']._serialized_start=750
-  _globals['_EXEMPLARTASK']._serialized_end=856
-  _globals['_TRACKEDBOX']._serialized_start=858
-  _globals['_TRACKEDBOX']._serialized_end=930
-  _globals['_REPORTTRACKREQUEST']._serialized_start=933
-  _globals['_REPORTTRACKREQUEST']._serialized_end=1064
-  _globals['_REPORTTRACKRESPONSE']._serialized_start=1066
-  _globals['_REPORTTRACKRESPONSE']._serialized_end=1087
-  _globals['_REPORTEXEMPLARSREQUEST']._serialized_start=1089
-  _globals['_REPORTEXEMPLARSREQUEST']._serialized_end=1197
-  _globals['_REPORTEXEMPLARSRESPONSE']._serialized_start=1199
-  _globals['_REPORTEXEMPLARSRESPONSE']._serialized_end=1224
-  _globals['_REPORTEMBEDREQUEST']._serialized_start=1226
-  _globals['_REPORTEMBEDREQUEST']._serialized_end=1293
-  _globals['_REPORTEMBEDRESPONSE']._serialized_start=1295
-  _globals['_REPORTEMBEDRESPONSE']._serialized_end=1316
-  _globals['_FAILTASKREQUEST']._serialized_start=1318
-  _globals['_FAILTASKREQUEST']._serialized_end=1382
-  _globals['_FAILTASKRESPONSE']._serialized_start=1384
-  _globals['_FAILTASKRESPONSE']._serialized_end=1402
-  _globals['_HEARTBEATREQUEST']._serialized_start=1405
-  _globals['_HEARTBEATREQUEST']._serialized_end=2101
-  _globals['_HEARTBEATRESPONSE']._serialized_start=2104
-  _globals['_HEARTBEATRESPONSE']._serialized_end=2234
-  _globals['_WORKERCOMMAND']._serialized_start=2236
-  _globals['_WORKERCOMMAND']._serialized_end=2315
-  _globals['_WORKERSERVICE']._serialized_start=2588
-  _globals['_WORKERSERVICE']._serialized_end=3059
+  _globals['_MODELLOADSTATE']._serialized_start=2379
+  _globals['_MODELLOADSTATE']._serialized_end=2546
+  _globals['_WORKERACTION']._serialized_start=2548
+  _globals['_WORKERACTION']._serialized_end=2646
+  _globals['_NEXTTASKREQUEST']._serialized_start=138
+  _globals['_NEXTTASKREQUEST']._serialized_end=155
+  _globals['_NEXTTASKRESPONSE']._serialized_start=158
+  _globals['_NEXTTASKRESPONSE']._serialized_end=328
+  _globals['_TASKFRAME']._serialized_start=330
+  _globals['_TASKFRAME']._serialized_end=412
+  _globals['_TRACKTASK']._serialized_start=415
+  _globals['_TRACKTASK']._serialized_end=614
+  _globals['_EMBEDTASK']._serialized_start=616
+  _globals['_EMBEDTASK']._serialized_end=689
+  _globals['_EMBEDFRAME']._serialized_start=691
+  _globals['_EMBEDFRAME']._serialized_end=768
+  _globals['_EXEMPLARTASK']._serialized_start=770
+  _globals['_EXEMPLARTASK']._serialized_end=876
+  _globals['_TRACKEDBOX']._serialized_start=878
+  _globals['_TRACKEDBOX']._serialized_end=950
+  _globals['_REPORTTRACKREQUEST']._serialized_start=953
+  _globals['_REPORTTRACKREQUEST']._serialized_end=1084
+  _globals['_REPORTTRACKRESPONSE']._serialized_start=1086
+  _globals['_REPORTTRACKRESPONSE']._serialized_end=1107
+  _globals['_REPORTEXEMPLARSREQUEST']._serialized_start=1109
+  _globals['_REPORTEXEMPLARSREQUEST']._serialized_end=1217
+  _globals['_REPORTEXEMPLARSRESPONSE']._serialized_start=1219
+  _globals['_REPORTEXEMPLARSRESPONSE']._serialized_end=1244
+  _globals['_REPORTEMBEDREQUEST']._serialized_start=1246
+  _globals['_REPORTEMBEDREQUEST']._serialized_end=1313
+  _globals['_REPORTEMBEDRESPONSE']._serialized_start=1315
+  _globals['_REPORTEMBEDRESPONSE']._serialized_end=1336
+  _globals['_FAILTASKREQUEST']._serialized_start=1338
+  _globals['_FAILTASKREQUEST']._serialized_end=1402
+  _globals['_FAILTASKRESPONSE']._serialized_start=1404
+  _globals['_FAILTASKRESPONSE']._serialized_end=1422
+  _globals['_HEARTBEATREQUEST']._serialized_start=1425
+  _globals['_HEARTBEATREQUEST']._serialized_end=2162
+  _globals['_HEARTBEATRESPONSE']._serialized_start=2165
+  _globals['_HEARTBEATRESPONSE']._serialized_end=2295
+  _globals['_WORKERCOMMAND']._serialized_start=2297
+  _globals['_WORKERCOMMAND']._serialized_end=2376
+  _globals['_WORKERSERVICE']._serialized_start=2649
+  _globals['_WORKERSERVICE']._serialized_end=3120
 # @@protoc_insertion_point(module_scope)

@@ -61,6 +61,8 @@ services:
       KRILL_GOLD_REVIEW_MIN_ATTEMPTS: ${KRILL_GOLD_REVIEW_MIN_ATTEMPTS:-}
       KRILL_UPDATE_CHECK: ${KRILL_UPDATE_CHECK:-}
       KRILL_STUCK_CLAIM_DAYS: ${KRILL_STUCK_CLAIM_DAYS:-}
+      KRILL_BACKUP_SCHEDULE: ${KRILL_BACKUP_SCHEDULE:-}
+      KRILL_BACKUP_KEEP: ${KRILL_BACKUP_KEEP:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }

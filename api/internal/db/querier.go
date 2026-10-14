@@ -32,18 +32,21 @@ type Querier interface {
 	CountUsers(ctx context.Context) (int32, error)
 	CoverageCells(ctx context.Context) ([]CoverageCellsRow, error)
 	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
+	CreateBackup(ctx context.Context, arg CreateBackupParams) (Backup, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
+	CreateStorageScan(ctx context.Context, createdBy pgtype.UUID) (int64, error)
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	CreateWorkerToken(ctx context.Context, arg CreateWorkerTokenParams) (WorkerToken, error)
 	DatabaseSize(ctx context.Context) (int64, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
+	DeleteBackup(ctx context.Context, id int64) (Backup, error)
 	DeleteClip(ctx context.Context, id int64) (int32, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
@@ -52,6 +55,8 @@ type Querier interface {
 	DeleteGoldFrame(ctx context.Context, frameID int64) (int64, error)
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
+	// Keeps the last few so the page can show the previous scan while one runs.
+	DeleteOldStorageScans(ctx context.Context) error
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
@@ -72,13 +77,22 @@ type Querier interface {
 	// one on @gold_frame_id, newest first.
 	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
 	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
+	FailBackup(ctx context.Context, arg FailBackupParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
+	FailInterruptedBackups(ctx context.Context) (int64, error)
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
 	FailInterruptedIngests(ctx context.Context) (int64, error)
+	FailInterruptedStorageScans(ctx context.Context) (int64, error)
+	FailStorageCleanup(ctx context.Context, arg FailStorageCleanupParams) error
+	FailStorageScan(ctx context.Context, arg FailStorageScanParams) error
+	FinishBackup(ctx context.Context, arg FinishBackupParams) error
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	FinishStorageCleanup(ctx context.Context, arg FinishStorageCleanupParams) error
+	FinishStorageScan(ctx context.Context, arg FinishStorageScanParams) error
 	FramesSinceGoldCheck(ctx context.Context, userID uuid.UUID) (int32, error)
+	GetBackup(ctx context.Context, id int64) (Backup, error)
 	GetClip(ctx context.Context, id int64) (Clip, error)
 	GetClipAuditName(ctx context.Context, id int64) (GetClipAuditNameRow, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
@@ -90,9 +104,14 @@ type Querier interface {
 	GetInvite(ctx context.Context, id int64) (GetInviteRow, error)
 	GetInviteByToken(ctx context.Context, tokenHash []byte) (Invite, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
+	GetLastBackup(ctx context.Context) (Backup, error)
+	GetLastSuccessfulBackup(ctx context.Context) (Backup, error)
+	GetLatestFinishedStorageScanID(ctx context.Context) (int64, error)
+	GetLatestStorageScanID(ctx context.Context) (int64, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
+	GetStorageScan(ctx context.Context, id int64) (GetStorageScanRow, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
@@ -109,6 +128,8 @@ type Querier interface {
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
+	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
+	InsertStorageScanVideos(ctx context.Context, arg []InsertStorageScanVideosParams) (int64, error)
 	// Replaces the user's code for this purpose once the cooldown has passed. With
 	// keep_live, a code that has not expired and went to the same address is kept.
 	// No row means nothing was issued.
@@ -124,6 +145,7 @@ type Querier interface {
 	LabelerFrameCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerFrameCountsRow, error)
 	LabelerProposalCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerProposalCountsRow, error)
 	LabelerTrend(ctx context.Context, arg LabelerTrendParams) ([]LabelerTrendRow, error)
+	LastScheduledBackupAt(ctx context.Context) (pgtype.Timestamptz, error)
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
@@ -131,6 +153,7 @@ type Querier interface {
 	ListAuditActions(ctx context.Context) ([]string, error)
 	ListAuditActors(ctx context.Context) ([]User, error)
 	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
+	ListBackups(ctx context.Context) ([]ListBackupsRow, error)
 	// Every box of the track, or only the one on frame_id when it is set, with
 	// its frame's status. A frame with no box of the track comes back with the
 	// box columns null when frame_id is set.
@@ -144,6 +167,7 @@ type Querier interface {
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
+	ListExpiredScheduledBackups(ctx context.Context, offset int32) ([]Backup, error)
 	// A track whose last box is still a proposal may have drifted, so none of its
 	// boxes count until someone confirms that last frame.
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
@@ -167,10 +191,13 @@ type Querier interface {
 	ListJobVideos(ctx context.Context, ids []int64) ([]ListJobVideosRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
+	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
+	ListStorageOrphans(ctx context.Context, arg ListStorageOrphansParams) ([]ListStorageOrphansRow, error)
+	ListStorageScanVideos(ctx context.Context, scanID int64) ([]ListStorageScanVideosRow, error)
 	ListStuckClips(ctx context.Context, idleBefore pgtype.Timestamptz) ([]ListStuckClipsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
 	// Each track comes with its first verified box, or its middle box when none
@@ -212,6 +239,9 @@ type Querier interface {
 	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
 	ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error)
 	RemoveApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
+	// Only the latest scan, since an older one's orphans were checked against an
+	// older state of the bucket.
+	RequestStorageCleanup(ctx context.Context, arg RequestStorageCleanupParams) (int64, error)
 	// RequeueDataset readies a failed export for its job to run again.
 	RequeueDataset(ctx context.Context, id int64) (int64, error)
 	// RequeueIngest readies a failed ingest for its job to run again.
@@ -220,6 +250,12 @@ type Querier interface {
 	ReviewExists(ctx context.Context, id int64) (bool, error)
 	RevokeInvite(ctx context.Context, id int64) (Invite, error)
 	RevokeWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
+	ScanBackups(ctx context.Context) ([]ScanBackupsRow, error)
+	ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error)
+	ScanLabelExampleKeys(ctx context.Context) ([]string, error)
+	ScanVideoFrames(ctx context.Context, videoID int64) ([]ScanVideoFramesRow, error)
+	ScanVideos(ctx context.Context) ([]ScanVideosRow, error)
+	ServerVersion(ctx context.Context) (string, error)
 	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
@@ -234,8 +270,11 @@ type Querier interface {
 	SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (int64, error)
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
+	StartBackup(ctx context.Context, id int64) (int64, error)
 	StartDataset(ctx context.Context, id int64) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	StartStorageCleanup(ctx context.Context, id int64) (int64, error)
+	StartStorageScan(ctx context.Context, id int64) (int64, error)
 	SubtractClipFrames(ctx context.Context, id int64) (int64, error)
 	TakeClip(ctx context.Context, arg TakeClipParams) error
 	TouchLogin(ctx context.Context, id uuid.UUID) error

@@ -43,3 +43,79 @@ func (r iteratorForInsertFrames) Err() error {
 func (q *Queries) InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"frames"}, []string{"video_id", "clip_id", "idx", "phash"}, &iteratorForInsertFrames{rows: arg})
 }
+
+// iteratorForInsertStorageOrphans implements pgx.CopyFromSource.
+type iteratorForInsertStorageOrphans struct {
+	rows                 []InsertStorageOrphansParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertStorageOrphans) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertStorageOrphans) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ScanID,
+		r.rows[0].Key,
+		r.rows[0].UploadID,
+		r.rows[0].Kind,
+		r.rows[0].SizeBytes,
+		r.rows[0].ModifiedAt,
+	}, nil
+}
+
+func (r iteratorForInsertStorageOrphans) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"storage_orphans"}, []string{"scan_id", "key", "upload_id", "kind", "size_bytes", "modified_at"}, &iteratorForInsertStorageOrphans{rows: arg})
+}
+
+// iteratorForInsertStorageScanVideos implements pgx.CopyFromSource.
+type iteratorForInsertStorageScanVideos struct {
+	rows                 []InsertStorageScanVideosParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertStorageScanVideos) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertStorageScanVideos) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ScanID,
+		r.rows[0].VideoID,
+		r.rows[0].FrameBytes,
+		r.rows[0].Frames,
+		r.rows[0].EmbeddingBytes,
+		r.rows[0].Embeddings,
+		r.rows[0].SourceBytes,
+		r.rows[0].OrphanBytes,
+	}, nil
+}
+
+func (r iteratorForInsertStorageScanVideos) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertStorageScanVideos(ctx context.Context, arg []InsertStorageScanVideosParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"storage_scan_videos"}, []string{"scan_id", "video_id", "frame_bytes", "frames", "embedding_bytes", "embeddings", "source_bytes", "orphan_bytes"}, &iteratorForInsertStorageScanVideos{rows: arg})
+}

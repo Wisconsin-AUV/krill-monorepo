@@ -162,4 +162,19 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.ComputeServiceListWorkerTokensProcedure:  manageSystem,
 	krillv1connect.ComputeServiceCreateWorkerTokenProcedure: manageSystem,
 	krillv1connect.ComputeServiceRevokeWorkerTokenProcedure: manageSystem,
+
+	krillv1connect.StorageServiceGetStorageReportProcedure: manageSystem,
+	krillv1connect.StorageServiceScanStorageProcedure:      manageSystem,
+	krillv1connect.StorageServiceCleanUpStorageProcedure:   manageSystem,
+
+	krillv1connect.DatabaseServiceGetDatabaseProcedure:       manageSystem,
+	krillv1connect.DatabaseServiceListBackupsProcedure:       manageSystem,
+	krillv1connect.DatabaseServiceCreateBackupProcedure:      manageSystem,
+	krillv1connect.DatabaseServiceGetBackupDownloadProcedure: manageSystem,
+	krillv1connect.DatabaseServiceDeleteBackupProcedure:      manageSystem,
+
+	// Logs include emailed codes in development and whatever else the API
+	// logs, so only admins see them.
+	krillv1connect.LogServiceListLogSourcesProcedure: manageSystem,
+	krillv1connect.LogServiceListLogsProcedure:       manageSystem,
 }

@@ -74,6 +74,10 @@ type Config struct {
 	// SamModel is the Hugging Face model GPU workers track with, unless a
 	// worker pins its own.
 	SamModel string
+	// BackupHour is the hour of the day scheduled backups run, or -1 when
+	// they're off. BackupKeep is how many scheduled backups are kept.
+	BackupHour int
+	BackupKeep int
 }
 
 // Lookup returns a setting's raw value, or false when nothing sets it and
@@ -137,6 +141,8 @@ func Parse(lookup Lookup) (Config, error) {
 		UpdateCheck:           p.bool("KRILL_UPDATE_CHECK"),
 		StuckClaimDays:        p.int("KRILL_STUCK_CLAIM_DAYS"),
 		SamModel:              p.choice("KRILL_SAM_MODEL"),
+		BackupHour:            p.backupHour("KRILL_BACKUP_SCHEDULE"),
+		BackupKeep:            p.int("KRILL_BACKUP_KEEP"),
 	}
 	if p.err != nil {
 		return Config{}, p.err
@@ -183,6 +189,9 @@ func (c Config) validate() error {
 	}
 	if c.EmailVerification == VerifyCode && !c.CanEmail() {
 		return invalid("KRILL_RESEND_API_KEY", "is required to send verification codes")
+	}
+	if c.BackupKeep < 1 {
+		return invalid("KRILL_BACKUP_KEEP", "must be at least 1")
 	}
 	return nil
 }
@@ -278,4 +287,13 @@ func orList(items []string) string {
 		return items[0] + " or " + items[1]
 	}
 	return strings.Join(items[:len(items)-1], ", ") + ", or " + items[len(items)-1]
+}
+
+func (p *parser) backupHour(key string) int {
+	v := p.choice(key)
+	if v == BackupOff {
+		return -1
+	}
+	h, _ := strconv.Atoi(v)
+	return h
 }
