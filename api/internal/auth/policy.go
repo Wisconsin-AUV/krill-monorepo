@@ -119,4 +119,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AdminServiceUpdateSettingsProcedure: manageSystem,
 	krillv1connect.AdminServiceSendTestEmailProcedure:  manageSystem,
 	krillv1connect.AdminServiceGetComputeProcedure:     manageSystem,
+
+	krillv1connect.AuditServiceListAuditLogProcedure:     manageSystem,
+	krillv1connect.AuditServiceListAuditFiltersProcedure: manageSystem,
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -28,7 +30,10 @@ func testStore(t *testing.T, env map[string]string) (*Store, *pgxpool.Pool) {
 	if err := db.Migrate(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
-	clear := func() { _, _ = pool.Exec(context.Background(), `DELETE FROM settings`) }
+	clear := func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM settings`)
+		_, _ = pool.Exec(context.Background(), `DELETE FROM audit_log WHERE target_type = 'setting'`)
+	}
 	clear()
 	t.Cleanup(clear)
 	if env["KRILL_DATABASE_URL"] == "" {
@@ -164,5 +169,41 @@ func TestSecretsAreNeverListed(t *testing.T) {
 	}
 	if s.Config().ResendAPIKey != "re_secret" {
 		t.Error("secret was not applied")
+	}
+}
+
+func TestSecretChangesAreAuditedWithoutTheirValue(t *testing.T) {
+	s, pool := testStore(t, map[string]string{"KRILL_PUBLIC_URL": "https://krill.example.com", "KRILL_S3_PUBLIC_ENDPOINT": "https://s3.example.com"})
+	for _, changes := range [][]Change{
+		{{Key: "KRILL_RESEND_API_KEY", Value: "re_secret"}, {Key: "KRILL_EMAIL_FROM", Value: "Krill <noreply@example.com>"}},
+		{{Key: "KRILL_RESEND_API_KEY", Reset: true}},
+	} {
+		if err := s.Update(t.Context(), uuid.Nil, changes); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rows, err := pool.Query(t.Context(), `SELECT target_id, details::text FROM audit_log WHERE action = 'setting.update' ORDER BY id`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for rows.Next() {
+		var key, details string
+		if err := rows.Scan(&key, &details); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(details, "re_secret") {
+			t.Errorf("%s entry has the secret: %s", key, details)
+		}
+		if key == "KRILL_EMAIL_FROM" && !strings.Contains(details, "noreply@example.com") {
+			t.Errorf("%s entry is missing the new value: %s", key, details)
+		}
+		got = append(got, key)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"KRILL_RESEND_API_KEY", "KRILL_EMAIL_FROM", "KRILL_RESEND_API_KEY"}; !slices.Equal(got, want) {
+		t.Errorf("audited %v, want %v", got, want)
 	}
 }

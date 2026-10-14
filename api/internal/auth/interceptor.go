@@ -20,15 +20,21 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 
 // Interceptor loads the caller's session and enforces the role policy.
 type Interceptor struct {
-	lookup        SessionLookup
-	workerToken   func() string
-	verifiedEmail func() bool
+	lookup         SessionLookup
+	workerToken    func() string
+	verifiedEmail  func() bool
+	clientIPHeader func() string
 }
 
 // NewInterceptor returns an interceptor that also accepts workerToken as a
 // bearer token on worker procedures. An empty token turns them off.
 func NewInterceptor(lookup SessionLookup, workerToken func() string) *Interceptor {
-	return &Interceptor{lookup: lookup, workerToken: workerToken, verifiedEmail: func() bool { return false }}
+	return &Interceptor{
+		lookup:         lookup,
+		workerToken:    workerToken,
+		verifiedEmail:  func() bool { return false },
+		clientIPHeader: func() string { return "" },
+	}
 }
 
 // RequireVerifiedEmail limits accounts with an unverified email to the
@@ -38,11 +44,18 @@ func (i *Interceptor) RequireVerifiedEmail(required func() bool) *Interceptor {
 	return i
 }
 
+// TrustClientIPHeader reads ClientIP from the header that header names, when
+// it names one.
+func (i *Interceptor) TrustClientIPHeader(header func() string) *Interceptor {
+	i.clientIPHeader = header
+	return i
+}
+
 var _ connect.Interceptor = (*Interceptor)(nil)
 
 func (i *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		ctx, err := i.authorize(ctx, req.Spec().Procedure, req.Header())
+		ctx, err := i.authorize(ctx, req.Spec().Procedure, req.Peer().Addr, req.Header())
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +69,7 @@ func (i *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) conn
 
 func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
-		ctx, err := i.authorize(ctx, conn.Spec().Procedure, conn.RequestHeader())
+		ctx, err := i.authorize(ctx, conn.Spec().Procedure, conn.Peer().Addr, conn.RequestHeader())
 		if err != nil {
 			return err
 		}
@@ -64,7 +77,8 @@ func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 	}
 }
 
-func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.Header) (context.Context, error) {
+func (i *Interceptor) authorize(ctx context.Context, procedure, peer string, h http.Header) (context.Context, error) {
+	ctx = context.WithValue(ctx, clientIPKey{}, clientIP(peer, h, i.clientIPHeader()))
 	need, ok := policy[procedure]
 	if !ok {
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s has no access policy", procedure))

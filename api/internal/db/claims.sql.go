@@ -194,6 +194,27 @@ func (q *Queries) ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOp
 	return items, nil
 }
 
+const lockClipClaim = `-- name: LockClipClaim :one
+SELECT cc.user_id, cc.active_at, u.name
+FROM clip_claims cc
+JOIN users u ON u.id = cc.user_id
+WHERE cc.clip_id = $1
+FOR UPDATE OF cc
+`
+
+type LockClipClaimRow struct {
+	UserID   uuid.UUID          `json:"user_id"`
+	ActiveAt pgtype.Timestamptz `json:"active_at"`
+	Name     string             `json:"name"`
+}
+
+func (q *Queries) LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error) {
+	row := q.db.QueryRow(ctx, lockClipClaim, clipID)
+	var i LockClipClaimRow
+	err := row.Scan(&i.UserID, &i.ActiveAt, &i.Name)
+	return i, err
+}
+
 const nextClip = `-- name: NextClip :one
 WITH worked AS (
     SELECT c.video_id, count(*) AS clips

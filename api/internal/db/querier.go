@@ -41,7 +41,7 @@ type Querier interface {
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
 	DeleteExpiredSessions(ctx context.Context) error
-	DeleteGoldFrame(ctx context.Context, frameID int64) error
+	DeleteGoldFrame(ctx context.Context, frameID int64) (int64, error)
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
@@ -69,14 +69,17 @@ type Querier interface {
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
 	FramesSinceGoldCheck(ctx context.Context, userID uuid.UUID) (int32, error)
 	GetClip(ctx context.Context, id int64) (Clip, error)
+	GetClipAuditName(ctx context.Context, id int64) (GetClipAuditNameRow, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetFrameAuditName(ctx context.Context, id int64) (GetFrameAuditNameRow, error)
 	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
+	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
 	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
@@ -88,9 +91,10 @@ type Querier interface {
 	GetVideo(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
+	InsertAuditEntry(ctx context.Context, arg InsertAuditEntryParams) error
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
-	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) error
+	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
 	// Replaces the user's code for this purpose once the cooldown has passed. With
 	// keep_live, a code that has not expired and went to the same address is kept.
 	// No row means nothing was issued.
@@ -98,6 +102,9 @@ type Querier interface {
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
+	ListAuditActions(ctx context.Context) ([]string, error)
+	ListAuditActors(ctx context.Context) ([]User, error)
+	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
@@ -131,6 +138,7 @@ type Querier interface {
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
 	LockUsers(ctx context.Context) error
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error)

@@ -2,6 +2,7 @@ package clip
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -11,6 +12,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/review"
@@ -160,6 +162,10 @@ func (s *Service) DeleteClip(ctx context.Context, req *krillv1.DeleteClipRequest
 	if err != nil {
 		return nil, rpc.DBError(err, "clip")
 	}
+	name, err := audit.ClipName(ctx, q, req.GetId())
+	if err != nil {
+		return nil, rpc.Internal(err, "name clip")
+	}
 	idx, err := q.DeleteClip(ctx, req.GetId())
 	if err != nil {
 		return nil, rpc.Internal(err, "delete clip")
@@ -169,6 +175,15 @@ func (s *Service) DeleteClip(ctx context.Context, req *krillv1.DeleteClipRequest
 	}
 	if err := q.UnparkClips(ctx, videoID); err != nil {
 		return nil, rpc.Internal(err, "renumber clips")
+	}
+	err = audit.Record(ctx, q, audit.Entry{
+		Action:     audit.ClipDelete,
+		TargetType: audit.TargetClip,
+		TargetID:   strconv.FormatInt(req.GetId(), 10),
+		TargetName: name,
+	})
+	if err != nil {
+		return nil, rpc.Internal(err, "record audit entry")
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")

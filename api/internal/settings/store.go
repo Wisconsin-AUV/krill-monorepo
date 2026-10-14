@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 )
@@ -183,6 +184,9 @@ func (s *Store) Update(ctx context.Context, by uuid.UUID, changes []Change) erro
 		if err != nil {
 			return fmt.Errorf("save %s: %w", c.Key, err)
 		}
+		if err := recordChange(ctx, q, st.saved, c); err != nil {
+			return err
+		}
 	}
 	rows, err := q.ListSettings(ctx)
 	if err != nil {
@@ -200,4 +204,34 @@ func (s *Store) Update(ctx context.Context, by uuid.UUID, changes []Change) erro
 		fn(cfg)
 	}
 	return nil
+}
+
+// recordChange audits the value the admin panel showed before and after.
+// Secrets are only noted as changed.
+func recordChange(ctx context.Context, q *db.Queries, before map[string]saved, c Change) error {
+	def, _ := config.Find(c.Key)
+	from, to := def.Default, def.Default
+	if v, ok := before[c.Key]; ok {
+		from = v.value
+	}
+	if !c.Reset {
+		to = c.Value
+	}
+	if from == to {
+		return nil
+	}
+	details := map[string]any{}
+	if def.Kind != config.KindSecret {
+		details = audit.Change(from, to)
+	}
+	if c.Reset {
+		details["reset"] = true
+	}
+	return audit.Record(ctx, q, audit.Entry{
+		Action:     audit.SettingUpdate,
+		TargetType: audit.TargetSetting,
+		TargetID:   c.Key,
+		TargetName: def.Label,
+		Details:    details,
+	})
 }

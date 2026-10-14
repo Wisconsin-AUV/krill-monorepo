@@ -54,6 +54,14 @@ func CallerID(ctx context.Context) uuid.UUID {
 	return s.User.ID
 }
 
+type clientIPKey struct{}
+
+// ClientIP is the caller's address, or empty outside an RPC.
+func ClientIP(ctx context.Context) string {
+	ip, _ := ctx.Value(clientIPKey{}).(string)
+	return ip
+}
+
 func hashToken(token string) []byte {
 	sum := sha256.Sum256([]byte(token))
 	return sum[:]

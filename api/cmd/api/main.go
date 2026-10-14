@@ -23,6 +23,7 @@ import (
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/admin"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/compute"
@@ -179,7 +180,8 @@ func run() error {
 	rpcOpts := connect.WithInterceptors(
 		rpc.ErrorInterceptor{},
 		auth.NewInterceptor(db.New(pool).GetSessionUser, func() string { return live.Load().cfg.WorkerToken }).
-			RequireVerifiedEmail(func() bool { return live.Load().auth.RequireVerifiedEmail }),
+			RequireVerifiedEmail(func() bool { return live.Load().auth.RequireVerifiedEmail }).
+			TrustClientIPHeader(func() string { return live.Load().cfg.ClientIPHeader }),
 	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
@@ -207,6 +209,7 @@ func run() error {
 		Mailer:     func() email.Sender { return live.Load().auth.Mailer },
 		Version:    version,
 	}), rpcOpts))
+	mux.Handle(krillv1connect.NewAuditServiceHandler(audit.NewService(pool), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

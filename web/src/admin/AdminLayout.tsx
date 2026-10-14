@@ -2,6 +2,7 @@ import { useQuery } from '@connectrpc/connect-query'
 import { CloseButton } from '@headlessui/react'
 import {
   ArrowLeftIcon,
+  ClipboardDocumentListIcon,
   CpuChipIcon,
   Cog6ToothIcon,
   HomeIcon,
@@ -30,20 +31,41 @@ import { useChangelog } from '@/changelog/store'
 import { UserAvatar, UserMenu } from '@/layouts/AppLayout'
 import { can, canAdmin, useUser } from '@/lib/auth'
 
-const items = [
-  { label: 'Overview', to: '/admin', icon: HomeIcon, permission: Permission.MANAGE_SYSTEM },
-  { label: 'Users', to: '/admin/users', icon: UsersIcon, permission: Permission.MANAGE_USERS },
+const sections = [
   {
-    label: 'Settings',
-    to: '/admin/settings',
-    icon: Cog6ToothIcon,
-    permission: Permission.MANAGE_SYSTEM,
+    heading: 'System',
+    items: [
+      { label: 'Overview', to: '/admin', icon: HomeIcon, permission: Permission.MANAGE_SYSTEM },
+      {
+        label: 'Settings',
+        to: '/admin/settings',
+        icon: Cog6ToothIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
   },
   {
-    label: 'Compute',
-    to: '/admin/compute',
-    icon: CpuChipIcon,
-    permission: Permission.MANAGE_SYSTEM,
+    heading: 'Compute',
+    items: [
+      {
+        label: 'Compute',
+        to: '/admin/compute',
+        icon: CpuChipIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'People',
+    items: [
+      { label: 'Users', to: '/admin/users', icon: UsersIcon, permission: Permission.MANAGE_USERS },
+      {
+        label: 'Audit log',
+        to: '/admin/audit',
+        icon: ClipboardDocumentListIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
   },
 ]
 
@@ -107,18 +129,22 @@ export function AdminLayout() {
             </div>
           </SidebarHeader>
           <SidebarBody>
-            <SidebarSection>
-              <SidebarHeading>Admin</SidebarHeading>
-              {items
-                .filter((i) => can(user, i.permission))
-                .map(({ label, to, icon: Icon }) => (
-                  <SidebarItem key={to} to={to} current={current(to)}>
-                    <Icon data-slot="icon" />
-                    <SidebarLabel>{label}</SidebarLabel>
-                    {to === '/admin' && updateAvailable && <Dot label="Update available" />}
-                  </SidebarItem>
-                ))}
-            </SidebarSection>
+            {sections.map(({ heading, items }) => {
+              const visible = items.filter((i) => can(user, i.permission))
+              if (visible.length === 0) return null
+              return (
+                <SidebarSection key={heading}>
+                  <SidebarHeading>{heading}</SidebarHeading>
+                  {visible.map(({ label, to, icon: Icon }) => (
+                    <SidebarItem key={to} to={to} current={current(to)}>
+                      <Icon data-slot="icon" />
+                      <SidebarLabel>{label}</SidebarLabel>
+                      {to === '/admin' && updateAvailable && <Dot label="Update available" />}
+                    </SidebarItem>
+                  ))}
+                </SidebarSection>
+              )
+            })}
           </SidebarBody>
           {user && (
             <SidebarFooter className="max-lg:hidden">

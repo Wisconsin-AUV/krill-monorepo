@@ -7,11 +7,11 @@ JOIN tracks t ON t.id = a.track_id
 WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id;
 
--- name: InsertGoldFrame :exec
+-- name: InsertGoldFrame :execrows
 INSERT INTO gold_frames (frame_id, boxes, created_by) VALUES (@frame_id, @boxes, @created_by::uuid)
 ON CONFLICT (frame_id) DO NOTHING;
 
--- name: DeleteGoldFrame :exec
+-- name: DeleteGoldFrame :execrows
 DELETE FROM gold_frames WHERE frame_id = $1;
 
 -- name: GetGoldFrame :one

@@ -12,13 +12,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteGoldFrame = `-- name: DeleteGoldFrame :exec
+const deleteGoldFrame = `-- name: DeleteGoldFrame :execrows
 DELETE FROM gold_frames WHERE frame_id = $1
 `
 
-func (q *Queries) DeleteGoldFrame(ctx context.Context, frameID int64) error {
-	_, err := q.db.Exec(ctx, deleteGoldFrame, frameID)
-	return err
+func (q *Queries) DeleteGoldFrame(ctx context.Context, frameID int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteGoldFrame, frameID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const enqueueDoneSinceGoldCheck = `-- name: EnqueueDoneSinceGoldCheck :execrows
@@ -225,7 +228,7 @@ func (q *Queries) InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptPa
 	return result.RowsAffected(), nil
 }
 
-const insertGoldFrame = `-- name: InsertGoldFrame :exec
+const insertGoldFrame = `-- name: InsertGoldFrame :execrows
 INSERT INTO gold_frames (frame_id, boxes, created_by) VALUES ($1, $2, $3::uuid)
 ON CONFLICT (frame_id) DO NOTHING
 `
@@ -236,9 +239,12 @@ type InsertGoldFrameParams struct {
 	CreatedBy uuid.UUID `json:"created_by"`
 }
 
-func (q *Queries) InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) error {
-	_, err := q.db.Exec(ctx, insertGoldFrame, arg.FrameID, arg.Boxes, arg.CreatedBy)
-	return err
+func (q *Queries) InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertGoldFrame, arg.FrameID, arg.Boxes, arg.CreatedBy)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const listClipGoldFrames = `-- name: ListClipGoldFrames :many

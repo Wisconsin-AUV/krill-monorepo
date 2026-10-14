@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -129,12 +131,30 @@ func (s *Service) ListExports(ctx context.Context, _ *krillv1.ListExportsRequest
 }
 
 func (s *Service) DeleteExport(ctx context.Context, req *krillv1.DeleteExportRequest) (*krillv1.DeleteExportResponse, error) {
-	n, err := s.q.DeleteDataset(ctx, req.GetId())
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	d, err := q.GetDataset(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "export")
+	}
+	if _, err := q.DeleteDataset(ctx, req.GetId()); err != nil {
 		return nil, rpc.Internal(err, "delete export")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("export not found"))
+	err = audit.Record(ctx, q, audit.Entry{
+		Action:     audit.ExportDelete,
+		TargetType: audit.TargetExport,
+		TargetID:   strconv.FormatInt(d.ID, 10),
+		TargetName: d.Name,
+	})
+	if err != nil {
+		return nil, rpc.Internal(err, "record audit entry")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	if err := s.store.RemovePrefix(ctx, storage.DatasetPrefix(req.GetId())); err != nil {
 		slog.Error("remove export objects", "dataset_id", req.GetId(), "err", err)

@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/gold"
@@ -128,11 +130,41 @@ func (s *Service) ClaimNextClip(ctx context.Context, req *krillv1.ClaimNextClipR
 }
 
 func (s *Service) TakeClip(ctx context.Context, req *krillv1.TakeClipRequest) (*krillv1.TakeClipResponse, error) {
-	if _, err := s.q.GetClip(ctx, req.GetClipId()); err != nil {
+	sess, _ := auth.SessionFrom(ctx)
+	me := sess.User.ID
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+
+	name, err := audit.ClipName(ctx, q, req.GetClipId())
+	if err != nil {
 		return nil, rpc.DBError(err, "clip")
 	}
-	if err := s.q.TakeClip(ctx, db.TakeClipParams{ClipID: req.GetClipId(), UserID: auth.CallerID(ctx)}); err != nil {
+	held, err := q.LockClipClaim(ctx, req.GetClipId())
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+	case err != nil:
+		return nil, rpc.Internal(err, "load claim")
+	case held.UserID != me && !held.ActiveAt.Time.Before(video.StaleBefore(time.Now()).Time):
+		err := audit.Record(ctx, q, audit.Entry{
+			Action:     audit.ClipTake,
+			TargetType: audit.TargetClip,
+			TargetID:   strconv.FormatInt(req.GetClipId(), 10),
+			TargetName: name,
+			Details:    audit.Change(held.Name, sess.User.Name),
+		})
+		if err != nil {
+			return nil, rpc.Internal(err, "record audit entry")
+		}
+	}
+	if err := q.TakeClip(ctx, db.TakeClipParams{ClipID: req.GetClipId(), UserID: me}); err != nil {
 		return nil, rpc.Internal(err, "take clip")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	return &krillv1.TakeClipResponse{}, nil
 }

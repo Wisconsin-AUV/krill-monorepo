@@ -27,6 +27,19 @@ type Annotation struct {
 	Drift        pgtype.Text        `json:"drift"`
 }
 
+type AuditLog struct {
+	ID         int64              `json:"id"`
+	At         pgtype.Timestamptz `json:"at"`
+	Actor      pgtype.UUID        `json:"actor"`
+	ActorName  string             `json:"actor_name"`
+	Action     string             `json:"action"`
+	TargetType string             `json:"target_type"`
+	TargetID   string             `json:"target_id"`
+	TargetName string             `json:"target_name"`
+	Details    []byte             `json:"details"`
+	Ip         string             `json:"ip"`
+}
+
 type Clip struct {
 	ID         int64              `json:"id"`
 	VideoID    int64              `json:"video_id"`

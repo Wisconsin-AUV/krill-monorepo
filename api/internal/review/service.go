@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
@@ -78,12 +80,13 @@ func ClipReviews(ctx context.Context, q *db.Queries, clipID int64) (map[int64]*k
 
 type Service struct {
 	krillv1connect.UnimplementedReviewServiceHandler
+	pool    *pgxpool.Pool
 	q       *db.Queries
 	present *video.Presenter
 }
 
 func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
-	return &Service{q: db.New(pool), present: video.NewPresenter(store)}
+	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store)}
 }
 
 func (s *Service) FlagFrame(ctx context.Context, req *krillv1.FlagFrameRequest) (*krillv1.FlagFrameResponse, error) {
@@ -153,7 +156,13 @@ func (s *Service) ResolveReview(ctx context.Context, req *krillv1.ResolveReviewR
 	if !ok {
 		return nil, rpc.Invalid("unknown resolution")
 	}
-	n, err := s.q.ResolveReview(ctx, db.ResolveReviewParams{
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	n, err := q.ResolveReview(ctx, db.ResolveReviewParams{
 		ID:         req.GetId(),
 		ResolvedBy: auth.CallerID(ctx),
 		Resolution: resolution,
@@ -162,6 +171,23 @@ func (s *Service) ResolveReview(ctx context.Context, req *krillv1.ResolveReviewR
 		return nil, rpc.Internal(err, "resolve review")
 	}
 	if n > 0 {
+		name, err := audit.ReviewName(ctx, q, req.GetId())
+		if err != nil {
+			return nil, rpc.Internal(err, "name review")
+		}
+		err = audit.Record(ctx, q, audit.Entry{
+			Action:     audit.ReviewResolve,
+			TargetType: audit.TargetReview,
+			TargetID:   strconv.FormatInt(req.GetId(), 10),
+			TargetName: name,
+			Details:    map[string]any{"resolution": resolution},
+		})
+		if err != nil {
+			return nil, rpc.Internal(err, "record audit entry")
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return nil, rpc.Internal(err, "commit")
+		}
 		return &krillv1.ResolveReviewResponse{}, nil
 	}
 	exists, err := s.q.ReviewExists(ctx, req.GetId())

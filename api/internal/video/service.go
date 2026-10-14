@@ -3,9 +3,9 @@ package video
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +17,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/rpc"
@@ -225,12 +226,30 @@ func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoReque
 
 func (s *Service) DeleteVideo(ctx context.Context, req *krillv1.DeleteVideoRequest) (*krillv1.DeleteVideoResponse, error) {
 	id := req.GetId()
-	n, err := s.q.DeleteVideo(ctx, id)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	v, err := q.GetVideo(ctx, id)
+	if err != nil {
+		return nil, rpc.DBError(err, "video")
+	}
+	if _, err := q.DeleteVideo(ctx, id); err != nil {
 		return nil, rpc.Internal(err, "delete video")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("video %d not found", id))
+	err = audit.Record(ctx, q, audit.Entry{
+		Action:     audit.VideoDelete,
+		TargetType: audit.TargetVideo,
+		TargetID:   strconv.FormatInt(id, 10),
+		TargetName: v.Name,
+	})
+	if err != nil {
+		return nil, rpc.Internal(err, "record audit entry")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	if err := s.store.AbortMultipartUploads(ctx, storage.VideoSourceKey(id)); err != nil {
 		slog.Error("abort video upload", "video_id", id, "err", err)

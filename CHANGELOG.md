@@ -15,6 +15,7 @@ All notable changes to this project are documented here. The format follows
 - Admins can search users, sign a user out everywhere, and mark an email verified.
 - A test email can be sent from the settings page.
 - A help menu in the top bar lists what's new and opens the changelog in the app, with a dot until you've seen the latest release.
+- An audit log in the admin panel records who changed users, settings, videos, clips, label types, exports, gold frames, and reviews, and when. Secret settings are logged as changed without their value.
 
 ### Changed
 

@@ -1,6 +1,7 @@
 package taxonomy
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -172,7 +175,13 @@ func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelT
 	if err != nil {
 		return nil, err
 	}
-	lt, err := s.q.CreateLabelType(ctx, db.CreateLabelTypeParams{
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	lt, err := q.CreateLabelType(ctx, db.CreateLabelTypeParams{
 		Name: in.name, Title: in.title, Color: in.color, Description: in.description,
 		Guideline: in.guideline, Attributes: in.attrs,
 	})
@@ -181,6 +190,12 @@ func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelT
 			return nil, dup
 		}
 		return nil, rpc.Internal(err, "create label type")
+	}
+	if err := record(ctx, q, audit.LabelTypeCreate, lt, nil); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	out, err := toProto(lt, 0, 0)
 	if err != nil {
@@ -194,7 +209,17 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 	if err != nil {
 		return nil, err
 	}
-	lt, err := s.q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	before, err := q.GetLabelType(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "label type")
+	}
+	lt, err := q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
 		ID: req.GetId(), Name: in.name, Title: in.title, Color: in.color, Description: in.description,
 		Guideline: in.guideline, Attributes: in.attrs,
 	})
@@ -204,9 +229,21 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 		}
 		return nil, rpc.DBError(err, "label type")
 	}
-	types, err := s.list(ctx, s.q)
+	if changed := changedFields(before, lt); len(changed) > 0 {
+		details := map[string]any{"changed": changed}
+		if before.Name != lt.Name {
+			details["from"], details["to"] = before.Name, lt.Name
+		}
+		if err := record(ctx, q, audit.LabelTypeUpdate, lt, details); err != nil {
+			return nil, err
+		}
+	}
+	types, err := s.list(ctx, q)
 	if err != nil {
 		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	for _, t := range types {
 		if t.GetId() == lt.ID {
@@ -217,7 +254,17 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 }
 
 func (s *Service) DeleteLabelType(ctx context.Context, req *krillv1.DeleteLabelTypeRequest) (*krillv1.DeleteLabelTypeResponse, error) {
-	tracks, err := s.q.CountTracksForLabelType(ctx, req.GetId())
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	lt, err := q.GetLabelType(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "label type")
+	}
+	tracks, err := q.CountTracksForLabelType(ctx, req.GetId())
 	if err != nil {
 		return nil, rpc.Internal(err, "count tracks")
 	}
@@ -225,17 +272,53 @@ func (s *Service) DeleteLabelType(ctx context.Context, req *krillv1.DeleteLabelT
 		return nil, connect.NewError(connect.CodeFailedPrecondition,
 			fmt.Errorf("%d tracks use this label type; delete or relabel them first", tracks))
 	}
-	n, err := s.q.DeleteLabelType(ctx, req.GetId())
-	if err != nil {
+	if _, err := q.DeleteLabelType(ctx, req.GetId()); err != nil {
 		return nil, rpc.Internal(err, "delete label type")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("label type not found"))
+	if err := record(ctx, q, audit.LabelTypeDelete, lt, nil); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	if err := s.store.RemovePrefix(ctx, storage.LabelExamplesPrefix(req.GetId())); err != nil {
 		slog.WarnContext(ctx, "remove label examples", "label_type_id", req.GetId(), "err", err)
 	}
 	return &krillv1.DeleteLabelTypeResponse{}, nil
+}
+
+func record(ctx context.Context, q *db.Queries, action string, lt db.LabelType, details any) error {
+	err := audit.Record(ctx, q, audit.Entry{
+		Action:     action,
+		TargetType: audit.TargetLabelType,
+		TargetID:   strconv.FormatInt(lt.ID, 10),
+		TargetName: lt.Name,
+		Details:    details,
+	})
+	if err != nil {
+		return rpc.Internal(err, "record audit entry")
+	}
+	return nil
+}
+
+func changedFields(a, b db.LabelType) []string {
+	var out []string
+	for _, f := range []struct {
+		name    string
+		changed bool
+	}{
+		{"name", a.Name != b.Name},
+		{"title", a.Title != b.Title},
+		{"color", a.Color != b.Color},
+		{"description", a.Description != b.Description},
+		{"guideline", a.Guideline != b.Guideline},
+		{"attributes", !bytes.Equal(a.Attributes, b.Attributes)},
+	} {
+		if f.changed {
+			out = append(out, f.name)
+		}
+	}
+	return out
 }
 
 func (s *Service) ReorderLabelTypes(ctx context.Context, req *krillv1.ReorderLabelTypesRequest) (*krillv1.ReorderLabelTypesResponse, error) {

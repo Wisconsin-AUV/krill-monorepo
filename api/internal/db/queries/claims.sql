@@ -69,3 +69,10 @@ ORDER BY
     random()
 LIMIT 1
 FOR UPDATE OF c SKIP LOCKED;
+
+-- name: LockClipClaim :one
+SELECT cc.user_id, cc.active_at, u.name
+FROM clip_claims cc
+JOIN users u ON u.id = cc.user_id
+WHERE cc.clip_id = @clip_id
+FOR UPDATE OF cc;
