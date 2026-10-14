@@ -116,7 +116,20 @@ export function LoginPage() {
           {onPasswordStep && (
             <motion.div key="password" {...revealPassword}>
               <Field>
-                <LabelRow>Password</LabelRow>
+                <LabelRow
+                  action={
+                    data?.passwordResetEnabled && (
+                      <TextLink
+                        to={`/reset-password?login=${encodeURIComponent(login)}`}
+                        className="text-sm/6"
+                      >
+                        Forgot password?
+                      </TextLink>
+                    )
+                  }
+                >
+                  Password
+                </LabelRow>
                 <PasswordInput
                   inputRef={passwordRef}
                   value={password}

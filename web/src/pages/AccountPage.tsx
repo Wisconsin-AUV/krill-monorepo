@@ -2,15 +2,16 @@ import { useMutation } from '@connectrpc/connect-query'
 import { CheckIcon, LockClosedIcon } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
 import { useState } from 'react'
+import { CODE_LENGTH, CodeInput } from '@/components/auth/CodeInput'
 import { PasswordInput } from '@/components/PasswordInput'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
-import { Field, FieldGroup, Label } from '@/components/ui/Fieldset'
+import { Description, Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
 import PageContentBlock from '@/components/ui/PageContentBlock'
-import { Text } from '@/components/ui/Text'
+import { Strong, Text, TextButton } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
 import type { PermissionInfo, User } from '@/gen/krill/v1/user_pb'
 import { can, refreshSession, useRoleLabel, useSession, useUser } from '@/lib/auth'
@@ -51,51 +52,110 @@ function ProfileForm({ user }: { user: User }) {
     form.name !== user.name || form.username !== user.username || form.email !== user.email
 
   return (
+    <>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          update.mutate(form)
+        }}
+      >
+        <FieldGroup>
+          <Field>
+            <Label>Name</Label>
+            <Input
+              name="name"
+              autoComplete="name"
+              value={form.name}
+              onChange={set('name')}
+              required
+              maxLength={100}
+            />
+          </Field>
+          <Field>
+            <Label>Username</Label>
+            <Input
+              name="username"
+              autoComplete="username"
+              value={form.username}
+              onChange={set('username')}
+              required
+              maxLength={32}
+            />
+          </Field>
+          <Field>
+            <Label>Email</Label>
+            <Input
+              type="email"
+              name="email"
+              autoComplete="email"
+              value={form.email}
+              onChange={set('email')}
+              required
+            />
+          </Field>
+          <FormError error={update.error} />
+        </FieldGroup>
+        <div className="mt-8 flex justify-end">
+          <Button type="submit" color="sky" disabled={!changed || update.isPending}>
+            Save
+          </Button>
+        </div>
+      </form>
+      {user.pendingEmail && <PendingEmail user={user} />}
+    </>
+  )
+}
+
+function PendingEmail({ user }: { user: User }) {
+  const [code, setCode] = useState('')
+  const verify = useMutation(AuthService.method.verifyEmail, {
+    onSuccess: async () => {
+      await refreshSession()
+      flash.success('Email changed')
+    },
+    onError: () => setCode(''),
+  })
+  const resend = useMutation(AuthService.method.sendVerificationCode, {
+    onSuccess: () => flash.success('Code sent'),
+  })
+  const cancel = useMutation(AuthService.method.updateProfile, {
+    onSuccess: () => refreshSession(),
+  })
+
+  return (
     <form
+      className="mt-10 space-y-8"
       onSubmit={(e) => {
         e.preventDefault()
-        update.mutate(form)
+        verify.mutate({ code })
       }}
     >
-      <FieldGroup>
-        <Field>
-          <Label>Name</Label>
-          <Input
-            name="name"
-            autoComplete="name"
-            value={form.name}
-            onChange={set('name')}
-            required
-            maxLength={100}
-          />
-        </Field>
-        <Field>
-          <Label>Username</Label>
-          <Input
-            name="username"
-            autoComplete="username"
-            value={form.username}
-            onChange={set('username')}
-            required
-            maxLength={32}
-          />
-        </Field>
-        <Field>
-          <Label>Email</Label>
-          <Input
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={set('email')}
-            required
-          />
-        </Field>
-        <FormError error={update.error} />
-      </FieldGroup>
-      <div className="mt-8 flex justify-end">
-        <Button type="submit" color="sky" disabled={!changed || update.isPending}>
-          Save
+      <Field>
+        <Label>Verification code</Label>
+        <Description>
+          Enter the code sent to <Strong>{user.pendingEmail}</Strong>.
+        </Description>
+        <CodeInput value={code} onChange={setCode} />
+      </Field>
+      <FormError error={verify.error ?? resend.error ?? cancel.error} />
+      <div className="flex items-center justify-end gap-6">
+        <TextButton onClick={() => resend.mutate({ resend: true })} disabled={resend.isPending}>
+          Send a new code
+        </TextButton>
+        <TextButton
+          onClick={() =>
+            cancel.mutate({ name: user.name, username: user.username, email: user.email })
+          }
+          disabled={cancel.isPending}
+        >
+          Cancel change
+        </TextButton>
+        <Button
+          type="submit"
+          color="sky"
+          disabled={code.length !== CODE_LENGTH || verify.isPending}
+        >
+          Verify
         </Button>
       </div>
     </form>
@@ -248,7 +308,10 @@ export function AccountPage() {
 
       <div className="mt-8">
         <Section title="Profile">
-          <ProfileForm key={user.id + user.name + user.username + user.email} user={user} />
+          <ProfileForm
+            key={user.id + user.name + user.username + user.email + user.pendingEmail}
+            user={user}
+          />
         </Section>
         <Section title="Role">
           <RoleSummary user={user} permissions={data?.allPermissions ?? []} />
