@@ -50,12 +50,14 @@ class Heartbeat:
 
     @contextmanager
     def working(self, task_id: int) -> Iterator[None]:
+        # Tasks served between training batches nest inside the training task.
+        outer = self.task_id
         self.task_id = task_id
         self._cancelled = 0
         try:
             yield
         finally:
-            self.task_id = 0
+            self.task_id = outer
 
     def cancelled(self) -> bool:
         """Whether the API stopped waiting on the running task."""

@@ -86,10 +86,13 @@ services:
     devices:
       - /dev/kfd
       - /dev/dri
-    volumes: [hfcache:/root/.cache/huggingface]
+    # Training's data loader workers pass batches through shared memory.
+    shm_size: 2gb
+    volumes: [hfcache:/root/.cache/huggingface, krillcache:/root/.cache/krill]
     depends_on: [api]
 
 volumes:
   pgdata:
   miniodata:
   hfcache:
+  krillcache:
