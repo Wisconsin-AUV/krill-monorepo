@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/clip.proto.
  */
 export const file_krill_v1_clip: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSKcAQoFRnJhbWUSCgoCaWQYASABKAMSDQoFaW5kZXgYAiABKAUSFAoMdGltZXN0YW1wX21zGAMgASgDEgsKA3VybBgEIAEoCRIlCgZzdGF0dXMYBSABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cxIMCgRnb2xkGAYgASgIEiAKBnJldmlldxgHIAEoCzIQLmtyaWxsLnYxLlJldmlldyIcCg5HZXRDbGlwUmVxdWVzdBIKCgJpZBgBIAEoAyKIAgoPR2V0Q2xpcFJlc3BvbnNlEh4KBXZpZGVvGAEgASgLMg8ua3JpbGwudjEuVmlkZW8SHAoEY2xpcBgCIAEoCzIOLmtyaWxsLnYxLkNsaXASHwoGZnJhbWVzGAMgAygLMg8ua3JpbGwudjEuRnJhbWUSGAoQcHJldmlvdXNfY2xpcF9pZBgEIAEoAxIUCgxuZXh0X2NsaXBfaWQYBSABKAMSHwoGdHJhY2tzGAYgAygLMg8ua3JpbGwudjEuVHJhY2sSKQoLYW5ub3RhdGlvbnMYByADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uEhoKEnRyYWNraW5nX3RyYWNrX2lkcxgIIAMoAzJPCgtDbGlwU2VydmljZRJACgdHZXRDbGlwEhgua3JpbGwudjEuR2V0Q2xpcFJlcXVlc3QaGS5rcmlsbC52MS5HZXRDbGlwUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglDbGlwUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_annotation, file_krill_v1_review, file_krill_v1_video]);
+  fileDesc("ChNrcmlsbC92MS9jbGlwLnByb3RvEghrcmlsbC52MSKcAQoFRnJhbWUSCgoCaWQYASABKAMSDQoFaW5kZXgYAiABKAUSFAoMdGltZXN0YW1wX21zGAMgASgDEgsKA3VybBgEIAEoCRIlCgZzdGF0dXMYBSABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cxIMCgRnb2xkGAYgASgIEiAKBnJldmlldxgHIAEoCzIQLmtyaWxsLnYxLlJldmlldyIcCg5HZXRDbGlwUmVxdWVzdBIKCgJpZBgBIAEoAyKIAgoPR2V0Q2xpcFJlc3BvbnNlEh4KBXZpZGVvGAEgASgLMg8ua3JpbGwudjEuVmlkZW8SHAoEY2xpcBgCIAEoCzIOLmtyaWxsLnYxLkNsaXASHwoGZnJhbWVzGAMgAygLMg8ua3JpbGwudjEuRnJhbWUSGAoQcHJldmlvdXNfY2xpcF9pZBgEIAEoAxIUCgxuZXh0X2NsaXBfaWQYBSABKAMSHwoGdHJhY2tzGAYgAygLMg8ua3JpbGwudjEuVHJhY2sSKQoLYW5ub3RhdGlvbnMYByADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uEhoKEnRyYWNraW5nX3RyYWNrX2lkcxgIIAMoAyIfChFEZWxldGVDbGlwUmVxdWVzdBIKCgJpZBgBIAEoAyIUChJEZWxldGVDbGlwUmVzcG9uc2UymgEKC0NsaXBTZXJ2aWNlEkAKB0dldENsaXASGC5rcmlsbC52MS5HZXRDbGlwUmVxdWVzdBoZLmtyaWxsLnYxLkdldENsaXBSZXNwb25zZSIAEkkKCkRlbGV0ZUNsaXASGy5rcmlsbC52MS5EZWxldGVDbGlwUmVxdWVzdBocLmtyaWxsLnYxLkRlbGV0ZUNsaXBSZXNwb25zZSIAQooBCgxjb20ua3JpbGwudjFCCUNsaXBQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_krill_v1_annotation, file_krill_v1_review, file_krill_v1_video]);
 
 /**
  * @generated from message krill.v1.Frame
@@ -147,6 +147,36 @@ export const GetClipResponseSchema: GenMessage<GetClipResponse> = /*@__PURE__*/
   messageDesc(file_krill_v1_clip, 2);
 
 /**
+ * @generated from message krill.v1.DeleteClipRequest
+ */
+export type DeleteClipRequest = Message<"krill.v1.DeleteClipRequest"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+};
+
+/**
+ * Describes the message krill.v1.DeleteClipRequest.
+ * Use `create(DeleteClipRequestSchema)` to create a new message.
+ */
+export const DeleteClipRequestSchema: GenMessage<DeleteClipRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_clip, 3);
+
+/**
+ * @generated from message krill.v1.DeleteClipResponse
+ */
+export type DeleteClipResponse = Message<"krill.v1.DeleteClipResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.DeleteClipResponse.
+ * Use `create(DeleteClipResponseSchema)` to create a new message.
+ */
+export const DeleteClipResponseSchema: GenMessage<DeleteClipResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_clip, 4);
+
+/**
  * @generated from service krill.v1.ClipService
  */
 export const ClipService: GenService<{
@@ -159,6 +189,17 @@ export const ClipService: GenService<{
     methodKind: "unary";
     input: typeof GetClipRequestSchema;
     output: typeof GetClipResponseSchema;
+  },
+  /**
+   * DeleteClip removes a clip with its frames and labels, and renumbers the
+   * clips after it so the video has no gap.
+   *
+   * @generated from rpc krill.v1.ClipService.DeleteClip
+   */
+  deleteClip: {
+    methodKind: "unary";
+    input: typeof DeleteClipRequestSchema;
+    output: typeof DeleteClipResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_clip, 0);

@@ -52,3 +52,13 @@ class GetClipResponse(_message.Message):
     annotations: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Annotation]
     tracking_track_ids: _containers.RepeatedScalarFieldContainer[int]
     def __init__(self, video: _Optional[_Union[_video_pb2.Video, _Mapping]] = ..., clip: _Optional[_Union[_video_pb2.Clip, _Mapping]] = ..., frames: _Optional[_Iterable[_Union[Frame, _Mapping]]] = ..., previous_clip_id: _Optional[int] = ..., next_clip_id: _Optional[int] = ..., tracks: _Optional[_Iterable[_Union[_annotation_pb2.Track, _Mapping]]] = ..., annotations: _Optional[_Iterable[_Union[_annotation_pb2.Annotation, _Mapping]]] = ..., tracking_track_ids: _Optional[_Iterable[int]] = ...) -> None: ...
+
+class DeleteClipRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class DeleteClipResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

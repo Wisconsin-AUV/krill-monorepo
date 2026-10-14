@@ -34,6 +34,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
+	DeleteClip(ctx context.Context, id int64) (int32, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
@@ -137,6 +138,10 @@ type Querier interface {
 	// the answer. The order is shuffled per labeler but stable, so skipping a
 	// check does not hand out an easier one.
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
+	// The unique (video_id, idx) constraint is checked row by row, so shifting
+	// every later clip down by one in a single UPDATE can collide with a row that
+	// hasn't moved yet. Parking them at negative indexes first avoids that.
+	ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
 	RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error
@@ -158,8 +163,10 @@ type Querier interface {
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
 	StartDataset(ctx context.Context, id int64) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	SubtractClipFrames(ctx context.Context, id int64) (int64, error)
 	TakeClip(ctx context.Context, arg TakeClipParams) error
 	TouchLogin(ctx context.Context, id uuid.UUID) error
+	UnparkClips(ctx context.Context, videoID int64) error
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)

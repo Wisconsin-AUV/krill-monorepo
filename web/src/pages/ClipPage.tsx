@@ -12,6 +12,7 @@ import {
   QuestionMarkCircleIcon,
   SparklesIcon,
   StarIcon,
+  TrashIcon,
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
@@ -52,6 +53,7 @@ import { VideoService } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
+import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { useUIStore } from '@/store/useUIStore'
@@ -200,6 +202,19 @@ export function ClipPage() {
   const takeClip = useMutation(QueueService.method.takeClip, {
     onSuccess: (_, { clipId }) => setTakenClipId(clipId),
   })
+  const canDelete = useCan(Permission.MANAGE_VIDEOS)
+  const [deleting, setDeleting] = useState(false)
+  const deleteClip = useMutation(ClipService.method.deleteClip, {
+    onSuccess: () => {
+      setDeleting(false)
+      flash.success('Clip deleted')
+      const next = data?.nextClipId || data?.previousClipId
+      navigate(next ? `/clips/${next}` : `/videos/${data?.video?.id}`, { replace: true })
+      void invalidateService(ClipService)
+      void invalidateService(VideoService)
+      void invalidateService(QueueService)
+    },
+  })
   const [goldEdits, setGoldEdits] = useState<Record<string, boolean>>({})
   const setGoldFrame = useMutation(GoldService.method.setGoldFrame, {
     onError: (err) => flash.error('Could not update gold frame', err),
@@ -274,6 +289,7 @@ export function ClipPage() {
     return st === FrameStatus.LABELED || st === FrameStatus.EMPTY
   }).length
   const finished = frames.length > 0 && doneCount === frames.length
+  const boxCount = Object.values(boxes).reduce((n, byTrack) => n + Object.keys(byTrack).length, 0)
 
   // Releasing the finished clip keeps it out of the caller's open clips.
   const nextFromQueue = () => {
@@ -601,6 +617,15 @@ export function ClipPage() {
         <NavbarItem aria-label="Keyboard shortcuts" onClick={() => setShowHelp(true)}>
           <QuestionMarkCircleIcon data-slot="icon" />
         </NavbarItem>
+        {canDelete && (
+          <NavbarItem
+            aria-label="Delete clip"
+            title="Delete clip"
+            onClick={() => setDeleting(true)}
+          >
+            <TrashIcon data-slot="icon" />
+          </NavbarItem>
+        )}
       </NavbarSection>
     </Navbar>
   )
@@ -623,6 +648,12 @@ export function ClipPage() {
             <QuestionMarkCircleIcon data-slot="icon" />
             <SidebarLabel>Keyboard shortcuts</SidebarLabel>
           </SidebarItem>
+          {canDelete && (
+            <SidebarItem onClick={() => setDeleting(true)}>
+              <TrashIcon data-slot="icon" />
+              <SidebarLabel>Delete clip</SidebarLabel>
+            </SidebarItem>
+          )}
         </SidebarSection>
       </SidebarBody>
     </Sidebar>
@@ -660,6 +691,23 @@ export function ClipPage() {
           title="Label this clip anyway?"
           description={`${otherLabeler} is already working on this clip.`}
           confirmLabel="Label anyway"
+        />
+        <ConfirmAlert
+          open={deleting}
+          onClose={() => {
+            setDeleting(false)
+            deleteClip.reset()
+          }}
+          onConfirm={() => deleteClip.mutate({ id: clip.id })}
+          busy={deleteClip.isPending}
+          error={deleteClip.error}
+          title={`Delete clip ${clip.index + 1}?`}
+          description={
+            boxCount > 0
+              ? `This removes its frames and ${plural(boxCount, 'box', 'boxes')}. It cannot be undone.`
+              : 'This removes its frames. It cannot be undone.'
+          }
+          confirmLabel="Delete clip"
         />
         <ShortcutsDialog
           open={showHelp}

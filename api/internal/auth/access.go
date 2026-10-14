@@ -52,7 +52,7 @@ type PermissionDef struct {
 // from GetSession, and a test fails if a Permission value is missing here.
 var Permissions = []PermissionDef{
 	{krillv1.Permission_PERMISSION_LABEL, "View videos, label clips, and mark frames done", krillv1.Role_ROLE_LABELER},
-	{krillv1.Permission_PERMISSION_MANAGE_VIDEOS, "Upload, edit, and delete videos", krillv1.Role_ROLE_DEVELOPER},
+	{krillv1.Permission_PERMISSION_MANAGE_VIDEOS, "Upload, edit, and delete videos and clips", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_LABEL_TYPES, "Manage label types", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_EXPORTS, "Create and download exports", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_USERS, "Manage users and their roles", krillv1.Role_ROLE_ADMIN},
