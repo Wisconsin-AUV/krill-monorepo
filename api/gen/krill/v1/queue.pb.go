@@ -409,6 +409,86 @@ func (x *ClaimNextClipResponse) GetGoldFrameId() int64 {
 	return 0
 }
 
+type TakeClipRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClipId        int64                  `protobuf:"varint,1,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TakeClipRequest) Reset() {
+	*x = TakeClipRequest{}
+	mi := &file_krill_v1_queue_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TakeClipRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TakeClipRequest) ProtoMessage() {}
+
+func (x *TakeClipRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_queue_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TakeClipRequest.ProtoReflect.Descriptor instead.
+func (*TakeClipRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_queue_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TakeClipRequest) GetClipId() int64 {
+	if x != nil {
+		return x.ClipId
+	}
+	return 0
+}
+
+type TakeClipResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TakeClipResponse) Reset() {
+	*x = TakeClipResponse{}
+	mi := &file_krill_v1_queue_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TakeClipResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TakeClipResponse) ProtoMessage() {}
+
+func (x *TakeClipResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_queue_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TakeClipResponse.ProtoReflect.Descriptor instead.
+func (*TakeClipResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_queue_proto_rawDescGZIP(), []int{8}
+}
+
 var File_krill_v1_queue_proto protoreflect.FileDescriptor
 
 const file_krill_v1_queue_proto_rawDesc = "" +
@@ -439,10 +519,14 @@ const file_krill_v1_queue_proto_rawDesc = "" +
 	"\x0frelease_clip_id\x18\x01 \x01(\x03R\rreleaseClipId\"T\n" +
 	"\x15ClaimNextClipResponse\x12\x17\n" +
 	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\x12\"\n" +
-	"\rgold_frame_id\x18\x02 \x01(\x03R\vgoldFrameId2\xa7\x01\n" +
+	"\rgold_frame_id\x18\x02 \x01(\x03R\vgoldFrameId\"*\n" +
+	"\x0fTakeClipRequest\x12\x17\n" +
+	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\"\x12\n" +
+	"\x10TakeClipResponse2\xec\x01\n" +
 	"\fQueueService\x12C\n" +
 	"\bGetQueue\x12\x19.krill.v1.GetQueueRequest\x1a\x1a.krill.v1.GetQueueResponse\"\x00\x12R\n" +
-	"\rClaimNextClip\x12\x1e.krill.v1.ClaimNextClipRequest\x1a\x1f.krill.v1.ClaimNextClipResponse\"\x00B\x8b\x01\n" +
+	"\rClaimNextClip\x12\x1e.krill.v1.ClaimNextClipRequest\x1a\x1f.krill.v1.ClaimNextClipResponse\"\x00\x12C\n" +
+	"\bTakeClip\x12\x19.krill.v1.TakeClipRequest\x1a\x1a.krill.v1.TakeClipResponse\"\x00B\x8b\x01\n" +
 	"\fcom.krill.v1B\n" +
 	"QueueProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
@@ -458,7 +542,7 @@ func file_krill_v1_queue_proto_rawDescGZIP() []byte {
 	return file_krill_v1_queue_proto_rawDescData
 }
 
-var file_krill_v1_queue_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_krill_v1_queue_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_krill_v1_queue_proto_goTypes = []any{
 	(*GetQueueRequest)(nil),       // 0: krill.v1.GetQueueRequest
 	(*OpenClip)(nil),              // 1: krill.v1.OpenClip
@@ -467,24 +551,28 @@ var file_krill_v1_queue_proto_goTypes = []any{
 	(*GetQueueResponse)(nil),      // 4: krill.v1.GetQueueResponse
 	(*ClaimNextClipRequest)(nil),  // 5: krill.v1.ClaimNextClipRequest
 	(*ClaimNextClipResponse)(nil), // 6: krill.v1.ClaimNextClipResponse
-	(*Clip)(nil),                  // 7: krill.v1.Clip
-	(*ClipClaim)(nil),             // 8: krill.v1.ClipClaim
+	(*TakeClipRequest)(nil),       // 7: krill.v1.TakeClipRequest
+	(*TakeClipResponse)(nil),      // 8: krill.v1.TakeClipResponse
+	(*Clip)(nil),                  // 9: krill.v1.Clip
+	(*ClipClaim)(nil),             // 10: krill.v1.ClipClaim
 }
 var file_krill_v1_queue_proto_depIdxs = []int32{
-	7, // 0: krill.v1.OpenClip.clip:type_name -> krill.v1.Clip
-	8, // 1: krill.v1.ClipProgress.claim:type_name -> krill.v1.ClipClaim
-	2, // 2: krill.v1.VideoProgress.clips:type_name -> krill.v1.ClipProgress
-	1, // 3: krill.v1.GetQueueResponse.open_clips:type_name -> krill.v1.OpenClip
-	3, // 4: krill.v1.GetQueueResponse.videos:type_name -> krill.v1.VideoProgress
-	0, // 5: krill.v1.QueueService.GetQueue:input_type -> krill.v1.GetQueueRequest
-	5, // 6: krill.v1.QueueService.ClaimNextClip:input_type -> krill.v1.ClaimNextClipRequest
-	4, // 7: krill.v1.QueueService.GetQueue:output_type -> krill.v1.GetQueueResponse
-	6, // 8: krill.v1.QueueService.ClaimNextClip:output_type -> krill.v1.ClaimNextClipResponse
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	9,  // 0: krill.v1.OpenClip.clip:type_name -> krill.v1.Clip
+	10, // 1: krill.v1.ClipProgress.claim:type_name -> krill.v1.ClipClaim
+	2,  // 2: krill.v1.VideoProgress.clips:type_name -> krill.v1.ClipProgress
+	1,  // 3: krill.v1.GetQueueResponse.open_clips:type_name -> krill.v1.OpenClip
+	3,  // 4: krill.v1.GetQueueResponse.videos:type_name -> krill.v1.VideoProgress
+	0,  // 5: krill.v1.QueueService.GetQueue:input_type -> krill.v1.GetQueueRequest
+	5,  // 6: krill.v1.QueueService.ClaimNextClip:input_type -> krill.v1.ClaimNextClipRequest
+	7,  // 7: krill.v1.QueueService.TakeClip:input_type -> krill.v1.TakeClipRequest
+	4,  // 8: krill.v1.QueueService.GetQueue:output_type -> krill.v1.GetQueueResponse
+	6,  // 9: krill.v1.QueueService.ClaimNextClip:output_type -> krill.v1.ClaimNextClipResponse
+	8,  // 10: krill.v1.QueueService.TakeClip:output_type -> krill.v1.TakeClipResponse
+	8,  // [8:11] is the sub-list for method output_type
+	5,  // [5:8] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_queue_proto_init() }
@@ -499,7 +587,7 @@ func file_krill_v1_queue_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_queue_proto_rawDesc), len(file_krill_v1_queue_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -37,11 +37,19 @@ func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx
 }
 
 // claim marks the caller as working on the clip. A failed claim should not
-// fail the edit that triggered it.
+// fail the edit that triggered it. Reviewers fixing labels only keep their own
+// claims alive, so a fix does not take the clip from the queue.
 func (s *Service) claim(ctx context.Context, clipID int64) {
-	_, err := s.q.ClaimClip(ctx, db.ClaimClipParams{
-		ClipID: clipID, UserID: auth.CallerID(ctx), StaleBefore: video.StaleBefore(time.Now()),
-	})
+	ctx = context.WithoutCancel(ctx)
+	me := auth.CallerID(ctx)
+	var err error
+	if auth.CallerCan(ctx, krillv1.Permission_PERMISSION_REVIEW_LABELS) {
+		err = s.q.RefreshClipClaim(ctx, db.RefreshClipClaimParams{ClipID: clipID, UserID: me})
+	} else {
+		_, err = s.q.ClaimClip(ctx, db.ClaimClipParams{
+			ClipID: clipID, UserID: me, StaleBefore: video.StaleBefore(time.Now()),
+		})
+	}
 	if err != nil {
 		slog.Warn("claim clip", "clip_id", clipID, "err", err)
 	}
@@ -167,6 +175,7 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 	if err != nil {
 		return nil, rpc.DBError(err, "track")
 	}
+	s.claim(ctx, updated.ClipID)
 	out, err := Track(updated)
 	if err != nil {
 		return nil, rpc.Internal(err, "decode track")
@@ -175,13 +184,11 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 }
 
 func (s *Service) DeleteTrack(ctx context.Context, req *krillv1.DeleteTrackRequest) (*krillv1.DeleteTrackResponse, error) {
-	n, err := s.q.DeleteTrack(ctx, req.GetId())
+	clipID, err := s.q.DeleteTrack(ctx, req.GetId())
 	if err != nil {
-		return nil, rpc.Internal(err, "delete track")
+		return nil, rpc.DBError(err, "track")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("track not found"))
-	}
+	s.claim(ctx, clipID)
 	return &krillv1.DeleteTrackResponse{}, nil
 }
 
@@ -233,12 +240,9 @@ func (s *Service) DeleteBox(ctx context.Context, req *krillv1.DeleteBoxRequest) 
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
 
-	n, err := q.DeleteAnnotation(ctx, db.DeleteAnnotationParams{TrackID: req.GetTrackId(), FrameID: req.GetFrameId()})
+	clipID, err := q.DeleteAnnotation(ctx, db.DeleteAnnotationParams{TrackID: req.GetTrackId(), FrameID: req.GetFrameId()})
 	if err != nil {
-		return nil, rpc.Internal(err, "delete box")
-	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("box not found"))
+		return nil, rpc.DBError(err, "box")
 	}
 	left, err := q.CountTrackAnnotations(ctx, req.GetTrackId())
 	if err != nil {
@@ -252,6 +256,7 @@ func (s *Service) DeleteBox(ctx context.Context, req *krillv1.DeleteBoxRequest) 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
+	s.claim(ctx, clipID)
 	return &krillv1.DeleteBoxResponse{TrackDeleted: left == 0}, nil
 }
 

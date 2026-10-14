@@ -127,8 +127,9 @@ func (q *Queries) CreateTrack(ctx context.Context, arg CreateTrackParams) (Track
 	return i, err
 }
 
-const deleteAnnotation = `-- name: DeleteAnnotation :execrows
+const deleteAnnotation = `-- name: DeleteAnnotation :one
 DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2
+RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = track_id)::bigint AS clip_id
 `
 
 type DeleteAnnotationParams struct {
@@ -137,23 +138,22 @@ type DeleteAnnotationParams struct {
 }
 
 func (q *Queries) DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteAnnotation, arg.TrackID, arg.FrameID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	row := q.db.QueryRow(ctx, deleteAnnotation, arg.TrackID, arg.FrameID)
+	var clip_id int64
+	err := row.Scan(&clip_id)
+	return clip_id, err
 }
 
-const deleteTrack = `-- name: DeleteTrack :execrows
+const deleteTrack = `-- name: DeleteTrack :one
 DELETE FROM tracks WHERE id = $1
+RETURNING clip_id
 `
 
 func (q *Queries) DeleteTrack(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteTrack, id)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	row := q.db.QueryRow(ctx, deleteTrack, id)
+	var clip_id int64
+	err := row.Scan(&clip_id)
+	return clip_id, err
 }
 
 const getFrame = `-- name: GetFrame :one

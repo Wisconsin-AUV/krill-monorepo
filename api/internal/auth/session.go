@@ -34,6 +34,12 @@ func withSession(ctx context.Context, s Session) context.Context {
 	return context.WithValue(ctx, sessionKey{}, s)
 }
 
+// WithUser runs a call as the user without a session token, for tests that
+// call services directly.
+func WithUser(ctx context.Context, u db.User) context.Context {
+	return withSession(ctx, Session{User: u})
+}
+
 // SessionFrom returns the caller's session. It is always set for procedures
 // that require a role.
 func SessionFrom(ctx context.Context) (Session, bool) {

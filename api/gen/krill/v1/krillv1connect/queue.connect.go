@@ -38,6 +38,8 @@ const (
 	// QueueServiceClaimNextClipProcedure is the fully-qualified name of the QueueService's
 	// ClaimNextClip RPC.
 	QueueServiceClaimNextClipProcedure = "/krill.v1.QueueService/ClaimNextClip"
+	// QueueServiceTakeClipProcedure is the fully-qualified name of the QueueService's TakeClip RPC.
+	QueueServiceTakeClipProcedure = "/krill.v1.QueueService/TakeClip"
 )
 
 // QueueServiceClient is a client for the krill.v1.QueueService service.
@@ -47,6 +49,8 @@ type QueueServiceClient interface {
 	// or claims a new one. New clips are spread across videos so labels cover
 	// as much footage as possible.
 	ClaimNextClip(context.Context, *v1.ClaimNextClipRequest) (*v1.ClaimNextClipResponse, error)
+	// TakeClip claims a clip even when someone else is actively labeling it.
+	TakeClip(context.Context, *v1.TakeClipRequest) (*v1.TakeClipResponse, error)
 }
 
 // NewQueueServiceClient constructs a client for the krill.v1.QueueService service. By default, it
@@ -72,6 +76,12 @@ func NewQueueServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(queueServiceMethods.ByName("ClaimNextClip")),
 			connect.WithClientOptions(opts...),
 		),
+		takeClip: connect.NewClient[v1.TakeClipRequest, v1.TakeClipResponse](
+			httpClient,
+			baseURL+QueueServiceTakeClipProcedure,
+			connect.WithSchema(queueServiceMethods.ByName("TakeClip")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -79,6 +89,7 @@ func NewQueueServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type queueServiceClient struct {
 	getQueue      *connect.Client[v1.GetQueueRequest, v1.GetQueueResponse]
 	claimNextClip *connect.Client[v1.ClaimNextClipRequest, v1.ClaimNextClipResponse]
+	takeClip      *connect.Client[v1.TakeClipRequest, v1.TakeClipResponse]
 }
 
 // GetQueue calls krill.v1.QueueService.GetQueue.
@@ -99,6 +110,15 @@ func (c *queueServiceClient) ClaimNextClip(ctx context.Context, req *v1.ClaimNex
 	return nil, err
 }
 
+// TakeClip calls krill.v1.QueueService.TakeClip.
+func (c *queueServiceClient) TakeClip(ctx context.Context, req *v1.TakeClipRequest) (*v1.TakeClipResponse, error) {
+	response, err := c.takeClip.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // QueueServiceHandler is an implementation of the krill.v1.QueueService service.
 type QueueServiceHandler interface {
 	GetQueue(context.Context, *v1.GetQueueRequest) (*v1.GetQueueResponse, error)
@@ -106,6 +126,8 @@ type QueueServiceHandler interface {
 	// or claims a new one. New clips are spread across videos so labels cover
 	// as much footage as possible.
 	ClaimNextClip(context.Context, *v1.ClaimNextClipRequest) (*v1.ClaimNextClipResponse, error)
+	// TakeClip claims a clip even when someone else is actively labeling it.
+	TakeClip(context.Context, *v1.TakeClipRequest) (*v1.TakeClipResponse, error)
 }
 
 // NewQueueServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -127,12 +149,20 @@ func NewQueueServiceHandler(svc QueueServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(queueServiceMethods.ByName("ClaimNextClip")),
 		connect.WithHandlerOptions(opts...),
 	)
+	queueServiceTakeClipHandler := connect.NewUnaryHandlerSimple(
+		QueueServiceTakeClipProcedure,
+		svc.TakeClip,
+		connect.WithSchema(queueServiceMethods.ByName("TakeClip")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.QueueService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case QueueServiceGetQueueProcedure:
 			queueServiceGetQueueHandler.ServeHTTP(w, r)
 		case QueueServiceClaimNextClipProcedure:
 			queueServiceClaimNextClipHandler.ServeHTTP(w, r)
+		case QueueServiceTakeClipProcedure:
+			queueServiceTakeClipHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -148,4 +178,8 @@ func (UnimplementedQueueServiceHandler) GetQueue(context.Context, *v1.GetQueueRe
 
 func (UnimplementedQueueServiceHandler) ClaimNextClip(context.Context, *v1.ClaimNextClipRequest) (*v1.ClaimNextClipResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.QueueService.ClaimNextClip is not implemented"))
+}
+
+func (UnimplementedQueueServiceHandler) TakeClip(context.Context, *v1.TakeClipRequest) (*v1.TakeClipResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.QueueService.TakeClip is not implemented"))
 }
