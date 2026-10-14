@@ -32,6 +32,9 @@ All notable changes to this project are documented here. The format follows
 - The SAM model is a setting in the admin panel, from SAM 2.1 tiny to large or SAM 3. Workers switch between tasks unless their own `KRILL_SAM_MODEL` pins one.
 - The compute page shows each worker's model, whether it's loaded, the GPU memory it holds, the models it has downloaded, its token, and its last heartbeat, with buttons to warm the model up or unload it.
 - Worker tokens can be created and revoked in the admin panel, alongside `KRILL_WORKER_TOKEN`, so a worker's token can be rotated without restarting the API.
+- A storage page breaks the bucket down by kind and by video, finds objects no row refers to and rows whose object is gone, and deletes the orphans after checking each one again.
+- A database page shows table sizes, row counts, and migration versions, and backs the database up to MinIO with `pg_dump`, by hand or daily with `KRILL_BACKUP_SCHEDULE`. Scheduled backups beyond `KRILL_BACKUP_KEEP` are deleted, and the overview warns when the last one failed or is over a day old.
+- A logs page shows recent log records from the API and each GPU worker, with level and text filters and a live tail. Emails logged in development show their code there. Tokens, passwords, and keys are redacted.
 
 ### Changed
 
@@ -42,6 +45,7 @@ All notable changes to this project are documented here. The format follows
 - Docker Compose no longer fills in defaults for settings the admin panel can change.
 - The compute page's queue counts GPU jobs waiting to start, not only the one waiting for a worker.
 - A clip whose embedding is interrupted by a model switch is embedded again with the new model instead of failing.
+- The API image includes `pg_dump` 17 for backups.
 
 ## [0.4.0] - 2026-10-14
 

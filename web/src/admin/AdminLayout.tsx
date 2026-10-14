@@ -1,11 +1,14 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { CloseButton } from '@headlessui/react'
 import {
+  ArchiveBoxIcon,
   ArrowLeftIcon,
   ChartBarIcon,
   ClockIcon,
   EnvelopeIcon,
   TableCellsIcon,
+  CircleStackIcon,
+  CommandLineIcon,
   ClipboardDocumentListIcon,
   ComputerDesktopIcon,
   CpuChipIcon,
@@ -54,6 +57,24 @@ const sections = [
         label: 'Emails',
         to: '/admin/emails',
         icon: EnvelopeIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Storage',
+        to: '/admin/storage',
+        icon: ArchiveBoxIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Database',
+        to: '/admin/database',
+        icon: CircleStackIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Logs',
+        to: '/admin/logs',
+        icon: CommandLineIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
     ],

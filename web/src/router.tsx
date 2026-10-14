@@ -120,6 +120,20 @@ export const router = createBrowserRouter([
                         Component: m.WorkerTokensPage,
                       })),
                   },
+                  {
+                    path: 'storage',
+                    lazy: () =>
+                      import('@/admin/StoragePage').then((m) => ({ Component: m.StoragePage })),
+                  },
+                  {
+                    path: 'database',
+                    lazy: () =>
+                      import('@/admin/DatabasePage').then((m) => ({ Component: m.DatabasePage })),
+                  },
+                  {
+                    path: 'logs',
+                    lazy: () => import('@/admin/LogsPage').then((m) => ({ Component: m.LogsPage })),
+                  },
                 ],
               },
               {
