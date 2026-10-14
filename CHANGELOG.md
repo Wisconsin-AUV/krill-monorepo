@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Admin panel at `/admin` with an overview, users, settings, and compute.
+- The overview shows whether a newer release is out, with its changelog, and checks the database, storage, GPU worker, email, and Slack. `KRILL_UPDATE_CHECK=false` stops it asking GitHub.
+- Settings can be changed in the admin panel and apply without a restart. Variables set in the environment still win.
+- The compute page shows how full MinIO's drive is, charts CPU, memory, disk, and GPU use for the API and each GPU worker, and shows what the worker is running. The overview warns once MinIO is 90% full.
+- Admins can search users, sign a user out everywhere, and mark an email verified.
+- A test email can be sent from the settings page.
+- A help menu in the top bar lists what's new and opens the changelog in the app, with a dot until you've seen the latest release.
+
+### Changed
+
+- Users moved from the top bar into the admin panel, and `/users` redirects there.
+- The version moved from the top bar into the help menu.
+- An empty `KRILL_` variable now counts as unset. To accept any email domain from the environment, set `KRILL_EMAIL_VERIFICATION=off`.
+- Docker Compose no longer fills in defaults for settings the admin panel can change.
+
 ## [0.4.0] - 2026-10-14
 
 ### Added

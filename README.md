@@ -24,9 +24,15 @@ The GPU worker authenticates with `KRILL_WORKER_TOKEN`, which must be set for bo
 
 The API image bundles the web app, so the full stack is served from `:8080`. Browsers load frames straight from MinIO on `:9000`, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach. When the app is served over HTTPS, MinIO needs its own HTTPS hostname too, for example a second Cloudflare Tunnel route to `:9000`.
 
+## Admin panel
+
+Admins open the admin panel from the shield in the top bar. It shows the running version and what changed in newer releases, checks the database, storage, GPU worker, email, and Slack, and charts CPU, memory, and GPU use for the API and each worker.
+
+Its Settings page edits every `KRILL_` variable except the ones the API needs to start or to be reached: the database, storage, listen address, public URL, and web directory. Saved settings apply without a restart. A variable set in the environment overrides the saved value and locks it in the panel, and an empty variable counts as unset.
+
 ## Accounts
 
-The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
+The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them under Users in the admin panel. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
 
 `KRILL_EMAIL_VERIFICATION` sets how sign-up checks emails: `off` accepts any, `domain` (the default) needs the sign-up domain, and `verify` also has people enter a code emailed to them. Codes are sent with [Resend](https://resend.com), so `verify` needs `KRILL_RESEND_API_KEY` and `KRILL_EMAIL_FROM` at a domain verified in Resend. A key also turns on password resets and sign-in codes. On localhost without a key, emails are written to the API log instead. Edit the email templates in `emails/`, preview them with `just emails`, and rebuild them with `just gen`.
 
