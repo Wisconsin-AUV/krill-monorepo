@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { ConfirmAlert } from '@/components/ConfirmAlert'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/ui/Dropdown'
@@ -195,6 +196,10 @@ export function ClipPage() {
   const toggleCorrected = useUIStore((s) => s.toggleDisplayCorrection)
 
   const canReview = useCan(Permission.REVIEW_LABELS)
+  const [takenClipId, setTakenClipId] = useState<bigint>()
+  const takeClip = useMutation(QueueService.method.takeClip, {
+    onSuccess: (_, { clipId }) => setTakenClipId(clipId),
+  })
   const [goldEdits, setGoldEdits] = useState<Record<string, boolean>>({})
   const setGoldFrame = useMutation(GoldService.method.setGoldFrame, {
     onError: (err) => flash.error('Could not update gold frame', err),
@@ -432,7 +437,8 @@ export function ClipPage() {
   const { video, clip } = data
   const zoomPct = fitScale > 0 ? Math.round((view.scale / fitScale) * 100) : 100
   const selectedKey = selectedTrackId !== null ? idKey(selectedTrackId) : null
-  const otherLabeler = takenByOther(clip.claim, me?.id) ? clip.claim?.user?.name : undefined
+  const otherLabeler =
+    takenByOther(clip.claim, me?.id) && takenClipId !== clip.id ? clip.claim?.user?.name : undefined
 
   const navbar = (
     <Navbar>
@@ -625,6 +631,17 @@ export function ClipPage() {
           }
           flagged={(i) => review.drift.has(idKey(frames[i].id))}
           marked={(i) => !!reviewOf(frames[i])}
+        />
+        {/* Reviewer edits never take the claim, so they only get the badge. */}
+        <ConfirmAlert
+          open={!!otherLabeler && !canReview && !switching}
+          onClose={() => navigate(`/videos/${video.id}`)}
+          onConfirm={() => takeClip.mutate({ clipId: clip.id })}
+          busy={takeClip.isPending}
+          error={takeClip.error}
+          title="Label this clip anyway?"
+          description={`${otherLabeler} is already working on this clip.`}
+          confirmLabel="Label anyway"
         />
         <ShortcutsDialog
           open={showHelp}

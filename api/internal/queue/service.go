@@ -127,6 +127,16 @@ func (s *Service) ClaimNextClip(ctx context.Context, req *krillv1.ClaimNextClipR
 	return nil, rpc.Internal(errors.New("clip was claimed by someone else"), "claim clip")
 }
 
+func (s *Service) TakeClip(ctx context.Context, req *krillv1.TakeClipRequest) (*krillv1.TakeClipResponse, error) {
+	if _, err := s.q.GetClip(ctx, req.GetClipId()); err != nil {
+		return nil, rpc.DBError(err, "clip")
+	}
+	if err := s.q.TakeClip(ctx, db.TakeClipParams{ClipID: req.GetClipId(), UserID: auth.CallerID(ctx)}); err != nil {
+		return nil, rpc.Internal(err, "take clip")
+	}
+	return &krillv1.TakeClipResponse{}, nil
+}
+
 // claimNew returns 0 when no clip is available, and taken when another
 // labeler claimed the chosen clip first.
 func (s *Service) claimNew(ctx context.Context, me uuid.UUID, skip int64) (id int64, taken bool, err error) {
