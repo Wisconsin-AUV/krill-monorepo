@@ -7,10 +7,12 @@ import (
 
 // Sample is who a preview is addressed to.
 type Sample struct {
-	To       string
-	Username string
-	Team     string
-	Now      time.Time
+	To        string
+	Name      string
+	Username  string
+	Team      string
+	PublicURL string
+	Now       time.Time
 }
 
 type Preview struct {
@@ -28,6 +30,16 @@ var previews = []struct {
 	{"verify-email", "Verify email", func(s Sample) (Message, error) { return VerifyEmail(s.To, sampleCode(s)) }},
 	{"reset-password", "Reset password", func(s Sample) (Message, error) { return ResetPassword(s.To, sampleCode(s)) }},
 	{"sign-in-code", "Sign-in code", func(s Sample) (Message, error) { return SignInCode(s.To, sampleCode(s)) }},
+	{"invite", "Invite", func(s Sample) (Message, error) {
+		return InviteEmail(s.To, Invite{
+			Inviter: s.Name,
+			Role:    "labeler",
+			URL:     s.PublicURL + "/register?invite=krill_inv_preview",
+			Expires: "on " + s.Now.AddDate(0, 0, 7).UTC().Format("2 January 2006"),
+			Team:    s.Team,
+			Year:    s.Now.Year(),
+		})
+	}},
 	{"test-email", "Test email", func(s Sample) (Message, error) {
 		return TestEmail(s.To, Test{Username: s.Username, Team: s.Team, Year: s.Now.Year()})
 	}},

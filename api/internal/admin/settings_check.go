@@ -65,11 +65,14 @@ func (s *SettingsCheck) GetSlackTestResult(ctx context.Context, req *krillv1.Get
 
 func (s *SettingsCheck) sample(ctx context.Context) email.Sample {
 	sess, _ := auth.SessionFrom(ctx)
+	cfg := s.settings.Config()
 	return email.Sample{
-		To:       sess.User.Email,
-		Username: sess.User.Username,
-		Team:     s.settings.Config().TeamName,
-		Now:      time.Now(),
+		To:        sess.User.Email,
+		Name:      sess.User.Name,
+		Username:  sess.User.Username,
+		Team:      cfg.TeamName,
+		PublicURL: cfg.PublicURL,
+		Now:       time.Now(),
 	}
 }
 
