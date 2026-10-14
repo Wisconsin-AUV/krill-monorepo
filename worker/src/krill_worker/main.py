@@ -14,7 +14,7 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt
+from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt, drop_cut_off
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
     start = last_report = time.monotonic()
     batch: list[worker_pb2.TrackedBox] = []
     found = 0
-    for frame_id, box in zip(ids, tracker.track(frames, prompt), strict=True):
+    for frame_id, box in zip(ids, drop_cut_off(tracker.track(frames, prompt)), strict=True):
         if box is not None:
             x, y, w, h = box
             box_msg = annotation_pb2.Box(x=x, y=y, width=w, height=h)
