@@ -215,10 +215,6 @@ export function AppLayout() {
             </NavbarSection>
             <NavbarSpacer />
             <NavbarSection>
-              <NavbarItem to={GUIDELINE_URL} target="_blank" rel="noreferrer">
-                <BookOpenIcon data-slot="icon" />
-                <NavbarLabel className="max-sm:hidden">Guideline</NavbarLabel>
-              </NavbarItem>
               <Version />
               {user && (
                 <Dropdown>

@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- Guideline link in the top navigation bar.
+
 ### Fixed
 
 - Buttons keep their height while showing a loading spinner.
