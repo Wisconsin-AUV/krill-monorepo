@@ -333,12 +333,15 @@ func (p *Pipeline) prelabelClip(ctx context.Context, runID int64, l *labeler, c 
 	return len(rows), n, nil
 }
 
+type rejectedKey struct{ frameID, labelTypeID int64 }
+
 var errRunStopped = errors.New("pre-label run was cancelled")
 
 // savePrelabels replaces the source's open proposals on the clip's frames
 // that are still unlabeled with dets, grouped into tracks. Boxes anyone
 // drew, accepted, or another source proposed stay, and dets on top of them
-// are dropped.
+// are dropped, as are dets on top of a proposal of their label type that a
+// labeler rejected.
 func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c db.ListPrelabelClipsRow, frames []db.ListUnlabeledClipFramesRow, dets []detection) (int, error) {
 	tx, err := p.Pool.Begin(ctx)
 	if err != nil {
@@ -357,11 +360,11 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 	if status != "running" {
 		return 0, errRunStopped
 	}
-	v, err := q.GetVideo(ctx, c.VideoID)
+	split, err := q.LockVideoSplit(ctx, c.VideoID)
 	if err != nil {
-		return 0, fmt.Errorf("load video: %w", err)
+		return 0, fmt.Errorf("lock video: %w", err)
 	}
-	if video.HeldOut(v.Split) {
+	if video.HeldOut(split) {
 		return 0, nil
 	}
 
@@ -394,18 +397,27 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 	for _, r := range rows {
 		existing[r.FrameID] = append(existing[r.FrameID], annotation.Box{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height})
 	}
+	byIndex := map[int]target{}
+	for _, tg := range l.targets {
+		byIndex[tg.index] = tg
+	}
+	rejectedRows, err := q.ListRejectedPrelabels(ctx, locked)
+	if err != nil {
+		return 0, fmt.Errorf("list rejected proposals: %w", err)
+	}
+	rejected := map[rejectedKey][]annotation.Box{}
+	for _, r := range rejectedRows {
+		k := rejectedKey{r.FrameID, r.LabelTypeID}
+		rejected[k] = append(rejected[k], annotation.Box{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height})
+	}
 	kept := dets[:0:0]
 	for _, d := range dets {
-		if open[d.frameID] {
+		if open[d.frameID] && !overlaps(d.box, rejected[rejectedKey{d.frameID, byIndex[d.target].labelTypeID}]) {
 			kept = append(kept, d)
 		}
 	}
 	kept = dropCovered(kept, existing)
 
-	byIndex := map[int]target{}
-	for _, tg := range l.targets {
-		byIndex[tg.index] = tg
-	}
 	ins := db.InsertPrelabelsParams{Source: l.source}
 	for _, group := range linkTracks(kept) {
 		tg := byIndex[kept[group[0]].target]

@@ -87,6 +87,7 @@ type Querier interface {
 	DeleteUserEmailCodes(ctx context.Context, userID uuid.UUID) error
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	DeleteVideoOpenPrelabels(ctx context.Context, videoID int64) ([]int64, error)
 	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
 	EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, error)
 	EndUserSessions(ctx context.Context, userID uuid.UUID) (int64, error)
@@ -162,6 +163,7 @@ type Querier interface {
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
 	InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error)
+	InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error
 	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
 	InsertStorageScanVideos(ctx context.Context, arg []InsertStorageScanVideosParams) (int64, error)
 	// Replaces the user's code for this purpose once the cooldown has passed. With
@@ -248,6 +250,7 @@ type Querier interface {
 	// What re-extracting each video throws away. Ingest replaces every clip,
 	// including the ones in the trash.
 	ListReextractStats(ctx context.Context, ids []int64) ([]ListReextractStatsRow, error)
+	ListRejectedPrelabels(ctx context.Context, frameIds []int64) ([]ListRejectedPrelabelsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListStorageOrphans(ctx context.Context, arg ListStorageOrphansParams) ([]ListStorageOrphansRow, error)
@@ -282,6 +285,9 @@ type Querier interface {
 	LockUnlabeledFrames(ctx context.Context, ids []int64) ([]int64, error)
 	LockUserPair(ctx context.Context, arg LockUserPairParams) ([]User, error)
 	LockUsers(ctx context.Context) error
+	// Held under a pre-label save so a video can't move to the test split
+	// between the check and the insert.
+	LockVideoSplit(ctx context.Context, id int64) (string, error)
 	// Returns the session's active user. A session not seen for five minutes is
 	// marked seen in the same statement, so most requests don't write.
 	LookupSession(ctx context.Context, arg LookupSessionParams) (User, error)
@@ -290,6 +296,7 @@ type Querier interface {
 	// Rewrites the copied boxes the same way as MergeTracks, so the key keeps
 	// matching what labelers will draw.
 	MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams) (int64, error)
+	MergeRejectedPrelabels(ctx context.Context, arg MergeRejectedPrelabelsParams) error
 	// @mapping is {"source attribute": {"source option": ["target attribute",
 	// "target option"]}}. Values without a mapping are dropped.
 	MergeTracks(ctx context.Context, arg MergeTracksParams) (int64, error)

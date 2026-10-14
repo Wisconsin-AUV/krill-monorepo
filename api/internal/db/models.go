@@ -226,6 +226,17 @@ type Prelabeler struct {
 	UpdatedBy pgtype.UUID        `json:"updated_by"`
 }
 
+type RejectedPrelabel struct {
+	ID          int64              `json:"id"`
+	FrameID     int64              `json:"frame_id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	X           float64            `json:"x"`
+	Y           float64            `json:"y"`
+	Width       float64            `json:"width"`
+	Height      float64            `json:"height"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Review struct {
 	ID         int64              `json:"id"`
 	FrameID    int64              `json:"frame_id"`

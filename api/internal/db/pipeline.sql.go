@@ -271,6 +271,34 @@ func (q *Queries) DeleteOpenPrelabels(ctx context.Context, arg DeleteOpenPrelabe
 	return items, nil
 }
 
+const deleteVideoOpenPrelabels = `-- name: DeleteVideoOpenPrelabels :many
+DELETE FROM annotations a
+USING frames f
+WHERE f.id = a.frame_id AND f.video_id = $1
+    AND a.status = 'proposed' AND a.source IN ('yolo', 'cv')
+RETURNING a.track_id
+`
+
+func (q *Queries) DeleteVideoOpenPrelabels(ctx context.Context, videoID int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, deleteVideoOpenPrelabels, videoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var track_id int64
+		if err := rows.Scan(&track_id); err != nil {
+			return nil, err
+		}
+		items = append(items, track_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const failInterruptedPrelabelRuns = `-- name: FailInterruptedPrelabelRuns :execrows
 UPDATE prelabel_runs SET status = 'failed', error = 'Pre-labeling was interrupted by an API restart.', finished_at = now()
 WHERE status = 'running'
@@ -585,6 +613,38 @@ func (q *Queries) InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams
 	return result.RowsAffected(), nil
 }
 
+const insertRejectedPrelabels = `-- name: InsertRejectedPrelabels :exec
+INSERT INTO rejected_prelabels (frame_id, label_type_id, x, y, width, height)
+SELECT
+    unnest($1::bigint[]),
+    unnest($2::bigint[]),
+    unnest($3::float8[]),
+    unnest($4::float8[]),
+    unnest($5::float8[]),
+    unnest($6::float8[])
+`
+
+type InsertRejectedPrelabelsParams struct {
+	FrameIds     []int64   `json:"frame_ids"`
+	LabelTypeIds []int64   `json:"label_type_ids"`
+	Xs           []float64 `json:"xs"`
+	Ys           []float64 `json:"ys"`
+	Widths       []float64 `json:"widths"`
+	Heights      []float64 `json:"heights"`
+}
+
+func (q *Queries) InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error {
+	_, err := q.db.Exec(ctx, insertRejectedPrelabels,
+		arg.FrameIds,
+		arg.LabelTypeIds,
+		arg.Xs,
+		arg.Ys,
+		arg.Widths,
+		arg.Heights,
+	)
+	return err
+}
+
 const listBoxesOnFrames = `-- name: ListBoxesOnFrames :many
 SELECT frame_id, x, y, width, height FROM annotations
 WHERE frame_id = ANY($1::bigint[]) AND status <> 'rejected'
@@ -781,6 +841,47 @@ func (q *Queries) ListPrelabelers(ctx context.Context) ([]ListPrelabelersRow, er
 	return items, nil
 }
 
+const listRejectedPrelabels = `-- name: ListRejectedPrelabels :many
+SELECT frame_id, label_type_id, x, y, width, height FROM rejected_prelabels
+WHERE frame_id = ANY($1::bigint[])
+`
+
+type ListRejectedPrelabelsRow struct {
+	FrameID     int64   `json:"frame_id"`
+	LabelTypeID int64   `json:"label_type_id"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	Width       float64 `json:"width"`
+	Height      float64 `json:"height"`
+}
+
+func (q *Queries) ListRejectedPrelabels(ctx context.Context, frameIds []int64) ([]ListRejectedPrelabelsRow, error) {
+	rows, err := q.db.Query(ctx, listRejectedPrelabels, frameIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRejectedPrelabelsRow
+	for rows.Next() {
+		var i ListRejectedPrelabelsRow
+		if err := rows.Scan(
+			&i.FrameID,
+			&i.LabelTypeID,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTrainingRuns = `-- name: ListTrainingRuns :many
 SELECT r.id, r.status, r.trigger, r.created_by, r.config, r.dataset, r.classes, r.verified_boxes, r.epochs, r.epoch, r.history, r.val_metrics, r.test_metrics, r.baseline_run_id, r.baseline_val_metrics, r.baseline_test_metrics, r.weights_bytes, r.device, r.log, r.error, r.pinned, r.created_at, r.started_at, r.finished_at, coalesce(u.name, '')::text AS created_by_name
 FROM training_runs r
@@ -907,6 +1008,19 @@ func (q *Queries) LockUnlabeledFrames(ctx context.Context, ids []int64) ([]int64
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockVideoSplit = `-- name: LockVideoSplit :one
+SELECT split FROM videos WHERE id = $1 FOR SHARE
+`
+
+// Held under a pre-label save so a video can't move to the test split
+// between the check and the insert.
+func (q *Queries) LockVideoSplit(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, lockVideoSplit, id)
+	var split string
+	err := row.Scan(&split)
+	return split, err
 }
 
 const pinTrainingRun = `-- name: PinTrainingRun :execrows

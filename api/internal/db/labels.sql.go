@@ -431,6 +431,20 @@ func (q *Queries) MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams
 	return result.RowsAffected(), nil
 }
 
+const mergeRejectedPrelabels = `-- name: MergeRejectedPrelabels :exec
+UPDATE rejected_prelabels SET label_type_id = $1 WHERE label_type_id = $2
+`
+
+type MergeRejectedPrelabelsParams struct {
+	TargetID int64 `json:"target_id"`
+	SourceID int64 `json:"source_id"`
+}
+
+func (q *Queries) MergeRejectedPrelabels(ctx context.Context, arg MergeRejectedPrelabelsParams) error {
+	_, err := q.db.Exec(ctx, mergeRejectedPrelabels, arg.TargetID, arg.SourceID)
+	return err
+}
+
 const mergeTracks = `-- name: MergeTracks :execrows
 UPDATE tracks t SET
     label_type_id = $1,

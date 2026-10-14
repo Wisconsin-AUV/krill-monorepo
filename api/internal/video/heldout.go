@@ -26,3 +26,19 @@ func IsHeldOut(ctx context.Context, q *db.Queries, videoID int64) (bool, error) 
 	}
 	return HeldOut(v.Split), nil
 }
+
+// ClearPrelabels deletes the video's open model proposals and the tracks
+// left without boxes, for when it becomes held out.
+func ClearPrelabels(ctx context.Context, q *db.Queries, videoID int64) error {
+	tracks, err := q.DeleteVideoOpenPrelabels(ctx, videoID)
+	if err != nil {
+		return fmt.Errorf("delete proposals: %w", err)
+	}
+	if len(tracks) == 0 {
+		return nil
+	}
+	if err := q.DeleteEmptyTracks(ctx, tracks); err != nil {
+		return fmt.Errorf("delete emptied tracks: %w", err)
+	}
+	return nil
+}

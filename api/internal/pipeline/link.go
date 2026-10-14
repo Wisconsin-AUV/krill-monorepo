@@ -14,7 +14,8 @@ const (
 	linkMinIoU = 0.3
 	// linkMaxGap lets a track survive a frame or two the detector missed.
 	linkMaxGap = 2
-	// duplicateIoU drops a proposal over a box that is already there.
+	// duplicateIoU drops a proposal over a box that is already there or
+	// was rejected there.
 	duplicateIoU = 0.5
 )
 
@@ -45,14 +46,18 @@ func iou(a, b annotation.Box) float64 {
 func dropCovered(dets []detection, existing map[int64][]annotation.Box) []detection {
 	out := dets[:0:0]
 	for _, d := range dets {
-		covered := slices.ContainsFunc(existing[d.frameID], func(b annotation.Box) bool {
-			return iou(d.box, b) > duplicateIoU
-		})
-		if !covered {
+		if !overlaps(d.box, existing[d.frameID]) {
 			out = append(out, d)
 		}
 	}
 	return out
+}
+
+// overlaps reports whether box duplicates any of boxes.
+func overlaps(box annotation.Box, boxes []annotation.Box) bool {
+	return slices.ContainsFunc(boxes, func(b annotation.Box) bool {
+		return iou(box, b) > duplicateIoU
+	})
 }
 
 type openTrack struct {

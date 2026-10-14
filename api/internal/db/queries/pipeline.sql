@@ -188,6 +188,32 @@ WHERE t.id = ANY(@ids::bigint[])
 SELECT frame_id, x, y, width, height FROM annotations
 WHERE frame_id = ANY(@frame_ids::bigint[]) AND status <> 'rejected';
 
+-- name: ListRejectedPrelabels :many
+SELECT frame_id, label_type_id, x, y, width, height FROM rejected_prelabels
+WHERE frame_id = ANY(@frame_ids::bigint[]);
+
+-- name: InsertRejectedPrelabels :exec
+INSERT INTO rejected_prelabels (frame_id, label_type_id, x, y, width, height)
+SELECT
+    unnest(@frame_ids::bigint[]),
+    unnest(@label_type_ids::bigint[]),
+    unnest(@xs::float8[]),
+    unnest(@ys::float8[]),
+    unnest(@widths::float8[]),
+    unnest(@heights::float8[]);
+
+-- name: LockVideoSplit :one
+-- Held under a pre-label save so a video can't move to the test split
+-- between the check and the insert.
+SELECT split FROM videos WHERE id = $1 FOR SHARE;
+
+-- name: DeleteVideoOpenPrelabels :many
+DELETE FROM annotations a
+USING frames f
+WHERE f.id = a.frame_id AND f.video_id = $1
+    AND a.status = 'proposed' AND a.source IN ('yolo', 'cv')
+RETURNING a.track_id;
+
 -- name: InsertPrelabels :execrows
 INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, model_version, confidence)
 SELECT

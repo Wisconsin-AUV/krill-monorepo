@@ -208,9 +208,23 @@ func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoReque
 		params.Split = pgtype.Text{String: split, Valid: true}
 	}
 
-	v, err := s.q.UpdateVideo(ctx, params)
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	v, err := q.UpdateVideo(ctx, params)
 	if err != nil {
 		return nil, rpc.DBError(err, "video")
+	}
+	if HeldOut(v.Split) {
+		if err := ClearPrelabels(ctx, q, v.ID); err != nil {
+			return nil, rpc.Internal(err, "remove proposals")
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	clipCount, err := s.q.CountClips(ctx, v.ID)
 	if err != nil {

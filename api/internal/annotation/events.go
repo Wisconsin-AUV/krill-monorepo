@@ -93,6 +93,7 @@ func recordBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, trackID i
 
 func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []db.ListBoxStatesRow, op boxOp, to rect) error {
 	p := db.InsertBoxEventsParams{UserID: me}
+	var rej db.InsertRejectedPrelabelsParams
 	for _, s := range states {
 		kind := boxEvent(me, s, op, to)
 		if kind == "" {
@@ -101,6 +102,14 @@ func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []
 		source := "human"
 		if s.Source.Valid {
 			source = s.Source.String
+		}
+		if kind == "rejected" && (source == "yolo" || source == "cv") {
+			rej.FrameIds = append(rej.FrameIds, s.FrameID)
+			rej.LabelTypeIds = append(rej.LabelTypeIds, s.LabelTypeID)
+			rej.Xs = append(rej.Xs, s.X.Float64)
+			rej.Ys = append(rej.Ys, s.Y.Float64)
+			rej.Widths = append(rej.Widths, s.Width.Float64)
+			rej.Heights = append(rej.Heights, s.Height.Float64)
 		}
 		labeler, markedAt := uuid.Nil, pgtype.Timestamptz{}
 		if isCorrection(kind) {
@@ -119,6 +128,11 @@ func insertBoxEvents(ctx context.Context, q *db.Queries, me uuid.UUID, states []
 	}
 	if err := q.InsertBoxEvents(ctx, p); err != nil {
 		return fmt.Errorf("record box events: %w", err)
+	}
+	if len(rej.FrameIds) > 0 {
+		if err := q.InsertRejectedPrelabels(ctx, rej); err != nil {
+			return fmt.Errorf("record rejected proposals: %w", err)
+		}
 	}
 	return nil
 }
