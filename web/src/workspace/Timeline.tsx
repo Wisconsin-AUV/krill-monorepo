@@ -1,6 +1,7 @@
 import { ChevronLeftIcon, ChevronRightIcon, PauseIcon, PlayIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
-import { useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
+import type { Frame } from '@/gen/krill/v1/clip_pb'
 import { Button } from '@/components/ui/Button'
 import { formatFrameTime } from '@/lib/format'
 import { useWorkspaceStore } from './useWorkspaceStore'
@@ -8,16 +9,19 @@ import { useWorkspaceStore } from './useWorkspaceStore'
 // Past this many frames the gaps between segments blur into noise.
 const MAX_SEGMENT_GAPS = 150
 
+// The per-frame rows are arrays indexed by frame position and drawn by
+// memoized components, so moving the playhead or the hover only redraws the
+// markers on top of them rather than every segment.
 export function Timeline({
-  frameClass,
-  trackClass,
+  frameClasses,
+  trackClasses,
   flagged,
   marked,
 }: {
-  frameClass?: (position: number) => string | undefined
-  trackClass?: (position: number) => string | undefined
-  flagged?: (position: number) => boolean
-  marked?: (position: number) => boolean
+  frameClasses?: (string | undefined)[]
+  trackClasses?: (string | undefined)[]
+  flagged?: boolean[]
+  marked?: boolean[]
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -78,51 +82,16 @@ export function Timeline({
           tabIndex={-1}
           className="sr-only"
         />
-        <div
-          className={clsx(
-            'absolute inset-x-0 top-2 flex h-5 overflow-hidden rounded-md',
-            n <= MAX_SEGMENT_GAPS && 'gap-px',
-          )}
-        >
-          {frames.map((f, i) => (
-            <div
-              key={String(f.id)}
-              className={clsx(
-                'h-full flex-1 transition-opacity',
-                frameClass?.(i) || 'bg-zinc-200 dark:bg-zinc-800',
-                hover === i && 'opacity-70',
-              )}
-            />
-          ))}
-        </div>
-        {flagged && (
-          <div className="absolute inset-x-0 top-0.5 flex h-1">
-            {frames.map((f, i) => (
-              <div
-                key={String(f.id)}
-                className={clsx('h-full flex-1 rounded-full', flagged(i) && 'bg-rose-500')}
-              />
-            ))}
-          </div>
+        <FrameRow frames={frames} classes={frameClasses} />
+        {hover !== null && (
+          <div
+            className="pointer-events-none absolute top-2 h-5 bg-white/30 dark:bg-zinc-900/30"
+            style={{ left: `${(hover / n) * 100}%`, width: `${100 / n}%` }}
+          />
         )}
-        {marked &&
-          frames.map(
-            (f, i) =>
-              marked(i) && (
-                <div
-                  key={String(f.id)}
-                  className="pointer-events-none absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-amber-400"
-                  style={{ left: center(i) }}
-                />
-              ),
-          )}
-        {trackClass && (
-          <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
-            {frames.map((f, i) => (
-              <div key={String(f.id)} className={clsx('h-full flex-1', trackClass(i))} />
-            ))}
-          </div>
-        )}
+        {flagged && <FlagRow frames={frames} flagged={flagged} />}
+        {marked && <MarkRow frames={frames} marked={marked} />}
+        {trackClasses && <TrackRow frames={frames} classes={trackClasses} />}
 
         {hover !== null && hover !== index && (
           <div
@@ -153,3 +122,75 @@ export function Timeline({
     </div>
   )
 }
+
+const FrameRow = memo(function FrameRow({
+  frames,
+  classes,
+}: {
+  frames: Frame[]
+  classes?: (string | undefined)[]
+}) {
+  return (
+    <div
+      className={clsx(
+        'absolute inset-x-0 top-2 flex h-5 overflow-hidden rounded-md',
+        frames.length <= MAX_SEGMENT_GAPS && 'gap-px',
+      )}
+    >
+      {frames.map((f, i) => (
+        <div
+          key={String(f.id)}
+          className={clsx('h-full flex-1', classes?.[i] || 'bg-zinc-200 dark:bg-zinc-800')}
+        />
+      ))}
+    </div>
+  )
+})
+
+const FlagRow = memo(function FlagRow({
+  frames,
+  flagged,
+}: {
+  frames: Frame[]
+  flagged: boolean[]
+}) {
+  return (
+    <div className="absolute inset-x-0 top-0.5 flex h-1">
+      {frames.map((f, i) => (
+        <div
+          key={String(f.id)}
+          className={clsx('h-full flex-1 rounded-full', flagged[i] && 'bg-rose-500')}
+        />
+      ))}
+    </div>
+  )
+})
+
+const MarkRow = memo(function MarkRow({ frames, marked }: { frames: Frame[]; marked: boolean[] }) {
+  return frames.map(
+    (f, i) =>
+      marked[i] && (
+        <div
+          key={String(f.id)}
+          className="pointer-events-none absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-amber-400"
+          style={{ left: `${((i + 0.5) / frames.length) * 100}%` }}
+        />
+      ),
+  )
+})
+
+const TrackRow = memo(function TrackRow({
+  frames,
+  classes,
+}: {
+  frames: Frame[]
+  classes: (string | undefined)[]
+}) {
+  return (
+    <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
+      {frames.map((f, i) => (
+        <div key={String(f.id)} className={clsx('h-full flex-1', classes[i])} />
+      ))}
+    </div>
+  )
+})

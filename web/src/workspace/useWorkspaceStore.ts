@@ -15,6 +15,9 @@ export interface Size {
 interface WorkspaceState {
   frames: Frame[]
   index: number
+  // The frame whose image is on the canvas, which trails index while the
+  // next image loads.
+  drawnFrameId: bigint | null
   playing: boolean
   view: View
   stageSize: Size
@@ -22,6 +25,7 @@ interface WorkspaceState {
   setFrames: (frames: Frame[], index: number) => void
   seek: (index: number) => void
   step: (delta: number) => void
+  setDrawnFrameId: (id: bigint | null) => void
   setPlaying: (playing: boolean) => void
   setView: (view: View) => void
   setStageSize: (size: Size) => void
@@ -47,6 +51,7 @@ export function fitView(stage: Size, image: Size): View {
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   frames: [],
   index: 0,
+  drawnFrameId: null,
   playing: false,
   view: { scale: 1, x: 0, y: 0 },
   stageSize: { width: 0, height: 0 },
@@ -62,6 +67,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ index: Math.min(Math.max(Math.round(index), 0), Math.max(last, 0)) })
   },
   step: (delta) => get().seek(get().index + delta),
+  setDrawnFrameId: (drawnFrameId) => set({ drawnFrameId }),
   setPlaying: (playing) => set({ playing }),
   setView: (view) => set({ view }),
   setStageSize: (stageSize) => {
