@@ -50,3 +50,10 @@ SELECT id, name, status FROM videos WHERE id = $1 AND deleted_at IS NOT NULL FOR
 
 -- name: ListLiveClipIDs :many
 SELECT id FROM clips WHERE video_id = $1 AND deleted_at IS NULL;
+
+-- name: GetVideoStatus :one
+SELECT status FROM videos WHERE id = $1;
+
+-- name: ListFrameIdxInRange :many
+SELECT idx FROM frames
+WHERE video_id = @video_id AND idx >= @start_idx AND idx < @end_idx;

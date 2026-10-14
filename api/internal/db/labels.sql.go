@@ -47,14 +47,22 @@ func (q *Queries) CountTrackValues(ctx context.Context, labelTypeID int64) ([]Co
 }
 
 const countTracksForLabelType = `-- name: CountTracksForLabelType :one
-SELECT count(*)::int FROM tracks WHERE label_type_id = $1
+SELECT
+    count(*) FILTER (WHERE clip_id IN (SELECT id FROM live_clips))::int AS live,
+    count(*) FILTER (WHERE clip_id NOT IN (SELECT id FROM live_clips))::int AS trashed
+FROM tracks WHERE label_type_id = $1
 `
 
-func (q *Queries) CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error) {
+type CountTracksForLabelTypeRow struct {
+	Live    int32 `json:"live"`
+	Trashed int32 `json:"trashed"`
+}
+
+func (q *Queries) CountTracksForLabelType(ctx context.Context, labelTypeID int64) (CountTracksForLabelTypeRow, error) {
 	row := q.db.QueryRow(ctx, countTracksForLabelType, labelTypeID)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i CountTracksForLabelTypeRow
+	err := row.Scan(&i.Live, &i.Trashed)
+	return i, err
 }
 
 const createLabelExample = `-- name: CreateLabelExample :one

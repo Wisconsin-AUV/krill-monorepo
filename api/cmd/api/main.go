@@ -191,7 +191,7 @@ func run(logHub *logs.Hub) error {
 	river.AddWorker(workers, backup.NewWorker(pool, store, databaseURL, liveConfig))
 	river.AddWorker(workers, backup.NewScheduleWorker(pool, liveConfig))
 	trashRetention := func() int { return live.Load().cfg.TrashRetentionDays }
-	river.AddWorker(workers, trash.NewPurgeWorker(store))
+	river.AddWorker(workers, trash.NewPurgeWorker(db.New(pool), store))
 	river.AddWorker(workers, trash.NewAutoPurgeWorker(pool, trashRetention))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),

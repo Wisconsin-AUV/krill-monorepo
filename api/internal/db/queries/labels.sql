@@ -30,7 +30,10 @@ RETURNING *;
 DELETE FROM label_types WHERE id = $1;
 
 -- name: CountTracksForLabelType :one
-SELECT count(*)::int FROM tracks WHERE label_type_id = $1;
+SELECT
+    count(*) FILTER (WHERE clip_id IN (SELECT id FROM live_clips))::int AS live,
+    count(*) FILTER (WHERE clip_id NOT IN (SELECT id FROM live_clips))::int AS trashed
+FROM tracks WHERE label_type_id = $1;
 
 -- name: SetLabelTypePosition :exec
 UPDATE label_types SET position = $2 WHERE id = $1;

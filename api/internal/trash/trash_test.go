@@ -16,6 +16,7 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivermigrate"
+	"github.com/riverqueue/river/rivertype"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/db"
@@ -359,7 +360,7 @@ func TestPurgeRemovesRowsAndObjects(t *testing.T) {
 			t.Fatal(err)
 		}
 		objects := &fakeObjects{}
-		w := trash.NewPurgeWorker(objects)
+		w := trash.NewPurgeWorker(f.q, objects)
 		for _, id := range p.Jobs {
 			row, err := jobs.JobGet(f.ctx, id)
 			if err != nil {
@@ -423,5 +424,43 @@ func TestPurgeRemovesRowsAndObjects(t *testing.T) {
 	}
 	if !slices.Equal(objects.prefixes, []string{storage.VideoPrefix(f.videoID)}) {
 		t.Errorf("removed prefixes %v, want the video's", objects.prefixes)
+	}
+}
+
+func TestPurgeKeepsFramesAReextractWroteAgain(t *testing.T) {
+	f := setup(t, 2)
+	args := trash.PurgeArgs{VideoID: f.videoID, StartFrame: 0, FrameCount: 2 * framesPerClip}
+
+	// Clip 1's frames are gone, as after a purge, and clip 0's frames stand
+	// for what a re-extract wrote at the same indexes.
+	if _, err := f.pool.Exec(f.ctx, `DELETE FROM frames WHERE clip_id = $1`, f.clips[1]); err != nil {
+		t.Fatal(err)
+	}
+	objects := &fakeObjects{}
+	w := trash.NewPurgeWorker(f.q, objects)
+	if err := w.Work(f.ctx, &river.Job[trash.PurgeArgs]{JobRow: &rivertype.JobRow{}, Args: args}); err != nil {
+		t.Fatal(err)
+	}
+	var want []string
+	for idx := int32(framesPerClip); idx < 2*framesPerClip; idx++ {
+		want = append(want, storage.FrameKey(f.videoID, idx), storage.EmbeddingKey(f.videoID, idx))
+	}
+	slices.Sort(want)
+	slices.Sort(objects.keys)
+	if !slices.Equal(objects.keys, want) {
+		t.Errorf("removed %v, want only the frames without a row %v", objects.keys, want)
+	}
+
+	if _, err := f.pool.Exec(f.ctx, `UPDATE videos SET status = 'processing' WHERE id = $1`, f.videoID); err != nil {
+		t.Fatal(err)
+	}
+	objects.keys = nil
+	err := w.Work(f.ctx, &river.Job[trash.PurgeArgs]{JobRow: &rivertype.JobRow{}, Args: args})
+	var snooze *river.JobSnoozeError
+	if !errors.As(err, &snooze) {
+		t.Fatalf("purging during a re-extract returned %v, want a snooze", err)
+	}
+	if len(objects.keys) != 0 {
+		t.Errorf("removed %v while the video was being extracted", objects.keys)
 	}
 }

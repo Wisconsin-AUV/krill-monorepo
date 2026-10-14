@@ -31,7 +31,7 @@ type Querier interface {
 	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error)
-	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
+	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (CountTracksForLabelTypeRow, error)
 	CountUsers(ctx context.Context) (int32, error)
 	CoverageCells(ctx context.Context) ([]CoverageCellsRow, error)
 	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
@@ -129,6 +129,7 @@ type Querier interface {
 	// Also finds trashed videos, for ingest and the trash itself.
 	GetVideoInTrash(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
+	GetVideoStatus(ctx context.Context, id int64) (string, error)
 	GetWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
 	InsertAuditEntry(ctx context.Context, arg InsertAuditEntryParams) error
@@ -193,6 +194,7 @@ type Querier interface {
 	// Matches what the dataset export treats as labels on a done frame, so
 	// tracker proposals the labeler left in place count.
 	ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error)
+	ListFrameIdxInRange(ctx context.Context, arg ListFrameIdxInRangeParams) ([]int32, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
 	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)

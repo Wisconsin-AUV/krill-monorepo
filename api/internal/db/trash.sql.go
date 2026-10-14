@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getVideoStatus = `-- name: GetVideoStatus :one
+SELECT status FROM videos WHERE id = $1
+`
+
+func (q *Queries) GetVideoStatus(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, getVideoStatus, id)
+	var status string
+	err := row.Scan(&status)
+	return status, err
+}
+
+const listFrameIdxInRange = `-- name: ListFrameIdxInRange :many
+SELECT idx FROM frames
+WHERE video_id = $1 AND idx >= $2 AND idx < $3
+`
+
+type ListFrameIdxInRangeParams struct {
+	VideoID  int64 `json:"video_id"`
+	StartIdx int32 `json:"start_idx"`
+	EndIdx   int32 `json:"end_idx"`
+}
+
+func (q *Queries) ListFrameIdxInRange(ctx context.Context, arg ListFrameIdxInRangeParams) ([]int32, error) {
+	rows, err := q.db.Query(ctx, listFrameIdxInRange, arg.VideoID, arg.StartIdx, arg.EndIdx)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idx int32
+		if err := rows.Scan(&idx); err != nil {
+			return nil, err
+		}
+		items = append(items, idx)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLiveClipIDs = `-- name: ListLiveClipIDs :many
 SELECT id FROM clips WHERE video_id = $1 AND deleted_at IS NULL
 `

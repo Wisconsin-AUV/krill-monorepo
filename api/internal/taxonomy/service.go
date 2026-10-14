@@ -268,9 +268,13 @@ func (s *Service) DeleteLabelType(ctx context.Context, req *krillv1.DeleteLabelT
 	if err != nil {
 		return nil, rpc.Internal(err, "count tracks")
 	}
-	if tracks > 0 {
+	switch {
+	case tracks.Live > 0:
 		return nil, connect.NewError(connect.CodeFailedPrecondition,
-			fmt.Errorf("%d tracks use this label type; delete or relabel them first", tracks))
+			fmt.Errorf("%d tracks use this label type; delete or relabel them first", tracks.Live))
+	case tracks.Trashed > 0:
+		return nil, connect.NewError(connect.CodeFailedPrecondition,
+			fmt.Errorf("%d tracks in the trash use this label type; delete them from the trash or merge this type into another", tracks.Trashed))
 	}
 	if _, err := q.DeleteLabelType(ctx, req.GetId()); err != nil {
 		return nil, rpc.Internal(err, "delete label type")

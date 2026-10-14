@@ -147,11 +147,12 @@ type Objects interface {
 
 type PurgeWorker struct {
 	river.WorkerDefaults[PurgeArgs]
+	q     *db.Queries
 	store Objects
 }
 
-func NewPurgeWorker(store Objects) *PurgeWorker {
-	return &PurgeWorker{store: store}
+func NewPurgeWorker(q *db.Queries, store Objects) *PurgeWorker {
+	return &PurgeWorker{q: q, store: store}
 }
 
 func (w *PurgeWorker) Timeout(*river.Job[PurgeArgs]) time.Duration { return time.Hour }
@@ -164,9 +165,32 @@ func (w *PurgeWorker) Work(ctx context.Context, job *river.Job[PurgeArgs]) error
 		}
 		return w.store.RemovePrefix(ctx, storage.VideoPrefix(a.VideoID))
 	}
+	// A clip's frames share keys with whatever a re-extract of its video
+	// writes at the same indexes, so wait out an ingest and keep any frame
+	// that has a row again.
+	status, err := w.q.GetVideoStatus(ctx, a.VideoID)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+	case err != nil:
+		return fmt.Errorf("load video %d: %w", a.VideoID, err)
+	case status == "queued" || status == "processing":
+		return river.JobSnooze(time.Minute)
+	}
+	live, err := w.q.ListFrameIdxInRange(ctx, db.ListFrameIdxInRangeParams{
+		VideoID: a.VideoID, StartIdx: a.StartFrame, EndIdx: a.StartFrame + a.FrameCount,
+	})
+	if err != nil {
+		return fmt.Errorf("list frames of video %d: %w", a.VideoID, err)
+	}
+	keep := make(map[int32]bool, len(live))
+	for _, idx := range live {
+		keep[idx] = true
+	}
 	keys := make([]string, 0, 2*a.FrameCount)
 	for idx := a.StartFrame; idx < a.StartFrame+a.FrameCount; idx++ {
-		keys = append(keys, storage.FrameKey(a.VideoID, idx), storage.EmbeddingKey(a.VideoID, idx))
+		if !keep[idx] {
+			keys = append(keys, storage.FrameKey(a.VideoID, idx), storage.EmbeddingKey(a.VideoID, idx))
+		}
 	}
 	return w.store.RemoveKeys(ctx, keys)
 }
