@@ -62,6 +62,8 @@ type VideoServiceClient interface {
 	ListVideos(context.Context, *v1.ListVideosRequest) (*v1.ListVideosResponse, error)
 	GetVideo(context.Context, *v1.GetVideoRequest) (*v1.GetVideoResponse, error)
 	UpdateVideo(context.Context, *v1.UpdateVideoRequest) (*v1.UpdateVideoResponse, error)
+	// DeleteVideo moves the video to the trash, where ContentService can
+	// restore it.
 	DeleteVideo(context.Context, *v1.DeleteVideoRequest) (*v1.DeleteVideoResponse, error)
 }
 
@@ -190,6 +192,8 @@ type VideoServiceHandler interface {
 	ListVideos(context.Context, *v1.ListVideosRequest) (*v1.ListVideosResponse, error)
 	GetVideo(context.Context, *v1.GetVideoRequest) (*v1.GetVideoResponse, error)
 	UpdateVideo(context.Context, *v1.UpdateVideoRequest) (*v1.UpdateVideoResponse, error)
+	// DeleteVideo moves the video to the trash, where ContentService can
+	// restore it.
 	DeleteVideo(context.Context, *v1.DeleteVideoRequest) (*v1.DeleteVideoResponse, error)
 }
 

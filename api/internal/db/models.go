@@ -82,12 +82,23 @@ type Clip struct {
 	FrameCount int32              `json:"frame_count"`
 	EmbeddedAt pgtype.Timestamptz `json:"embedded_at"`
 	EmbedModel string             `json:"embed_model"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy  pgtype.UUID        `json:"deleted_by"`
 }
 
 type ClipClaim struct {
 	ClipID   int64              `json:"clip_id"`
 	UserID   uuid.UUID          `json:"user_id"`
 	ActiveAt pgtype.Timestamptz `json:"active_at"`
+}
+
+type ContentJob struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	Summary     string             `json:"summary"`
+	RiverJobIds []int64            `json:"river_job_ids"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Dataset struct {
@@ -182,6 +193,11 @@ type LabelType struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	Title       string             `json:"title"`
 	Guideline   string             `json:"guideline"`
+}
+
+type LiveClip struct {
+	ID      int64 `json:"id"`
+	VideoID int64 `json:"video_id"`
 }
 
 type Review struct {
@@ -289,6 +305,8 @@ type Video struct {
 	DurationMs     int64              `json:"duration_ms"`
 	FrameCount     int32              `json:"frame_count"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy      pgtype.UUID        `json:"deleted_by"`
 }
 
 type WorkerToken struct {

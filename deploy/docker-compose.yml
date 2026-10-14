@@ -63,6 +63,7 @@ services:
       KRILL_STUCK_CLAIM_DAYS: ${KRILL_STUCK_CLAIM_DAYS:-}
       KRILL_BACKUP_SCHEDULE: ${KRILL_BACKUP_SCHEDULE:-}
       KRILL_BACKUP_KEEP: ${KRILL_BACKUP_KEEP:-}
+      KRILL_TRASH_RETENTION_DAYS: ${KRILL_TRASH_RETENTION_DAYS:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }

@@ -12,7 +12,7 @@ import (
 )
 
 const countClips = `-- name: CountClips :one
-SELECT count(*)::int FROM clips WHERE video_id = $1
+SELECT count(*)::int FROM clips WHERE video_id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) CountClips(ctx context.Context, videoID int64) (int32, error) {
@@ -50,7 +50,7 @@ func (q *Queries) CreateClip(ctx context.Context, arg CreateClipParams) (int64, 
 const createVideo = `-- name: CreateVideo :one
 INSERT INTO videos (name, filename, extract_fps)
 VALUES ($1, $2, $3)
-RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
 `
 
 type CreateVideoParams struct {
@@ -78,6 +78,8 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 		&i.DurationMs,
 		&i.FrameCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -146,7 +148,7 @@ func (q *Queries) FinishIngest(ctx context.Context, arg FinishIngestParams) erro
 }
 
 const getVideo = `-- name: GetVideo :one
-SELECT id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at FROM videos WHERE id = $1
+SELECT id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by FROM videos WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetVideo(ctx context.Context, id int64) (Video, error) {
@@ -168,25 +170,71 @@ func (q *Queries) GetVideo(ctx context.Context, id int64) (Video, error) {
 		&i.DurationMs,
 		&i.FrameCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const getVideoInTrash = `-- name: GetVideoInTrash :one
+SELECT id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by FROM videos WHERE id = $1
+`
+
+// Also finds trashed videos, for ingest and the trash itself.
+func (q *Queries) GetVideoInTrash(ctx context.Context, id int64) (Video, error) {
+	row := q.db.QueryRow(ctx, getVideoInTrash, id)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Filename,
+		&i.Notes,
+		&i.Status,
+		&i.Error,
+		&i.IngestProgress,
+		&i.Split,
+		&i.ExtractFps,
+		&i.Width,
+		&i.Height,
+		&i.Fps,
+		&i.DurationMs,
+		&i.FrameCount,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const getVideoLabelStats = `-- name: GetVideoLabelStats :one
 SELECT
-    (SELECT count(*) FROM frames f WHERE f.video_id = $1 AND f.status <> 'unlabeled')::int AS labeled_frame_count,
-    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = $1)::int AS box_count
+    (
+        SELECT count(*) FROM frames f JOIN clips c ON c.id = f.clip_id
+        WHERE f.video_id = $1 AND c.deleted_at IS NULL AND f.status <> 'unlabeled'
+    )::int AS labeled_frame_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN clips c ON c.id = t.clip_id
+        WHERE c.video_id = $1 AND c.deleted_at IS NULL
+    )::int AS box_count,
+    coalesce((
+        SELECT c.start_frame + c.frame_count / 2 FROM clips c
+        WHERE c.video_id = $1 AND c.deleted_at IS NULL
+        ORDER BY c.idx
+        OFFSET (SELECT count(*) / 2 FROM clips m WHERE m.video_id = $1 AND m.deleted_at IS NULL)
+        LIMIT 1
+    ), -1)::int AS thumbnail_frame
 `
 
 type GetVideoLabelStatsRow struct {
 	LabeledFrameCount int32 `json:"labeled_frame_count"`
 	BoxCount          int32 `json:"box_count"`
+	ThumbnailFrame    int32 `json:"thumbnail_frame"`
 }
 
 func (q *Queries) GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error) {
 	row := q.db.QueryRow(ctx, getVideoLabelStats, videoID)
 	var i GetVideoLabelStatsRow
-	err := row.Scan(&i.LabeledFrameCount, &i.BoxCount)
+	err := row.Scan(&i.LabeledFrameCount, &i.BoxCount, &i.ThumbnailFrame)
 	return i, err
 }
 
@@ -199,11 +247,11 @@ type InsertFramesParams struct {
 
 const listClips = `-- name: ListClips :many
 SELECT
-    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model,
+    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model, c.deleted_at, c.deleted_by,
     (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
     (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
 FROM clips c
-WHERE c.video_id = $1
+WHERE c.video_id = $1 AND c.deleted_at IS NULL
 ORDER BY c.idx
 `
 
@@ -230,6 +278,8 @@ func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]ListClipsRow,
 			&i.Clip.FrameCount,
 			&i.Clip.EmbeddedAt,
 			&i.Clip.EmbedModel,
+			&i.Clip.DeletedAt,
+			&i.Clip.DeletedBy,
 			&i.LabeledFrameCount,
 			&i.BoxCount,
 		); err != nil {
@@ -245,11 +295,25 @@ func (q *Queries) ListClips(ctx context.Context, videoID int64) ([]ListClipsRow,
 
 const listVideos = `-- name: ListVideos :many
 SELECT
-    v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at,
-    (SELECT count(*) FROM clips c WHERE c.video_id = v.id)::int AS clip_count,
-    (SELECT count(*) FROM frames f WHERE f.video_id = v.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
-    (SELECT count(*) FROM annotations a JOIN frames f ON f.id = a.frame_id WHERE f.video_id = v.id)::int AS box_count
+    v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at, v.deleted_at, v.deleted_by,
+    (SELECT count(*) FROM clips c WHERE c.video_id = v.id AND c.deleted_at IS NULL)::int AS clip_count,
+    (
+        SELECT count(*) FROM frames f JOIN clips c ON c.id = f.clip_id
+        WHERE f.video_id = v.id AND c.deleted_at IS NULL AND f.status <> 'unlabeled'
+    )::int AS labeled_frame_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN clips c ON c.id = t.clip_id
+        WHERE c.video_id = v.id AND c.deleted_at IS NULL
+    )::int AS box_count,
+    coalesce((
+        SELECT c.start_frame + c.frame_count / 2 FROM clips c
+        WHERE c.video_id = v.id AND c.deleted_at IS NULL
+        ORDER BY c.idx
+        OFFSET (SELECT count(*) / 2 FROM clips m WHERE m.video_id = v.id AND m.deleted_at IS NULL)
+        LIMIT 1
+    ), -1)::int AS thumbnail_frame
 FROM videos v
+WHERE v.deleted_at IS NULL
 ORDER BY v.created_at DESC, v.id DESC
 `
 
@@ -258,6 +322,7 @@ type ListVideosRow struct {
 	ClipCount         int32 `json:"clip_count"`
 	LabeledFrameCount int32 `json:"labeled_frame_count"`
 	BoxCount          int32 `json:"box_count"`
+	ThumbnailFrame    int32 `json:"thumbnail_frame"`
 }
 
 func (q *Queries) ListVideos(ctx context.Context) ([]ListVideosRow, error) {
@@ -285,9 +350,12 @@ func (q *Queries) ListVideos(ctx context.Context) ([]ListVideosRow, error) {
 			&i.Video.DurationMs,
 			&i.Video.FrameCount,
 			&i.Video.CreatedAt,
+			&i.Video.DeletedAt,
+			&i.Video.DeletedBy,
 			&i.ClipCount,
 			&i.LabeledFrameCount,
 			&i.BoxCount,
+			&i.ThumbnailFrame,
 		); err != nil {
 			return nil, err
 		}
@@ -301,8 +369,8 @@ func (q *Queries) ListVideos(ctx context.Context) ([]ListVideosRow, error) {
 
 const queueIngest = `-- name: QueueIngest :one
 UPDATE videos SET status = 'queued', error = '', ingest_progress = 0
-WHERE id = $1 AND status IN ('uploading', 'failed')
-RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at
+WHERE id = $1 AND status IN ('uploading', 'failed') AND deleted_at IS NULL
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
 `
 
 func (q *Queries) QueueIngest(ctx context.Context, id int64) (Video, error) {
@@ -324,6 +392,75 @@ func (q *Queries) QueueIngest(ctx context.Context, id int64) (Video, error) {
 		&i.DurationMs,
 		&i.FrameCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const queueReextract = `-- name: QueueReextract :one
+UPDATE videos SET status = 'queued', error = '', ingest_progress = 0, extract_fps = $1
+WHERE id = $2 AND status IN ('ready', 'failed') AND deleted_at IS NULL
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
+`
+
+type QueueReextractParams struct {
+	ExtractFps float64 `json:"extract_fps"`
+	ID         int64   `json:"id"`
+}
+
+func (q *Queries) QueueReextract(ctx context.Context, arg QueueReextractParams) (Video, error) {
+	row := q.db.QueryRow(ctx, queueReextract, arg.ExtractFps, arg.ID)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Filename,
+		&i.Notes,
+		&i.Status,
+		&i.Error,
+		&i.IngestProgress,
+		&i.Split,
+		&i.ExtractFps,
+		&i.Width,
+		&i.Height,
+		&i.Fps,
+		&i.DurationMs,
+		&i.FrameCount,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const restoreVideo = `-- name: RestoreVideo :one
+UPDATE videos SET deleted_at = NULL, deleted_by = NULL
+WHERE id = $1 AND deleted_at IS NOT NULL
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
+`
+
+func (q *Queries) RestoreVideo(ctx context.Context, id int64) (Video, error) {
+	row := q.db.QueryRow(ctx, restoreVideo, id)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Filename,
+		&i.Notes,
+		&i.Status,
+		&i.Error,
+		&i.IngestProgress,
+		&i.Split,
+		&i.ExtractFps,
+		&i.Width,
+		&i.Height,
+		&i.Fps,
+		&i.DurationMs,
+		&i.FrameCount,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -379,13 +516,49 @@ func (q *Queries) StartProcessing(ctx context.Context, id int64) (int64, error) 
 	return result.RowsAffected(), nil
 }
 
+const trashVideo = `-- name: TrashVideo :one
+UPDATE videos SET deleted_at = now(), deleted_by = $1::uuid
+WHERE id = $2 AND deleted_at IS NULL
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
+`
+
+type TrashVideoParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	ID     int64       `json:"id"`
+}
+
+func (q *Queries) TrashVideo(ctx context.Context, arg TrashVideoParams) (Video, error) {
+	row := q.db.QueryRow(ctx, trashVideo, arg.UserID, arg.ID)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Filename,
+		&i.Notes,
+		&i.Status,
+		&i.Error,
+		&i.IngestProgress,
+		&i.Split,
+		&i.ExtractFps,
+		&i.Width,
+		&i.Height,
+		&i.Fps,
+		&i.DurationMs,
+		&i.FrameCount,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
 const updateVideo = `-- name: UpdateVideo :one
 UPDATE videos SET
     name = coalesce($1, name),
     notes = coalesce($2, notes),
     split = coalesce($3, split)
-WHERE id = $4
-RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at
+WHERE id = $4 AND deleted_at IS NULL
+RETURNING id, name, filename, notes, status, error, ingest_progress, split, extract_fps, width, height, fps, duration_ms, frame_count, created_at, deleted_at, deleted_by
 `
 
 type UpdateVideoParams struct {
@@ -419,6 +592,8 @@ func (q *Queries) UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video
 		&i.DurationMs,
 		&i.FrameCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }

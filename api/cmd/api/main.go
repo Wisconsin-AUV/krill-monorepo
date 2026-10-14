@@ -30,6 +30,7 @@ import (
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/config"
+	"github.com/wauv/krill/api/internal/content"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/email"
 	"github.com/wauv/krill/api/internal/export"
@@ -49,6 +50,7 @@ import (
 	"github.com/wauv/krill/api/internal/storagescan"
 	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/tracker"
+	"github.com/wauv/krill/api/internal/trash"
 	"github.com/wauv/krill/api/internal/user"
 	"github.com/wauv/krill/api/internal/video"
 	"github.com/wauv/krill/api/internal/web"
@@ -188,6 +190,9 @@ func run(logHub *logs.Hub) error {
 	river.AddWorker(workers, storagescan.NewCleanupWorker(pool, store))
 	river.AddWorker(workers, backup.NewWorker(pool, store, databaseURL, liveConfig))
 	river.AddWorker(workers, backup.NewScheduleWorker(pool, liveConfig))
+	trashRetention := func() int { return live.Load().cfg.TrashRetentionDays }
+	river.AddWorker(workers, trash.NewPurgeWorker(store))
+	river.AddWorker(workers, trash.NewAutoPurgeWorker(pool, trashRetention))
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Logger: slog.Default(),
 		Queues: map[string]river.QueueConfig{
@@ -204,6 +209,7 @@ func run(logHub *logs.Hub) error {
 			river.NewPeriodicJob(river.PeriodicInterval(backup.ScheduleInterval), func() (river.JobArgs, *river.InsertOpts) {
 				return backup.ScheduleArgs{}, nil
 			}, &river.PeriodicJobOpts{RunOnStart: true}),
+			trash.AutoPurgeJob(),
 		},
 	})
 	if err != nil {
@@ -269,6 +275,7 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewStorageServiceHandler(storagescan.NewService(pool, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewDatabaseServiceHandler(backup.NewService(pool, store, jobs, liveConfig), rpcOpts))
 	mux.Handle(krillv1connect.NewLogServiceHandler(logs.NewService(logHub), rpcOpts))
+	mux.Handle(krillv1connect.NewContentServiceHandler(content.NewService(pool, store, jobs, nodes, trashRetention), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

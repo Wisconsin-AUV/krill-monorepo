@@ -1,5 +1,8 @@
 -- name: GetFrame :one
-SELECT * FROM frames WHERE id = $1;
+SELECT f.* FROM frames f
+JOIN clips c ON c.id = f.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE f.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL;
 
 -- name: CreateTrack :one
 INSERT INTO tracks (clip_id, label_type_id, attributes)
@@ -7,7 +10,10 @@ VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetTrack :one
-SELECT * FROM tracks WHERE id = $1;
+SELECT t.* FROM tracks t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE t.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL;
 
 -- name: UpdateTrack :one
 UPDATE tracks SET label_type_id = $2, attributes = $3
@@ -15,8 +21,10 @@ WHERE id = $1
 RETURNING *;
 
 -- name: DeleteTrack :one
-DELETE FROM tracks WHERE id = $1
-RETURNING clip_id;
+DELETE FROM tracks t
+USING clips c, videos v
+WHERE t.id = $1 AND c.id = t.clip_id AND v.id = c.video_id AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+RETURNING t.clip_id;
 
 -- name: ListClipTracks :many
 SELECT * FROM tracks WHERE clip_id = $1 ORDER BY id;
@@ -45,8 +53,12 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
 RETURNING *;
 
 -- name: DeleteAnnotation :one
-DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2
-RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = track_id)::bigint AS clip_id;
+DELETE FROM annotations a
+WHERE a.track_id = $1 AND a.frame_id = $2
+    AND EXISTS (
+        SELECT 1 FROM tracks t JOIN live_clips c ON c.id = t.clip_id WHERE t.id = a.track_id
+    )
+RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = a.track_id)::bigint AS clip_id;
 
 -- name: CountTrackAnnotations :one
 SELECT count(*)::int FROM annotations WHERE track_id = $1;
@@ -75,7 +87,8 @@ UPDATE frames SET
         WHEN status = sqlc.arg('status') THEN status_at
         ELSE now()
     END
-WHERE id = sqlc.arg('id')
+WHERE frames.id = sqlc.arg('id')
+    AND frames.clip_id IN (SELECT lc.id FROM live_clips lc)
 RETURNING status, clip_id;
 
 -- name: CountFrameAnnotations :one
@@ -92,6 +105,7 @@ SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
     b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
 FROM tracks t
 JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
 JOIN label_types lt ON lt.id = t.label_type_id
 JOIN LATERAL (
     SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
@@ -109,6 +123,8 @@ JOIN LATERAL (
     LIMIT 1
 ) b ON true
 WHERE t.label_type_id = sqlc.arg('label_type_id')
+    AND c.deleted_at IS NULL
+    AND v.deleted_at IS NULL
     AND (sqlc.arg('video_id')::bigint = 0 OR c.video_id = sqlc.arg('video_id')::bigint)
     AND t.id > sqlc.arg('after_id')::bigint
     AND (NOT sqlc.arg('missing_only')::bool OR EXISTS (

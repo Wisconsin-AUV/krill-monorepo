@@ -9,6 +9,43 @@ import (
 	"context"
 )
 
+const countTrackValues = `-- name: CountTrackValues :many
+SELECT e.key::text AS attribute, e.value::text AS option, count(*)::int AS tracks
+FROM tracks t
+CROSS JOIN LATERAL jsonb_each_text(
+    CASE WHEN jsonb_typeof(t.attributes) = 'object' THEN t.attributes ELSE '{}' END
+) AS e (key, value)
+WHERE t.label_type_id = $1
+GROUP BY e.key, e.value
+ORDER BY e.key, e.value
+`
+
+type CountTrackValuesRow struct {
+	Attribute string `json:"attribute"`
+	Option    string `json:"option"`
+	Tracks    int32  `json:"tracks"`
+}
+
+func (q *Queries) CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error) {
+	rows, err := q.db.Query(ctx, countTrackValues, labelTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountTrackValuesRow
+	for rows.Next() {
+		var i CountTrackValuesRow
+		if err := rows.Scan(&i.Attribute, &i.Option, &i.Tracks); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countTracksForLabelType = `-- name: CountTracksForLabelType :one
 SELECT count(*)::int FROM tracks WHERE label_type_id = $1
 `
@@ -135,6 +172,66 @@ func (q *Queries) GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	return i, err
 }
 
+const getMergeImpact = `-- name: GetMergeImpact :one
+SELECT
+    (SELECT count(*) FROM tracks t WHERE t.label_type_id = $1)::int AS track_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.label_type_id = $1)::int AS box_count,
+    (SELECT count(DISTINCT t.clip_id) FROM tracks t WHERE t.label_type_id = $1)::int AS clip_count,
+    (
+        SELECT count(DISTINCT c.video_id) FROM tracks t JOIN clips c ON c.id = t.clip_id
+        WHERE t.label_type_id = $1
+    )::int AS video_count,
+    (
+        SELECT count(*) FROM tracks t
+        WHERE t.label_type_id = $1 AND NOT EXISTS (SELECT 1 FROM live_clips c WHERE c.id = t.clip_id)
+    )::int AS trashed_track_count,
+    (
+        SELECT count(*) FROM gold_frames g
+        WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', $1::bigint))
+    )::int AS gold_frame_count,
+    (
+        SELECT count(*) FROM gold_attempts g
+        WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', $1::bigint))
+    )::int AS gold_attempt_count,
+    (
+        SELECT count(DISTINCT r.id) FROM reviews r
+        JOIN annotations a ON a.frame_id = r.frame_id
+        JOIN tracks t ON t.id = a.track_id
+        WHERE r.resolved_at IS NULL AND t.label_type_id = $1
+    )::int AS open_review_count,
+    (SELECT count(*) FROM label_examples e WHERE e.label_type_id = $1)::int AS example_count
+`
+
+type GetMergeImpactRow struct {
+	TrackCount        int32 `json:"track_count"`
+	BoxCount          int32 `json:"box_count"`
+	ClipCount         int32 `json:"clip_count"`
+	VideoCount        int32 `json:"video_count"`
+	TrashedTrackCount int32 `json:"trashed_track_count"`
+	GoldFrameCount    int32 `json:"gold_frame_count"`
+	GoldAttemptCount  int32 `json:"gold_attempt_count"`
+	OpenReviewCount   int32 `json:"open_review_count"`
+	ExampleCount      int32 `json:"example_count"`
+}
+
+// Covers tracks in the trash too, since they move with the rest.
+func (q *Queries) GetMergeImpact(ctx context.Context, id int64) (GetMergeImpactRow, error) {
+	row := q.db.QueryRow(ctx, getMergeImpact, id)
+	var i GetMergeImpactRow
+	err := row.Scan(
+		&i.TrackCount,
+		&i.BoxCount,
+		&i.ClipCount,
+		&i.VideoCount,
+		&i.TrashedTrackCount,
+		&i.GoldFrameCount,
+		&i.GoldAttemptCount,
+		&i.OpenReviewCount,
+		&i.ExampleCount,
+	)
+	return i, err
+}
+
 const listLabelExamples = `-- name: ListLabelExamples :many
 SELECT id, label_type_id, object_key, caption, created_at FROM label_examples ORDER BY label_type_id, id
 `
@@ -168,8 +265,14 @@ func (q *Queries) ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 const listLabelTypes = `-- name: ListLabelTypes :many
 SELECT
     lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at, lt.title, lt.guideline,
-    (SELECT count(*) FROM tracks t WHERE t.label_type_id = lt.id)::int AS track_count,
-    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.label_type_id = lt.id)::int AS box_count
+    (
+        SELECT count(*) FROM tracks t JOIN live_clips c ON c.id = t.clip_id
+        WHERE t.label_type_id = lt.id
+    )::int AS track_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
+        WHERE t.label_type_id = lt.id
+    )::int AS box_count
 FROM label_types lt
 ORDER BY lt.position, lt.id
 `
@@ -210,6 +313,141 @@ func (q *Queries) ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockLabelTypes = `-- name: LockLabelTypes :many
+SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types WHERE id = ANY($1::bigint[]) ORDER BY id FOR UPDATE
+`
+
+func (q *Queries) LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error) {
+	rows, err := q.db.Query(ctx, lockLabelTypes, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LabelType
+	for rows.Next() {
+		var i LabelType
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Color,
+			&i.Description,
+			&i.Position,
+			&i.Attributes,
+			&i.CreatedAt,
+			&i.Title,
+			&i.Guideline,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const mergeGoldAttempts = `-- name: MergeGoldAttempts :execrows
+UPDATE gold_attempts g SET boxes = (
+    SELECT jsonb_agg(
+        CASE WHEN (b.box ->> 'label_type_id')::bigint = $1::bigint THEN
+            b.box || jsonb_build_object(
+                'label_type_id', $2::bigint,
+                'attributes', coalesce((
+                    SELECT jsonb_object_agg($3::jsonb -> e.key -> e.value ->> 0, $3::jsonb -> e.key -> e.value ->> 1)
+                    FROM jsonb_each_text(
+                        CASE WHEN jsonb_typeof(b.box -> 'attributes') = 'object' THEN b.box -> 'attributes' ELSE '{}' END
+                    ) AS e (key, value)
+                    WHERE $3::jsonb -> e.key -> e.value IS NOT NULL
+                ), '{}'::jsonb)
+            )
+        ELSE b.box END
+        ORDER BY b.n
+    )
+    FROM jsonb_array_elements(g.boxes) WITH ORDINALITY AS b (box, n)
+)
+WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', $1::bigint))
+`
+
+type MergeGoldAttemptsParams struct {
+	SourceID int64  `json:"source_id"`
+	TargetID int64  `json:"target_id"`
+	Mapping  []byte `json:"mapping"`
+}
+
+func (q *Queries) MergeGoldAttempts(ctx context.Context, arg MergeGoldAttemptsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, mergeGoldAttempts, arg.SourceID, arg.TargetID, arg.Mapping)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const mergeGoldFrames = `-- name: MergeGoldFrames :execrows
+UPDATE gold_frames g SET boxes = (
+    SELECT jsonb_agg(
+        CASE WHEN (b.box ->> 'label_type_id')::bigint = $1::bigint THEN
+            b.box || jsonb_build_object(
+                'label_type_id', $2::bigint,
+                'attributes', coalesce((
+                    SELECT jsonb_object_agg($3::jsonb -> e.key -> e.value ->> 0, $3::jsonb -> e.key -> e.value ->> 1)
+                    FROM jsonb_each_text(
+                        CASE WHEN jsonb_typeof(b.box -> 'attributes') = 'object' THEN b.box -> 'attributes' ELSE '{}' END
+                    ) AS e (key, value)
+                    WHERE $3::jsonb -> e.key -> e.value IS NOT NULL
+                ), '{}'::jsonb)
+            )
+        ELSE b.box END
+        ORDER BY b.n
+    )
+    FROM jsonb_array_elements(g.boxes) WITH ORDINALITY AS b (box, n)
+)
+WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', $1::bigint))
+`
+
+type MergeGoldFramesParams struct {
+	SourceID int64  `json:"source_id"`
+	TargetID int64  `json:"target_id"`
+	Mapping  []byte `json:"mapping"`
+}
+
+// Rewrites the copied boxes the same way as MergeTracks, so the key keeps
+// matching what labelers will draw.
+func (q *Queries) MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams) (int64, error) {
+	result, err := q.db.Exec(ctx, mergeGoldFrames, arg.SourceID, arg.TargetID, arg.Mapping)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const mergeTracks = `-- name: MergeTracks :execrows
+UPDATE tracks t SET
+    label_type_id = $1,
+    attributes = coalesce((
+        SELECT jsonb_object_agg($2::jsonb -> e.key -> e.value ->> 0, $2::jsonb -> e.key -> e.value ->> 1)
+        FROM jsonb_each_text(CASE WHEN jsonb_typeof(t.attributes) = 'object' THEN t.attributes ELSE '{}' END) AS e (key, value)
+        WHERE $2::jsonb -> e.key -> e.value IS NOT NULL
+    ), '{}')
+WHERE t.label_type_id = $3
+`
+
+type MergeTracksParams struct {
+	TargetID int64  `json:"target_id"`
+	Mapping  []byte `json:"mapping"`
+	SourceID int64  `json:"source_id"`
+}
+
+// @mapping is {"source attribute": {"source option": ["target attribute",
+// "target option"]}}. Values without a mapping are dropped.
+func (q *Queries) MergeTracks(ctx context.Context, arg MergeTracksParams) (int64, error) {
+	result, err := q.db.Exec(ctx, mergeTracks, arg.TargetID, arg.Mapping, arg.SourceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const setLabelTypePosition = `-- name: SetLabelTypePosition :exec

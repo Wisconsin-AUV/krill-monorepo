@@ -28,6 +28,7 @@ const enqueueDoneSinceGoldCheck = `-- name: EnqueueDoneSinceGoldCheck :execrows
 INSERT INTO reviews (frame_id, reason)
 SELECT f.id, $1::text
 FROM frames f
+JOIN live_clips c ON c.id = f.clip_id
 WHERE f.status_by = $2::uuid
     AND f.status_at > coalesce(
         (SELECT max(created_at) FROM gold_attempts WHERE user_id = $2::uuid AND frame_id <> $3::bigint),
@@ -64,6 +65,7 @@ const framesSinceGoldCheck = `-- name: FramesSinceGoldCheck :one
 SELECT count(*)::int
 FROM frames
 WHERE status_by = $1::uuid
+    AND clip_id IN (SELECT id FROM live_clips)
     AND status_at > coalesce(
         (SELECT max(created_at) FROM gold_attempts WHERE user_id = $1::uuid),
         '-infinity'::timestamptz
@@ -85,6 +87,7 @@ SELECT
 FROM gold_attempts ga
 JOIN gold_frames g ON g.frame_id = ga.frame_id
 JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 JOIN users u ON u.id = ga.user_id
 WHERE ga.frame_id = $1 AND ga.user_id = $2
@@ -146,6 +149,7 @@ const getGoldFrame = `-- name: GetGoldFrame :one
 SELECT g.frame_id, g.boxes, f.idx, f.video_id, v.width, v.height
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE g.frame_id = $1
 `
@@ -327,6 +331,7 @@ SELECT
     u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
 FROM gold_attempts ga
 JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 JOIN users u ON u.id = ga.user_id
 WHERE ($1::uuid IS NULL OR ga.user_id = $1::uuid)
@@ -414,6 +419,7 @@ SELECT
     coalesce(avg(ga.score), 0)::float8 AS mean_score
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 LEFT JOIN gold_attempts ga ON ga.frame_id = g.frame_id
 GROUP BY g.frame_id, f.id, v.id
@@ -470,10 +476,13 @@ SELECT
     sum(ga.iou_sum)::float8 AS iou_sum,
     (
         SELECT avg(r.score) FROM (
-            SELECT score FROM gold_attempts WHERE user_id = u.id ORDER BY created_at DESC LIMIT $1::int
+            SELECT a.score FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+            WHERE a.user_id = u.id ORDER BY a.created_at DESC LIMIT $1::int
         ) r
     )::float8 AS recent_score
 FROM gold_attempts ga
+JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN users u ON u.id = ga.user_id
 GROUP BY u.id
 `
@@ -528,6 +537,7 @@ const nextGoldFrame = `-- name: NextGoldFrame :one
 SELECT g.frame_id
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND g.created_by IS DISTINCT FROM $1::uuid
@@ -556,10 +566,14 @@ func (q *Queries) NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, e
 
 const recentGoldScore = `-- name: RecentGoldScore :one
 SELECT
-    (SELECT count(*) FROM gold_attempts WHERE user_id = $1::uuid)::int AS attempts,
+    (
+        SELECT count(*) FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+        WHERE a.user_id = $1::uuid
+    )::int AS attempts,
     coalesce((
         SELECT avg(r.score) FROM (
-            SELECT score FROM gold_attempts WHERE user_id = $1::uuid ORDER BY created_at DESC LIMIT $2::int
+            SELECT a.score FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+            WHERE a.user_id = $1::uuid ORDER BY a.created_at DESC LIMIT $2::int
         ) r
     ), 0)::float8 AS recent_score
 `

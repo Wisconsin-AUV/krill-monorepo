@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"iter"
 	"time"
@@ -94,30 +93,6 @@ func (s *Store) Stat(ctx context.Context, key string) (Object, bool, error) {
 		return Object{}, false, fmt.Errorf("stat %s: %w", key, err)
 	}
 	return Object{Key: key, Size: info.Size, Modified: info.LastModified}, true, nil
-}
-
-// RemoveKeys deletes keys in batches. Keys that are already gone are not an
-// error.
-func (s *Store) RemoveKeys(ctx context.Context, keys []string) error {
-	objects := make(chan minio.ObjectInfo)
-	go func() {
-		defer close(objects)
-		for _, k := range keys {
-			select {
-			case objects <- minio.ObjectInfo{Key: k}:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-	var errs []error
-	for res := range s.client.RemoveObjects(ctx, s.bucket, objects, minio.RemoveObjectsOptions{}) {
-		errs = append(errs, fmt.Errorf("remove %s: %w", res.ObjectName, res.Err))
-	}
-	if err := ctx.Err(); err != nil {
-		errs = append(errs, err)
-	}
-	return errors.Join(errs...)
 }
 
 // AbortUpload aborts one multipart upload, leaving any others for the key.

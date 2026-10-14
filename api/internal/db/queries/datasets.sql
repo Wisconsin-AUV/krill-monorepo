@@ -32,12 +32,14 @@ WHERE status = 'running';
 -- name: ListExportVideos :many
 SELECT id, name, split FROM videos
 WHERE status = 'ready'
+    AND deleted_at IS NULL
     AND (cardinality(sqlc.arg('video_ids')::bigint[]) = 0 OR id = ANY(sqlc.arg('video_ids')::bigint[]))
 ORDER BY id;
 
 -- name: ListExportFrames :many
 SELECT f.id, f.video_id, f.clip_id, f.idx, f.phash, f.status
 FROM frames f
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND (cardinality(sqlc.arg('video_ids')::bigint[]) = 0 OR v.id = ANY(sqlc.arg('video_ids')::bigint[]))
@@ -59,6 +61,7 @@ FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN last_boxes l ON l.track_id = a.track_id
 JOIN frames f ON f.id = a.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND f.status <> 'unlabeled'

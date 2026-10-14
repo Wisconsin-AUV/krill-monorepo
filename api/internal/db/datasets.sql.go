@@ -195,6 +195,7 @@ FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN last_boxes l ON l.track_id = a.track_id
 JOIN frames f ON f.id = a.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND f.status <> 'unlabeled'
@@ -250,6 +251,7 @@ func (q *Queries) ListExportAnnotations(ctx context.Context, videoIds []int64) (
 const listExportFrames = `-- name: ListExportFrames :many
 SELECT f.id, f.video_id, f.clip_id, f.idx, f.phash, f.status
 FROM frames f
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND (cardinality($1::bigint[]) = 0 OR v.id = ANY($1::bigint[]))
@@ -295,6 +297,7 @@ func (q *Queries) ListExportFrames(ctx context.Context, videoIds []int64) ([]Lis
 const listExportVideos = `-- name: ListExportVideos :many
 SELECT id, name, split FROM videos
 WHERE status = 'ready'
+    AND deleted_at IS NULL
     AND (cardinality($1::bigint[]) = 0 OR id = ANY($1::bigint[]))
 ORDER BY id
 `

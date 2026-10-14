@@ -43,8 +43,8 @@ const (
 type ClipServiceClient interface {
 	// GetClip returns everything the labeling view needs for one clip.
 	GetClip(context.Context, *v1.GetClipRequest) (*v1.GetClipResponse, error)
-	// DeleteClip removes a clip with its frames and labels, and renumbers the
-	// clips after it so the video has no gap.
+	// DeleteClip moves a clip to the trash and renumbers the clips after it so
+	// the video has no gap. Restoring it puts it back in its place.
 	DeleteClip(context.Context, *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error)
 }
 
@@ -102,8 +102,8 @@ func (c *clipServiceClient) DeleteClip(ctx context.Context, req *v1.DeleteClipRe
 type ClipServiceHandler interface {
 	// GetClip returns everything the labeling view needs for one clip.
 	GetClip(context.Context, *v1.GetClipRequest) (*v1.GetClipResponse, error)
-	// DeleteClip removes a clip with its frames and labels, and renumbers the
-	// clips after it so the video has no gap.
+	// DeleteClip moves a clip to the trash and renumbers the clips after it so
+	// the video has no gap. Restoring it puts it back in its place.
 	DeleteClip(context.Context, *v1.DeleteClipRequest) (*v1.DeleteClipResponse, error)
 }
 

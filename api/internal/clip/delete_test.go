@@ -56,7 +56,7 @@ func TestDeleteClipClosesTheGap(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rows, err := pool.Query(ctx, `SELECT id FROM clips WHERE video_id = $1 ORDER BY idx`, videoID)
+	rows, err := pool.Query(ctx, `SELECT id FROM clips WHERE video_id = $1 AND deleted_at IS NULL ORDER BY idx`, videoID)
 	if err != nil {
 		t.Fatal(err)
 	}

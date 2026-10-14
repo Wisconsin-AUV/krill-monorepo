@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/label.proto.
  */
 export const file_krill_v1_label: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIv0BCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZSI4CgxMYWJlbEV4YW1wbGUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEg8KB2NhcHRpb24YAyABKAkiFwoVTGlzdExhYmVsVHlwZXNSZXF1ZXN0IkIKFkxpc3RMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUimgEKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBSABKAkSEQoJZ3VpZGVsaW5lGAYgASgJIkIKF0NyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUipgEKFlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIsCgphdHRyaWJ1dGVzGAUgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBiABKAkSEQoJZ3VpZGVsaW5lGAcgASgJIkIKF1VwZGF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiJAoWRGVsZXRlTGFiZWxUeXBlUmVxdWVzdBIKCgJpZBgBIAEoAyIZChdEZWxldGVMYWJlbFR5cGVSZXNwb25zZSInChhSZW9yZGVyTGFiZWxUeXBlc1JlcXVlc3QSCwoDaWRzGAEgAygDIkUKGVJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiOAofQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIkMKIENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlc3BvbnNlEgsKA2tleRgBIAEoCRISCgp1cGxvYWRfdXJsGAIgASgJIk0KFkFkZExhYmVsRXhhbXBsZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkSDwoHY2FwdGlvbhgDIAEoCSJCChdBZGRMYWJlbEV4YW1wbGVSZXNwb25zZRInCgdleGFtcGxlGAEgASgLMhYua3JpbGwudjEuTGFiZWxFeGFtcGxlIicKGURlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QSCgoCaWQYASABKAMiHAoaRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UyhQYKDExhYmVsU2VydmljZRJVCg5MaXN0TGFiZWxUeXBlcxIfLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVxdWVzdBogLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9DcmVhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9VcGRhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9EZWxldGVMYWJlbFR5cGUSIC5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiABJeChFSZW9yZGVyTGFiZWxUeXBlcxIiLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBojLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2UiABJzChhDcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWQSKS5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0Gioua3JpbGwudjEuQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2UiABJYCg9BZGRMYWJlbEV4YW1wbGUSIC5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXF1ZXN0GiEua3JpbGwudjEuQWRkTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJhChJEZWxldGVMYWJlbEV4YW1wbGUSIy5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXF1ZXN0GiQua3JpbGwudjEuRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpMYWJlbFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw");
+  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIv0BCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZSI4CgxMYWJlbEV4YW1wbGUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEg8KB2NhcHRpb24YAyABKAkiFwoVTGlzdExhYmVsVHlwZXNSZXF1ZXN0IkIKFkxpc3RMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUimgEKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBSABKAkSEQoJZ3VpZGVsaW5lGAYgASgJIkIKF0NyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUipgEKFlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIsCgphdHRyaWJ1dGVzGAUgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBiABKAkSEQoJZ3VpZGVsaW5lGAcgASgJIkIKF1VwZGF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiJAoWRGVsZXRlTGFiZWxUeXBlUmVxdWVzdBIKCgJpZBgBIAEoAyIZChdEZWxldGVMYWJlbFR5cGVSZXNwb25zZSInChhSZW9yZGVyTGFiZWxUeXBlc1JlcXVlc3QSCwoDaWRzGAEgAygDIkUKGVJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiOAofQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIkMKIENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlc3BvbnNlEgsKA2tleRgBIAEoCRISCgp1cGxvYWRfdXJsGAIgASgJIk0KFkFkZExhYmVsRXhhbXBsZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkSDwoHY2FwdGlvbhgDIAEoCSJCChdBZGRMYWJlbEV4YW1wbGVSZXNwb25zZRInCgdleGFtcGxlGAEgASgLMhYua3JpbGwudjEuTGFiZWxFeGFtcGxlIicKGURlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QSCgoCaWQYASABKAMiHAoaRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UijgEKFUF0dHJpYnV0ZVZhbHVlTWFwcGluZxIYChBzb3VyY2VfYXR0cmlidXRlGAEgASgJEhUKDXNvdXJjZV9vcHRpb24YAiABKAkSGAoQdGFyZ2V0X2F0dHJpYnV0ZRgDIAEoCRIVCg10YXJnZXRfb3B0aW9uGAQgASgJEhMKC3RyYWNrX2NvdW50GAUgASgFIlIKEUV4cG9ydENsYXNzQ2hhbmdlEgwKBG5hbWUYASABKAkSDgoGb2xkX2lkGAIgASgFEg4KBm5ld19pZBgDIAEoBRIPCgdiZWNvbWVzGAQgASgJIngKHVByZXZpZXdNZXJnZUxhYmVsVHlwZXNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoAxIRCgl0YXJnZXRfaWQYAiABKAMSMQoIbWFwcGluZ3MYAyADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmci+gIKHlByZXZpZXdNZXJnZUxhYmVsVHlwZXNSZXNwb25zZRITCgt0cmFja19jb3VudBgBIAEoBRIRCglib3hfY291bnQYAiABKAUSEgoKY2xpcF9jb3VudBgDIAEoBRITCgt2aWRlb19jb3VudBgEIAEoBRIbChN0cmFzaGVkX3RyYWNrX2NvdW50GAUgASgFEhgKEGdvbGRfZnJhbWVfY291bnQYBiABKAUSGgoSZ29sZF9hdHRlbXB0X2NvdW50GAcgASgFEhkKEW9wZW5fcmV2aWV3X2NvdW50GAggASgFEhUKDWV4YW1wbGVfY291bnQYCSABKAUSMQoIbWFwcGluZ3MYCiADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmcSMgoNY2xhc3NfY2hhbmdlcxgLIAMoCzIbLmtyaWxsLnYxLkV4cG9ydENsYXNzQ2hhbmdlEhsKE3VuZmlsbGVkX2F0dHJpYnV0ZXMYDCADKAkicQoWTWVyZ2VMYWJlbFR5cGVzUmVxdWVzdBIRCglzb3VyY2VfaWQYASABKAMSEQoJdGFyZ2V0X2lkGAIgASgDEjEKCG1hcHBpbmdzGAMgAygLMh8ua3JpbGwudjEuQXR0cmlidXRlVmFsdWVNYXBwaW5nIngKF01lcmdlTGFiZWxUeXBlc1Jlc3BvbnNlEhMKC3RyYWNrX2NvdW50GAEgASgFEhEKCWJveF9jb3VudBgCIAEoBRIYChBnb2xkX2ZyYW1lX2NvdW50GAMgASgFEhsKE2Ryb3BwZWRfdmFsdWVfY291bnQYBCABKAUyzgcKDExhYmVsU2VydmljZRJVCg5MaXN0TGFiZWxUeXBlcxIfLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVxdWVzdBogLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9DcmVhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9VcGRhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9EZWxldGVMYWJlbFR5cGUSIC5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiABJeChFSZW9yZGVyTGFiZWxUeXBlcxIiLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBojLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2UiABJzChhDcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWQSKS5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0Gioua3JpbGwudjEuQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2UiABJYCg9BZGRMYWJlbEV4YW1wbGUSIC5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXF1ZXN0GiEua3JpbGwudjEuQWRkTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJhChJEZWxldGVMYWJlbEV4YW1wbGUSIy5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXF1ZXN0GiQua3JpbGwudjEuRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJtChZQcmV2aWV3TWVyZ2VMYWJlbFR5cGVzEicua3JpbGwudjEuUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QaKC5rcmlsbC52MS5QcmV2aWV3TWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9NZXJnZUxhYmVsVHlwZXMSIC5rcmlsbC52MS5NZXJnZUxhYmVsVHlwZXNSZXF1ZXN0GiEua3JpbGwudjEuTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpMYWJlbFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message krill.v1.LabelAttribute
@@ -465,6 +465,264 @@ export const DeleteLabelExampleResponseSchema: GenMessage<DeleteLabelExampleResp
   messageDesc(file_krill_v1_label, 18);
 
 /**
+ * AttributeValueMapping says what a source track's attribute value becomes.
+ *
+ * @generated from message krill.v1.AttributeValueMapping
+ */
+export type AttributeValueMapping = Message<"krill.v1.AttributeValueMapping"> & {
+  /**
+   * @generated from field: string source_attribute = 1;
+   */
+  sourceAttribute: string;
+
+  /**
+   * @generated from field: string source_option = 2;
+   */
+  sourceOption: string;
+
+  /**
+   * Both empty drops the value.
+   *
+   * @generated from field: string target_attribute = 3;
+   */
+  targetAttribute: string;
+
+  /**
+   * @generated from field: string target_option = 4;
+   */
+  targetOption: string;
+
+  /**
+   * Tracks of the source type with this value.
+   *
+   * @generated from field: int32 track_count = 5;
+   */
+  trackCount: number;
+};
+
+/**
+ * Describes the message krill.v1.AttributeValueMapping.
+ * Use `create(AttributeValueMappingSchema)` to create a new message.
+ */
+export const AttributeValueMappingSchema: GenMessage<AttributeValueMapping> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 19);
+
+/**
+ * @generated from message krill.v1.ExportClassChange
+ */
+export type ExportClassChange = Message<"krill.v1.ExportClassChange"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 old_id = 2;
+   */
+  oldId: number;
+
+  /**
+   * -1 when the class is gone.
+   *
+   * @generated from field: int32 new_id = 3;
+   */
+  newId: number;
+
+  /**
+   * For the source's classes, the target class its boxes export as. Empty
+   * when the mapping leaves a target attribute unset.
+   *
+   * @generated from field: string becomes = 4;
+   */
+  becomes: string;
+};
+
+/**
+ * Describes the message krill.v1.ExportClassChange.
+ * Use `create(ExportClassChangeSchema)` to create a new message.
+ */
+export const ExportClassChangeSchema: GenMessage<ExportClassChange> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 20);
+
+/**
+ * @generated from message krill.v1.PreviewMergeLabelTypesRequest
+ */
+export type PreviewMergeLabelTypesRequest = Message<"krill.v1.PreviewMergeLabelTypesRequest"> & {
+  /**
+   * @generated from field: int64 source_id = 1;
+   */
+  sourceId: bigint;
+
+  /**
+   * @generated from field: int64 target_id = 2;
+   */
+  targetId: bigint;
+
+  /**
+   * Empty uses the default: same attribute and option names.
+   *
+   * @generated from field: repeated krill.v1.AttributeValueMapping mappings = 3;
+   */
+  mappings: AttributeValueMapping[];
+};
+
+/**
+ * Describes the message krill.v1.PreviewMergeLabelTypesRequest.
+ * Use `create(PreviewMergeLabelTypesRequestSchema)` to create a new message.
+ */
+export const PreviewMergeLabelTypesRequestSchema: GenMessage<PreviewMergeLabelTypesRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 21);
+
+/**
+ * @generated from message krill.v1.PreviewMergeLabelTypesResponse
+ */
+export type PreviewMergeLabelTypesResponse = Message<"krill.v1.PreviewMergeLabelTypesResponse"> & {
+  /**
+   * Counts include tracks in the trash, which move too.
+   *
+   * @generated from field: int32 track_count = 1;
+   */
+  trackCount: number;
+
+  /**
+   * @generated from field: int32 box_count = 2;
+   */
+  boxCount: number;
+
+  /**
+   * @generated from field: int32 clip_count = 3;
+   */
+  clipCount: number;
+
+  /**
+   * @generated from field: int32 video_count = 4;
+   */
+  videoCount: number;
+
+  /**
+   * @generated from field: int32 trashed_track_count = 5;
+   */
+  trashedTrackCount: number;
+
+  /**
+   * Gold keys and attempts are rewritten. Scores already given stay.
+   *
+   * @generated from field: int32 gold_frame_count = 6;
+   */
+  goldFrameCount: number;
+
+  /**
+   * @generated from field: int32 gold_attempt_count = 7;
+   */
+  goldAttemptCount: number;
+
+  /**
+   * @generated from field: int32 open_review_count = 8;
+   */
+  openReviewCount: number;
+
+  /**
+   * Deleted with the source.
+   *
+   * @generated from field: int32 example_count = 9;
+   */
+  exampleCount: number;
+
+  /**
+   * Every option of the source's attributes, and every value its tracks
+   * have.
+   *
+   * @generated from field: repeated krill.v1.AttributeValueMapping mappings = 10;
+   */
+  mappings: AttributeValueMapping[];
+
+  /**
+   * Classes whose export ID changes or that go away.
+   *
+   * @generated from field: repeated krill.v1.ExportClassChange class_changes = 11;
+   */
+  classChanges: ExportClassChange[];
+
+  /**
+   * Target attributes no mapping fills, which merged tracks will be
+   * missing.
+   *
+   * @generated from field: repeated string unfilled_attributes = 12;
+   */
+  unfilledAttributes: string[];
+};
+
+/**
+ * Describes the message krill.v1.PreviewMergeLabelTypesResponse.
+ * Use `create(PreviewMergeLabelTypesResponseSchema)` to create a new message.
+ */
+export const PreviewMergeLabelTypesResponseSchema: GenMessage<PreviewMergeLabelTypesResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 22);
+
+/**
+ * @generated from message krill.v1.MergeLabelTypesRequest
+ */
+export type MergeLabelTypesRequest = Message<"krill.v1.MergeLabelTypesRequest"> & {
+  /**
+   * @generated from field: int64 source_id = 1;
+   */
+  sourceId: bigint;
+
+  /**
+   * @generated from field: int64 target_id = 2;
+   */
+  targetId: bigint;
+
+  /**
+   * Values without a mapping are dropped.
+   *
+   * @generated from field: repeated krill.v1.AttributeValueMapping mappings = 3;
+   */
+  mappings: AttributeValueMapping[];
+};
+
+/**
+ * Describes the message krill.v1.MergeLabelTypesRequest.
+ * Use `create(MergeLabelTypesRequestSchema)` to create a new message.
+ */
+export const MergeLabelTypesRequestSchema: GenMessage<MergeLabelTypesRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 23);
+
+/**
+ * @generated from message krill.v1.MergeLabelTypesResponse
+ */
+export type MergeLabelTypesResponse = Message<"krill.v1.MergeLabelTypesResponse"> & {
+  /**
+   * @generated from field: int32 track_count = 1;
+   */
+  trackCount: number;
+
+  /**
+   * @generated from field: int32 box_count = 2;
+   */
+  boxCount: number;
+
+  /**
+   * @generated from field: int32 gold_frame_count = 3;
+   */
+  goldFrameCount: number;
+
+  /**
+   * Attribute values dropped across all tracks.
+   *
+   * @generated from field: int32 dropped_value_count = 4;
+   */
+  droppedValueCount: number;
+};
+
+/**
+ * Describes the message krill.v1.MergeLabelTypesResponse.
+ * Use `create(MergeLabelTypesResponseSchema)` to create a new message.
+ */
+export const MergeLabelTypesResponseSchema: GenMessage<MergeLabelTypesResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 24);
+
+/**
  * LabelService manages the taxonomy: object types and the attributes that
  * are assigned once per track. Export flattens type and attribute values
  * into YOLO class names, so the taxonomy can change without relabeling.
@@ -542,6 +800,28 @@ export const LabelService: GenService<{
     methodKind: "unary";
     input: typeof DeleteLabelExampleRequestSchema;
     output: typeof DeleteLabelExampleResponseSchema;
+  },
+  /**
+   * PreviewMergeLabelTypes shows what merging one type into another would
+   * change.
+   *
+   * @generated from rpc krill.v1.LabelService.PreviewMergeLabelTypes
+   */
+  previewMergeLabelTypes: {
+    methodKind: "unary";
+    input: typeof PreviewMergeLabelTypesRequestSchema;
+    output: typeof PreviewMergeLabelTypesResponseSchema;
+  },
+  /**
+   * MergeLabelTypes moves every track of the source type to the target,
+   * mapping their attribute values, and deletes the source.
+   *
+   * @generated from rpc krill.v1.LabelService.MergeLabelTypes
+   */
+  mergeLabelTypes: {
+    methodKind: "unary";
+    input: typeof MergeLabelTypesRequestSchema;
+    output: typeof MergeLabelTypesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_label, 0);

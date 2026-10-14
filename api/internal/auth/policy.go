@@ -65,6 +65,8 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.LabelServiceCreateLabelExampleUploadProcedure: manageLabelTypes,
 	krillv1connect.LabelServiceAddLabelExampleProcedure:          manageLabelTypes,
 	krillv1connect.LabelServiceDeleteLabelExampleProcedure:       manageLabelTypes,
+	krillv1connect.LabelServicePreviewMergeLabelTypesProcedure:   manageLabelTypes,
+	krillv1connect.LabelServiceMergeLabelTypesProcedure:          manageLabelTypes,
 
 	krillv1connect.AnnotationServiceCreateTrackProcedure:       label,
 	krillv1connect.AnnotationServiceUpdateTrackProcedure:       label,
@@ -177,4 +179,17 @@ var policy = map[string]krillv1.Permission{
 	// logs, so only admins see them.
 	krillv1connect.LogServiceListLogSourcesProcedure: manageSystem,
 	krillv1connect.LogServiceListLogsProcedure:       manageSystem,
+
+	krillv1connect.ContentServiceListTrashProcedure: manageSystem,
+	// Whoever can trash a video or clip can undo it.
+	krillv1connect.ContentServiceRestoreTrashProcedure:         manageVideos,
+	krillv1connect.ContentServicePurgeTrashProcedure:           manageSystem,
+	krillv1connect.ContentServiceEmptyTrashProcedure:           manageSystem,
+	krillv1connect.ContentServiceListContentVideosProcedure:    manageSystem,
+	krillv1connect.ContentServiceListContentClipsProcedure:     manageSystem,
+	krillv1connect.ContentServicePreviewReextractProcedure:     manageSystem,
+	krillv1connect.ContentServiceReextractVideosProcedure:      manageSystem,
+	krillv1connect.ContentServiceRegenerateEmbeddingsProcedure: manageSystem,
+	krillv1connect.ContentServiceReassignClipsProcedure:        manageSystem,
+	krillv1connect.ContentServiceListContentJobsProcedure:      manageSystem,
 }

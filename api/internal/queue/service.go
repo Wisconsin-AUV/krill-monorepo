@@ -139,6 +139,9 @@ func (s *Service) TakeClip(ctx context.Context, req *krillv1.TakeClipRequest) (*
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
 
+	if _, err := q.GetClip(ctx, req.GetClipId()); err != nil {
+		return nil, rpc.DBError(err, "clip")
+	}
 	name, err := audit.ClipName(ctx, q, req.GetClipId())
 	if err != nil {
 		return nil, rpc.DBError(err, "clip")

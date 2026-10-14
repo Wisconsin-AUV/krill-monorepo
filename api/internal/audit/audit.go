@@ -15,15 +15,20 @@ import (
 )
 
 const (
-	ClipDelete      = "clip.delete"
+	ClipAssign      = "clip.assign"
+	ClipPurge       = "clip.purge"
 	ClipRelease     = "clip.release"
+	ClipRestore     = "clip.restore"
 	ClipTake        = "clip.take"
+	ClipTrash       = "clip.trash"
+	EmbedRegenerate = "embeddings.regenerate"
 	ExportDelete    = "export.delete"
 	GoldSet         = "gold.set"
 	GoldUnset       = "gold.unset"
 	LabelTypeCreate = "label_type.create"
 	LabelTypeUpdate = "label_type.update"
 	LabelTypeDelete = "label_type.delete"
+	LabelTypeMerge  = "label_type.merge"
 	ReviewResolve   = "review.resolve"
 	SettingUpdate   = "setting.update"
 	UserDelete      = "user.delete"
@@ -33,7 +38,10 @@ const (
 	UserRole        = "user.role"
 	UserSignOut     = "user.sign_out"
 	UserVerifyEmail = "user.verify_email"
-	VideoDelete     = "video.delete"
+	VideoPurge      = "video.purge"
+	VideoReextract  = "video.reextract"
+	VideoRestore    = "video.restore"
+	VideoTrash      = "video.trash"
 
 	ApprovedEmailAdd    = "approved_email.add"
 	ApprovedEmailRemove = "approved_email.remove"

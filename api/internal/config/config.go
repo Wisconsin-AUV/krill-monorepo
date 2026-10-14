@@ -78,6 +78,9 @@ type Config struct {
 	// they're off. BackupKeep is how many scheduled backups are kept.
 	BackupHour int
 	BackupKeep int
+	// TrashRetentionDays is how long trashed videos and clips are kept before
+	// they are purged. 0 keeps them until someone purges them.
+	TrashRetentionDays int
 }
 
 // Lookup returns a setting's raw value, or false when nothing sets it and
@@ -143,6 +146,7 @@ func Parse(lookup Lookup) (Config, error) {
 		SamModel:              p.choice("KRILL_SAM_MODEL"),
 		BackupHour:            p.backupHour("KRILL_BACKUP_SCHEDULE"),
 		BackupKeep:            p.int("KRILL_BACKUP_KEEP"),
+		TrashRetentionDays:    p.int("KRILL_TRASH_RETENTION_DAYS"),
 	}
 	if p.err != nil {
 		return Config{}, p.err
@@ -172,6 +176,9 @@ func (c Config) validate() error {
 	}
 	if c.StuckClaimDays < 1 {
 		return invalid("KRILL_STUCK_CLAIM_DAYS", "must be at least 1")
+	}
+	if c.TrashRetentionDays < 0 {
+		return invalid("KRILL_TRASH_RETENTION_DAYS", "must not be negative")
 	}
 	if strings.HasPrefix(c.PublicURL, "https://") && !strings.HasPrefix(c.S3PublicEndpoint, "https://") {
 		return invalid("KRILL_S3_PUBLIC_ENDPOINT", "must be HTTPS when KRILL_PUBLIC_URL is")

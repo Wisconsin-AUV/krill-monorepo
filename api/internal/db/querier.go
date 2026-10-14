@@ -14,8 +14,10 @@ import (
 type Querier interface {
 	AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error
 	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
+	AddClipFrames(ctx context.Context, id int64) (int64, error)
 	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
 	ApprovedSignupOpen(ctx context.Context) (bool, error)
+	AssignClips(ctx context.Context, arg AssignClipsParams) (int64, error)
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
@@ -28,12 +30,14 @@ type Querier interface {
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
 	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
+	CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
 	CoverageCells(ctx context.Context) ([]CoverageCellsRow, error)
 	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
 	CreateBackup(ctx context.Context, arg CreateBackupParams) (Backup, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
+	CreateContentJob(ctx context.Context, arg CreateContentJobParams) (ContentJob, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
@@ -47,7 +51,7 @@ type Querier interface {
 	DatabaseSize(ctx context.Context) (int64, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteBackup(ctx context.Context, id int64) (Backup, error)
-	DeleteClip(ctx context.Context, id int64) (int32, error)
+	DeleteClip(ctx context.Context, id int64) (DeleteClipRow, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
@@ -108,6 +112,8 @@ type Querier interface {
 	GetLastSuccessfulBackup(ctx context.Context) (Backup, error)
 	GetLatestFinishedStorageScanID(ctx context.Context) (int64, error)
 	GetLatestStorageScanID(ctx context.Context) (int64, error)
+	// Covers tracks in the trash too, since they move with the rest.
+	GetMergeImpact(ctx context.Context, id int64) (GetMergeImpactRow, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
@@ -120,6 +126,8 @@ type Querier interface {
 	GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
+	// Also finds trashed videos, for ingest and the trash itself.
+	GetVideoInTrash(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
 	GetWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
@@ -166,7 +174,15 @@ type Querier interface {
 	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
+	// Clips for the admin panel, by video or by who holds them. With neither
+	// filter it lists every claimed clip.
+	ListContentClips(ctx context.Context, arg ListContentClipsParams) ([]ListContentClipsRow, error)
+	ListContentJobs(ctx context.Context, since pgtype.Timestamptz) ([]ListContentJobsRow, error)
+	ListContentVideos(ctx context.Context, model string) ([]ListContentVideosRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
+	// Clips to embed, from the given videos and clips. Stale clips have no
+	// embeddings or ones from another model than @model, when it is known.
+	ListEmbedClips(ctx context.Context, arg ListEmbedClipsParams) ([]int64, error)
 	ListExpiredScheduledBackups(ctx context.Context, offset int32) ([]Backup, error)
 	// A track whose last box is still a proposal may have drifted, so none of its
 	// boxes count until someone confirms that last frame.
@@ -192,14 +208,25 @@ type Querier interface {
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
+	ListLiveClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
+	// What re-extracting each video throws away. Ingest replaces every clip,
+	// including the ones in the trash.
+	ListReextractStats(ctx context.Context, ids []int64) ([]ListReextractStatsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListStorageOrphans(ctx context.Context, arg ListStorageOrphansParams) ([]ListStorageOrphansRow, error)
 	ListStorageScanVideos(ctx context.Context, scanID int64) ([]ListStorageScanVideosRow, error)
 	ListStuckClips(ctx context.Context, idleBefore pgtype.Timestamptz) ([]ListStuckClipsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
+	// Everything trashed before @before. A clip whose video is also trashed goes
+	// with the video.
+	ListTrashIDs(ctx context.Context, before pgtype.Timestamptz) ([]ListTrashIDsRow, error)
+	// Clips of a trashed video are listed with the video instead.
+	ListTrashedClips(ctx context.Context) ([]ListTrashedClipsRow, error)
+	// Counts cover clips trashed on their own too, since they go with the video.
+	ListTrashedVideos(ctx context.Context) ([]ListTrashedVideosRow, error)
 	// Each track comes with its first verified box, or its middle box when none
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
@@ -210,12 +237,22 @@ type Querier interface {
 	LockApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
 	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
+	LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error)
+	LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error)
+	LockTrashedVideo(ctx context.Context, id int64) (LockTrashedVideoRow, error)
 	LockUserPair(ctx context.Context, arg LockUserPairParams) ([]User, error)
 	LockUsers(ctx context.Context) error
 	// Returns the session's active user. A session not seen for five minutes is
 	// marked seen in the same statement, so most requests don't write.
 	LookupSession(ctx context.Context, arg LookupSessionParams) (User, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error)
+	MergeGoldAttempts(ctx context.Context, arg MergeGoldAttemptsParams) (int64, error)
+	// Rewrites the copied boxes the same way as MergeTracks, so the key keeps
+	// matching what labelers will draw.
+	MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams) (int64, error)
+	// @mapping is {"source attribute": {"source option": ["target attribute",
+	// "target option"]}}. Values without a mapping are dropped.
+	MergeTracks(ctx context.Context, arg MergeTracksParams) (int64, error)
 	// Started clips that were abandoned come first so they get finished. After
 	// that, clips come from the video with the fewest clips worked on, so labels
 	// spread across as much footage as possible.
@@ -224,16 +261,20 @@ type Querier interface {
 	// the answer. The order is shuffled per labeler but stable, so skipping a
 	// check does not hand out an easier one.
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
-	// The unique (video_id, idx) constraint is checked row by row, so shifting
-	// every later clip down by one in a single UPDATE can collide with a row that
-	// hasn't moved yet. Parking them at negative indexes first avoids that.
-	ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error
+	// Clips never overlap, so start_frame keeps a restored clip where it was.
+	NumberClips(ctx context.Context, videoID int64) error
+	// The unique index on (video_id, idx) is checked row by row, so renumbering
+	// in one UPDATE can collide with a row that hasn't moved yet. Parking them
+	// at negative indexes first avoids that.
+	ParkClips(ctx context.Context, videoID int64) error
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	QueueReextract(ctx context.Context, arg QueueReextractParams) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
 	// Run before AcceptFrameProposals.
 	RecordAcceptedProposals(ctx context.Context, arg RecordAcceptedProposalsParams) error
 	RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	ReleaseClipClaims(ctx context.Context, clipIds []int64) (int64, error)
 	// Only claims still idle since idle_before go, so a claimant who came back
 	// after the list loaded keeps their clip.
 	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
@@ -247,6 +288,10 @@ type Querier interface {
 	// RequeueIngest readies a failed ingest for its job to run again.
 	RequeueIngest(ctx context.Context, id int64) (int64, error)
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
+	// Run after ParkClips. A live clip may hold the index the clip had, so it
+	// comes back parked below the others until NumberClips.
+	RestoreClip(ctx context.Context, id int64) error
+	RestoreVideo(ctx context.Context, id int64) (Video, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
 	RevokeInvite(ctx context.Context, id int64) (Invite, error)
 	RevokeWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
@@ -275,10 +320,14 @@ type Querier interface {
 	StartProcessing(ctx context.Context, id int64) (int64, error)
 	StartStorageCleanup(ctx context.Context, id int64) (int64, error)
 	StartStorageScan(ctx context.Context, id int64) (int64, error)
+	// Locks the video row before touching its clips, so two clips trashed or
+	// restored in one video renumber one after the other instead of
+	// deadlocking.
 	SubtractClipFrames(ctx context.Context, id int64) (int64, error)
 	TakeClip(ctx context.Context, arg TakeClipParams) error
 	TouchLogin(ctx context.Context, id uuid.UUID) error
-	UnparkClips(ctx context.Context, videoID int64) error
+	TrashClip(ctx context.Context, arg TrashClipParams) error
+	TrashVideo(ctx context.Context, arg TrashVideoParams) (Video, error)
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)

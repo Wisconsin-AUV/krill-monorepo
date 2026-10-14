@@ -251,6 +251,51 @@ func (s *Store) RemovePrefix(ctx context.Context, prefix string) error {
 	return errors.Join(errs...)
 }
 
+// RemoveKeys removes the objects that exist among keys.
+func (s *Store) RemoveKeys(ctx context.Context, keys []string) error {
+	objects := make(chan minio.ObjectInfo)
+	go func() {
+		defer close(objects)
+		for _, k := range keys {
+			select {
+			case objects <- minio.ObjectInfo{Key: k}:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	var errs []error
+	for res := range s.client.RemoveObjects(ctx, s.bucket, objects, minio.RemoveObjectsOptions{}) {
+		if minio.ToErrorResponse(res.Err).Code == minio.NoSuchKey {
+			continue
+		}
+		errs = append(errs, fmt.Errorf("remove %s: %w", res.ObjectName, res.Err))
+	}
+	if err := ctx.Err(); err != nil {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
+}
+
+// Size totals the objects under prefix with keys after startAfter, up to and
+// including until. Empty bounds are open.
+func (s *Store) Size(ctx context.Context, prefix, startAfter, until string) (int64, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var total int64
+	opts := minio.ListObjectsOptions{Prefix: prefix, Recursive: true, StartAfter: startAfter}
+	for obj := range s.client.ListObjects(ctx, s.bucket, opts) {
+		if obj.Err != nil {
+			return 0, fmt.Errorf("list %s: %w", prefix, obj.Err)
+		}
+		if until != "" && obj.Key > until {
+			break
+		}
+		total += obj.Size
+	}
+	return total, nil
+}
+
 func (s *Store) Remove(ctx context.Context, key string) error {
 	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
 		return fmt.Errorf("remove %s: %w", key, err)

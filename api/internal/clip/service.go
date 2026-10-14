@@ -2,7 +2,6 @@ package clip
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -12,12 +11,12 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
-	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/trash"
 	"github.com/wauv/krill/api/internal/video"
 )
 
@@ -134,6 +133,7 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	return &krillv1.GetClipResponse{
 		Video: s.present.Video(ctx, v, video.Stats{
 			Clips: clipCount, LabeledFrames: videoStats.LabeledFrameCount, Boxes: videoStats.BoxCount,
+			Thumbnail: videoStats.ThumbnailFrame,
 		}),
 		Clip:             out,
 		Tracks:           tracks,
@@ -145,45 +145,14 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	}, nil
 }
 
-// DeleteClip leaves the frame images in storage. The video's thumbnail is
-// picked by frame index, so it could point at one of them, and they are
-// removed with the video.
 func (s *Service) DeleteClip(ctx context.Context, req *krillv1.DeleteClipRequest) (*krillv1.DeleteClipResponse, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return nil, rpc.Internal(err, "begin")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	q := s.q.WithTx(tx)
-
-	// Locks the video row before touching its clips, so two deletes in one
-	// video renumber one after the other instead of deadlocking.
-	videoID, err := q.SubtractClipFrames(ctx, req.GetId())
-	if err != nil {
-		return nil, rpc.DBError(err, "clip")
-	}
-	name, err := audit.ClipName(ctx, q, req.GetId())
-	if err != nil {
-		return nil, rpc.Internal(err, "name clip")
-	}
-	idx, err := q.DeleteClip(ctx, req.GetId())
-	if err != nil {
-		return nil, rpc.Internal(err, "delete clip")
-	}
-	if err := q.ParkClipsAfter(ctx, db.ParkClipsAfterParams{VideoID: videoID, Idx: idx}); err != nil {
-		return nil, rpc.Internal(err, "renumber clips")
-	}
-	if err := q.UnparkClips(ctx, videoID); err != nil {
-		return nil, rpc.Internal(err, "renumber clips")
-	}
-	err = audit.Record(ctx, q, audit.Entry{
-		Action:     audit.ClipDelete,
-		TargetType: audit.TargetClip,
-		TargetID:   strconv.FormatInt(req.GetId(), 10),
-		TargetName: name,
-	})
-	if err != nil {
-		return nil, rpc.Internal(err, "record audit entry")
+	if err := trash.TrashClip(ctx, s.q.WithTx(tx), req.GetId()); err != nil {
+		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")

@@ -36,6 +36,8 @@ The SAM model setting applies to every worker between tasks. A worker started wi
 
 To rotate a worker token, create a new one under Worker tokens, set it as the worker's `KRILL_WORKER_TOKEN` and restart the worker, then revoke the old one once the Compute page shows the worker on the new token. Revoked tokens stop working on the next request. The API's own `KRILL_WORKER_TOKEN` stays valid until it is cleared.
 
+Deleted videos and clips wait in the panel's Trash until they are restored or purged. `KRILL_TRASH_RETENTION_DAYS` (30 by default) purges them after that many days, and 0 keeps them until someone empties the trash.
+
 ## Accounts
 
 The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them under Users in the admin panel. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
