@@ -159,3 +159,87 @@ class MarkEmailVerifiedResponse(_message.Message):
     USER_FIELD_NUMBER: _ClassVar[int]
     user: User
     def __init__(self, user: _Optional[_Union[User, _Mapping]] = ...) -> None: ...
+
+class DeactivateUserRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class DeactivateUserResponse(_message.Message):
+    __slots__ = ("user", "sessions_ended", "claims_released")
+    USER_FIELD_NUMBER: _ClassVar[int]
+    SESSIONS_ENDED_FIELD_NUMBER: _ClassVar[int]
+    CLAIMS_RELEASED_FIELD_NUMBER: _ClassVar[int]
+    user: User
+    sessions_ended: int
+    claims_released: int
+    def __init__(self, user: _Optional[_Union[User, _Mapping]] = ..., sessions_ended: _Optional[int] = ..., claims_released: _Optional[int] = ...) -> None: ...
+
+class ReactivateUserRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class ReactivateUserResponse(_message.Message):
+    __slots__ = ("user",)
+    USER_FIELD_NUMBER: _ClassVar[int]
+    user: User
+    def __init__(self, user: _Optional[_Union[User, _Mapping]] = ...) -> None: ...
+
+class SendPasswordResetRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    def __init__(self, id: _Optional[str] = ...) -> None: ...
+
+class SendPasswordResetResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class MergeCount(_message.Message):
+    __slots__ = ("label", "moved", "dropped")
+    LABEL_FIELD_NUMBER: _ClassVar[int]
+    MOVED_FIELD_NUMBER: _ClassVar[int]
+    DROPPED_FIELD_NUMBER: _ClassVar[int]
+    label: str
+    moved: int
+    dropped: int
+    def __init__(self, label: _Optional[str] = ..., moved: _Optional[int] = ..., dropped: _Optional[int] = ...) -> None: ...
+
+class PreviewMergeUsersRequest(_message.Message):
+    __slots__ = ("source_id", "target_id")
+    SOURCE_ID_FIELD_NUMBER: _ClassVar[int]
+    TARGET_ID_FIELD_NUMBER: _ClassVar[int]
+    source_id: str
+    target_id: str
+    def __init__(self, source_id: _Optional[str] = ..., target_id: _Optional[str] = ...) -> None: ...
+
+class PreviewMergeUsersResponse(_message.Message):
+    __slots__ = ("source", "target", "result", "counts")
+    SOURCE_FIELD_NUMBER: _ClassVar[int]
+    TARGET_FIELD_NUMBER: _ClassVar[int]
+    RESULT_FIELD_NUMBER: _ClassVar[int]
+    COUNTS_FIELD_NUMBER: _ClassVar[int]
+    source: User
+    target: User
+    result: User
+    counts: _containers.RepeatedCompositeFieldContainer[MergeCount]
+    def __init__(self, source: _Optional[_Union[User, _Mapping]] = ..., target: _Optional[_Union[User, _Mapping]] = ..., result: _Optional[_Union[User, _Mapping]] = ..., counts: _Optional[_Iterable[_Union[MergeCount, _Mapping]]] = ...) -> None: ...
+
+class MergeUsersRequest(_message.Message):
+    __slots__ = ("source_id", "target_id")
+    SOURCE_ID_FIELD_NUMBER: _ClassVar[int]
+    TARGET_ID_FIELD_NUMBER: _ClassVar[int]
+    source_id: str
+    target_id: str
+    def __init__(self, source_id: _Optional[str] = ..., target_id: _Optional[str] = ...) -> None: ...
+
+class MergeUsersResponse(_message.Message):
+    __slots__ = ("user", "counts")
+    USER_FIELD_NUMBER: _ClassVar[int]
+    COUNTS_FIELD_NUMBER: _ClassVar[int]
+    user: User
+    counts: _containers.RepeatedCompositeFieldContainer[MergeCount]
+    def __init__(self, user: _Optional[_Union[User, _Mapping]] = ..., counts: _Optional[_Iterable[_Union[MergeCount, _Mapping]]] = ...) -> None: ...

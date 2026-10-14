@@ -34,6 +34,14 @@ const (
 	UserSignOut     = "user.sign_out"
 	UserVerifyEmail = "user.verify_email"
 	VideoDelete     = "video.delete"
+
+	ApprovedEmailAdd    = "approved_email.add"
+	ApprovedEmailRemove = "approved_email.remove"
+	InviteCreate        = "invite.create"
+	InviteRevoke        = "invite.revoke"
+	SessionRevoke       = "session.revoke"
+	UserMerge           = "user.merge"
+	UserPasswordReset   = "user.password_reset"
 )
 
 const (
@@ -45,6 +53,9 @@ const (
 	TargetSetting   = "setting"
 	TargetUser      = "user"
 	TargetVideo     = "video"
+
+	TargetApprovedEmail = "approved_email"
+	TargetInvite        = "invite"
 )
 
 type Entry struct {

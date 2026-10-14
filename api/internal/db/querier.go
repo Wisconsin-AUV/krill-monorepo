@@ -13,6 +13,9 @@ import (
 
 type Querier interface {
 	AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error
+	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
+	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
+	ApprovedSignupOpen(ctx context.Context) (bool, error)
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
@@ -30,6 +33,7 @@ type Querier interface {
 	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
+	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
@@ -49,16 +53,19 @@ type Querier interface {
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
+	DeleteSessionByID(ctx context.Context, arg DeleteSessionByIDParams) (DeleteSessionByIDRow, error)
 	DeleteSetting(ctx context.Context, key string) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
 	// Clears what an earlier run proposed on frames the new run covers.
 	DeleteTrackProposalsFrom(ctx context.Context, arg DeleteTrackProposalsFromParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteUserEmailCodes(ctx context.Context, userID uuid.UUID) error
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
 	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
 	EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, error)
+	EndUserSessions(ctx context.Context, userID uuid.UUID) (int64, error)
 	// Queues the frames the labeler marked done since their gold check before the
 	// one on @gold_frame_id, newest first.
 	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
@@ -78,11 +85,12 @@ type Querier interface {
 	GetFrameAuditName(ctx context.Context, id int64) (GetFrameAuditNameRow, error)
 	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
+	GetInvite(ctx context.Context, id int64) (GetInviteRow, error)
+	GetInviteByToken(ctx context.Context, tokenHash []byte) (Invite, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
-	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
@@ -116,6 +124,7 @@ type Querier interface {
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
+	ListApprovedEmails(ctx context.Context) ([]ListApprovedEmailsRow, error)
 	ListAuditActions(ctx context.Context) ([]string, error)
 	ListAuditActors(ctx context.Context) ([]User, error)
 	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
@@ -145,10 +154,13 @@ type Querier interface {
 	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
 	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
+	ListInviteUses(ctx context.Context, inviteIds []int64) ([]ListInviteUsesRow, error)
+	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
+	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListStuckClips(ctx context.Context, idleBefore pgtype.Timestamptz) ([]ListStuckClipsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
@@ -158,9 +170,14 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	LockApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
 	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
+	LockUserPair(ctx context.Context, arg LockUserPairParams) ([]User, error)
 	LockUsers(ctx context.Context) error
+	// Returns the session's active user. A session not seen for five minutes is
+	// marked seen in the same statement, so most requests don't write.
+	LookupSession(ctx context.Context, arg LookupSessionParams) (User, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error)
 	// Started clips that were abandoned come first so they get finished. After
 	// that, clips come from the video with the fewest clips worked on, so labels
@@ -183,8 +200,11 @@ type Querier interface {
 	// Only claims still idle since idle_before go, so a claimant who came back
 	// after the list loaded keeps their clip.
 	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
+	ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error)
+	RemoveApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
+	RevokeInvite(ctx context.Context, id int64) (Invite, error)
 	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
@@ -193,6 +213,7 @@ type Querier interface {
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
+	SetMergedIdentity(ctx context.Context, arg SetMergedIdentityParams) (User, error)
 	SetPendingEmail(ctx context.Context, arg SetPendingEmailParams) (User, error)
 	SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (User, error)
 	SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (int64, error)
@@ -212,6 +233,10 @@ type Querier interface {
 	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
+	UseApprovedEmail(ctx context.Context, arg UseApprovedEmailParams) error
+	// Counts a use only while the invite is live. The row stays locked until the
+	// sign-up commits, so two sign-ups can't share the last use.
+	UseInvite(ctx context.Context, tokenHash []byte) (Invite, error)
 	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)

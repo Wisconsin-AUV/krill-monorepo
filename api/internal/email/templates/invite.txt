@@ -1,0 +1,10 @@
+You're invited to Krill
+
+{{.Inviter}} invited you to join {{.Team}} on Krill as a {{.Role}}.
+
+Create your account:
+{{.URL}}
+
+The link expires {{.Expires}}.
+
+© {{.Year}} {{.Team}}

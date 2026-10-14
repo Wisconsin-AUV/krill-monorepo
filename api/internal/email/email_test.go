@@ -44,6 +44,24 @@ func TestTemplatesFillEveryField(t *testing.T) {
 	}
 }
 
+// html/template replaces a URL it doesn't trust in an href, which would leave
+// the invite button going nowhere.
+func TestInviteLinksToTheInvite(t *testing.T) {
+	url := "https://krill.example.com/register?invite=3q2-7wE_AAAA"
+	m, err := InviteEmail("bucky@wisc.edu", Invite{
+		Inviter: "Bucky", Role: "labeler", URL: url, Expires: "on 21 October 2026", Team: "WAUV", Year: 2026,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(m.HTML, `href="`+url+`"`) {
+		t.Error("HTML doesn't link to the invite")
+	}
+	if !strings.Contains(m.Text, url) || strings.Contains(m.HTML+m.Text, "{{") {
+		t.Error("text is missing the invite link or has an unfilled action")
+	}
+}
+
 func TestResendSend(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -47,6 +47,20 @@ const (
 	// UserServiceMarkEmailVerifiedProcedure is the fully-qualified name of the UserService's
 	// MarkEmailVerified RPC.
 	UserServiceMarkEmailVerifiedProcedure = "/krill.v1.UserService/MarkEmailVerified"
+	// UserServiceDeactivateUserProcedure is the fully-qualified name of the UserService's
+	// DeactivateUser RPC.
+	UserServiceDeactivateUserProcedure = "/krill.v1.UserService/DeactivateUser"
+	// UserServiceReactivateUserProcedure is the fully-qualified name of the UserService's
+	// ReactivateUser RPC.
+	UserServiceReactivateUserProcedure = "/krill.v1.UserService/ReactivateUser"
+	// UserServiceSendPasswordResetProcedure is the fully-qualified name of the UserService's
+	// SendPasswordReset RPC.
+	UserServiceSendPasswordResetProcedure = "/krill.v1.UserService/SendPasswordReset"
+	// UserServicePreviewMergeUsersProcedure is the fully-qualified name of the UserService's
+	// PreviewMergeUsers RPC.
+	UserServicePreviewMergeUsersProcedure = "/krill.v1.UserService/PreviewMergeUsers"
+	// UserServiceMergeUsersProcedure is the fully-qualified name of the UserService's MergeUsers RPC.
+	UserServiceMergeUsersProcedure = "/krill.v1.UserService/MergeUsers"
 )
 
 // UserServiceClient is a client for the krill.v1.UserService service.
@@ -61,6 +75,22 @@ type UserServiceClient interface {
 	SignOutUser(context.Context, *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error)
 	// MarkEmailVerified trusts the user's current email without a code.
 	MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error)
+	// DeactivateUser signs the user out everywhere and releases their clip
+	// claims. They can't sign in by any method until reactivated. Their labels
+	// stay attributed to them.
+	DeactivateUser(context.Context, *v1.DeactivateUserRequest) (*v1.DeactivateUserResponse, error)
+	ReactivateUser(context.Context, *v1.ReactivateUserRequest) (*v1.ReactivateUserResponse, error)
+	// SendPasswordReset emails the user a password reset code. It fails with
+	// FailedPrecondition when the server can't send email.
+	SendPasswordReset(context.Context, *v1.SendPasswordResetRequest) (*v1.SendPasswordResetResponse, error)
+	// PreviewMergeUsers says what MergeUsers would move, without changing
+	// anything.
+	PreviewMergeUsers(context.Context, *v1.PreviewMergeUsersRequest) (*v1.PreviewMergeUsersResponse, error)
+	// MergeUsers moves everything the source account did to the target, gives
+	// the target the source's sign-in methods it lacks and the higher of the
+	// two roles, and deletes the source. Where both have the same record, like
+	// a gold check on the same frame, the target's is kept.
+	MergeUsers(context.Context, *v1.MergeUsersRequest) (*v1.MergeUsersResponse, error)
 }
 
 // NewUserServiceClient constructs a client for the krill.v1.UserService service. By default, it
@@ -110,6 +140,36 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("MarkEmailVerified")),
 			connect.WithClientOptions(opts...),
 		),
+		deactivateUser: connect.NewClient[v1.DeactivateUserRequest, v1.DeactivateUserResponse](
+			httpClient,
+			baseURL+UserServiceDeactivateUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("DeactivateUser")),
+			connect.WithClientOptions(opts...),
+		),
+		reactivateUser: connect.NewClient[v1.ReactivateUserRequest, v1.ReactivateUserResponse](
+			httpClient,
+			baseURL+UserServiceReactivateUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("ReactivateUser")),
+			connect.WithClientOptions(opts...),
+		),
+		sendPasswordReset: connect.NewClient[v1.SendPasswordResetRequest, v1.SendPasswordResetResponse](
+			httpClient,
+			baseURL+UserServiceSendPasswordResetProcedure,
+			connect.WithSchema(userServiceMethods.ByName("SendPasswordReset")),
+			connect.WithClientOptions(opts...),
+		),
+		previewMergeUsers: connect.NewClient[v1.PreviewMergeUsersRequest, v1.PreviewMergeUsersResponse](
+			httpClient,
+			baseURL+UserServicePreviewMergeUsersProcedure,
+			connect.WithSchema(userServiceMethods.ByName("PreviewMergeUsers")),
+			connect.WithClientOptions(opts...),
+		),
+		mergeUsers: connect.NewClient[v1.MergeUsersRequest, v1.MergeUsersResponse](
+			httpClient,
+			baseURL+UserServiceMergeUsersProcedure,
+			connect.WithSchema(userServiceMethods.ByName("MergeUsers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -121,6 +181,11 @@ type userServiceClient struct {
 	deleteUser        *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
 	signOutUser       *connect.Client[v1.SignOutUserRequest, v1.SignOutUserResponse]
 	markEmailVerified *connect.Client[v1.MarkEmailVerifiedRequest, v1.MarkEmailVerifiedResponse]
+	deactivateUser    *connect.Client[v1.DeactivateUserRequest, v1.DeactivateUserResponse]
+	reactivateUser    *connect.Client[v1.ReactivateUserRequest, v1.ReactivateUserResponse]
+	sendPasswordReset *connect.Client[v1.SendPasswordResetRequest, v1.SendPasswordResetResponse]
+	previewMergeUsers *connect.Client[v1.PreviewMergeUsersRequest, v1.PreviewMergeUsersResponse]
+	mergeUsers        *connect.Client[v1.MergeUsersRequest, v1.MergeUsersResponse]
 }
 
 // ListUsers calls krill.v1.UserService.ListUsers.
@@ -177,6 +242,51 @@ func (c *userServiceClient) MarkEmailVerified(ctx context.Context, req *v1.MarkE
 	return nil, err
 }
 
+// DeactivateUser calls krill.v1.UserService.DeactivateUser.
+func (c *userServiceClient) DeactivateUser(ctx context.Context, req *v1.DeactivateUserRequest) (*v1.DeactivateUserResponse, error) {
+	response, err := c.deactivateUser.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ReactivateUser calls krill.v1.UserService.ReactivateUser.
+func (c *userServiceClient) ReactivateUser(ctx context.Context, req *v1.ReactivateUserRequest) (*v1.ReactivateUserResponse, error) {
+	response, err := c.reactivateUser.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SendPasswordReset calls krill.v1.UserService.SendPasswordReset.
+func (c *userServiceClient) SendPasswordReset(ctx context.Context, req *v1.SendPasswordResetRequest) (*v1.SendPasswordResetResponse, error) {
+	response, err := c.sendPasswordReset.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// PreviewMergeUsers calls krill.v1.UserService.PreviewMergeUsers.
+func (c *userServiceClient) PreviewMergeUsers(ctx context.Context, req *v1.PreviewMergeUsersRequest) (*v1.PreviewMergeUsersResponse, error) {
+	response, err := c.previewMergeUsers.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// MergeUsers calls krill.v1.UserService.MergeUsers.
+func (c *userServiceClient) MergeUsers(ctx context.Context, req *v1.MergeUsersRequest) (*v1.MergeUsersResponse, error) {
+	response, err := c.mergeUsers.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // UserServiceHandler is an implementation of the krill.v1.UserService service.
 type UserServiceHandler interface {
 	ListUsers(context.Context, *v1.ListUsersRequest) (*v1.ListUsersResponse, error)
@@ -189,6 +299,22 @@ type UserServiceHandler interface {
 	SignOutUser(context.Context, *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error)
 	// MarkEmailVerified trusts the user's current email without a code.
 	MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error)
+	// DeactivateUser signs the user out everywhere and releases their clip
+	// claims. They can't sign in by any method until reactivated. Their labels
+	// stay attributed to them.
+	DeactivateUser(context.Context, *v1.DeactivateUserRequest) (*v1.DeactivateUserResponse, error)
+	ReactivateUser(context.Context, *v1.ReactivateUserRequest) (*v1.ReactivateUserResponse, error)
+	// SendPasswordReset emails the user a password reset code. It fails with
+	// FailedPrecondition when the server can't send email.
+	SendPasswordReset(context.Context, *v1.SendPasswordResetRequest) (*v1.SendPasswordResetResponse, error)
+	// PreviewMergeUsers says what MergeUsers would move, without changing
+	// anything.
+	PreviewMergeUsers(context.Context, *v1.PreviewMergeUsersRequest) (*v1.PreviewMergeUsersResponse, error)
+	// MergeUsers moves everything the source account did to the target, gives
+	// the target the source's sign-in methods it lacks and the higher of the
+	// two roles, and deletes the source. Where both have the same record, like
+	// a gold check on the same frame, the target's is kept.
+	MergeUsers(context.Context, *v1.MergeUsersRequest) (*v1.MergeUsersResponse, error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -234,6 +360,36 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("MarkEmailVerified")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceDeactivateUserHandler := connect.NewUnaryHandlerSimple(
+		UserServiceDeactivateUserProcedure,
+		svc.DeactivateUser,
+		connect.WithSchema(userServiceMethods.ByName("DeactivateUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceReactivateUserHandler := connect.NewUnaryHandlerSimple(
+		UserServiceReactivateUserProcedure,
+		svc.ReactivateUser,
+		connect.WithSchema(userServiceMethods.ByName("ReactivateUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceSendPasswordResetHandler := connect.NewUnaryHandlerSimple(
+		UserServiceSendPasswordResetProcedure,
+		svc.SendPasswordReset,
+		connect.WithSchema(userServiceMethods.ByName("SendPasswordReset")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServicePreviewMergeUsersHandler := connect.NewUnaryHandlerSimple(
+		UserServicePreviewMergeUsersProcedure,
+		svc.PreviewMergeUsers,
+		connect.WithSchema(userServiceMethods.ByName("PreviewMergeUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceMergeUsersHandler := connect.NewUnaryHandlerSimple(
+		UserServiceMergeUsersProcedure,
+		svc.MergeUsers,
+		connect.WithSchema(userServiceMethods.ByName("MergeUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceListUsersProcedure:
@@ -248,6 +404,16 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceSignOutUserHandler.ServeHTTP(w, r)
 		case UserServiceMarkEmailVerifiedProcedure:
 			userServiceMarkEmailVerifiedHandler.ServeHTTP(w, r)
+		case UserServiceDeactivateUserProcedure:
+			userServiceDeactivateUserHandler.ServeHTTP(w, r)
+		case UserServiceReactivateUserProcedure:
+			userServiceReactivateUserHandler.ServeHTTP(w, r)
+		case UserServiceSendPasswordResetProcedure:
+			userServiceSendPasswordResetHandler.ServeHTTP(w, r)
+		case UserServicePreviewMergeUsersProcedure:
+			userServicePreviewMergeUsersHandler.ServeHTTP(w, r)
+		case UserServiceMergeUsersProcedure:
+			userServiceMergeUsersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -279,4 +445,24 @@ func (UnimplementedUserServiceHandler) SignOutUser(context.Context, *v1.SignOutU
 
 func (UnimplementedUserServiceHandler) MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.MarkEmailVerified is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeactivateUser(context.Context, *v1.DeactivateUserRequest) (*v1.DeactivateUserResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.DeactivateUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ReactivateUser(context.Context, *v1.ReactivateUserRequest) (*v1.ReactivateUserResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.ReactivateUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) SendPasswordReset(context.Context, *v1.SendPasswordResetRequest) (*v1.SendPasswordResetResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.SendPasswordReset is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) PreviewMergeUsers(context.Context, *v1.PreviewMergeUsersRequest) (*v1.PreviewMergeUsersResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.PreviewMergeUsers is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) MergeUsers(context.Context, *v1.MergeUsersRequest) (*v1.MergeUsersResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.MergeUsers is not implemented"))
 }

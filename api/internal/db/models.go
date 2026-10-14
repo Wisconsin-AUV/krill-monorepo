@@ -27,6 +27,15 @@ type Annotation struct {
 	Drift        pgtype.Text        `json:"drift"`
 }
 
+type ApprovedEmail struct {
+	Email     string             `json:"email"`
+	Role      string             `json:"role"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UsedBy    pgtype.UUID        `json:"used_by"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
 type AuditLog struct {
 	ID         int64              `json:"id"`
 	At         pgtype.Timestamptz `json:"at"`
@@ -123,6 +132,26 @@ type GoldFrame struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type Invite struct {
+	ID        int64              `json:"id"`
+	TokenHash []byte             `json:"token_hash"`
+	Role      string             `json:"role"`
+	MaxUses   int32              `json:"max_uses"`
+	Uses      int32              `json:"uses"`
+	Note      string             `json:"note"`
+	Email     string             `json:"email"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type InviteUse struct {
+	InviteID int64              `json:"invite_id"`
+	UserID   uuid.UUID          `json:"user_id"`
+	UsedAt   pgtype.Timestamptz `json:"used_at"`
+}
+
 type LabelExample struct {
 	ID          int64              `json:"id"`
 	LabelTypeID int64              `json:"label_type_id"`
@@ -155,10 +184,14 @@ type Review struct {
 }
 
 type Session struct {
-	TokenHash []byte             `json:"token_hash"`
-	UserID    uuid.UUID          `json:"user_id"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	TokenHash  []byte             `json:"token_hash"`
+	UserID     uuid.UUID          `json:"user_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	ID         uuid.UUID          `json:"id"`
+	Ip         string             `json:"ip"`
+	UserAgent  string             `json:"user_agent"`
+	LastSeenAt pgtype.Timestamptz `json:"last_seen_at"`
 }
 
 type Setting struct {

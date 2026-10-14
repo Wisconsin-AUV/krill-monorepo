@@ -134,4 +134,23 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.InsightServiceGetCoverageProcedure:       manageSystem,
 	krillv1connect.InsightServiceListStuckClipsProcedure:    manageSystem,
 	krillv1connect.InsightServiceReleaseStuckClipsProcedure: manageSystem,
+
+	krillv1connect.UserServiceDeactivateUserProcedure:    manageUsers,
+	krillv1connect.UserServiceReactivateUserProcedure:    manageUsers,
+	krillv1connect.UserServiceSendPasswordResetProcedure: manageUsers,
+	krillv1connect.UserServicePreviewMergeUsersProcedure: manageUsers,
+	krillv1connect.UserServiceMergeUsersProcedure:        manageUsers,
+
+	krillv1connect.SessionServiceListSessionsProcedure:    manageUsers,
+	krillv1connect.SessionServiceRevokeSessionProcedure:   manageUsers,
+	krillv1connect.SessionServiceListMySessionsProcedure:  signedIn,
+	krillv1connect.SessionServiceRevokeMySessionProcedure: signedIn,
+
+	krillv1connect.InviteServiceListInvitesProcedure:         manageUsers,
+	krillv1connect.InviteServiceCreateInviteProcedure:        manageUsers,
+	krillv1connect.InviteServiceRevokeInviteProcedure:        manageUsers,
+	krillv1connect.InviteServiceListApprovedEmailsProcedure:  manageUsers,
+	krillv1connect.InviteServiceAddApprovedEmailsProcedure:   manageUsers,
+	krillv1connect.InviteServiceRemoveApprovedEmailProcedure: manageUsers,
+	krillv1connect.InviteServiceCheckInviteProcedure:         public,
 }

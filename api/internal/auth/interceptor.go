@@ -78,7 +78,7 @@ func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 }
 
 func (i *Interceptor) authorize(ctx context.Context, procedure, peer string, h http.Header) (context.Context, error) {
-	ctx = context.WithValue(ctx, clientIPKey{}, clientIP(peer, h, i.clientIPHeader()))
+	ctx = withClient(ctx, clientIP(peer, h, i.clientIPHeader()), h.Get("User-Agent"))
 	need, ok := policy[procedure]
 	if !ok {
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s has no access policy", procedure))

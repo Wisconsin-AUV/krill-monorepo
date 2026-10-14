@@ -76,7 +76,7 @@ type AuthServiceClient interface {
 	// Login accepts a username or an email.
 	Login(context.Context, *v1.LoginRequest) (*v1.LoginResponse, error)
 	// Register creates a labeler and signs them in. The first account is an
-	// admin.
+	// admin. An invite or a pre-approved email sets the role instead.
 	Register(context.Context, *v1.RegisterRequest) (*v1.RegisterResponse, error)
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 	UpdateProfile(context.Context, *v1.UpdateProfileRequest) (*v1.UpdateProfileResponse, error)
@@ -330,7 +330,7 @@ type AuthServiceHandler interface {
 	// Login accepts a username or an email.
 	Login(context.Context, *v1.LoginRequest) (*v1.LoginResponse, error)
 	// Register creates a labeler and signs them in. The first account is an
-	// admin.
+	// admin. An invite or a pre-approved email sets the role instead.
 	Register(context.Context, *v1.RegisterRequest) (*v1.RegisterResponse, error)
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 	UpdateProfile(context.Context, *v1.UpdateProfileRequest) (*v1.UpdateProfileResponse, error)

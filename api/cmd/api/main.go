@@ -35,6 +35,7 @@ import (
 	"github.com/wauv/krill/api/internal/health"
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/insight"
+	"github.com/wauv/krill/api/internal/invite"
 	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
@@ -180,13 +181,14 @@ func run() error {
 	goldRouting := func() review.GoldRouting { return live.Load().gold }
 	rpcOpts := connect.WithInterceptors(
 		rpc.ErrorInterceptor{},
-		auth.NewInterceptor(db.New(pool).GetSessionUser, func() string { return live.Load().cfg.WorkerToken }).
+		auth.NewInterceptor(auth.LookupSessions(db.New(pool)), func() string { return live.Load().cfg.WorkerToken }).
 			RequireVerifiedEmail(func() bool { return live.Load().auth.RequireVerifiedEmail }).
 			TrustClientIPHeader(func() string { return live.Load().cfg.ClientIPHeader }),
 	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
-	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, func() auth.Options { return live.Load().auth }), rpcOpts))
+	authService := auth.NewService(pool, func() auth.Options { return live.Load().auth })
+	mux.Handle(krillv1connect.NewAuthServiceHandler(authService, rpcOpts))
 	slack := auth.NewSlack(pool, func() auth.SlackConfig { return live.Load().slack }, cookies)
 	mux.HandleFunc("GET /auth/slack/login", slack.Login)
 	mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
@@ -197,7 +199,7 @@ func run() error {
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
-	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool, authService), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewReviewServiceHandler(review.NewService(pool, store), rpcOpts))
@@ -214,6 +216,11 @@ func run() error {
 	mux.Handle(krillv1connect.NewSettingsCheckServiceHandler(admin.NewSettingsCheck(slack, settingsStore,
 		func() email.Sender { return live.Load().auth.Mailer }), rpcOpts))
 	mux.Handle(krillv1connect.NewInsightServiceHandler(insight.NewService(pool, settingsStore), rpcOpts))
+	mux.Handle(krillv1connect.NewSessionServiceHandler(user.NewSessionService(pool), rpcOpts))
+	mux.Handle(krillv1connect.NewInviteServiceHandler(invite.NewService(pool, func() invite.Options {
+		rt := live.Load()
+		return invite.Options{Mailer: rt.auth.Mailer, PublicURL: cfg.PublicURL, TeamName: rt.cfg.TeamName}
+	}), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))
@@ -289,6 +296,8 @@ func newRuntime(cfg config.Config, cookies auth.Cookies) *runtime {
 			ClientSecret: cfg.SlackClientSecret,
 			TeamID:       cfg.SlackTeamID,
 			PublicURL:    cfg.PublicURL,
+
+			ClientIPHeader: cfg.ClientIPHeader,
 		},
 		gold: review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts},
 	}
