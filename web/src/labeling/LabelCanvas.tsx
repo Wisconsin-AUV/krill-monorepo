@@ -62,11 +62,16 @@ export function LabelCanvas({
   })
 
   // The selected track's most recent box before this frame, drawn dashed so
-  // the labeler can see where the object was when continuing the track.
+  // the labeler can see where the object was when continuing the track. In a
+  // gap between boxes it would sit where a just-deleted box was and make the
+  // delete look like it did nothing.
   const ghost = useMemo((): Annotation | undefined => {
     if (selectedTrackId === null || !frame) return undefined
     const k = idKey(selectedTrackId)
     if (boxes[idKey(frame.id)]?.[k]) return undefined
+    for (let i = index + 1; i < frames.length; i++) {
+      if (boxes[idKey(frames[i].id)]?.[k]) return undefined
+    }
     for (let i = index - 1; i >= 0; i--) {
       const a = boxes[idKey(frames[i].id)]?.[k]
       if (a) return a

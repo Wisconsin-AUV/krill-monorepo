@@ -5,6 +5,7 @@ import {
   ExclamationTriangleIcon,
   FlagIcon,
   TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
 import { useMemo } from 'react'
@@ -29,6 +30,7 @@ function TrackEditor({
   canTrack: boolean
 }) {
   const updateTrack = useLabelStore((s) => s.updateTrack)
+  const deleteBox = useLabelStore((s) => s.deleteBox)
   const deleteTrack = useLabelStore((s) => s.deleteTrack)
   const trackObject = useLabelStore((s) => s.trackObject)
   const seek = useWorkspaceStore((s) => s.seek)
@@ -99,6 +101,17 @@ function TrackEditor({
             <ArrowPathIcon data-slot="icon" />
           </Button>
         )}
+      </div>
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          plain
+          title="Delete box (Delete)"
+          disabled={!here || !frame}
+          onClick={() => frame && void deleteBox(track.id, frame.id)}
+        >
+          <XMarkIcon data-slot="icon" />
+          Delete box
+        </Button>
         <Button
           plain
           title="Delete track (Shift+Delete)"
