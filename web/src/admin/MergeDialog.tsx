@@ -156,11 +156,13 @@ export function MergeDialog({
   }
   const source = users.find((u) => u.id === pair.source)
   const merge = useMutation(UserService.method.mergeUsers, {
-    onSuccess: async (res) => {
-      await invalidateService(UserService)
+    // Invalidating once the dialog has closed keeps the preview from refetching
+    // the deleted account and showing an error until the refetches finish.
+    onSuccess: (res) => {
       flash.success('Accounts merged', `${source?.name} → ${res.user?.name}`)
       close()
       if (res.user) void navigate(`/admin/users/${res.user.id}`)
+      setTimeout(() => void invalidateService(UserService))
     },
   })
   function close() {
