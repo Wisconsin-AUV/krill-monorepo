@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/auth.proto.
  */
 export const file_krill_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCKMAgoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8SIwobZW1haWxfdmVyaWZpY2F0aW9uX3JlcXVpcmVkGAcgASgIEhsKE2VtYWlsX2NvZGVzX2VuYWJsZWQYCCABKAgiLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIi0KG1NlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBIOCgZyZXNlbmQYASABKAgiHgocU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIiChJWZXJpZnlFbWFpbFJlcXVlc3QSDAoEY29kZRgBIAEoCSIzChNWZXJpZnlFbWFpbFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiwKG1JlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBINCgVsb2dpbhgBIAEoCSIeChxSZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIkkKFFJlc2V0UGFzc3dvcmRSZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEgwKBGNvZGUYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIjUKFVJlc2V0UGFzc3dvcmRSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIpChhSZXF1ZXN0U2lnbkluQ29kZVJlcXVlc3QSDQoFbG9naW4YASABKAkiGwoZUmVxdWVzdFNpZ25JbkNvZGVSZXNwb25zZSI0ChVTaWduSW5XaXRoQ29kZVJlcXVlc3QSDQoFbG9naW4YASABKAkSDAoEY29kZRgCIAEoCSI2ChZTaWduSW5XaXRoQ29kZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyMu4HCgtBdXRoU2VydmljZRJJCgpHZXRTZXNzaW9uEhsua3JpbGwudjEuR2V0U2Vzc2lvblJlcXVlc3QaHC5rcmlsbC52MS5HZXRTZXNzaW9uUmVzcG9uc2UiABI6CgVMb2dpbhIWLmtyaWxsLnYxLkxvZ2luUmVxdWVzdBoXLmtyaWxsLnYxLkxvZ2luUmVzcG9uc2UiABJDCghSZWdpc3RlchIZLmtyaWxsLnYxLlJlZ2lzdGVyUmVxdWVzdBoaLmtyaWxsLnYxLlJlZ2lzdGVyUmVzcG9uc2UiABI9CgZMb2dvdXQSFy5rcmlsbC52MS5Mb2dvdXRSZXF1ZXN0Ghgua3JpbGwudjEuTG9nb3V0UmVzcG9uc2UiABJSCg1VcGRhdGVQcm9maWxlEh4ua3JpbGwudjEuVXBkYXRlUHJvZmlsZVJlcXVlc3QaHy5rcmlsbC52MS5VcGRhdGVQcm9maWxlUmVzcG9uc2UiABJVCg5DaGFuZ2VQYXNzd29yZBIfLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVxdWVzdBogLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVzcG9uc2UiABJnChRTZW5kVmVyaWZpY2F0aW9uQ29kZRIlLmtyaWxsLnYxLlNlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBomLmtyaWxsLnYxLlNlbmRWZXJpZmljYXRpb25Db2RlUmVzcG9uc2UiABJMCgtWZXJpZnlFbWFpbBIcLmtyaWxsLnYxLlZlcmlmeUVtYWlsUmVxdWVzdBodLmtyaWxsLnYxLlZlcmlmeUVtYWlsUmVzcG9uc2UiABJnChRSZXF1ZXN0UGFzc3dvcmRSZXNldBIlLmtyaWxsLnYxLlJlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBomLmtyaWxsLnYxLlJlcXVlc3RQYXNzd29yZFJlc2V0UmVzcG9uc2UiABJSCg1SZXNldFBhc3N3b3JkEh4ua3JpbGwudjEuUmVzZXRQYXNzd29yZFJlcXVlc3QaHy5rcmlsbC52MS5SZXNldFBhc3N3b3JkUmVzcG9uc2UiABJeChFSZXF1ZXN0U2lnbkluQ29kZRIiLmtyaWxsLnYxLlJlcXVlc3RTaWduSW5Db2RlUmVxdWVzdBojLmtyaWxsLnYxLlJlcXVlc3RTaWduSW5Db2RlUmVzcG9uc2UiABJVCg5TaWduSW5XaXRoQ29kZRIfLmtyaWxsLnYxLlNpZ25JbldpdGhDb2RlUmVxdWVzdBogLmtyaWxsLnYxLlNpZ25JbldpdGhDb2RlUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglBdXRoUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_user]);
+  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCKMAgoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8SIwobZW1haWxfdmVyaWZpY2F0aW9uX3JlcXVpcmVkGAcgASgIEhsKE2VtYWlsX2NvZGVzX2VuYWJsZWQYCCABKAgiLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIi0KG1NlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBIOCgZyZXNlbmQYASABKAgiHgocU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIiChJWZXJpZnlFbWFpbFJlcXVlc3QSDAoEY29kZRgBIAEoCSIzChNWZXJpZnlFbWFpbFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiwKG1JlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBINCgVsb2dpbhgBIAEoCSIeChxSZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIjQKFUNoZWNrUmVzZXRDb2RlUmVxdWVzdBINCgVsb2dpbhgBIAEoCRIMCgRjb2RlGAIgASgJIhgKFkNoZWNrUmVzZXRDb2RlUmVzcG9uc2UiSQoUUmVzZXRQYXNzd29yZFJlcXVlc3QSDQoFbG9naW4YASABKAkSDAoEY29kZRgCIAEoCRIUCgxuZXdfcGFzc3dvcmQYAyABKAkiNQoVUmVzZXRQYXNzd29yZFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIikKGFJlcXVlc3RTaWduSW5Db2RlUmVxdWVzdBINCgVsb2dpbhgBIAEoCSIbChlSZXF1ZXN0U2lnbkluQ29kZVJlc3BvbnNlIjQKFVNpZ25JbldpdGhDb2RlUmVxdWVzdBINCgVsb2dpbhgBIAEoCRIMCgRjb2RlGAIgASgJIjYKFlNpZ25JbldpdGhDb2RlUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIyxQgKC0F1dGhTZXJ2aWNlEkkKCkdldFNlc3Npb24SGy5rcmlsbC52MS5HZXRTZXNzaW9uUmVxdWVzdBocLmtyaWxsLnYxLkdldFNlc3Npb25SZXNwb25zZSIAEjoKBUxvZ2luEhYua3JpbGwudjEuTG9naW5SZXF1ZXN0Ghcua3JpbGwudjEuTG9naW5SZXNwb25zZSIAEkMKCFJlZ2lzdGVyEhkua3JpbGwudjEuUmVnaXN0ZXJSZXF1ZXN0Ghoua3JpbGwudjEuUmVnaXN0ZXJSZXNwb25zZSIAEj0KBkxvZ291dBIXLmtyaWxsLnYxLkxvZ291dFJlcXVlc3QaGC5rcmlsbC52MS5Mb2dvdXRSZXNwb25zZSIAElIKDVVwZGF0ZVByb2ZpbGUSHi5rcmlsbC52MS5VcGRhdGVQcm9maWxlUmVxdWVzdBofLmtyaWxsLnYxLlVwZGF0ZVByb2ZpbGVSZXNwb25zZSIAElUKDkNoYW5nZVBhc3N3b3JkEh8ua3JpbGwudjEuQ2hhbmdlUGFzc3dvcmRSZXF1ZXN0GiAua3JpbGwudjEuQ2hhbmdlUGFzc3dvcmRSZXNwb25zZSIAEmcKFFNlbmRWZXJpZmljYXRpb25Db2RlEiUua3JpbGwudjEuU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXF1ZXN0GiYua3JpbGwudjEuU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIAEkwKC1ZlcmlmeUVtYWlsEhwua3JpbGwudjEuVmVyaWZ5RW1haWxSZXF1ZXN0Gh0ua3JpbGwudjEuVmVyaWZ5RW1haWxSZXNwb25zZSIAEmcKFFJlcXVlc3RQYXNzd29yZFJlc2V0EiUua3JpbGwudjEuUmVxdWVzdFBhc3N3b3JkUmVzZXRSZXF1ZXN0GiYua3JpbGwudjEuUmVxdWVzdFBhc3N3b3JkUmVzZXRSZXNwb25zZSIAElUKDkNoZWNrUmVzZXRDb2RlEh8ua3JpbGwudjEuQ2hlY2tSZXNldENvZGVSZXF1ZXN0GiAua3JpbGwudjEuQ2hlY2tSZXNldENvZGVSZXNwb25zZSIAElIKDVJlc2V0UGFzc3dvcmQSHi5rcmlsbC52MS5SZXNldFBhc3N3b3JkUmVxdWVzdBofLmtyaWxsLnYxLlJlc2V0UGFzc3dvcmRSZXNwb25zZSIAEl4KEVJlcXVlc3RTaWduSW5Db2RlEiIua3JpbGwudjEuUmVxdWVzdFNpZ25JbkNvZGVSZXF1ZXN0GiMua3JpbGwudjEuUmVxdWVzdFNpZ25JbkNvZGVSZXNwb25zZSIAElUKDlNpZ25JbldpdGhDb2RlEh8ua3JpbGwudjEuU2lnbkluV2l0aENvZGVSZXF1ZXN0GiAua3JpbGwudjEuU2lnbkluV2l0aENvZGVSZXNwb25zZSIAQooBCgxjb20ua3JpbGwudjFCCUF1dGhQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_krill_v1_user]);
 
 /**
  * @generated from message krill.v1.GetSessionRequest
@@ -384,6 +384,41 @@ export const RequestPasswordResetResponseSchema: GenMessage<RequestPasswordReset
   messageDesc(file_krill_v1_auth, 17);
 
 /**
+ * @generated from message krill.v1.CheckResetCodeRequest
+ */
+export type CheckResetCodeRequest = Message<"krill.v1.CheckResetCodeRequest"> & {
+  /**
+   * @generated from field: string login = 1;
+   */
+  login: string;
+
+  /**
+   * @generated from field: string code = 2;
+   */
+  code: string;
+};
+
+/**
+ * Describes the message krill.v1.CheckResetCodeRequest.
+ * Use `create(CheckResetCodeRequestSchema)` to create a new message.
+ */
+export const CheckResetCodeRequestSchema: GenMessage<CheckResetCodeRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 18);
+
+/**
+ * @generated from message krill.v1.CheckResetCodeResponse
+ */
+export type CheckResetCodeResponse = Message<"krill.v1.CheckResetCodeResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.CheckResetCodeResponse.
+ * Use `create(CheckResetCodeResponseSchema)` to create a new message.
+ */
+export const CheckResetCodeResponseSchema: GenMessage<CheckResetCodeResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 19);
+
+/**
  * @generated from message krill.v1.ResetPasswordRequest
  */
 export type ResetPasswordRequest = Message<"krill.v1.ResetPasswordRequest"> & {
@@ -408,7 +443,7 @@ export type ResetPasswordRequest = Message<"krill.v1.ResetPasswordRequest"> & {
  * Use `create(ResetPasswordRequestSchema)` to create a new message.
  */
 export const ResetPasswordRequestSchema: GenMessage<ResetPasswordRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 18);
+  messageDesc(file_krill_v1_auth, 20);
 
 /**
  * @generated from message krill.v1.ResetPasswordResponse
@@ -425,7 +460,7 @@ export type ResetPasswordResponse = Message<"krill.v1.ResetPasswordResponse"> & 
  * Use `create(ResetPasswordResponseSchema)` to create a new message.
  */
 export const ResetPasswordResponseSchema: GenMessage<ResetPasswordResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 19);
+  messageDesc(file_krill_v1_auth, 21);
 
 /**
  * @generated from message krill.v1.RequestSignInCodeRequest
@@ -444,7 +479,7 @@ export type RequestSignInCodeRequest = Message<"krill.v1.RequestSignInCodeReques
  * Use `create(RequestSignInCodeRequestSchema)` to create a new message.
  */
 export const RequestSignInCodeRequestSchema: GenMessage<RequestSignInCodeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 20);
+  messageDesc(file_krill_v1_auth, 22);
 
 /**
  * @generated from message krill.v1.RequestSignInCodeResponse
@@ -457,7 +492,7 @@ export type RequestSignInCodeResponse = Message<"krill.v1.RequestSignInCodeRespo
  * Use `create(RequestSignInCodeResponseSchema)` to create a new message.
  */
 export const RequestSignInCodeResponseSchema: GenMessage<RequestSignInCodeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 21);
+  messageDesc(file_krill_v1_auth, 23);
 
 /**
  * @generated from message krill.v1.SignInWithCodeRequest
@@ -479,7 +514,7 @@ export type SignInWithCodeRequest = Message<"krill.v1.SignInWithCodeRequest"> & 
  * Use `create(SignInWithCodeRequestSchema)` to create a new message.
  */
 export const SignInWithCodeRequestSchema: GenMessage<SignInWithCodeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 22);
+  messageDesc(file_krill_v1_auth, 24);
 
 /**
  * @generated from message krill.v1.SignInWithCodeResponse
@@ -496,7 +531,7 @@ export type SignInWithCodeResponse = Message<"krill.v1.SignInWithCodeResponse"> 
  * Use `create(SignInWithCodeResponseSchema)` to create a new message.
  */
 export const SignInWithCodeResponseSchema: GenMessage<SignInWithCodeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_auth, 23);
+  messageDesc(file_krill_v1_auth, 25);
 
 /**
  * AuthService signs users in with a session cookie. Slack sign-in is a
@@ -590,6 +625,16 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof RequestPasswordResetRequestSchema;
     output: typeof RequestPasswordResetResponseSchema;
+  },
+  /**
+   * CheckResetCode confirms a reset code without using it up.
+   *
+   * @generated from rpc krill.v1.AuthService.CheckResetCode
+   */
+  checkResetCode: {
+    methodKind: "unary";
+    input: typeof CheckResetCodeRequestSchema;
+    output: typeof CheckResetCodeResponseSchema;
   },
   /**
    * ResetPassword signs out every session and signs the caller in.

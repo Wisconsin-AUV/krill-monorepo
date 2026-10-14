@@ -24,6 +24,8 @@ service AuthService {
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
   // RequestPasswordReset responds the same whether or not the account exists.
   rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {}
+  // CheckResetCode confirms a reset code without using it up.
+  rpc CheckResetCode(CheckResetCodeRequest) returns (CheckResetCodeResponse) {}
   // ResetPassword signs out every session and signs the caller in.
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
   // RequestSignInCode responds the same whether or not the account exists.
@@ -113,6 +115,13 @@ message RequestPasswordResetRequest {
 }
 
 message RequestPasswordResetResponse {}
+
+message CheckResetCodeRequest {
+  string login = 1;
+  string code = 2;
+}
+
+message CheckResetCodeResponse {}
 
 message ResetPasswordRequest {
   string login = 1;

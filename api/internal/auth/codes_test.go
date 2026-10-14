@@ -214,8 +214,15 @@ func TestResetPassword(t *testing.T) {
 	}
 	code := mail.code(t, u.Email)
 
+	_, err := s.CheckResetCode(t.Context(), &krillv1.CheckResetCodeRequest{Login: u.Username, Code: otherCode(code)})
+	wantCode(t, err, connect.CodeInvalidArgument)
+	// Checking a right code leaves it for the reset itself.
+	if _, err := s.CheckResetCode(t.Context(), &krillv1.CheckResetCodeRequest{Login: u.Username, Code: code}); err != nil {
+		t.Fatal(err)
+	}
+
 	const password = "Correct-horse-9"
-	_, err := s.ResetPassword(t.Context(), &krillv1.ResetPasswordRequest{Login: u.Email, Code: otherCode(code), NewPassword: password})
+	_, err = s.ResetPassword(t.Context(), &krillv1.ResetPasswordRequest{Login: u.Email, Code: otherCode(code), NewPassword: password})
 	wantCode(t, err, connect.CodeInvalidArgument)
 	res, err := s.ResetPassword(t.Context(), &krillv1.ResetPasswordRequest{Login: u.Email, Code: code, NewPassword: password})
 	if err != nil {

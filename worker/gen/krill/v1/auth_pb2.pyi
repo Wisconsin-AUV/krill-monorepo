@@ -131,6 +131,18 @@ class RequestPasswordResetResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
+class CheckResetCodeRequest(_message.Message):
+    __slots__ = ("login", "code")
+    LOGIN_FIELD_NUMBER: _ClassVar[int]
+    CODE_FIELD_NUMBER: _ClassVar[int]
+    login: str
+    code: str
+    def __init__(self, login: _Optional[str] = ..., code: _Optional[str] = ...) -> None: ...
+
+class CheckResetCodeResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
 class ResetPasswordRequest(_message.Message):
     __slots__ = ("login", "code", "new_password")
     LOGIN_FIELD_NUMBER: _ClassVar[int]

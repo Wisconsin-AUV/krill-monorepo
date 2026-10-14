@@ -38,6 +38,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AuthServiceVerifyEmailProcedure:          unverified,
 	krillv1connect.AuthServiceRequestPasswordResetProcedure: public,
 	krillv1connect.AuthServiceResetPasswordProcedure:        public,
+	krillv1connect.AuthServiceCheckResetCodeProcedure:       public,
 	krillv1connect.AuthServiceRequestSignInCodeProcedure:    public,
 	krillv1connect.AuthServiceSignInWithCodeProcedure:       public,
 

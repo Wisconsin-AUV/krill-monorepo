@@ -158,10 +158,10 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 	return nil
 }
 
-// checkCode uses up the code if it matches and returns the address it was
-// sent to. A wrong guess counts against the code, so the caller must commit
-// q's transaction even when ok is false.
-func checkCode(ctx context.Context, q *db.Queries, userID uuid.UUID, purpose, code string) (sentTo string, ok bool, err error) {
+// checkCode uses up the code if it matches, unless keep is set, and returns
+// the address it was sent to. A wrong guess counts against the code, so the
+// caller must commit q's transaction even when ok is false.
+func checkCode(ctx context.Context, q *db.Queries, userID uuid.UUID, purpose, code string, keep bool) (sentTo string, ok bool, err error) {
 	key := db.DeleteEmailCodeParams{UserID: userID, Purpose: purpose}
 	row, err := q.LockEmailCode(ctx, db.LockEmailCodeParams{UserID: userID, Purpose: purpose})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -178,6 +178,9 @@ func checkCode(ctx context.Context, q *db.Queries, userID uuid.UUID, purpose, co
 			return "", false, q.DeleteEmailCode(ctx, key)
 		}
 		return "", false, q.CountEmailCodeAttempt(ctx, db.CountEmailCodeAttemptParams(key))
+	}
+	if keep {
+		return row.Email, true, nil
 	}
 	return row.Email, true, q.DeleteEmailCode(ctx, key)
 }
@@ -214,7 +217,7 @@ func (s *Service) VerifyEmail(ctx context.Context, req *krillv1.VerifyEmailReque
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
-	sentTo, ok, err := checkCode(ctx, q, sess.User.ID, purposeVerify, code)
+	sentTo, ok, err := checkCode(ctx, q, sess.User.ID, purposeVerify, code, false)
 	if err != nil {
 		return nil, rpc.Internal(err, "check code")
 	}
@@ -273,6 +276,20 @@ func (s *Service) ResetPassword(ctx context.Context, req *krillv1.ResetPasswordR
 	}
 	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
 	return &krillv1.ResetPasswordResponse{User: ToProto(user)}, nil
+}
+
+// CheckResetCode lets the reset form confirm the code before asking for a new
+// password. The code stays valid for ResetPassword.
+func (s *Service) CheckResetCode(ctx context.Context, req *krillv1.CheckResetCodeRequest) (*krillv1.CheckResetCodeResponse, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := s.matchCode(ctx, tx, req.GetLogin(), req.GetCode(), purposeReset, true); err != nil {
+		return nil, err
+	}
+	return &krillv1.CheckResetCodeResponse{}, nil
 }
 
 func (s *Service) RequestSignInCode(ctx context.Context, req *krillv1.RequestSignInCodeRequest) (*krillv1.RequestSignInCodeResponse, error) {
@@ -336,50 +353,18 @@ func (s *Service) sendAlone(ctx context.Context, user db.User, purpose string, f
 }
 
 // redeemCode checks a code sent by requestCode and signs the account in,
-// running then first in the same transaction. Every failure looks the same,
-// so it can't tell anyone whether the account exists.
+// running then first in the same transaction.
 func (s *Service) redeemCode(ctx context.Context, login, rawCode, purpose string, then func(q *db.Queries, id uuid.UUID) error) (db.User, error) {
-	if err := s.checkCodeFailLimit(ctx); err != nil {
-		return db.User{}, err
-	}
-	ip := s.clientIP(ctx)
-	fail := func() (db.User, error) {
-		s.codeFailLimit.fail(ip)
-		return db.User{}, errBadCode
-	}
-	code, ok := normalizeCode(rawCode)
-	if !ok {
-		return fail()
-	}
-	login = strings.ToLower(strings.TrimSpace(login))
-	user, err := s.q.GetUserByLogin(ctx, login)
-	known := err == nil && !user.Disabled
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return db.User{}, rpc.Internal(err, "load user")
-	}
-
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return db.User{}, rpc.Internal(err, "begin")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	q := s.q.WithTx(tx)
-	// An unknown account still looks for a code, so it takes as long as a
-	// wrong guess on a real one.
-	id := uuid.Nil
-	if known {
-		id = user.ID
-	}
-	sentTo, ok, err := checkCode(ctx, q, id, purpose, code)
+	user, err := s.matchCode(ctx, tx, login, rawCode, purpose, false)
 	if err != nil {
-		return db.User{}, rpc.Internal(err, "check code")
+		return db.User{}, err
 	}
-	if !known || !ok || sentTo != user.Email {
-		if err := tx.Commit(ctx); err != nil {
-			return db.User{}, rpc.Internal(err, "commit")
-		}
-		return fail()
-	}
+	q := s.q.WithTx(tx)
 	if then != nil {
 		if err := then(q, user.ID); err != nil {
 			return db.User{}, rpc.Internal(err, "use code")
@@ -396,8 +381,49 @@ func (s *Service) redeemCode(ctx context.Context, login, rawCode, purpose string
 	if err := tx.Commit(ctx); err != nil {
 		return db.User{}, rpc.Internal(err, "commit")
 	}
-	s.accountLimit.clear(login)
+	s.accountLimit.clear(strings.ToLower(strings.TrimSpace(login)))
 	setCookie(ctx, cookie)
+	return user, nil
+}
+
+// matchCode finds the account a code sent by requestCode belongs to. Every
+// failure looks the same, so it can't tell anyone whether the account exists.
+// A wrong code commits tx so the guess still counts. keep leaves a right code
+// to be used later.
+func (s *Service) matchCode(ctx context.Context, tx pgx.Tx, login, rawCode, purpose string, keep bool) (db.User, error) {
+	if err := s.checkCodeFailLimit(ctx); err != nil {
+		return db.User{}, err
+	}
+	ip := s.clientIP(ctx)
+	fail := func() (db.User, error) {
+		s.codeFailLimit.fail(ip)
+		return db.User{}, errBadCode
+	}
+	code, ok := normalizeCode(rawCode)
+	if !ok {
+		return fail()
+	}
+	user, err := s.q.GetUserByLogin(ctx, strings.ToLower(strings.TrimSpace(login)))
+	known := err == nil && !user.Disabled
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return db.User{}, rpc.Internal(err, "load user")
+	}
+	// An unknown account still looks for a code, so it takes as long as a
+	// wrong guess on a real one.
+	id := uuid.Nil
+	if known {
+		id = user.ID
+	}
+	sentTo, ok, err := checkCode(ctx, s.q.WithTx(tx), id, purpose, code, keep)
+	if err != nil {
+		return db.User{}, rpc.Internal(err, "check code")
+	}
+	if !known || !ok || sentTo != user.Email {
+		if err := tx.Commit(ctx); err != nil {
+			return db.User{}, rpc.Internal(err, "commit")
+		}
+		return fail()
+	}
 	return user, nil
 }
 

@@ -886,6 +886,94 @@ func (*RequestPasswordResetResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_auth_proto_rawDescGZIP(), []int{17}
 }
 
+type CheckResetCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckResetCodeRequest) Reset() {
+	*x = CheckResetCodeRequest{}
+	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckResetCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckResetCodeRequest) ProtoMessage() {}
+
+func (x *CheckResetCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckResetCodeRequest.ProtoReflect.Descriptor instead.
+func (*CheckResetCodeRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *CheckResetCodeRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *CheckResetCodeRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type CheckResetCodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckResetCodeResponse) Reset() {
+	*x = CheckResetCodeResponse{}
+	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckResetCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckResetCodeResponse) ProtoMessage() {}
+
+func (x *CheckResetCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckResetCodeResponse.ProtoReflect.Descriptor instead.
+func (*CheckResetCodeResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{19}
+}
+
 type ResetPasswordRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
@@ -897,7 +985,7 @@ type ResetPasswordRequest struct {
 
 func (x *ResetPasswordRequest) Reset() {
 	*x = ResetPasswordRequest{}
-	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	mi := &file_krill_v1_auth_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +997,7 @@ func (x *ResetPasswordRequest) String() string {
 func (*ResetPasswordRequest) ProtoMessage() {}
 
 func (x *ResetPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	mi := &file_krill_v1_auth_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -922,7 +1010,7 @@ func (x *ResetPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetPasswordRequest.ProtoReflect.Descriptor instead.
 func (*ResetPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{18}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ResetPasswordRequest) GetLogin() string {
@@ -955,7 +1043,7 @@ type ResetPasswordResponse struct {
 
 func (x *ResetPasswordResponse) Reset() {
 	*x = ResetPasswordResponse{}
-	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	mi := &file_krill_v1_auth_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1055,7 @@ func (x *ResetPasswordResponse) String() string {
 func (*ResetPasswordResponse) ProtoMessage() {}
 
 func (x *ResetPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	mi := &file_krill_v1_auth_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1068,7 @@ func (x *ResetPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetPasswordResponse.ProtoReflect.Descriptor instead.
 func (*ResetPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{19}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResetPasswordResponse) GetUser() *User {
@@ -1000,7 +1088,7 @@ type RequestSignInCodeRequest struct {
 
 func (x *RequestSignInCodeRequest) Reset() {
 	*x = RequestSignInCodeRequest{}
-	mi := &file_krill_v1_auth_proto_msgTypes[20]
+	mi := &file_krill_v1_auth_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1012,7 +1100,7 @@ func (x *RequestSignInCodeRequest) String() string {
 func (*RequestSignInCodeRequest) ProtoMessage() {}
 
 func (x *RequestSignInCodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[20]
+	mi := &file_krill_v1_auth_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1025,7 +1113,7 @@ func (x *RequestSignInCodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestSignInCodeRequest.ProtoReflect.Descriptor instead.
 func (*RequestSignInCodeRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{20}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *RequestSignInCodeRequest) GetLogin() string {
@@ -1043,7 +1131,7 @@ type RequestSignInCodeResponse struct {
 
 func (x *RequestSignInCodeResponse) Reset() {
 	*x = RequestSignInCodeResponse{}
-	mi := &file_krill_v1_auth_proto_msgTypes[21]
+	mi := &file_krill_v1_auth_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1143,7 @@ func (x *RequestSignInCodeResponse) String() string {
 func (*RequestSignInCodeResponse) ProtoMessage() {}
 
 func (x *RequestSignInCodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[21]
+	mi := &file_krill_v1_auth_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1156,7 @@ func (x *RequestSignInCodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestSignInCodeResponse.ProtoReflect.Descriptor instead.
 func (*RequestSignInCodeResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{21}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{23}
 }
 
 type SignInWithCodeRequest struct {
@@ -1081,7 +1169,7 @@ type SignInWithCodeRequest struct {
 
 func (x *SignInWithCodeRequest) Reset() {
 	*x = SignInWithCodeRequest{}
-	mi := &file_krill_v1_auth_proto_msgTypes[22]
+	mi := &file_krill_v1_auth_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1093,7 +1181,7 @@ func (x *SignInWithCodeRequest) String() string {
 func (*SignInWithCodeRequest) ProtoMessage() {}
 
 func (x *SignInWithCodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[22]
+	mi := &file_krill_v1_auth_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +1194,7 @@ func (x *SignInWithCodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignInWithCodeRequest.ProtoReflect.Descriptor instead.
 func (*SignInWithCodeRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{22}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *SignInWithCodeRequest) GetLogin() string {
@@ -1132,7 +1220,7 @@ type SignInWithCodeResponse struct {
 
 func (x *SignInWithCodeResponse) Reset() {
 	*x = SignInWithCodeResponse{}
-	mi := &file_krill_v1_auth_proto_msgTypes[23]
+	mi := &file_krill_v1_auth_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1144,7 +1232,7 @@ func (x *SignInWithCodeResponse) String() string {
 func (*SignInWithCodeResponse) ProtoMessage() {}
 
 func (x *SignInWithCodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_auth_proto_msgTypes[23]
+	mi := &file_krill_v1_auth_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1157,7 +1245,7 @@ func (x *SignInWithCodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignInWithCodeResponse.ProtoReflect.Descriptor instead.
 func (*SignInWithCodeResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_auth_proto_rawDescGZIP(), []int{23}
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *SignInWithCodeResponse) GetUser() *User {
@@ -1215,7 +1303,11 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"3\n" +
 	"\x1bRequestPasswordResetRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\"\x1e\n" +
-	"\x1cRequestPasswordResetResponse\"c\n" +
+	"\x1cRequestPasswordResetResponse\"A\n" +
+	"\x15CheckResetCodeRequest\x12\x14\n" +
+	"\x05login\x18\x01 \x01(\tR\x05login\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"\x18\n" +
+	"\x16CheckResetCodeResponse\"c\n" +
 	"\x14ResetPasswordRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12!\n" +
@@ -1229,7 +1321,7 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\"<\n" +
 	"\x16SignInWithCodeResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user2\xee\a\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user2\xc5\b\n" +
 	"\vAuthService\x12I\n" +
 	"\n" +
 	"GetSession\x12\x1b.krill.v1.GetSessionRequest\x1a\x1c.krill.v1.GetSessionResponse\"\x00\x12:\n" +
@@ -1240,7 +1332,8 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\x0eChangePassword\x12\x1f.krill.v1.ChangePasswordRequest\x1a .krill.v1.ChangePasswordResponse\"\x00\x12g\n" +
 	"\x14SendVerificationCode\x12%.krill.v1.SendVerificationCodeRequest\x1a&.krill.v1.SendVerificationCodeResponse\"\x00\x12L\n" +
 	"\vVerifyEmail\x12\x1c.krill.v1.VerifyEmailRequest\x1a\x1d.krill.v1.VerifyEmailResponse\"\x00\x12g\n" +
-	"\x14RequestPasswordReset\x12%.krill.v1.RequestPasswordResetRequest\x1a&.krill.v1.RequestPasswordResetResponse\"\x00\x12R\n" +
+	"\x14RequestPasswordReset\x12%.krill.v1.RequestPasswordResetRequest\x1a&.krill.v1.RequestPasswordResetResponse\"\x00\x12U\n" +
+	"\x0eCheckResetCode\x12\x1f.krill.v1.CheckResetCodeRequest\x1a .krill.v1.CheckResetCodeResponse\"\x00\x12R\n" +
 	"\rResetPassword\x12\x1e.krill.v1.ResetPasswordRequest\x1a\x1f.krill.v1.ResetPasswordResponse\"\x00\x12^\n" +
 	"\x11RequestSignInCode\x12\".krill.v1.RequestSignInCodeRequest\x1a#.krill.v1.RequestSignInCodeResponse\"\x00\x12U\n" +
 	"\x0eSignInWithCode\x12\x1f.krill.v1.SignInWithCodeRequest\x1a .krill.v1.SignInWithCodeResponse\"\x00B\x8a\x01\n" +
@@ -1258,7 +1351,7 @@ func file_krill_v1_auth_proto_rawDescGZIP() []byte {
 	return file_krill_v1_auth_proto_rawDescData
 }
 
-var file_krill_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_krill_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_krill_v1_auth_proto_goTypes = []any{
 	(*GetSessionRequest)(nil),            // 0: krill.v1.GetSessionRequest
 	(*GetSessionResponse)(nil),           // 1: krill.v1.GetSessionResponse
@@ -1278,26 +1371,28 @@ var file_krill_v1_auth_proto_goTypes = []any{
 	(*VerifyEmailResponse)(nil),          // 15: krill.v1.VerifyEmailResponse
 	(*RequestPasswordResetRequest)(nil),  // 16: krill.v1.RequestPasswordResetRequest
 	(*RequestPasswordResetResponse)(nil), // 17: krill.v1.RequestPasswordResetResponse
-	(*ResetPasswordRequest)(nil),         // 18: krill.v1.ResetPasswordRequest
-	(*ResetPasswordResponse)(nil),        // 19: krill.v1.ResetPasswordResponse
-	(*RequestSignInCodeRequest)(nil),     // 20: krill.v1.RequestSignInCodeRequest
-	(*RequestSignInCodeResponse)(nil),    // 21: krill.v1.RequestSignInCodeResponse
-	(*SignInWithCodeRequest)(nil),        // 22: krill.v1.SignInWithCodeRequest
-	(*SignInWithCodeResponse)(nil),       // 23: krill.v1.SignInWithCodeResponse
-	(*User)(nil),                         // 24: krill.v1.User
-	(*PermissionInfo)(nil),               // 25: krill.v1.PermissionInfo
-	(*RoleInfo)(nil),                     // 26: krill.v1.RoleInfo
+	(*CheckResetCodeRequest)(nil),        // 18: krill.v1.CheckResetCodeRequest
+	(*CheckResetCodeResponse)(nil),       // 19: krill.v1.CheckResetCodeResponse
+	(*ResetPasswordRequest)(nil),         // 20: krill.v1.ResetPasswordRequest
+	(*ResetPasswordResponse)(nil),        // 21: krill.v1.ResetPasswordResponse
+	(*RequestSignInCodeRequest)(nil),     // 22: krill.v1.RequestSignInCodeRequest
+	(*RequestSignInCodeResponse)(nil),    // 23: krill.v1.RequestSignInCodeResponse
+	(*SignInWithCodeRequest)(nil),        // 24: krill.v1.SignInWithCodeRequest
+	(*SignInWithCodeResponse)(nil),       // 25: krill.v1.SignInWithCodeResponse
+	(*User)(nil),                         // 26: krill.v1.User
+	(*PermissionInfo)(nil),               // 27: krill.v1.PermissionInfo
+	(*RoleInfo)(nil),                     // 28: krill.v1.RoleInfo
 }
 var file_krill_v1_auth_proto_depIdxs = []int32{
-	24, // 0: krill.v1.GetSessionResponse.user:type_name -> krill.v1.User
-	25, // 1: krill.v1.GetSessionResponse.all_permissions:type_name -> krill.v1.PermissionInfo
-	26, // 2: krill.v1.GetSessionResponse.roles:type_name -> krill.v1.RoleInfo
-	24, // 3: krill.v1.LoginResponse.user:type_name -> krill.v1.User
-	24, // 4: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
-	24, // 5: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
-	24, // 6: krill.v1.VerifyEmailResponse.user:type_name -> krill.v1.User
-	24, // 7: krill.v1.ResetPasswordResponse.user:type_name -> krill.v1.User
-	24, // 8: krill.v1.SignInWithCodeResponse.user:type_name -> krill.v1.User
+	26, // 0: krill.v1.GetSessionResponse.user:type_name -> krill.v1.User
+	27, // 1: krill.v1.GetSessionResponse.all_permissions:type_name -> krill.v1.PermissionInfo
+	28, // 2: krill.v1.GetSessionResponse.roles:type_name -> krill.v1.RoleInfo
+	26, // 3: krill.v1.LoginResponse.user:type_name -> krill.v1.User
+	26, // 4: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
+	26, // 5: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
+	26, // 6: krill.v1.VerifyEmailResponse.user:type_name -> krill.v1.User
+	26, // 7: krill.v1.ResetPasswordResponse.user:type_name -> krill.v1.User
+	26, // 8: krill.v1.SignInWithCodeResponse.user:type_name -> krill.v1.User
 	0,  // 9: krill.v1.AuthService.GetSession:input_type -> krill.v1.GetSessionRequest
 	2,  // 10: krill.v1.AuthService.Login:input_type -> krill.v1.LoginRequest
 	4,  // 11: krill.v1.AuthService.Register:input_type -> krill.v1.RegisterRequest
@@ -1307,23 +1402,25 @@ var file_krill_v1_auth_proto_depIdxs = []int32{
 	12, // 15: krill.v1.AuthService.SendVerificationCode:input_type -> krill.v1.SendVerificationCodeRequest
 	14, // 16: krill.v1.AuthService.VerifyEmail:input_type -> krill.v1.VerifyEmailRequest
 	16, // 17: krill.v1.AuthService.RequestPasswordReset:input_type -> krill.v1.RequestPasswordResetRequest
-	18, // 18: krill.v1.AuthService.ResetPassword:input_type -> krill.v1.ResetPasswordRequest
-	20, // 19: krill.v1.AuthService.RequestSignInCode:input_type -> krill.v1.RequestSignInCodeRequest
-	22, // 20: krill.v1.AuthService.SignInWithCode:input_type -> krill.v1.SignInWithCodeRequest
-	1,  // 21: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
-	3,  // 22: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
-	5,  // 23: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
-	7,  // 24: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
-	9,  // 25: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
-	11, // 26: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
-	13, // 27: krill.v1.AuthService.SendVerificationCode:output_type -> krill.v1.SendVerificationCodeResponse
-	15, // 28: krill.v1.AuthService.VerifyEmail:output_type -> krill.v1.VerifyEmailResponse
-	17, // 29: krill.v1.AuthService.RequestPasswordReset:output_type -> krill.v1.RequestPasswordResetResponse
-	19, // 30: krill.v1.AuthService.ResetPassword:output_type -> krill.v1.ResetPasswordResponse
-	21, // 31: krill.v1.AuthService.RequestSignInCode:output_type -> krill.v1.RequestSignInCodeResponse
-	23, // 32: krill.v1.AuthService.SignInWithCode:output_type -> krill.v1.SignInWithCodeResponse
-	21, // [21:33] is the sub-list for method output_type
-	9,  // [9:21] is the sub-list for method input_type
+	18, // 18: krill.v1.AuthService.CheckResetCode:input_type -> krill.v1.CheckResetCodeRequest
+	20, // 19: krill.v1.AuthService.ResetPassword:input_type -> krill.v1.ResetPasswordRequest
+	22, // 20: krill.v1.AuthService.RequestSignInCode:input_type -> krill.v1.RequestSignInCodeRequest
+	24, // 21: krill.v1.AuthService.SignInWithCode:input_type -> krill.v1.SignInWithCodeRequest
+	1,  // 22: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
+	3,  // 23: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
+	5,  // 24: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
+	7,  // 25: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
+	9,  // 26: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
+	11, // 27: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
+	13, // 28: krill.v1.AuthService.SendVerificationCode:output_type -> krill.v1.SendVerificationCodeResponse
+	15, // 29: krill.v1.AuthService.VerifyEmail:output_type -> krill.v1.VerifyEmailResponse
+	17, // 30: krill.v1.AuthService.RequestPasswordReset:output_type -> krill.v1.RequestPasswordResetResponse
+	19, // 31: krill.v1.AuthService.CheckResetCode:output_type -> krill.v1.CheckResetCodeResponse
+	21, // 32: krill.v1.AuthService.ResetPassword:output_type -> krill.v1.ResetPasswordResponse
+	23, // 33: krill.v1.AuthService.RequestSignInCode:output_type -> krill.v1.RequestSignInCodeResponse
+	25, // 34: krill.v1.AuthService.SignInWithCode:output_type -> krill.v1.SignInWithCodeResponse
+	22, // [22:35] is the sub-list for method output_type
+	9,  // [9:22] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -1341,7 +1438,7 @@ func file_krill_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_auth_proto_rawDesc), len(file_krill_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

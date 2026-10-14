@@ -34,3 +34,21 @@ export const fadeWithPassword = {
   animate: { opacity: 1, transition: { delay: OPEN_S, duration: FADE_S, ease: 'linear' } },
   exit: { opacity: 0, transition: { duration: 0 } },
 } as const
+
+// Swaps one step's fields for the next: the old fields close as the new slot
+// opens, so the form's height moves smoothly, then the new fields fade in.
+export const swapStep = {
+  initial: revealPassword.initial,
+  animate: revealPassword.animate,
+  exit: {
+    height: 0,
+    marginTop: '-2rem',
+    opacity: 0,
+    overflow: 'hidden',
+    transition: {
+      height: { duration: OPEN_S, ease: 'easeOut' },
+      marginTop: { duration: OPEN_S, ease: 'easeOut' },
+      opacity: { duration: 0 },
+    },
+  },
+} as const
