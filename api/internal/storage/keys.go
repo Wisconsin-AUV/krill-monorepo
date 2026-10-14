@@ -45,3 +45,23 @@ const BackupsPrefix = "backups/"
 func BackupKey(name string) string {
 	return BackupsPrefix + name
 }
+
+func TrainingRunPrefix(runID int64) string {
+	return fmt.Sprintf("training-runs/%d/", runID)
+}
+
+// TrainingDatasetKey is the dataset a run trained on, in the export layout.
+func TrainingDatasetKey(runID int64) string {
+	return fmt.Sprintf("training-runs/%d/dataset.zip", runID)
+}
+
+// TrainingWeightsKey holds the best epoch's Ultralytics weights.
+func TrainingWeightsKey(runID int64) string {
+	return fmt.Sprintf("training-runs/%d/best.pt", runID)
+}
+
+// PrelabelerPreviewKey is the mask from a pre-labeler's latest preview. Each
+// preview replaces it.
+func PrelabelerPreviewKey(name string) string {
+	return fmt.Sprintf("prelabelers/%s/preview.png", name)
+}

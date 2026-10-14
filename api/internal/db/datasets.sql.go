@@ -183,14 +183,14 @@ func (q *Queries) ListDatasets(ctx context.Context) ([]Dataset, error) {
 
 const listExportAnnotations = `-- name: ListExportAnnotations :many
 WITH last_boxes AS (
-    SELECT DISTINCT ON (a.track_id) a.track_id, a.status
+    SELECT DISTINCT ON (a.track_id) a.track_id, a.status, a.source
     FROM annotations a
     JOIN frames f ON f.id = a.frame_id
     WHERE a.status <> 'rejected'
     ORDER BY a.track_id, f.idx DESC
 )
 SELECT a.frame_id, a.x, a.y, a.width, a.height, a.status, t.label_type_id, t.attributes,
-    (l.status = 'proposed')::bool AS track_unconfirmed
+    (l.status = 'proposed' AND l.source = 'sam')::bool AS track_unconfirmed
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN last_boxes l ON l.track_id = a.track_id
@@ -216,8 +216,9 @@ type ListExportAnnotationsRow struct {
 	TrackUnconfirmed bool    `json:"track_unconfirmed"`
 }
 
-// A track whose last box is still a proposal may have drifted, so none of its
-// boxes count until someone confirms that last frame.
+// A tracked object whose last box is still a proposal may have drifted, so
+// none of its boxes count until someone confirms that last frame. Pre-labels
+// are found on each frame on their own, so they can't drift.
 func (q *Queries) ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error) {
 	rows, err := q.db.Query(ctx, listExportAnnotations, videoIds)
 	if err != nil {

@@ -476,6 +476,35 @@ func (q *Queries) ScanLabelExampleKeys(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const scanTrainingRuns = `-- name: ScanTrainingRuns :many
+SELECT id, status FROM training_runs
+`
+
+type ScanTrainingRunsRow struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
+func (q *Queries) ScanTrainingRuns(ctx context.Context) ([]ScanTrainingRunsRow, error) {
+	rows, err := q.db.Query(ctx, scanTrainingRuns)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ScanTrainingRunsRow
+	for rows.Next() {
+		var i ScanTrainingRunsRow
+		if err := rows.Scan(&i.ID, &i.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const scanVideoFrames = `-- name: ScanVideoFrames :many
 SELECT f.idx, (c.embedded_at IS NOT NULL)::bool AS embedded
 FROM frames f

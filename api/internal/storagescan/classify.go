@@ -24,9 +24,10 @@ const (
 	KindBackup       Kind = "backup"
 	KindUpload       Kind = "upload"
 	KindOther        Kind = "other"
+	KindModel        Kind = "model"
 )
 
-var kinds = []Kind{KindSource, KindFrame, KindEmbedding, KindExport, KindLabelExample, KindBackup, KindUpload, KindOther}
+var kinds = []Kind{KindSource, KindFrame, KindEmbedding, KindExport, KindLabelExample, KindBackup, KindModel, KindUpload, KindOther}
 
 const (
 	// grace leaves recent objects alone, since a label example is uploaded
@@ -45,6 +46,8 @@ type parsedKey struct {
 	idx   int32
 	// The dataset of an export.
 	dataset int64
+	// The training run of a model.
+	run int64
 }
 
 func parseKey(key string) parsedKey {
@@ -75,6 +78,12 @@ func parseKey(key string) parsedKey {
 			return parsedKey{kind: KindOther}
 		}
 		return parsedKey{kind: KindExport, dataset: id}
+	case len(parts) >= 3 && parts[0] == "training-runs":
+		id, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil || storage.TrainingRunPrefix(id) != parts[0]+"/"+parts[1]+"/" {
+			return parsedKey{kind: KindOther}
+		}
+		return parsedKey{kind: KindModel, run: id}
 	case len(parts) == 4 && parts[0] == "label-types" && parts[2] == "examples":
 		return parsedKey{kind: KindLabelExample}
 	case strings.HasPrefix(key, storage.BackupsPrefix):
@@ -122,6 +131,8 @@ type state struct {
 	now      time.Time
 	videos   map[int64]*video
 	datasets map[int64]*row
+	// runs is seen once a run's weights are listed.
+	runs     map[int64]*row
 	examples map[string]*row
 	backups  map[string]*row
 }
@@ -132,6 +143,7 @@ func load(ctx context.Context, q *db.Queries, now time.Time) (*state, error) {
 		now:      now,
 		videos:   map[int64]*video{},
 		datasets: map[int64]*row{},
+		runs:     map[int64]*row{},
 		examples: map[string]*row{},
 		backups:  map[string]*row{},
 	}
@@ -148,6 +160,13 @@ func load(ctx context.Context, q *db.Queries, now time.Time) (*state, error) {
 	}
 	for _, d := range datasets {
 		s.datasets[d.ID] = &row{status: d.Status}
+	}
+	runs, err := q.ScanTrainingRuns(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list training runs: %w", err)
+	}
+	for _, r := range runs {
+		s.runs[r.ID] = &row{status: r.Status}
 	}
 	examples, err := q.ScanLabelExampleKeys(ctx)
 	if err != nil {
@@ -216,6 +235,9 @@ func (s *state) orphan(ctx context.Context, p parsedKey, key string, modified ti
 	case KindExport:
 		_, ok := s.datasets[p.dataset]
 		return !ok, nil
+	case KindModel:
+		_, ok := s.runs[p.run]
+		return !ok, nil
 	case KindLabelExample:
 		_, ok := s.examples[key]
 		return !ok, nil
@@ -246,6 +268,9 @@ func (s *state) orphanUpload(u storage.Upload) bool {
 	case p.kind == KindBackup:
 		b, ok := s.backups[u.Key]
 		return !ok || !active(b.status)
+	case p.kind == KindModel:
+		r, ok := s.runs[p.run]
+		return !ok || !training(r.status)
 	case p.kind == KindOther && p.video == 0:
 		return false
 	}
@@ -254,4 +279,8 @@ func (s *state) orphanUpload(u storage.Upload) bool {
 
 func active(status string) bool {
 	return status == "queued" || status == "running"
+}
+
+func training(status string) bool {
+	return status == "queued" || status == "preparing" || status == "training" || status == "evaluating"
 }

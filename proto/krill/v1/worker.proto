@@ -5,6 +5,7 @@ package krill.v1;
 import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
 import "krill/v1/log.proto";
+import "krill/v1/pipeline.proto";
 import "krill/v1/system.proto";
 
 // WorkerService is called by the GPU worker. Requests carry a worker token
@@ -34,6 +35,9 @@ message NextTaskResponse {
     TrackTask track = 1;
     ExemplarTask exemplar = 2;
     EmbedTask embed = 3;
+    TrainTask train = 10;
+    PrelabelTask prelabel = 11;
+    PreviewTask preview = 12;
   }
 }
 

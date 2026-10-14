@@ -55,6 +55,7 @@ var kindsToProto = map[Kind]krillv1.ObjectKind{
 	KindBackup:       krillv1.ObjectKind_OBJECT_KIND_BACKUP,
 	KindUpload:       krillv1.ObjectKind_OBJECT_KIND_UPLOAD,
 	KindOther:        krillv1.ObjectKind_OBJECT_KIND_OTHER,
+	KindModel:        krillv1.ObjectKind_OBJECT_KIND_MODEL,
 }
 
 func ts(t pgtype.Timestamptz) *timestamppb.Timestamp {

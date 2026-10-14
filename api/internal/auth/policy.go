@@ -192,4 +192,25 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.ContentServiceRegenerateEmbeddingsProcedure: manageSystem,
 	krillv1connect.ContentServiceReassignClipsProcedure:        manageSystem,
 	krillv1connect.ContentServiceListContentJobsProcedure:      manageSystem,
+
+	krillv1connect.ExportServiceGetExportDefaultsProcedure: manageExports,
+
+	krillv1connect.PipelineServiceListTrainingRunsProcedure:  manageSystem,
+	krillv1connect.PipelineServiceGetTrainingRunProcedure:    manageSystem,
+	krillv1connect.PipelineServiceStartTrainingProcedure:     manageSystem,
+	krillv1connect.PipelineServiceCancelTrainingProcedure:    manageSystem,
+	krillv1connect.PipelineServicePinModelProcedure:          manageSystem,
+	krillv1connect.PipelineServiceListPrelabelRunsProcedure:  manageSystem,
+	krillv1connect.PipelineServiceStartPrelabelProcedure:     manageSystem,
+	krillv1connect.PipelineServiceCancelPrelabelProcedure:    manageSystem,
+	krillv1connect.PipelineServiceListPrelabelersProcedure:   manageSystem,
+	krillv1connect.PipelineServiceUpdatePrelabelerProcedure:  manageSystem,
+	krillv1connect.PipelineServicePreviewPrelabelerProcedure: manageSystem,
+
+	krillv1connect.PipelineWorkerServiceRegisterPrelabelersProcedure: worker,
+	krillv1connect.PipelineWorkerServiceCheckInProcedure:             worker,
+	krillv1connect.PipelineWorkerServiceReportTrainProgressProcedure: worker,
+	krillv1connect.PipelineWorkerServiceFinishTrainProcedure:         worker,
+	krillv1connect.PipelineWorkerServiceReportPrelabelsProcedure:     worker,
+	krillv1connect.PipelineWorkerServiceReportPreviewProcedure:       worker,
 }

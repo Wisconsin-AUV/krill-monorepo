@@ -21,6 +21,7 @@ class ObjectKind(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     OBJECT_KIND_BACKUP: _ClassVar[ObjectKind]
     OBJECT_KIND_UPLOAD: _ClassVar[ObjectKind]
     OBJECT_KIND_OTHER: _ClassVar[ObjectKind]
+    OBJECT_KIND_MODEL: _ClassVar[ObjectKind]
 
 class JobStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -38,6 +39,7 @@ OBJECT_KIND_LABEL_EXAMPLE: ObjectKind
 OBJECT_KIND_BACKUP: ObjectKind
 OBJECT_KIND_UPLOAD: ObjectKind
 OBJECT_KIND_OTHER: ObjectKind
+OBJECT_KIND_MODEL: ObjectKind
 JOB_STATUS_UNSPECIFIED: JobStatus
 JOB_STATUS_QUEUED: JobStatus
 JOB_STATUS_RUNNING: JobStatus

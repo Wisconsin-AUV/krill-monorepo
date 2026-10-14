@@ -29,7 +29,7 @@ WHERE a.frame_id = $3
     AND a.status <> 'rejected'
     AND (cardinality($4::bigint[]) = 0 OR a.track_id = ANY($4::bigint[]))
 ON CONFLICT (track_id, frame_id) DO NOTHING
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
 `
 
 type CopyAnnotationsParams struct {
@@ -69,6 +69,7 @@ func (q *Queries) CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams
 			&i.CreatedBy,
 			&i.UpdatedBy,
 			&i.Drift,
+			&i.Confidence,
 		); err != nil {
 			return nil, err
 		}
@@ -206,7 +207,7 @@ func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
 }
 
 const listClipAnnotations = `-- name: ListClipAnnotations :many
-SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift
+SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift, a.confidence
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE t.clip_id = $1
@@ -238,6 +239,7 @@ func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Anno
 			&i.CreatedBy,
 			&i.UpdatedBy,
 			&i.Drift,
+			&i.Confidence,
 		); err != nil {
 			return nil, err
 		}
@@ -449,10 +451,11 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    confidence = NULL,
     drift = CASE WHEN annotations.drift = 'flagged' THEN 'reviewed' ELSE annotations.drift END,
     updated_by = excluded.updated_by,
     updated_at = now()
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
 `
 
 type UpsertAnnotationParams struct {
@@ -492,6 +495,7 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		&i.CreatedBy,
 		&i.UpdatedBy,
 		&i.Drift,
+		&i.Confidence,
 	)
 	return i, err
 }

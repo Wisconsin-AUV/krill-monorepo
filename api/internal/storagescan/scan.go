@@ -170,6 +170,10 @@ func (s *state) markSeen(ctx context.Context, p parsedKey, key string) error {
 		r = s.examples[key]
 	case KindBackup:
 		r = s.backups[key]
+	case KindModel:
+		if key == storage.TrainingWeightsKey(p.run) {
+			r = s.runs[p.run]
+		}
 	}
 	if r != nil {
 		r.seen = true
@@ -219,6 +223,11 @@ func (s *state) missing(ctx context.Context, r *report) error {
 	for key, e := range s.examples {
 		if !e.seen {
 			r.categories[KindLabelExample].miss(key)
+		}
+	}
+	for id, run := range s.runs {
+		if run.status == "succeeded" && !run.seen {
+			r.categories[KindModel].miss(storage.TrainingWeightsKey(id))
 		}
 	}
 	for key, b := range s.backups {

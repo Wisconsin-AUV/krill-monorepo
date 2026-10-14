@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,6 +22,7 @@ import (
 	"github.com/riverqueue/river/rivermigrate"
 	"github.com/riverqueue/river/rivertype"
 
+	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/admin"
 	"github.com/wauv/krill/api/internal/annotation"
@@ -41,6 +43,7 @@ import (
 	"github.com/wauv/krill/api/internal/invite"
 	"github.com/wauv/krill/api/internal/jobmeta"
 	"github.com/wauv/krill/api/internal/logs"
+	"github.com/wauv/krill/api/internal/pipeline"
 	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
@@ -158,6 +161,16 @@ func run(logHub *logs.Hub) error {
 	} else if n > 0 {
 		slog.Warn("marked interrupted backups as failed", "count", n)
 	}
+	if n, err := db.New(pool).FailInterruptedTrainingRuns(ctx); err != nil {
+		return fmt.Errorf("fail interrupted training: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted training runs as failed", "count", n)
+	}
+	if n, err := db.New(pool).FailInterruptedPrelabelRuns(ctx); err != nil {
+		return fmt.Errorf("fail interrupted pre-labeling: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted pre-label runs as failed", "count", n)
+	}
 
 	store, err := storage.New(ctx, storage.Config{
 		Endpoint:       cfg.S3Endpoint,
@@ -193,28 +206,39 @@ func run(logHub *logs.Hub) error {
 	trashRetention := func() int { return live.Load().cfg.TrashRetentionDays }
 	river.AddWorker(workers, trash.NewPurgeWorker(db.New(pool), store))
 	river.AddWorker(workers, trash.NewAutoPurgeWorker(pool, trashRetention))
+	pipe := pipeline.New(pipeline.Deps{
+		Pool:       pool,
+		Store:      store,
+		Dispatcher: dispatcher,
+		Config:     liveConfig,
+		Version:    version,
+	})
+	pipe.AddWorkers(workers)
+	queues := map[string]river.QueueConfig{
+		river.QueueDefault:    {MaxWorkers: 2},
+		ingest.Queue:          {MaxWorkers: 1},
+		annotation.TrackQueue: {MaxWorkers: 1},
+		ingest.EmbedQueue:     {MaxWorkers: 1},
+		storagescan.Queue:     {MaxWorkers: 1},
+		backup.Queue:          {MaxWorkers: 1},
+	}
+	maps.Copy(queues, pipeline.Queues())
 	jobs, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
-		Logger: slog.Default(),
-		Queues: map[string]river.QueueConfig{
-			river.QueueDefault:    {MaxWorkers: 2},
-			ingest.Queue:          {MaxWorkers: 1},
-			annotation.TrackQueue: {MaxWorkers: 1},
-			ingest.EmbedQueue:     {MaxWorkers: 1},
-			storagescan.Queue:     {MaxWorkers: 1},
-			backup.Queue:          {MaxWorkers: 1},
-		},
+		Logger:     slog.Default(),
+		Queues:     queues,
 		Workers:    workers,
 		Middleware: []rivertype.Middleware{&jobmeta.StartedBy{}},
-		PeriodicJobs: []*river.PeriodicJob{
+		PeriodicJobs: append([]*river.PeriodicJob{
 			river.NewPeriodicJob(river.PeriodicInterval(backup.ScheduleInterval), func() (river.JobArgs, *river.InsertOpts) {
 				return backup.ScheduleArgs{}, nil
 			}, &river.PeriodicJobOpts{RunOnStart: true}),
 			trash.AutoPurgeJob(),
-		},
+		}, pipeline.PeriodicJobs()...),
 	})
 	if err != nil {
 		return fmt.Errorf("create job client: %w", err)
 	}
+	pipe.SetJobs(jobs)
 	if err := jobs.Start(ctx); err != nil {
 		return fmt.Errorf("start jobs: %w", err)
 	}
@@ -242,7 +266,8 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes).
 		WithModel(func() string { return live.Load().cfg.SamModel }).
 		WithLogs(logHub), rpcOpts))
-	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
+	exportDefaults := func() *krillv1.ExportOptions { return export.Defaults(live.Load().cfg) }
+	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs, exportDefaults), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool, authService), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store, goldRouting), rpcOpts))
@@ -276,6 +301,8 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewDatabaseServiceHandler(backup.NewService(pool, store, jobs, liveConfig), rpcOpts))
 	mux.Handle(krillv1connect.NewLogServiceHandler(logs.NewService(logHub), rpcOpts))
 	mux.Handle(krillv1connect.NewContentServiceHandler(content.NewService(pool, store, jobs, nodes, trashRetention), rpcOpts))
+	mux.Handle(krillv1connect.NewPipelineServiceHandler(pipeline.NewService(pipe), rpcOpts))
+	mux.Handle(krillv1connect.NewPipelineWorkerServiceHandler(pipeline.NewWorkerService(pipe), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

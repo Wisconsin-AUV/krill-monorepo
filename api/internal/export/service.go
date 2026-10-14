@@ -20,6 +20,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/audit"
+	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -41,14 +42,29 @@ var statusToProto = map[string]krillv1.ExportStatus{
 
 type Service struct {
 	krillv1connect.UnimplementedExportServiceHandler
-	pool  *pgxpool.Pool
-	q     *db.Queries
-	store *storage.Store
-	jobs  *river.Client[pgx.Tx]
+	pool     *pgxpool.Pool
+	q        *db.Queries
+	store    *storage.Store
+	jobs     *river.Client[pgx.Tx]
+	defaults func() *krillv1.ExportOptions
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], defaults func() *krillv1.ExportOptions) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs, defaults: defaults}
+}
+
+// Defaults are the options the admin panel set, for every ready video.
+func Defaults(cfg config.Config) *krillv1.ExportOptions {
+	return &krillv1.ExportOptions{
+		ValFraction:   float32(cfg.ExportValFraction),
+		Stride:        int32(cfg.ExportStride), //nolint:gosec // validated to at most MaxExportStride
+		Dedup:         cfg.ExportDedup,
+		DedupDistance: int32(cfg.ExportDedupDistance), //nolint:gosec // validated to at most MaxExportDedupDistance
+	}
+}
+
+func (s *Service) GetExportDefaults(context.Context, *krillv1.GetExportDefaultsRequest) (*krillv1.GetExportDefaultsResponse, error) {
+	return &krillv1.GetExportDefaultsResponse{Options: s.defaults()}, nil
 }
 
 func (s *Service) PreviewExport(ctx context.Context, req *krillv1.PreviewExportRequest) (*krillv1.PreviewExportResponse, error) {

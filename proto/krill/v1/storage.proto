@@ -30,6 +30,8 @@ enum ObjectKind {
   OBJECT_KIND_UPLOAD = 7;
   // Keys Krill doesn't write. Never orphans.
   OBJECT_KIND_OTHER = 8;
+  // Training datasets and weights.
+  OBJECT_KIND_MODEL = 9;
 }
 
 enum JobStatus {

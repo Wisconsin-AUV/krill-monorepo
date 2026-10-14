@@ -112,14 +112,18 @@ func run(ctx context.Context, d *Dispatcher, t *task, pickup time.Duration) erro
 		return err
 	}
 
-	idle := time.NewTimer(idleTimeout)
+	limit := idleTimeout
+	if t.idle > 0 {
+		limit = t.idle
+	}
+	idle := time.NewTimer(limit)
 	defer idle.Stop()
 	for {
 		select {
 		case err := <-t.done:
 			return err
 		case <-t.progress:
-			idle.Reset(idleTimeout)
+			idle.Reset(limit)
 		case <-idle.C:
 			return errors.New("GPU worker stopped reporting")
 		case <-ctx.Done():

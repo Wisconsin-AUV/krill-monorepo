@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "krill/v1/annotation.proto";
+import "krill/v1/pipeline.proto";
+import "krill/v1/worker.proto";
+
+// PipelineWorkerService is called by the GPU worker for training,
+// pre-labeling, and pre-labeler previews. Requests carry the worker token.
+// Failures go through WorkerService.FailTask.
+service PipelineWorkerService {
+  // RegisterPrelabelers tells the API which CV plugins the worker has.
+  rpc RegisterPrelabelers(RegisterPrelabelersRequest) returns (RegisterPrelabelersResponse) {}
+  // CheckIn is called between training batches. It hands over a waiting
+  // task other than training, so clicks never wait for a run to finish.
+  // NotFound means the run was cancelled and training should stop.
+  rpc CheckIn(CheckInRequest) returns (CheckInResponse) {}
+  rpc ReportTrainProgress(ReportTrainProgressRequest) returns (ReportTrainProgressResponse) {}
+  // FinishTrain is called once the weights are uploaded.
+  rpc FinishTrain(FinishTrainRequest) returns (FinishTrainResponse) {}
+  // ReportPrelabels saves boxes for a prelabel task in batches, with done
+  // set on the last one.
+  rpc ReportPrelabels(ReportPrelabelsRequest) returns (ReportPrelabelsResponse) {}
+  rpc ReportPreview(ReportPreviewRequest) returns (ReportPreviewResponse) {}
+}
+
+message RegisterPrelabelersRequest {
+  repeated PrelabelerSpec prelabelers = 1;
+}
+
+message RegisterPrelabelersResponse {}
+
+message CheckInRequest {
+  // The training task.
+  int64 task_id = 1;
+}
+
+message CheckInResponse {
+  // Empty when nothing is waiting.
+  NextTaskResponse task = 1;
+}
+
+message ReportTrainProgressRequest {
+  int64 task_id = 1;
+  int32 epochs = 2;
+  // Unset before the first epoch finishes.
+  EpochMetrics epoch = 3;
+  bool evaluating = 4;
+  // The end of the training log.
+  string log = 5;
+  string device = 6;
+}
+
+message ReportTrainProgressResponse {}
+
+message FinishTrainRequest {
+  int64 task_id = 1;
+  EvalMetrics val = 2;
+  EvalMetrics test = 3;
+  EvalMetrics baseline_val = 4;
+  EvalMetrics baseline_test = 5;
+  int64 weights_bytes = 6;
+  string log = 7;
+}
+
+message FinishTrainResponse {}
+
+message PrelabelBox {
+  int64 frame_id = 1;
+  // A class name for YOLO, or the plugin's output for CV.
+  string label = 2;
+  Box box = 3;
+  float confidence = 4;
+  // The CV plugin that found it.
+  string plugin = 5;
+}
+
+message ReportPrelabelsRequest {
+  int64 task_id = 1;
+  repeated PrelabelBox boxes = 2;
+  bool done = 3;
+}
+
+message ReportPrelabelsResponse {}
+
+message ReportPreviewRequest {
+  int64 task_id = 1;
+  repeated PreviewBox boxes = 2;
+  int32 took_ms = 3;
+}
+
+message ReportPreviewResponse {}

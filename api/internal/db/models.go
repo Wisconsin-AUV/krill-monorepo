@@ -25,6 +25,7 @@ type Annotation struct {
 	CreatedBy    pgtype.UUID        `json:"created_by"`
 	UpdatedBy    pgtype.UUID        `json:"updated_by"`
 	Drift        pgtype.Text        `json:"drift"`
+	Confidence   pgtype.Float4      `json:"confidence"`
 }
 
 type ApprovedEmail struct {
@@ -200,6 +201,31 @@ type LiveClip struct {
 	VideoID int64 `json:"video_id"`
 }
 
+type PrelabelRun struct {
+	ID            int64              `json:"id"`
+	Source        string             `json:"source"`
+	TrainingRunID pgtype.Int8        `json:"training_run_id"`
+	Status        string             `json:"status"`
+	ClipsTotal    int32              `json:"clips_total"`
+	ClipsDone     int32              `json:"clips_done"`
+	Frames        int32              `json:"frames"`
+	Proposals     int32              `json:"proposals"`
+	Error         string             `json:"error"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	FinishedAt    pgtype.Timestamptz `json:"finished_at"`
+}
+
+type Prelabeler struct {
+	Name      string             `json:"name"`
+	Spec      []byte             `json:"spec"`
+	Enabled   bool               `json:"enabled"`
+	Params    []byte             `json:"params"`
+	Outputs   []byte             `json:"outputs"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
 type Review struct {
 	ID         int64              `json:"id"`
 	FrameID    int64              `json:"frame_id"`
@@ -272,6 +298,33 @@ type Track struct {
 	LabelTypeID int64              `json:"label_type_id"`
 	Attributes  []byte             `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type TrainingRun struct {
+	ID                  int64              `json:"id"`
+	Status              string             `json:"status"`
+	Trigger             string             `json:"trigger"`
+	CreatedBy           pgtype.UUID        `json:"created_by"`
+	Config              []byte             `json:"config"`
+	Dataset             []byte             `json:"dataset"`
+	Classes             []byte             `json:"classes"`
+	VerifiedBoxes       int32              `json:"verified_boxes"`
+	Epochs              int32              `json:"epochs"`
+	Epoch               int32              `json:"epoch"`
+	History             []byte             `json:"history"`
+	ValMetrics          []byte             `json:"val_metrics"`
+	TestMetrics         []byte             `json:"test_metrics"`
+	BaselineRunID       pgtype.Int8        `json:"baseline_run_id"`
+	BaselineValMetrics  []byte             `json:"baseline_val_metrics"`
+	BaselineTestMetrics []byte             `json:"baseline_test_metrics"`
+	WeightsBytes        int64              `json:"weights_bytes"`
+	Device              string             `json:"device"`
+	Log                 string             `json:"log"`
+	Error               string             `json:"error"`
+	Pinned              bool               `json:"pinned"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	StartedAt           pgtype.Timestamptz `json:"started_at"`
+	FinishedAt          pgtype.Timestamptz `json:"finished_at"`
 }
 
 type User struct {

@@ -106,3 +106,6 @@ SELECT object_key FROM label_examples;
 
 -- name: ScanBackups :many
 SELECT object_key, status FROM backups;
+
+-- name: ScanTrainingRuns :many
+SELECT id, status FROM training_runs;

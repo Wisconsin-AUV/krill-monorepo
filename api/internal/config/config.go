@@ -81,7 +81,33 @@ type Config struct {
 	// TrashRetentionDays is how long trashed videos and clips are kept before
 	// they are purged. 0 keeps them until someone purges them.
 	TrashRetentionDays int
+	// The export defaults prefill the export form and build the datasets
+	// scheduled retrains train on.
+	ExportValFraction   float64
+	ExportStride        int
+	ExportDedup         bool
+	ExportDedupDistance int
+	// RetrainHour is when a scheduled retrain may start, or -1 for never. It
+	// only starts once RetrainMinNewLabels verified boxes were added or
+	// changed since the last run.
+	RetrainHour         int
+	RetrainMinNewLabels int
+	RetrainModel        string
+	RetrainEpochs       int
+	RetrainImageSize    int
+	RetrainBatch        int
+	// RetrainAutoPin pins a scheduled run's model when it scores better on
+	// the held-out test videos than the pinned one.
+	RetrainAutoPin     bool
+	PrelabelConfidence float64
 }
+
+// Export limits, shared by the settings and each export's own options.
+const (
+	MaxExportValFraction   = 0.5
+	MaxExportStride        = 100
+	MaxExportDedupDistance = 16
+)
 
 // Lookup returns a setting's raw value, or false when nothing sets it and
 // its default applies.
@@ -144,9 +170,21 @@ func Parse(lookup Lookup) (Config, error) {
 		UpdateCheck:           p.bool("KRILL_UPDATE_CHECK"),
 		StuckClaimDays:        p.int("KRILL_STUCK_CLAIM_DAYS"),
 		SamModel:              p.choice("KRILL_SAM_MODEL"),
-		BackupHour:            p.backupHour("KRILL_BACKUP_SCHEDULE"),
+		BackupHour:            p.hour("KRILL_BACKUP_SCHEDULE"),
 		BackupKeep:            p.int("KRILL_BACKUP_KEEP"),
 		TrashRetentionDays:    p.int("KRILL_TRASH_RETENTION_DAYS"),
+		ExportValFraction:     p.float("KRILL_EXPORT_VAL_FRACTION"),
+		ExportStride:          p.int("KRILL_EXPORT_STRIDE"),
+		ExportDedup:           p.bool("KRILL_EXPORT_DEDUP"),
+		ExportDedupDistance:   p.int("KRILL_EXPORT_DEDUP_DISTANCE"),
+		RetrainHour:           p.hour("KRILL_RETRAIN_HOUR"),
+		RetrainMinNewLabels:   p.int("KRILL_RETRAIN_MIN_NEW_LABELS"),
+		RetrainModel:          p.choice("KRILL_RETRAIN_MODEL"),
+		RetrainEpochs:         p.int("KRILL_RETRAIN_EPOCHS"),
+		RetrainImageSize:      p.int("KRILL_RETRAIN_IMAGE_SIZE"),
+		RetrainBatch:          p.int("KRILL_RETRAIN_BATCH"),
+		RetrainAutoPin:        p.bool("KRILL_RETRAIN_AUTO_PIN"),
+		PrelabelConfidence:    p.float("KRILL_PRELABEL_CONFIDENCE"),
 	}
 	if p.err != nil {
 		return Config{}, p.err
@@ -180,6 +218,9 @@ func (c Config) validate() error {
 	if c.TrashRetentionDays < 0 {
 		return invalid("KRILL_TRASH_RETENTION_DAYS", "must not be negative")
 	}
+	if err := c.validatePipeline(); err != nil {
+		return err
+	}
 	if strings.HasPrefix(c.PublicURL, "https://") && !strings.HasPrefix(c.S3PublicEndpoint, "https://") {
 		return invalid("KRILL_S3_PUBLIC_ENDPOINT", "must be HTTPS when KRILL_PUBLIC_URL is")
 	}
@@ -199,6 +240,43 @@ func (c Config) validate() error {
 	}
 	if c.BackupKeep < 1 {
 		return invalid("KRILL_BACKUP_KEEP", "must be at least 1")
+	}
+	return nil
+}
+
+func (c Config) validatePipeline() error {
+	if c.ExportValFraction < 0 || c.ExportValFraction > MaxExportValFraction {
+		return invalid("KRILL_EXPORT_VAL_FRACTION", "must be between 0 and %.1f", MaxExportValFraction)
+	}
+	if c.ExportStride < 1 || c.ExportStride > MaxExportStride {
+		return invalid("KRILL_EXPORT_STRIDE", "must be between 1 and %d", MaxExportStride)
+	}
+	if c.ExportDedupDistance < 1 || c.ExportDedupDistance > MaxExportDedupDistance {
+		return invalid("KRILL_EXPORT_DEDUP_DISTANCE", "must be between 1 and %d", MaxExportDedupDistance)
+	}
+	if c.RetrainMinNewLabels < 0 {
+		return invalid("KRILL_RETRAIN_MIN_NEW_LABELS", "must not be negative")
+	}
+	if err := CheckTraining(c.RetrainEpochs, c.RetrainImageSize, c.RetrainBatch); err != nil {
+		return err
+	}
+	if c.PrelabelConfidence < 0.01 || c.PrelabelConfidence > 0.99 {
+		return invalid("KRILL_PRELABEL_CONFIDENCE", "must be between 0.01 and 0.99")
+	}
+	return nil
+}
+
+// CheckTraining checks a training run's settings. Errors name the setting
+// that holds each default.
+func CheckTraining(epochs, imageSize, batch int) error {
+	if epochs < 1 || epochs > 1000 {
+		return invalid("KRILL_RETRAIN_EPOCHS", "must be between 1 and 1000")
+	}
+	if imageSize < 320 || imageSize > 1920 || imageSize%32 != 0 {
+		return invalid("KRILL_RETRAIN_IMAGE_SIZE", "must be a multiple of 32 from 320 to 1920")
+	}
+	if batch < 1 || batch > 256 {
+		return invalid("KRILL_RETRAIN_BATCH", "must be between 1 and 256")
 	}
 	return nil
 }
@@ -270,6 +348,16 @@ func (p *parser) float(key string) float64 {
 	return v
 }
 
+// hour reads a choice from hourChoices, with -1 for off.
+func (p *parser) hour(key string) int {
+	v := p.choice(key)
+	if v == HourOff {
+		return -1
+	}
+	h, _ := strconv.Atoi(v)
+	return h
+}
+
 func (p *parser) choice(key string) string {
 	v := strings.ToLower(p.raw(key))
 	choices := byKey[key].Choices
@@ -294,13 +382,4 @@ func orList(items []string) string {
 		return items[0] + " or " + items[1]
 	}
 	return strings.Join(items[:len(items)-1], ", ") + ", or " + items[len(items)-1]
-}
-
-func (p *parser) backupHour(key string) int {
-	v := p.choice(key)
-	if v == BackupOff {
-		return -1
-	}
-	h, _ := strconv.Atoi(v)
-	return h
 }

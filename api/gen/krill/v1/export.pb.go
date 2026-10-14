@@ -960,6 +960,86 @@ func (*DeleteExportResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_export_proto_rawDescGZIP(), []int{12}
 }
 
+type GetExportDefaultsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExportDefaultsRequest) Reset() {
+	*x = GetExportDefaultsRequest{}
+	mi := &file_krill_v1_export_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExportDefaultsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExportDefaultsRequest) ProtoMessage() {}
+
+func (x *GetExportDefaultsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_export_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExportDefaultsRequest.ProtoReflect.Descriptor instead.
+func (*GetExportDefaultsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{13}
+}
+
+type GetExportDefaultsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Options       *ExportOptions         `protobuf:"bytes,1,opt,name=options,proto3" json:"options,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExportDefaultsResponse) Reset() {
+	*x = GetExportDefaultsResponse{}
+	mi := &file_krill_v1_export_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExportDefaultsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExportDefaultsResponse) ProtoMessage() {}
+
+func (x *GetExportDefaultsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_export_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExportDefaultsResponse.ProtoReflect.Descriptor instead.
+func (*GetExportDefaultsResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetExportDefaultsResponse) GetOptions() *ExportOptions {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
 var File_krill_v1_export_proto protoreflect.FileDescriptor
 
 const file_krill_v1_export_proto_rawDesc = "" +
@@ -1038,18 +1118,22 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\aexports\x18\x01 \x03(\v2\x10.krill.v1.ExportR\aexports\"%\n" +
 	"\x13DeleteExportRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x16\n" +
-	"\x14DeleteExportResponse*\x95\x01\n" +
+	"\x14DeleteExportResponse\"\x1a\n" +
+	"\x18GetExportDefaultsRequest\"N\n" +
+	"\x19GetExportDefaultsResponse\x121\n" +
+	"\aoptions\x18\x01 \x01(\v2\x17.krill.v1.ExportOptionsR\aoptions*\x95\x01\n" +
 	"\fExportStatus\x12\x1d\n" +
 	"\x19EXPORT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EXPORT_STATUS_QUEUED\x10\x01\x12\x19\n" +
 	"\x15EXPORT_STATUS_RUNNING\x10\x02\x12\x17\n" +
 	"\x13EXPORT_STATUS_READY\x10\x03\x12\x18\n" +
-	"\x14EXPORT_STATUS_FAILED\x10\x042\xd3\x02\n" +
+	"\x14EXPORT_STATUS_FAILED\x10\x042\xb3\x03\n" +
 	"\rExportService\x12R\n" +
 	"\rPreviewExport\x12\x1e.krill.v1.PreviewExportRequest\x1a\x1f.krill.v1.PreviewExportResponse\"\x00\x12O\n" +
 	"\fCreateExport\x12\x1d.krill.v1.CreateExportRequest\x1a\x1e.krill.v1.CreateExportResponse\"\x00\x12L\n" +
 	"\vListExports\x12\x1c.krill.v1.ListExportsRequest\x1a\x1d.krill.v1.ListExportsResponse\"\x00\x12O\n" +
-	"\fDeleteExport\x12\x1d.krill.v1.DeleteExportRequest\x1a\x1e.krill.v1.DeleteExportResponse\"\x00B\x8c\x01\n" +
+	"\fDeleteExport\x12\x1d.krill.v1.DeleteExportRequest\x1a\x1e.krill.v1.DeleteExportResponse\"\x00\x12^\n" +
+	"\x11GetExportDefaults\x12\".krill.v1.GetExportDefaultsRequest\x1a#.krill.v1.GetExportDefaultsResponse\"\x00B\x8c\x01\n" +
 	"\fcom.krill.v1B\vExportProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -1065,23 +1149,25 @@ func file_krill_v1_export_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_export_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_krill_v1_export_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_krill_v1_export_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_krill_v1_export_proto_goTypes = []any{
-	(ExportStatus)(0),             // 0: krill.v1.ExportStatus
-	(*ExportOptions)(nil),         // 1: krill.v1.ExportOptions
-	(*ExportClassStats)(nil),      // 2: krill.v1.ExportClassStats
-	(*ExportVideoStats)(nil),      // 3: krill.v1.ExportVideoStats
-	(*ExportStats)(nil),           // 4: krill.v1.ExportStats
-	(*Export)(nil),                // 5: krill.v1.Export
-	(*PreviewExportRequest)(nil),  // 6: krill.v1.PreviewExportRequest
-	(*PreviewExportResponse)(nil), // 7: krill.v1.PreviewExportResponse
-	(*CreateExportRequest)(nil),   // 8: krill.v1.CreateExportRequest
-	(*CreateExportResponse)(nil),  // 9: krill.v1.CreateExportResponse
-	(*ListExportsRequest)(nil),    // 10: krill.v1.ListExportsRequest
-	(*ListExportsResponse)(nil),   // 11: krill.v1.ListExportsResponse
-	(*DeleteExportRequest)(nil),   // 12: krill.v1.DeleteExportRequest
-	(*DeleteExportResponse)(nil),  // 13: krill.v1.DeleteExportResponse
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(ExportStatus)(0),                 // 0: krill.v1.ExportStatus
+	(*ExportOptions)(nil),             // 1: krill.v1.ExportOptions
+	(*ExportClassStats)(nil),          // 2: krill.v1.ExportClassStats
+	(*ExportVideoStats)(nil),          // 3: krill.v1.ExportVideoStats
+	(*ExportStats)(nil),               // 4: krill.v1.ExportStats
+	(*Export)(nil),                    // 5: krill.v1.Export
+	(*PreviewExportRequest)(nil),      // 6: krill.v1.PreviewExportRequest
+	(*PreviewExportResponse)(nil),     // 7: krill.v1.PreviewExportResponse
+	(*CreateExportRequest)(nil),       // 8: krill.v1.CreateExportRequest
+	(*CreateExportResponse)(nil),      // 9: krill.v1.CreateExportResponse
+	(*ListExportsRequest)(nil),        // 10: krill.v1.ListExportsRequest
+	(*ListExportsResponse)(nil),       // 11: krill.v1.ListExportsResponse
+	(*DeleteExportRequest)(nil),       // 12: krill.v1.DeleteExportRequest
+	(*DeleteExportResponse)(nil),      // 13: krill.v1.DeleteExportResponse
+	(*GetExportDefaultsRequest)(nil),  // 14: krill.v1.GetExportDefaultsRequest
+	(*GetExportDefaultsResponse)(nil), // 15: krill.v1.GetExportDefaultsResponse
+	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
 }
 var file_krill_v1_export_proto_depIdxs = []int32{
 	2,  // 0: krill.v1.ExportStats.classes:type_name -> krill.v1.ExportClassStats
@@ -1089,26 +1175,29 @@ var file_krill_v1_export_proto_depIdxs = []int32{
 	0,  // 2: krill.v1.Export.status:type_name -> krill.v1.ExportStatus
 	1,  // 3: krill.v1.Export.options:type_name -> krill.v1.ExportOptions
 	4,  // 4: krill.v1.Export.stats:type_name -> krill.v1.ExportStats
-	14, // 5: krill.v1.Export.created_at:type_name -> google.protobuf.Timestamp
-	14, // 6: krill.v1.Export.finished_at:type_name -> google.protobuf.Timestamp
+	16, // 5: krill.v1.Export.created_at:type_name -> google.protobuf.Timestamp
+	16, // 6: krill.v1.Export.finished_at:type_name -> google.protobuf.Timestamp
 	1,  // 7: krill.v1.PreviewExportRequest.options:type_name -> krill.v1.ExportOptions
 	4,  // 8: krill.v1.PreviewExportResponse.stats:type_name -> krill.v1.ExportStats
 	1,  // 9: krill.v1.CreateExportRequest.options:type_name -> krill.v1.ExportOptions
 	5,  // 10: krill.v1.CreateExportResponse.export:type_name -> krill.v1.Export
 	5,  // 11: krill.v1.ListExportsResponse.exports:type_name -> krill.v1.Export
-	6,  // 12: krill.v1.ExportService.PreviewExport:input_type -> krill.v1.PreviewExportRequest
-	8,  // 13: krill.v1.ExportService.CreateExport:input_type -> krill.v1.CreateExportRequest
-	10, // 14: krill.v1.ExportService.ListExports:input_type -> krill.v1.ListExportsRequest
-	12, // 15: krill.v1.ExportService.DeleteExport:input_type -> krill.v1.DeleteExportRequest
-	7,  // 16: krill.v1.ExportService.PreviewExport:output_type -> krill.v1.PreviewExportResponse
-	9,  // 17: krill.v1.ExportService.CreateExport:output_type -> krill.v1.CreateExportResponse
-	11, // 18: krill.v1.ExportService.ListExports:output_type -> krill.v1.ListExportsResponse
-	13, // 19: krill.v1.ExportService.DeleteExport:output_type -> krill.v1.DeleteExportResponse
-	16, // [16:20] is the sub-list for method output_type
-	12, // [12:16] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	1,  // 12: krill.v1.GetExportDefaultsResponse.options:type_name -> krill.v1.ExportOptions
+	6,  // 13: krill.v1.ExportService.PreviewExport:input_type -> krill.v1.PreviewExportRequest
+	8,  // 14: krill.v1.ExportService.CreateExport:input_type -> krill.v1.CreateExportRequest
+	10, // 15: krill.v1.ExportService.ListExports:input_type -> krill.v1.ListExportsRequest
+	12, // 16: krill.v1.ExportService.DeleteExport:input_type -> krill.v1.DeleteExportRequest
+	14, // 17: krill.v1.ExportService.GetExportDefaults:input_type -> krill.v1.GetExportDefaultsRequest
+	7,  // 18: krill.v1.ExportService.PreviewExport:output_type -> krill.v1.PreviewExportResponse
+	9,  // 19: krill.v1.ExportService.CreateExport:output_type -> krill.v1.CreateExportResponse
+	11, // 20: krill.v1.ExportService.ListExports:output_type -> krill.v1.ListExportsResponse
+	13, // 21: krill.v1.ExportService.DeleteExport:output_type -> krill.v1.DeleteExportResponse
+	15, // 22: krill.v1.ExportService.GetExportDefaults:output_type -> krill.v1.GetExportDefaultsResponse
+	18, // [18:23] is the sub-list for method output_type
+	13, // [13:18] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_export_proto_init() }
@@ -1122,7 +1211,7 @@ func file_krill_v1_export_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_export_proto_rawDesc), len(file_krill_v1_export_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

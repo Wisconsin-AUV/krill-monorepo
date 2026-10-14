@@ -49,7 +49,7 @@ func Track(t db.Track) (*krillv1.Track, error) {
 }
 
 func Annotation(a db.Annotation) *krillv1.Annotation {
-	return &krillv1.Annotation{
+	out := &krillv1.Annotation{
 		Id:      a.ID,
 		TrackId: a.TrackID,
 		FrameId: a.FrameID,
@@ -58,4 +58,8 @@ func Annotation(a db.Annotation) *krillv1.Annotation {
 		Status:  statusToProto[a.Status],
 		Drift:   a.Drift.String == "flagged",
 	}
+	if a.Confidence.Valid {
+		out.Confidence = &a.Confidence.Float32
+	}
+	return out
 }

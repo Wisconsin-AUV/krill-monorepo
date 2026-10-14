@@ -3,6 +3,7 @@ import datetime
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from krill.v1 import annotation_pb2 as _annotation_pb2
 from krill.v1 import log_pb2 as _log_pb2
+from krill.v1 import pipeline_pb2 as _pipeline_pb2
 from krill.v1 import system_pb2 as _system_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -40,14 +41,20 @@ class NextTaskRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class NextTaskResponse(_message.Message):
-    __slots__ = ("track", "exemplar", "embed")
+    __slots__ = ("track", "exemplar", "embed", "train", "prelabel", "preview")
     TRACK_FIELD_NUMBER: _ClassVar[int]
     EXEMPLAR_FIELD_NUMBER: _ClassVar[int]
     EMBED_FIELD_NUMBER: _ClassVar[int]
+    TRAIN_FIELD_NUMBER: _ClassVar[int]
+    PRELABEL_FIELD_NUMBER: _ClassVar[int]
+    PREVIEW_FIELD_NUMBER: _ClassVar[int]
     track: TrackTask
     exemplar: ExemplarTask
     embed: EmbedTask
-    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ...) -> None: ...
+    train: _pipeline_pb2.TrainTask
+    prelabel: _pipeline_pb2.PrelabelTask
+    preview: _pipeline_pb2.PreviewTask
+    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ..., train: _Optional[_Union[_pipeline_pb2.TrainTask, _Mapping]] = ..., prelabel: _Optional[_Union[_pipeline_pb2.PrelabelTask, _Mapping]] = ..., preview: _Optional[_Union[_pipeline_pb2.PreviewTask, _Mapping]] = ...) -> None: ...
 
 class TaskFrame(_message.Message):
     __slots__ = ("id", "url", "embedding_url")

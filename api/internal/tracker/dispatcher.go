@@ -16,6 +16,9 @@ type priority int
 const (
 	interactive priority = iota
 	background
+	// training is handed out only when nothing else waits, and a worker
+	// training checks in between batches to run whatever arrives meanwhile.
+	training
 	numPriorities
 )
 
@@ -38,6 +41,8 @@ type task struct {
 	done     chan error
 	// found gets an exemplar task's boxes before done is signalled.
 	found chan exemplarResult
+	// idle overrides idleTimeout when set.
+	idle time.Duration
 }
 
 type exemplarResult struct {
@@ -129,9 +134,15 @@ func (d *Dispatcher) push(t *task) {
 
 // take pops the oldest task of the highest priority, or nil.
 func (d *Dispatcher) take() *task {
+	return d.takeBefore(numPriorities)
+}
+
+// takeBefore pops the oldest task of the highest priority that comes before
+// limit, or nil.
+func (d *Dispatcher) takeBefore(limit priority) *task {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	for p := range d.pending {
+	for p := range limit {
 		if q := d.pending[p]; len(q) > 0 {
 			t := q[0]
 			d.pending[p] = q[1:]
@@ -276,6 +287,12 @@ func (t *task) info() TaskInfo {
 		info.Kind, info.Frames = "exemplar", 1
 	case *krillv1.NextTaskResponse_Embed:
 		info.Kind, info.Frames = "embed", len(m.Embed.GetFrames())
+	case *krillv1.NextTaskResponse_Train:
+		info.Kind = "train"
+	case *krillv1.NextTaskResponse_Prelabel:
+		info.Kind, info.Frames = "prelabel", len(m.Prelabel.GetFrames())
+	case *krillv1.NextTaskResponse_Preview:
+		info.Kind, info.Frames = "preview", 1
 	}
 	return info
 }

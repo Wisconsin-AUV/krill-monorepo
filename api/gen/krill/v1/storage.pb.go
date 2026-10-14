@@ -37,6 +37,8 @@ const (
 	ObjectKind_OBJECT_KIND_UPLOAD ObjectKind = 7
 	// Keys Krill doesn't write. Never orphans.
 	ObjectKind_OBJECT_KIND_OTHER ObjectKind = 8
+	// Training datasets and weights.
+	ObjectKind_OBJECT_KIND_MODEL ObjectKind = 9
 )
 
 // Enum value maps for ObjectKind.
@@ -51,6 +53,7 @@ var (
 		6: "OBJECT_KIND_BACKUP",
 		7: "OBJECT_KIND_UPLOAD",
 		8: "OBJECT_KIND_OTHER",
+		9: "OBJECT_KIND_MODEL",
 	}
 	ObjectKind_value = map[string]int32{
 		"OBJECT_KIND_UNSPECIFIED":   0,
@@ -62,6 +65,7 @@ var (
 		"OBJECT_KIND_BACKUP":        6,
 		"OBJECT_KIND_UPLOAD":        7,
 		"OBJECT_KIND_OTHER":         8,
+		"OBJECT_KIND_MODEL":         9,
 	}
 )
 
@@ -950,7 +954,7 @@ const file_krill_v1_storage_proto_rawDesc = "" +
 	"\x15CleanUpStorageRequest\x12\x17\n" +
 	"\ascan_id\x18\x01 \x01(\x03R\x06scanId\"C\n" +
 	"\x16CleanUpStorageResponse\x12)\n" +
-	"\x04scan\x18\x01 \x01(\v2\x15.krill.v1.StorageScanR\x04scan*\xf1\x01\n" +
+	"\x04scan\x18\x01 \x01(\v2\x15.krill.v1.StorageScanR\x04scan*\x88\x02\n" +
 	"\n" +
 	"ObjectKind\x12\x1b\n" +
 	"\x17OBJECT_KIND_UNSPECIFIED\x10\x00\x12\x16\n" +
@@ -961,7 +965,8 @@ const file_krill_v1_storage_proto_rawDesc = "" +
 	"\x19OBJECT_KIND_LABEL_EXAMPLE\x10\x05\x12\x16\n" +
 	"\x12OBJECT_KIND_BACKUP\x10\x06\x12\x16\n" +
 	"\x12OBJECT_KIND_UPLOAD\x10\a\x12\x15\n" +
-	"\x11OBJECT_KIND_OTHER\x10\b*\x82\x01\n" +
+	"\x11OBJECT_KIND_OTHER\x10\b\x12\x15\n" +
+	"\x11OBJECT_KIND_MODEL\x10\t*\x82\x01\n" +
 	"\tJobStatus\x12\x1a\n" +
 	"\x16JOB_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11JOB_STATUS_QUEUED\x10\x01\x12\x16\n" +

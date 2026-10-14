@@ -151,6 +151,13 @@ func TestScanAndCleanUp(t *testing.T) {
 	example := storage.LabelExamplesPrefix(labelType) + "kept"
 	exec(t, ctx, tx, `INSERT INTO label_examples (label_type_id, object_key) VALUES ($1, $2) RETURNING id`, labelType, example)
 	abandoned := storage.LabelExamplesPrefix(labelType) + "abandoned"
+	run := func(status string) int64 {
+		return exec(t, ctx, tx, `INSERT INTO training_runs (status, trigger, config) VALUES ($1, 'manual', '{}') RETURNING id`, status)
+	}
+	trained := run("succeeded")
+	weightless := run("succeeded")
+	goneRun := run("failed")
+	exec(t, ctx, tx, `DELETE FROM training_runs WHERE id = $1 RETURNING id`, goneRun)
 
 	store := &fakeStore{objects: map[string]storage.Object{}}
 	store.put(storage.VideoSourceKey(ready), 1000, old)
@@ -169,6 +176,10 @@ func TestScanAndCleanUp(t *testing.T) {
 	store.put(abandoned, 6, old)
 	store.put(storage.BackupKey("stray.dump"), 700, old)
 	store.put("misc/readme.txt", 1, old)
+	store.put(storage.TrainingWeightsKey(trained), 800, old)
+	store.put(storage.TrainingDatasetKey(trained), 900, old)
+	store.put(storage.TrainingDatasetKey(weightless), 900, old)
+	store.put(storage.TrainingWeightsKey(goneRun), 1100, old)
 	store.uploads = []storage.Upload{
 		{Key: storage.VideoSourceKey(ready), ID: "stale", Size: 50, Initiated: now.Add(-30 * time.Hour)},
 		{Key: storage.VideoSourceKey(uploading), ID: "live", Size: 60, Initiated: old},
@@ -192,6 +203,7 @@ func TestScanAndCleanUp(t *testing.T) {
 		storage.VideoSourceKey(ready) + "#stale",
 		storage.FrameKey(deleted, 0),
 		storage.VideoSourceKey(deleted),
+		storage.TrainingWeightsKey(goneRun),
 	}
 	slices.Sort(want)
 	if got := orphanKeys(r); !slices.Equal(got, want) {
@@ -204,7 +216,7 @@ func TestScanAndCleanUp(t *testing.T) {
 	// Only the processing and recent videos lack a source, since the upload
 	// isn't done for the uploading one. The clip's second frame has no
 	// embedding.
-	for kind, n := range map[Kind]int64{KindSource: 2, KindEmbedding: 1, KindFrame: 0, KindExport: 0, KindLabelExample: 0} {
+	for kind, n := range map[Kind]int64{KindSource: 2, KindEmbedding: 1, KindFrame: 0, KindExport: 0, KindLabelExample: 0, KindModel: 1} {
 		if d := r.categories[kind].Missing - before.categories[kind].Missing; d != n {
 			t.Errorf("%s missing went up by %d, want %d", kind, d, n)
 		}
@@ -230,7 +242,7 @@ func TestScanAndCleanUp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.skipped != 2 || res.deleted != 6 || res.bytes != 2000+20+600+100+700+50 {
+	if res.skipped != 2 || res.deleted != 7 || res.bytes != 2000+20+600+100+700+50+1100 {
 		t.Errorf("cleanup = %+v", res)
 	}
 	for _, k := range []string{abandoned, storage.FrameKey(ready, 2), storage.FrameKey(processing, 0), example, storage.VideoSourceKey(ready)} {

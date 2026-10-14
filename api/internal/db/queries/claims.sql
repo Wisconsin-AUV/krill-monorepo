@@ -48,7 +48,8 @@ ORDER BY v.created_at DESC, v.id DESC, c.idx;
 -- name: NextClip :one
 -- Started clips that were abandoned come first so they get finished. After
 -- that, clips come from the video with the fewest clips worked on, so labels
--- spread across as much footage as possible.
+-- spread across as much footage as possible, and among those the clip with
+-- the least certain pre-label goes first.
 WITH worked AS (
     SELECT c.video_id, count(*) AS clips
     FROM clips c
@@ -72,6 +73,12 @@ WHERE v.status = 'ready'
 ORDER BY
     EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled') DESC,
     coalesce(w.clips, 0),
+    (
+        SELECT min(a.confidence)
+        FROM annotations a
+        JOIN frames f ON f.id = a.frame_id
+        WHERE f.clip_id = c.id AND f.status = 'unlabeled' AND a.status = 'proposed'
+    ) NULLS LAST,
     random()
 LIMIT 1
 FOR UPDATE OF c SKIP LOCKED;

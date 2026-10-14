@@ -62,6 +62,13 @@ const (
 	BackupCreate        = "backup.create"
 	BackupDownload      = "backup.download"
 	BackupDelete        = "backup.delete"
+	VideoDelete         = "video.delete"
+	ModelTrain          = "model.train"
+	ModelCancel         = "model.cancel"
+	ModelPin            = "model.pin"
+	PrelabelStart       = "prelabel.start"
+	PrelabelCancel      = "prelabel.cancel"
+	PrelabelerSave      = "prelabeler.update"
 )
 
 const (
@@ -81,6 +88,9 @@ const (
 	TargetWorkerToken   = "worker_token"
 	TargetScan          = "storage_scan"
 	TargetBackup        = "backup"
+	TargetModel         = "training_run"
+	TargetPrelabel      = "prelabel_run"
+	TargetPlugin        = "prelabeler"
 )
 
 type Entry struct {

@@ -12,6 +12,8 @@ service ExportService {
   rpc CreateExport(CreateExportRequest) returns (CreateExportResponse) {}
   rpc ListExports(ListExportsRequest) returns (ListExportsResponse) {}
   rpc DeleteExport(DeleteExportRequest) returns (DeleteExportResponse) {}
+  // GetExportDefaults returns the options set in the admin panel.
+  rpc GetExportDefaults(GetExportDefaultsRequest) returns (GetExportDefaultsResponse) {}
 }
 
 enum ExportStatus {
@@ -123,3 +125,9 @@ message DeleteExportRequest {
 }
 
 message DeleteExportResponse {}
+
+message GetExportDefaultsRequest {}
+
+message GetExportDefaultsResponse {
+  ExportOptions options = 1;
+}
