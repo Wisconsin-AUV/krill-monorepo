@@ -1,7 +1,7 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { FlagIcon } from '@heroicons/react/24/outline'
-import { useSearchParams } from 'react-router'
+import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { SegmentedTabs } from '@/components/SegmentedTabs'
 import { Thumbnail } from '@/components/Thumbnail'
@@ -23,15 +23,39 @@ import { errorMessage } from '@/lib/errors'
 import { formatRelative } from '@/lib/format'
 import { reasonFromKey, reasonTabs, reasons } from '@/lib/reviews'
 
+const sections = [
+  { key: 'flagged', label: 'Flagged', to: '/review' },
+  { key: 'gold', label: 'Gold', to: '/review/gold' },
+] as const
+
 export function ReviewPage() {
-  const [params, setParams] = useSearchParams()
-  const reason = reasonFromKey(params.get('reason'))
-  const { data, isPending, error } = useQuery(ReviewService.method.listReviews, { reason })
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const section = pathname.startsWith('/review/gold') ? 'gold' : 'flagged'
 
   return (
     <PageContentBlock title="Review · Krill">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <Heading>Review</Heading>
+        <SegmentedTabs
+          options={sections}
+          value={section}
+          onChange={(key) => navigate(sections.find((s) => s.key === key)?.to ?? '/review')}
+        />
+      </div>
+      <Outlet />
+    </PageContentBlock>
+  )
+}
+
+export function FlaggedPage() {
+  const [params, setParams] = useSearchParams()
+  const reason = reasonFromKey(params.get('reason'))
+  const { data, isPending, error } = useQuery(ReviewService.method.listReviews, { reason })
+
+  return (
+    <>
+      <div className="mt-8">
         <SegmentedTabs
           options={reasonTabs}
           value={reasons[reason].key}
@@ -48,7 +72,7 @@ export function ReviewPage() {
           Could not load reviews: {errorMessage(error)}
         </Text>
       ) : data.reviews.length === 0 ? (
-        <div className="mt-8">
+        <div className="mt-6">
           <EmptyState
             icon={FlagIcon}
             title="Nothing to review"
@@ -56,7 +80,7 @@ export function ReviewPage() {
           />
         </div>
       ) : (
-        <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
+        <Table className="mt-6 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
           <TableHead>
             <TableRow>
               <TableHeader>Frame</TableHeader>
@@ -103,6 +127,6 @@ export function ReviewPage() {
           </TableBody>
         </Table>
       )}
-    </PageContentBlock>
+    </>
   )
 }

@@ -8,7 +8,6 @@ import {
   FlagIcon,
   HomeIcon,
   Squares2X2Icon,
-  StarIcon,
   TagIcon,
   TrophyIcon,
   UserCircleIcon,
@@ -99,13 +98,6 @@ const navItems = [
     icon: ArrowDownTrayIcon,
     permission: Permission.MANAGE_EXPORTS,
     match: (p: string) => p.startsWith('/exports'),
-  },
-  {
-    label: 'Gold',
-    to: '/gold',
-    icon: StarIcon,
-    permission: Permission.REVIEW_LABELS,
-    match: (p: string) => p.startsWith('/gold'),
   },
   {
     label: 'Review',
