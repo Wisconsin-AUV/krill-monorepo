@@ -5,6 +5,7 @@ import urllib.request
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import nullcontext
 from typing import Protocol, TypeVar
 
 import cv2
@@ -13,7 +14,9 @@ from krill.v1 import annotation_pb2, worker_pb2
 
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
+from krill_worker.heartbeat import Heartbeat
 from krill_worker.prelabelers import Frame
+from krill_worker.stats import accelerator, gpu_stats
 from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt, drop_cut_off
 
 log = logging.getLogger(__name__)
@@ -174,11 +177,27 @@ def run_embed(
     )
 
 
-def run_task(api: Api, tracker: Tracker, res: worker_pb2.NextTaskResponse) -> None:
+def run_task(
+    api: Api,
+    tracker: Tracker,
+    res: worker_pb2.NextTaskResponse,
+    heartbeat: Heartbeat | None = None,
+) -> None:
     kind = res.WhichOneof("task")
     if kind is None:
         return
     task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask = getattr(res, kind)
+    with heartbeat.working(task.id) if heartbeat else nullcontext():
+        _run_task(api, tracker, kind, res, task)
+
+
+def _run_task(
+    api: Api,
+    tracker: Tracker,
+    kind: str,
+    res: worker_pb2.NextTaskResponse,
+    task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask,
+) -> None:
     try:
         if kind == "track":
             run_track(api, tracker, res.track)
@@ -201,6 +220,8 @@ def main() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     log.info("krill-worker %s starting", __version__)
     # Imported here so everything else works without torch installed.
+    import torch
+
     from krill_worker.sam import SamTracker
 
     api = Api(
@@ -209,6 +230,8 @@ def main() -> None:
     tracker = SamTracker(os.environ.get("KRILL_SAM_MODEL", DEFAULT_MODEL))
     tracker.warm_up()
     log.info("loaded %s", tracker.model_id)
+    heartbeat = Heartbeat(api, tracker.model_id, accelerator(torch), lambda: gpu_stats(torch))
+    heartbeat.start()
 
     while True:
         try:
@@ -217,7 +240,7 @@ def main() -> None:
             log.warning("poll failed, retrying in %.0fs: %s", RETRY_DELAY, e)
             time.sleep(RETRY_DELAY)
             continue
-        run_task(api, tracker, res)
+        run_task(api, tracker, res, heartbeat)
 
 
 if __name__ == "__main__":
