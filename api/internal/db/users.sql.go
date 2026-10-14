@@ -12,6 +12,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const clearPassword = `-- name: ClearPassword :exec
+UPDATE users SET password_hash = NULL WHERE id = $1
+`
+
+func (q *Queries) ClearPassword(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, clearPassword, id)
+	return err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*)::int FROM users
 `
@@ -41,7 +50,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (name, username, email, password_hash, role, slack_user_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at
+RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 type CreateUserParams struct {
@@ -74,6 +83,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
@@ -131,8 +142,24 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID uuid.UUID) erro
 	return err
 }
 
+const emailInUse = `-- name: EmailInUse :one
+SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND id <> $2)
+`
+
+type EmailInUseParams struct {
+	Email string    `json:"email"`
+	ID    uuid.UUID `json:"id"`
+}
+
+func (q *Queries) EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, error) {
+	row := q.db.QueryRow(ctx, emailInUse, arg.Email, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const getSessionUser = `-- name: GetSessionUser :one
-SELECT u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at FROM sessions s
+SELECT u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at, u.email_verified_at, u.pending_email FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.disabled
 `
@@ -151,12 +178,14 @@ func (q *Queries) GetSessionUser(ctx context.Context, tokenHash []byte) (User, e
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE id = $1
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -173,12 +202,14 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE email = $1
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -195,12 +226,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const getUserByLogin = `-- name: GetUserByLogin :one
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE username = $1::text OR email = $1::text
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE username = $1::text OR email = $1::text
 `
 
 func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error) {
@@ -217,12 +250,14 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const getUserBySlackID = `-- name: GetUserBySlackID :one
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE slack_user_id = $1
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE slack_user_id = $1
 `
 
 func (q *Queries) GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text) (User, error) {
@@ -239,12 +274,14 @@ func (q *Queries) GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text)
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const linkSlack = `-- name: LinkSlack :one
-UPDATE users SET slack_user_id = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at
+UPDATE users SET slack_user_id = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 type LinkSlackParams struct {
@@ -266,12 +303,14 @@ func (q *Queries) LinkSlack(ctx context.Context, arg LinkSlackParams) (User, err
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users ORDER BY created_at, id
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users ORDER BY created_at, id
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -294,6 +333,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.Disabled,
 			&i.CreatedAt,
 			&i.LastLoginAt,
+			&i.EmailVerifiedAt,
+			&i.PendingEmail,
 		); err != nil {
 			return nil, err
 		}
@@ -314,8 +355,61 @@ func (q *Queries) LockUsers(ctx context.Context) error {
 	return err
 }
 
+const markEmailVerified = `-- name: MarkEmailVerified :one
+UPDATE users SET email_verified_at = coalesce(email_verified_at, now()) WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
+`
+
+func (q *Queries) MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, markEmailVerified, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.SlackUserID,
+		&i.Disabled,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
+	)
+	return i, err
+}
+
+const setPendingEmail = `-- name: SetPendingEmail :one
+UPDATE users SET pending_email = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
+`
+
+type SetPendingEmailParams struct {
+	ID           uuid.UUID   `json:"id"`
+	PendingEmail pgtype.Text `json:"pending_email"`
+}
+
+func (q *Queries) SetPendingEmail(ctx context.Context, arg SetPendingEmailParams) (User, error) {
+	row := q.db.QueryRow(ctx, setPendingEmail, arg.ID, arg.PendingEmail)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.SlackUserID,
+		&i.Disabled,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
+	)
+	return i, err
+}
+
 const setUserDisabled = `-- name: SetUserDisabled :one
-UPDATE users SET disabled = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at
+UPDATE users SET disabled = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 type SetUserDisabledParams struct {
@@ -337,6 +431,8 @@ func (q *Queries) SetUserDisabled(ctx context.Context, arg SetUserDisabledParams
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
@@ -359,7 +455,7 @@ func (q *Queries) SetUserPassword(ctx context.Context, arg SetUserPasswordParams
 }
 
 const setUserRole = `-- name: SetUserRole :one
-UPDATE users SET role = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at
+UPDATE users SET role = $2 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 type SetUserRoleParams struct {
@@ -381,6 +477,8 @@ func (q *Queries) SetUserRole(ctx context.Context, arg SetUserRoleParams) (User,
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
@@ -395,7 +493,11 @@ func (q *Queries) TouchLogin(ctx context.Context, id uuid.UUID) error {
 }
 
 const updateUserProfile = `-- name: UpdateUserProfile :one
-UPDATE users SET name = $2, username = $3, email = $4 WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at
+UPDATE users
+SET name = $2, username = $3, email = $4,
+    email_verified_at = CASE WHEN email = $4 THEN email_verified_at END
+WHERE id = $1
+RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 type UpdateUserProfileParams struct {
@@ -424,6 +526,8 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }
@@ -437,4 +541,33 @@ func (q *Queries) UsernameExists(ctx context.Context, username string) (bool, er
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const verifyUserEmail = `-- name: VerifyUserEmail :one
+UPDATE users SET email = $2, email_verified_at = now(), pending_email = NULL WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
+`
+
+type VerifyUserEmailParams struct {
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+}
+
+func (q *Queries) VerifyUserEmail(ctx context.Context, arg VerifyUserEmailParams) (User, error) {
+	row := q.db.QueryRow(ctx, verifyUserEmail, arg.ID, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.SlackUserID,
+		&i.Disabled,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
+	)
+	return i, err
 }

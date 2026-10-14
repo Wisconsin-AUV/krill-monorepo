@@ -20,14 +20,22 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 
 // Interceptor loads the caller's session and enforces the role policy.
 type Interceptor struct {
-	lookup      SessionLookup
-	workerToken string
+	lookup        SessionLookup
+	workerToken   string
+	verifiedEmail bool
 }
 
 // NewInterceptor returns an interceptor that also accepts workerToken as a
 // bearer token on worker procedures. An empty token turns them off.
 func NewInterceptor(lookup SessionLookup, workerToken string) *Interceptor {
 	return &Interceptor{lookup: lookup, workerToken: workerToken}
+}
+
+// RequireVerifiedEmail limits accounts with an unverified email to the
+// procedures that verify it.
+func (i *Interceptor) RequireVerifiedEmail(required bool) *Interceptor {
+	i.verifiedEmail = required
+	return i
 }
 
 var _ connect.Interceptor = (*Interceptor)(nil)
@@ -83,6 +91,12 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	s, ok := SessionFrom(ctx)
 	if !ok {
 		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("sign in to continue"))
+	}
+	if need == unverified {
+		return ctx, nil
+	}
+	if i.verifiedEmail && !s.User.EmailVerifiedAt.Valid {
+		return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("verify your email to continue"))
 	}
 	if need != signedIn && !Can(ParseRole(s.User.Role), need) {
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have permission to do this (%s)", describe(need)))

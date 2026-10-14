@@ -24,6 +24,7 @@ import (
 	"github.com/wauv/krill/api/internal/clip"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/email"
 	"github.com/wauv/krill/api/internal/export"
 	"github.com/wauv/krill/api/internal/gold"
 	"github.com/wauv/krill/api/internal/health"
@@ -127,19 +128,33 @@ func run() error {
 
 	goldRouting := review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts}
 	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
+	var mailer email.Sender
+	switch {
+	case cfg.ResendAPIKey != "":
+		mailer = email.NewResend(cfg.ResendAPIKey, cfg.EmailFrom)
+	case cfg.LogEmails:
+		mailer = email.Log{}
+	}
+	signupDomain := cfg.SignupEmailDomain
+	if cfg.EmailVerification == config.VerifyOff {
+		signupDomain = ""
+	}
+	requireVerified := cfg.EmailVerification == config.VerifyCode
 	rpcOpts := connect.WithInterceptors(
 		rpc.ErrorInterceptor{},
-		auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken),
+		auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken).RequireVerifiedEmail(requireVerified),
 	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
 	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
-		Cookies:           cookies,
-		AllowSignup:       cfg.AllowSignup,
-		SignupEmailDomain: cfg.SignupEmailDomain,
-		SlackEnabled:      cfg.SlackClientID != "",
-		TeamName:          cfg.TeamName,
-		ClientIPHeader:    cfg.ClientIPHeader,
+		Cookies:              cookies,
+		AllowSignup:          cfg.AllowSignup,
+		SignupEmailDomain:    signupDomain,
+		RequireVerifiedEmail: requireVerified,
+		Mailer:               mailer,
+		SlackEnabled:         cfg.SlackClientID != "",
+		TeamName:             cfg.TeamName,
+		ClientIPHeader:       cfg.ClientIPHeader,
 	}), rpcOpts))
 	if cfg.SlackClientID != "" {
 		slack := auth.NewSlack(pool, auth.SlackConfig{

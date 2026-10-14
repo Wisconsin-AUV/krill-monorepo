@@ -3,9 +3,22 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
+)
+
+// EmailVerification is how much sign-up trusts the email an account gives.
+type EmailVerification string
+
+const (
+	// VerifyOff accepts any email.
+	VerifyOff EmailVerification = "off"
+	// VerifyDomain requires an email at SignupEmailDomain.
+	VerifyDomain EmailVerification = "domain"
+	// VerifyCode also requires entering a code sent to the email.
+	VerifyCode EmailVerification = "verify"
 )
 
 type Config struct {
@@ -29,7 +42,13 @@ type Config struct {
 	// SignupEmailDomain limits password sign-up to emails at this domain.
 	// Empty allows any email.
 	SignupEmailDomain string
-	TeamName          string
+	EmailVerification EmailVerification
+	// Emails go through Resend when ResendAPIKey is set. Without it, a local
+	// instance logs them instead, and anything else sends none.
+	ResendAPIKey string
+	EmailFrom    string
+	LogEmails    bool
+	TeamName     string
 	// Slack sign-in is enabled when SlackClientID is set.
 	SlackClientID     string
 	SlackClientSecret string
@@ -65,6 +84,9 @@ func Load() (Config, error) {
 		SlackTeamID:       os.Getenv("KRILL_SLACK_TEAM_ID"),
 		WorkerToken:       os.Getenv("KRILL_WORKER_TOKEN"),
 		SignupEmailDomain: strings.ToLower(strings.TrimSpace(getenv("KRILL_SIGNUP_EMAIL_DOMAIN", "wisc.edu"))),
+		EmailVerification: EmailVerification(strings.ToLower(strings.TrimSpace(getenv("KRILL_EMAIL_VERIFICATION", "domain")))),
+		ResendAPIKey:      strings.TrimSpace(os.Getenv("KRILL_RESEND_API_KEY")),
+		EmailFrom:         strings.TrimSpace(os.Getenv("KRILL_EMAIL_FROM")),
 		ClientIPHeader:    strings.TrimSpace(os.Getenv("KRILL_CLIENT_IP_HEADER")),
 	}
 	if cfg.TeamName = strings.TrimSpace(os.Getenv("KRILL_TEAM_NAME")); cfg.TeamName == "" {
@@ -99,10 +121,39 @@ func Load() (Config, error) {
 	if cfg.SlackClientID != "" && (cfg.SlackClientSecret == "" || cfg.SlackTeamID == "") {
 		return Config{}, errors.New("KRILL_SLACK_CLIENT_SECRET and KRILL_SLACK_TEAM_ID are required with KRILL_SLACK_CLIENT_ID")
 	}
+	switch cfg.EmailVerification {
+	case VerifyOff, VerifyDomain, VerifyCode:
+	default:
+		return Config{}, errors.New("KRILL_EMAIL_VERIFICATION must be off, domain, or verify")
+	}
+	if cfg.ResendAPIKey != "" && cfg.EmailFrom == "" {
+		return Config{}, errors.New("KRILL_EMAIL_FROM is required with KRILL_RESEND_API_KEY")
+	}
+	cfg.LogEmails = cfg.ResendAPIKey == "" && isLocal(cfg.PublicURL)
+	if cfg.EmailVerification == VerifyCode && !cfg.CanEmail() {
+		return Config{}, errors.New("KRILL_RESEND_API_KEY is required when KRILL_EMAIL_VERIFICATION is verify")
+	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("KRILL_DATABASE_URL is required")
 	}
 	return cfg, nil
+}
+
+// CanEmail reports whether the API can send email, for real or to its log.
+func (c Config) CanEmail() bool {
+	return c.ResendAPIKey != "" || c.LogEmails
+}
+
+func isLocal(publicURL string) bool {
+	u, err := url.Parse(publicURL)
+	if err != nil {
+		return false
+	}
+	switch u.Hostname() {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	}
+	return false
 }
 
 func getenv(key, fallback string) string {

@@ -266,6 +266,9 @@ type User struct {
 	LastLoginAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
 	// Granted by the role.
 	Permissions   []Permission `protobuf:"varint,11,rep,packed,name=permissions,proto3,enum=krill.v1.Permission" json:"permissions,omitempty"`
+	EmailVerified bool         `protobuf:"varint,12,opt,name=email_verified,json=emailVerified,proto3" json:"email_verified,omitempty"`
+	// A new email waiting for its verification code. Empty when there is none.
+	PendingEmail  string `protobuf:"bytes,13,opt,name=pending_email,json=pendingEmail,proto3" json:"pending_email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -375,6 +378,20 @@ func (x *User) GetPermissions() []Permission {
 		return x.Permissions
 	}
 	return nil
+}
+
+func (x *User) GetEmailVerified() bool {
+	if x != nil {
+		return x.EmailVerified
+	}
+	return false
+}
+
+func (x *User) GetPendingEmail() string {
+	if x != nil {
+		return x.PendingEmail
+	}
+	return ""
 }
 
 type ListUsersRequest struct {
@@ -743,7 +760,7 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"permission\x18\x01 \x01(\x0e2\x14.krill.v1.PermissionR\n" +
 	"permission\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\"\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x0e.krill.v1.RoleR\x04role\"\x95\x03\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x0e.krill.v1.RoleR\x04role\"\xe1\x03\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -757,7 +774,9 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
 	"\rlast_login_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\x126\n" +
-	"\vpermissions\x18\v \x03(\x0e2\x14.krill.v1.PermissionR\vpermissions\"\x12\n" +
+	"\vpermissions\x18\v \x03(\x0e2\x14.krill.v1.PermissionR\vpermissions\x12%\n" +
+	"\x0eemail_verified\x18\f \x01(\bR\remailVerified\x12#\n" +
+	"\rpending_email\x18\r \x01(\tR\fpendingEmail\"\x12\n" +
 	"\x10ListUsersRequest\"9\n" +
 	"\x11ListUsersResponse\x12$\n" +
 	"\x05users\x18\x01 \x03(\v2\x0e.krill.v1.UserR\x05users\"\x83\x01\n" +

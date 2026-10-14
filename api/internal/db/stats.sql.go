@@ -50,7 +50,7 @@ func (q *Queries) DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, 
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at FROM users WHERE username = $1
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -67,6 +67,8 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Disabled,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
 	)
 	return i, err
 }

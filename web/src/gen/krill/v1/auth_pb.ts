@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/auth.proto.
  */
 export const file_krill_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCLKAQoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8iLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlMsMDCgtBdXRoU2VydmljZRJJCgpHZXRTZXNzaW9uEhsua3JpbGwudjEuR2V0U2Vzc2lvblJlcXVlc3QaHC5rcmlsbC52MS5HZXRTZXNzaW9uUmVzcG9uc2UiABI6CgVMb2dpbhIWLmtyaWxsLnYxLkxvZ2luUmVxdWVzdBoXLmtyaWxsLnYxLkxvZ2luUmVzcG9uc2UiABJDCghSZWdpc3RlchIZLmtyaWxsLnYxLlJlZ2lzdGVyUmVxdWVzdBoaLmtyaWxsLnYxLlJlZ2lzdGVyUmVzcG9uc2UiABI9CgZMb2dvdXQSFy5rcmlsbC52MS5Mb2dvdXRSZXF1ZXN0Ghgua3JpbGwudjEuTG9nb3V0UmVzcG9uc2UiABJSCg1VcGRhdGVQcm9maWxlEh4ua3JpbGwudjEuVXBkYXRlUHJvZmlsZVJlcXVlc3QaHy5rcmlsbC52MS5VcGRhdGVQcm9maWxlUmVzcG9uc2UiABJVCg5DaGFuZ2VQYXNzd29yZBIfLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVxdWVzdBogLmtyaWxsLnYxLkNoYW5nZVBhc3N3b3JkUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglBdXRoUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_krill_v1_user]);
+  fileDesc("ChNrcmlsbC92MS9hdXRoLnByb3RvEghrcmlsbC52MSITChFHZXRTZXNzaW9uUmVxdWVzdCKPAgoSR2V0U2Vzc2lvblJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhUKDXNsYWNrX2VuYWJsZWQYAiABKAgSFgoOc2lnbnVwX2VuYWJsZWQYAyABKAgSEQoJdGVhbV9uYW1lGAQgASgJEjEKD2FsbF9wZXJtaXNzaW9ucxgFIAMoCzIYLmtyaWxsLnYxLlBlcm1pc3Npb25JbmZvEiEKBXJvbGVzGAYgAygLMhIua3JpbGwudjEuUm9sZUluZm8SIwobZW1haWxfdmVyaWZpY2F0aW9uX3JlcXVpcmVkGAcgASgIEh4KFnBhc3N3b3JkX3Jlc2V0X2VuYWJsZWQYCCABKAgiLwoMTG9naW5SZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIi0KDUxvZ2luUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiUgoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkSEAoIcGFzc3dvcmQYBCABKAkiMAoQUmVnaXN0ZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIkUKFFVwZGF0ZVByb2ZpbGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDQoFZW1haWwYAyABKAkiNQoVVXBkYXRlUHJvZmlsZVJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIkcKFUNoYW5nZVBhc3N3b3JkUmVxdWVzdBIYChBjdXJyZW50X3Bhc3N3b3JkGAEgASgJEhQKDG5ld19wYXNzd29yZBgCIAEoCSIYChZDaGFuZ2VQYXNzd29yZFJlc3BvbnNlIi0KG1NlbmRWZXJpZmljYXRpb25Db2RlUmVxdWVzdBIOCgZyZXNlbmQYASABKAgiHgocU2VuZFZlcmlmaWNhdGlvbkNvZGVSZXNwb25zZSIiChJWZXJpZnlFbWFpbFJlcXVlc3QSDAoEY29kZRgBIAEoCSIzChNWZXJpZnlFbWFpbFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiwKG1JlcXVlc3RQYXNzd29yZFJlc2V0UmVxdWVzdBINCgVsb2dpbhgBIAEoCSIeChxSZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIkkKFFJlc2V0UGFzc3dvcmRSZXF1ZXN0Eg0KBWxvZ2luGAEgASgJEgwKBGNvZGUYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIjUKFVJlc2V0UGFzc3dvcmRSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlcjK3BgoLQXV0aFNlcnZpY2USSQoKR2V0U2Vzc2lvbhIbLmtyaWxsLnYxLkdldFNlc3Npb25SZXF1ZXN0Ghwua3JpbGwudjEuR2V0U2Vzc2lvblJlc3BvbnNlIgASOgoFTG9naW4SFi5rcmlsbC52MS5Mb2dpblJlcXVlc3QaFy5rcmlsbC52MS5Mb2dpblJlc3BvbnNlIgASQwoIUmVnaXN0ZXISGS5rcmlsbC52MS5SZWdpc3RlclJlcXVlc3QaGi5rcmlsbC52MS5SZWdpc3RlclJlc3BvbnNlIgASPQoGTG9nb3V0Ehcua3JpbGwudjEuTG9nb3V0UmVxdWVzdBoYLmtyaWxsLnYxLkxvZ291dFJlc3BvbnNlIgASUgoNVXBkYXRlUHJvZmlsZRIeLmtyaWxsLnYxLlVwZGF0ZVByb2ZpbGVSZXF1ZXN0Gh8ua3JpbGwudjEuVXBkYXRlUHJvZmlsZVJlc3BvbnNlIgASVQoOQ2hhbmdlUGFzc3dvcmQSHy5rcmlsbC52MS5DaGFuZ2VQYXNzd29yZFJlcXVlc3QaIC5rcmlsbC52MS5DaGFuZ2VQYXNzd29yZFJlc3BvbnNlIgASZwoUU2VuZFZlcmlmaWNhdGlvbkNvZGUSJS5rcmlsbC52MS5TZW5kVmVyaWZpY2F0aW9uQ29kZVJlcXVlc3QaJi5rcmlsbC52MS5TZW5kVmVyaWZpY2F0aW9uQ29kZVJlc3BvbnNlIgASTAoLVmVyaWZ5RW1haWwSHC5rcmlsbC52MS5WZXJpZnlFbWFpbFJlcXVlc3QaHS5rcmlsbC52MS5WZXJpZnlFbWFpbFJlc3BvbnNlIgASZwoUUmVxdWVzdFBhc3N3b3JkUmVzZXQSJS5rcmlsbC52MS5SZXF1ZXN0UGFzc3dvcmRSZXNldFJlcXVlc3QaJi5rcmlsbC52MS5SZXF1ZXN0UGFzc3dvcmRSZXNldFJlc3BvbnNlIgASUgoNUmVzZXRQYXNzd29yZBIeLmtyaWxsLnYxLlJlc2V0UGFzc3dvcmRSZXF1ZXN0Gh8ua3JpbGwudjEuUmVzZXRQYXNzd29yZFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJQXV0aFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_user]);
 
 /**
  * @generated from message krill.v1.GetSessionRequest
@@ -66,6 +66,18 @@ export type GetSessionResponse = Message<"krill.v1.GetSessionResponse"> & {
    * @generated from field: repeated krill.v1.RoleInfo roles = 6;
    */
   roles: RoleInfo[];
+
+  /**
+   * Accounts must verify their email before using the app.
+   *
+   * @generated from field: bool email_verification_required = 7;
+   */
+  emailVerificationRequired: boolean;
+
+  /**
+   * @generated from field: bool password_reset_enabled = 8;
+   */
+  passwordResetEnabled: boolean;
 };
 
 /**
@@ -271,6 +283,149 @@ export const ChangePasswordResponseSchema: GenMessage<ChangePasswordResponse> = 
   messageDesc(file_krill_v1_auth, 11);
 
 /**
+ * @generated from message krill.v1.SendVerificationCodeRequest
+ */
+export type SendVerificationCodeRequest = Message<"krill.v1.SendVerificationCodeRequest"> & {
+  /**
+   * Replace a code that is still valid. Otherwise one is only sent when
+   * there is no valid code.
+   *
+   * @generated from field: bool resend = 1;
+   */
+  resend: boolean;
+};
+
+/**
+ * Describes the message krill.v1.SendVerificationCodeRequest.
+ * Use `create(SendVerificationCodeRequestSchema)` to create a new message.
+ */
+export const SendVerificationCodeRequestSchema: GenMessage<SendVerificationCodeRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 12);
+
+/**
+ * @generated from message krill.v1.SendVerificationCodeResponse
+ */
+export type SendVerificationCodeResponse = Message<"krill.v1.SendVerificationCodeResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.SendVerificationCodeResponse.
+ * Use `create(SendVerificationCodeResponseSchema)` to create a new message.
+ */
+export const SendVerificationCodeResponseSchema: GenMessage<SendVerificationCodeResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 13);
+
+/**
+ * @generated from message krill.v1.VerifyEmailRequest
+ */
+export type VerifyEmailRequest = Message<"krill.v1.VerifyEmailRequest"> & {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code: string;
+};
+
+/**
+ * Describes the message krill.v1.VerifyEmailRequest.
+ * Use `create(VerifyEmailRequestSchema)` to create a new message.
+ */
+export const VerifyEmailRequestSchema: GenMessage<VerifyEmailRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 14);
+
+/**
+ * @generated from message krill.v1.VerifyEmailResponse
+ */
+export type VerifyEmailResponse = Message<"krill.v1.VerifyEmailResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message krill.v1.VerifyEmailResponse.
+ * Use `create(VerifyEmailResponseSchema)` to create a new message.
+ */
+export const VerifyEmailResponseSchema: GenMessage<VerifyEmailResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 15);
+
+/**
+ * @generated from message krill.v1.RequestPasswordResetRequest
+ */
+export type RequestPasswordResetRequest = Message<"krill.v1.RequestPasswordResetRequest"> & {
+  /**
+   * A username or an email.
+   *
+   * @generated from field: string login = 1;
+   */
+  login: string;
+};
+
+/**
+ * Describes the message krill.v1.RequestPasswordResetRequest.
+ * Use `create(RequestPasswordResetRequestSchema)` to create a new message.
+ */
+export const RequestPasswordResetRequestSchema: GenMessage<RequestPasswordResetRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 16);
+
+/**
+ * @generated from message krill.v1.RequestPasswordResetResponse
+ */
+export type RequestPasswordResetResponse = Message<"krill.v1.RequestPasswordResetResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.RequestPasswordResetResponse.
+ * Use `create(RequestPasswordResetResponseSchema)` to create a new message.
+ */
+export const RequestPasswordResetResponseSchema: GenMessage<RequestPasswordResetResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 17);
+
+/**
+ * @generated from message krill.v1.ResetPasswordRequest
+ */
+export type ResetPasswordRequest = Message<"krill.v1.ResetPasswordRequest"> & {
+  /**
+   * @generated from field: string login = 1;
+   */
+  login: string;
+
+  /**
+   * @generated from field: string code = 2;
+   */
+  code: string;
+
+  /**
+   * @generated from field: string new_password = 3;
+   */
+  newPassword: string;
+};
+
+/**
+ * Describes the message krill.v1.ResetPasswordRequest.
+ * Use `create(ResetPasswordRequestSchema)` to create a new message.
+ */
+export const ResetPasswordRequestSchema: GenMessage<ResetPasswordRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 18);
+
+/**
+ * @generated from message krill.v1.ResetPasswordResponse
+ */
+export type ResetPasswordResponse = Message<"krill.v1.ResetPasswordResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message krill.v1.ResetPasswordResponse.
+ * Use `create(ResetPasswordResponseSchema)` to create a new message.
+ */
+export const ResetPasswordResponseSchema: GenMessage<ResetPasswordResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_auth, 19);
+
+/**
  * AuthService signs users in with a session cookie. Slack sign-in is a
  * browser redirect to /auth/slack/login, not an RPC.
  *
@@ -333,6 +488,45 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof ChangePasswordRequestSchema;
     output: typeof ChangePasswordResponseSchema;
+  },
+  /**
+   * SendVerificationCode emails a code to the caller's pending email, or to
+   * their email while it is unverified.
+   *
+   * @generated from rpc krill.v1.AuthService.SendVerificationCode
+   */
+  sendVerificationCode: {
+    methodKind: "unary";
+    input: typeof SendVerificationCodeRequestSchema;
+    output: typeof SendVerificationCodeResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.AuthService.VerifyEmail
+   */
+  verifyEmail: {
+    methodKind: "unary";
+    input: typeof VerifyEmailRequestSchema;
+    output: typeof VerifyEmailResponseSchema;
+  },
+  /**
+   * RequestPasswordReset responds the same whether or not the account exists.
+   *
+   * @generated from rpc krill.v1.AuthService.RequestPasswordReset
+   */
+  requestPasswordReset: {
+    methodKind: "unary";
+    input: typeof RequestPasswordResetRequestSchema;
+    output: typeof RequestPasswordResetResponseSchema;
+  },
+  /**
+   * ResetPassword signs out every session and signs the caller in.
+   *
+   * @generated from rpc krill.v1.AuthService.ResetPassword
+   */
+  resetPassword: {
+    methodKind: "unary";
+    input: typeof ResetPasswordRequestSchema;
+    output: typeof ResetPasswordResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_auth, 0);

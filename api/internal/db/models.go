@@ -56,6 +56,16 @@ type Dataset struct {
 	FinishedAt pgtype.Timestamptz `json:"finished_at"`
 }
 
+type EmailCode struct {
+	UserID    uuid.UUID          `json:"user_id"`
+	Purpose   string             `json:"purpose"`
+	Email     string             `json:"email"`
+	CodeHash  []byte             `json:"code_hash"`
+	Attempts  int32              `json:"attempts"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
 type Frame struct {
 	ID       int64              `json:"id"`
 	VideoID  int64              `json:"video_id"`
@@ -134,16 +144,18 @@ type Track struct {
 }
 
 type User struct {
-	ID           uuid.UUID          `json:"id"`
-	Name         string             `json:"name"`
-	Username     string             `json:"username"`
-	Email        string             `json:"email"`
-	PasswordHash pgtype.Text        `json:"password_hash"`
-	Role         string             `json:"role"`
-	SlackUserID  pgtype.Text        `json:"slack_user_id"`
-	Disabled     bool               `json:"disabled"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	LastLoginAt  pgtype.Timestamptz `json:"last_login_at"`
+	ID              uuid.UUID          `json:"id"`
+	Name            string             `json:"name"`
+	Username        string             `json:"username"`
+	Email           string             `json:"email"`
+	PasswordHash    pgtype.Text        `json:"password_hash"`
+	Role            string             `json:"role"`
+	SlackUserID     pgtype.Text        `json:"slack_user_id"`
+	Disabled        bool               `json:"disabled"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	LastLoginAt     pgtype.Timestamptz `json:"last_login_at"`
+	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+	PendingEmail    pgtype.Text        `json:"pending_email"`
 }
 
 type Video struct {

@@ -28,6 +28,8 @@ The API image bundles the web app, so the full stack is served from `:8080`. Bro
 
 The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them on the Users page. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
 
+`KRILL_EMAIL_VERIFICATION` sets how sign-up checks emails: `off` accepts any, `domain` (the default) needs the sign-up domain, and `verify` also has people enter a code emailed to them. Codes are sent with [Resend](https://resend.com), so `verify` needs `KRILL_RESEND_API_KEY` and `KRILL_EMAIL_FROM` at a domain verified in Resend. A key also turns on password resets. On localhost without a key, emails are written to the API log instead. Edit the email templates in `emails/`, preview them with `just emails`, and rebuild them with `just gen`.
+
 Roles and what each can do are defined in [`api/internal/auth/access.go`](api/internal/auth/access.go).
 
 Create a Slack app with the redirect URL `$KRILL_PUBLIC_URL/auth/slack/callback` and the `openid`, `profile`, and `email` scopes, then set `KRILL_SLACK_CLIENT_ID`, `KRILL_SLACK_CLIENT_SECRET`, and `KRILL_SLACK_TEAM_ID`. Slack requires an HTTPS redirect URL.

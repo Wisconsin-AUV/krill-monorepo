@@ -27,6 +27,9 @@ func ToProto(u db.User) *krillv1.User {
 		CreatedAt:   timestamp(u.CreatedAt),
 		LastLoginAt: timestamp(u.LastLoginAt),
 		Permissions: Granted(ParseRole(u.Role)),
+
+		EmailVerified: u.EmailVerifiedAt.Valid,
+		PendingEmail:  u.PendingEmail.String,
 	}
 }
 

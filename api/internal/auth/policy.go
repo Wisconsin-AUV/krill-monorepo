@@ -7,10 +7,12 @@ import (
 
 const (
 	// public procedures need no session, signedIn ones need any account, and
-	// worker ones need the worker token.
-	public   krillv1.Permission = -1
-	worker   krillv1.Permission = -2
-	signedIn                    = krillv1.Permission_PERMISSION_UNSPECIFIED
+	// worker ones need the worker token. unverified ones also allow an account
+	// whose email isn't verified yet.
+	public     krillv1.Permission = -1
+	worker     krillv1.Permission = -2
+	unverified krillv1.Permission = -3
+	signedIn                      = krillv1.Permission_PERMISSION_UNSPECIFIED
 
 	label            = krillv1.Permission_PERMISSION_LABEL
 	manageVideos     = krillv1.Permission_PERMISSION_MANAGE_VIDEOS
@@ -29,8 +31,13 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AuthServiceLoginProcedure:          public,
 	krillv1connect.AuthServiceRegisterProcedure:       public,
 	krillv1connect.AuthServiceLogoutProcedure:         public,
-	krillv1connect.AuthServiceUpdateProfileProcedure:  signedIn,
 	krillv1connect.AuthServiceChangePasswordProcedure: signedIn,
+	// Fixing a mistyped email has to work before it is verified.
+	krillv1connect.AuthServiceUpdateProfileProcedure:        unverified,
+	krillv1connect.AuthServiceSendVerificationCodeProcedure: unverified,
+	krillv1connect.AuthServiceVerifyEmailProcedure:          unverified,
+	krillv1connect.AuthServiceRequestPasswordResetProcedure: public,
+	krillv1connect.AuthServiceResetPasswordProcedure:        public,
 
 	krillv1connect.VideoServiceListVideosProcedure:  label,
 	krillv1connect.VideoServiceGetVideoProcedure:    label,

@@ -18,6 +18,14 @@ service AuthService {
   rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}
   // ChangePassword signs out every other session.
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
+  // SendVerificationCode emails a code to the caller's pending email, or to
+  // their email while it is unverified.
+  rpc SendVerificationCode(SendVerificationCodeRequest) returns (SendVerificationCodeResponse) {}
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  // RequestPasswordReset responds the same whether or not the account exists.
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {}
+  // ResetPassword signs out every session and signs the caller in.
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
 }
 
 message GetSessionRequest {}
@@ -32,6 +40,9 @@ message GetSessionResponse {
   repeated PermissionInfo all_permissions = 5;
   // Every role, lowest first.
   repeated RoleInfo roles = 6;
+  // Accounts must verify their email before using the app.
+  bool email_verification_required = 7;
+  bool password_reset_enabled = 8;
 }
 
 message LoginRequest {
@@ -75,3 +86,36 @@ message ChangePasswordRequest {
 }
 
 message ChangePasswordResponse {}
+
+message SendVerificationCodeRequest {
+  // Replace a code that is still valid. Otherwise one is only sent when
+  // there is no valid code.
+  bool resend = 1;
+}
+
+message SendVerificationCodeResponse {}
+
+message VerifyEmailRequest {
+  string code = 1;
+}
+
+message VerifyEmailResponse {
+  User user = 1;
+}
+
+message RequestPasswordResetRequest {
+  // A username or an email.
+  string login = 1;
+}
+
+message RequestPasswordResetResponse {}
+
+message ResetPasswordRequest {
+  string login = 1;
+  string code = 2;
+  string new_password = 3;
+}
+
+message ResetPasswordResponse {
+  User user = 1;
+}

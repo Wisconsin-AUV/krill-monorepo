@@ -67,9 +67,12 @@ type GetSessionResponse struct {
 	// Every permission, for showing what each role can do.
 	AllPermissions []*PermissionInfo `protobuf:"bytes,5,rep,name=all_permissions,json=allPermissions,proto3" json:"all_permissions,omitempty"`
 	// Every role, lowest first.
-	Roles         []*RoleInfo `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Roles []*RoleInfo `protobuf:"bytes,6,rep,name=roles,proto3" json:"roles,omitempty"`
+	// Accounts must verify their email before using the app.
+	EmailVerificationRequired bool `protobuf:"varint,7,opt,name=email_verification_required,json=emailVerificationRequired,proto3" json:"email_verification_required,omitempty"`
+	PasswordResetEnabled      bool `protobuf:"varint,8,opt,name=password_reset_enabled,json=passwordResetEnabled,proto3" json:"password_reset_enabled,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *GetSessionResponse) Reset() {
@@ -142,6 +145,20 @@ func (x *GetSessionResponse) GetRoles() []*RoleInfo {
 		return x.Roles
 	}
 	return nil
+}
+
+func (x *GetSessionResponse) GetEmailVerificationRequired() bool {
+	if x != nil {
+		return x.EmailVerificationRequired
+	}
+	return false
+}
+
+func (x *GetSessionResponse) GetPasswordResetEnabled() bool {
+	if x != nil {
+		return x.PasswordResetEnabled
+	}
+	return false
 }
 
 type LoginRequest struct {
@@ -617,19 +634,376 @@ func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_auth_proto_rawDescGZIP(), []int{11}
 }
 
+type SendVerificationCodeRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Replace a code that is still valid. Otherwise one is only sent when
+	// there is no valid code.
+	Resend        bool `protobuf:"varint,1,opt,name=resend,proto3" json:"resend,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendVerificationCodeRequest) Reset() {
+	*x = SendVerificationCodeRequest{}
+	mi := &file_krill_v1_auth_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendVerificationCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendVerificationCodeRequest) ProtoMessage() {}
+
+func (x *SendVerificationCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendVerificationCodeRequest.ProtoReflect.Descriptor instead.
+func (*SendVerificationCodeRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SendVerificationCodeRequest) GetResend() bool {
+	if x != nil {
+		return x.Resend
+	}
+	return false
+}
+
+type SendVerificationCodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendVerificationCodeResponse) Reset() {
+	*x = SendVerificationCodeResponse{}
+	mi := &file_krill_v1_auth_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendVerificationCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendVerificationCodeResponse) ProtoMessage() {}
+
+func (x *SendVerificationCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendVerificationCodeResponse.ProtoReflect.Descriptor instead.
+func (*SendVerificationCodeResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{13}
+}
+
+type VerifyEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyEmailRequest) Reset() {
+	*x = VerifyEmailRequest{}
+	mi := &file_krill_v1_auth_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyEmailRequest) ProtoMessage() {}
+
+func (x *VerifyEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyEmailRequest.ProtoReflect.Descriptor instead.
+func (*VerifyEmailRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *VerifyEmailRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type VerifyEmailResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyEmailResponse) Reset() {
+	*x = VerifyEmailResponse{}
+	mi := &file_krill_v1_auth_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyEmailResponse) ProtoMessage() {}
+
+func (x *VerifyEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyEmailResponse.ProtoReflect.Descriptor instead.
+func (*VerifyEmailResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *VerifyEmailResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type RequestPasswordResetRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A username or an email.
+	Login         string `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestPasswordResetRequest) Reset() {
+	*x = RequestPasswordResetRequest{}
+	mi := &file_krill_v1_auth_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestPasswordResetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestPasswordResetRequest) ProtoMessage() {}
+
+func (x *RequestPasswordResetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestPasswordResetRequest.ProtoReflect.Descriptor instead.
+func (*RequestPasswordResetRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RequestPasswordResetRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+type RequestPasswordResetResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestPasswordResetResponse) Reset() {
+	*x = RequestPasswordResetResponse{}
+	mi := &file_krill_v1_auth_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestPasswordResetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestPasswordResetResponse) ProtoMessage() {}
+
+func (x *RequestPasswordResetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestPasswordResetResponse.ProtoReflect.Descriptor instead.
+func (*RequestPasswordResetResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{17}
+}
+
+type ResetPasswordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	NewPassword   string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetPasswordRequest) Reset() {
+	*x = ResetPasswordRequest{}
+	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetPasswordRequest) ProtoMessage() {}
+
+func (x *ResetPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetPasswordRequest.ProtoReflect.Descriptor instead.
+func (*ResetPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ResetPasswordRequest) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *ResetPasswordRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *ResetPasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ResetPasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetPasswordResponse) Reset() {
+	*x = ResetPasswordResponse{}
+	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetPasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetPasswordResponse) ProtoMessage() {}
+
+func (x *ResetPasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_auth_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetPasswordResponse.ProtoReflect.Descriptor instead.
+func (*ResetPasswordResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_auth_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ResetPasswordResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 var File_krill_v1_auth_proto protoreflect.FileDescriptor
 
 const file_krill_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x13krill/v1/auth.proto\x12\bkrill.v1\x1a\x13krill/v1/user.proto\"\x13\n" +
-	"\x11GetSessionRequest\"\x8e\x02\n" +
+	"\x11GetSessionRequest\"\x84\x03\n" +
 	"\x12GetSessionResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\x12#\n" +
 	"\rslack_enabled\x18\x02 \x01(\bR\fslackEnabled\x12%\n" +
 	"\x0esignup_enabled\x18\x03 \x01(\bR\rsignupEnabled\x12\x1b\n" +
 	"\tteam_name\x18\x04 \x01(\tR\bteamName\x12A\n" +
 	"\x0fall_permissions\x18\x05 \x03(\v2\x18.krill.v1.PermissionInfoR\x0eallPermissions\x12(\n" +
-	"\x05roles\x18\x06 \x03(\v2\x12.krill.v1.RoleInfoR\x05roles\"@\n" +
+	"\x05roles\x18\x06 \x03(\v2\x12.krill.v1.RoleInfoR\x05roles\x12>\n" +
+	"\x1bemail_verification_required\x18\a \x01(\bR\x19emailVerificationRequired\x124\n" +
+	"\x16password_reset_enabled\x18\b \x01(\bR\x14passwordResetEnabled\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"3\n" +
@@ -653,7 +1027,23 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\x15ChangePasswordRequest\x12)\n" +
 	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
 	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"\x18\n" +
-	"\x16ChangePasswordResponse2\xc3\x03\n" +
+	"\x16ChangePasswordResponse\"5\n" +
+	"\x1bSendVerificationCodeRequest\x12\x16\n" +
+	"\x06resend\x18\x01 \x01(\bR\x06resend\"\x1e\n" +
+	"\x1cSendVerificationCodeResponse\"(\n" +
+	"\x12VerifyEmailRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"9\n" +
+	"\x13VerifyEmailResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"3\n" +
+	"\x1bRequestPasswordResetRequest\x12\x14\n" +
+	"\x05login\x18\x01 \x01(\tR\x05login\"\x1e\n" +
+	"\x1cRequestPasswordResetResponse\"c\n" +
+	"\x14ResetPasswordRequest\x12\x14\n" +
+	"\x05login\x18\x01 \x01(\tR\x05login\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12!\n" +
+	"\fnew_password\x18\x03 \x01(\tR\vnewPassword\";\n" +
+	"\x15ResetPasswordResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user2\xb7\x06\n" +
 	"\vAuthService\x12I\n" +
 	"\n" +
 	"GetSession\x12\x1b.krill.v1.GetSessionRequest\x1a\x1c.krill.v1.GetSessionResponse\"\x00\x12:\n" +
@@ -661,7 +1051,11 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\bRegister\x12\x19.krill.v1.RegisterRequest\x1a\x1a.krill.v1.RegisterResponse\"\x00\x12=\n" +
 	"\x06Logout\x12\x17.krill.v1.LogoutRequest\x1a\x18.krill.v1.LogoutResponse\"\x00\x12R\n" +
 	"\rUpdateProfile\x12\x1e.krill.v1.UpdateProfileRequest\x1a\x1f.krill.v1.UpdateProfileResponse\"\x00\x12U\n" +
-	"\x0eChangePassword\x12\x1f.krill.v1.ChangePasswordRequest\x1a .krill.v1.ChangePasswordResponse\"\x00B\x8a\x01\n" +
+	"\x0eChangePassword\x12\x1f.krill.v1.ChangePasswordRequest\x1a .krill.v1.ChangePasswordResponse\"\x00\x12g\n" +
+	"\x14SendVerificationCode\x12%.krill.v1.SendVerificationCodeRequest\x1a&.krill.v1.SendVerificationCodeResponse\"\x00\x12L\n" +
+	"\vVerifyEmail\x12\x1c.krill.v1.VerifyEmailRequest\x1a\x1d.krill.v1.VerifyEmailResponse\"\x00\x12g\n" +
+	"\x14RequestPasswordReset\x12%.krill.v1.RequestPasswordResetRequest\x1a&.krill.v1.RequestPasswordResetResponse\"\x00\x12R\n" +
+	"\rResetPassword\x12\x1e.krill.v1.ResetPasswordRequest\x1a\x1f.krill.v1.ResetPasswordResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tAuthProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -676,48 +1070,66 @@ func file_krill_v1_auth_proto_rawDescGZIP() []byte {
 	return file_krill_v1_auth_proto_rawDescData
 }
 
-var file_krill_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_krill_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_krill_v1_auth_proto_goTypes = []any{
-	(*GetSessionRequest)(nil),      // 0: krill.v1.GetSessionRequest
-	(*GetSessionResponse)(nil),     // 1: krill.v1.GetSessionResponse
-	(*LoginRequest)(nil),           // 2: krill.v1.LoginRequest
-	(*LoginResponse)(nil),          // 3: krill.v1.LoginResponse
-	(*RegisterRequest)(nil),        // 4: krill.v1.RegisterRequest
-	(*RegisterResponse)(nil),       // 5: krill.v1.RegisterResponse
-	(*LogoutRequest)(nil),          // 6: krill.v1.LogoutRequest
-	(*LogoutResponse)(nil),         // 7: krill.v1.LogoutResponse
-	(*UpdateProfileRequest)(nil),   // 8: krill.v1.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil),  // 9: krill.v1.UpdateProfileResponse
-	(*ChangePasswordRequest)(nil),  // 10: krill.v1.ChangePasswordRequest
-	(*ChangePasswordResponse)(nil), // 11: krill.v1.ChangePasswordResponse
-	(*User)(nil),                   // 12: krill.v1.User
-	(*PermissionInfo)(nil),         // 13: krill.v1.PermissionInfo
-	(*RoleInfo)(nil),               // 14: krill.v1.RoleInfo
+	(*GetSessionRequest)(nil),            // 0: krill.v1.GetSessionRequest
+	(*GetSessionResponse)(nil),           // 1: krill.v1.GetSessionResponse
+	(*LoginRequest)(nil),                 // 2: krill.v1.LoginRequest
+	(*LoginResponse)(nil),                // 3: krill.v1.LoginResponse
+	(*RegisterRequest)(nil),              // 4: krill.v1.RegisterRequest
+	(*RegisterResponse)(nil),             // 5: krill.v1.RegisterResponse
+	(*LogoutRequest)(nil),                // 6: krill.v1.LogoutRequest
+	(*LogoutResponse)(nil),               // 7: krill.v1.LogoutResponse
+	(*UpdateProfileRequest)(nil),         // 8: krill.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),        // 9: krill.v1.UpdateProfileResponse
+	(*ChangePasswordRequest)(nil),        // 10: krill.v1.ChangePasswordRequest
+	(*ChangePasswordResponse)(nil),       // 11: krill.v1.ChangePasswordResponse
+	(*SendVerificationCodeRequest)(nil),  // 12: krill.v1.SendVerificationCodeRequest
+	(*SendVerificationCodeResponse)(nil), // 13: krill.v1.SendVerificationCodeResponse
+	(*VerifyEmailRequest)(nil),           // 14: krill.v1.VerifyEmailRequest
+	(*VerifyEmailResponse)(nil),          // 15: krill.v1.VerifyEmailResponse
+	(*RequestPasswordResetRequest)(nil),  // 16: krill.v1.RequestPasswordResetRequest
+	(*RequestPasswordResetResponse)(nil), // 17: krill.v1.RequestPasswordResetResponse
+	(*ResetPasswordRequest)(nil),         // 18: krill.v1.ResetPasswordRequest
+	(*ResetPasswordResponse)(nil),        // 19: krill.v1.ResetPasswordResponse
+	(*User)(nil),                         // 20: krill.v1.User
+	(*PermissionInfo)(nil),               // 21: krill.v1.PermissionInfo
+	(*RoleInfo)(nil),                     // 22: krill.v1.RoleInfo
 }
 var file_krill_v1_auth_proto_depIdxs = []int32{
-	12, // 0: krill.v1.GetSessionResponse.user:type_name -> krill.v1.User
-	13, // 1: krill.v1.GetSessionResponse.all_permissions:type_name -> krill.v1.PermissionInfo
-	14, // 2: krill.v1.GetSessionResponse.roles:type_name -> krill.v1.RoleInfo
-	12, // 3: krill.v1.LoginResponse.user:type_name -> krill.v1.User
-	12, // 4: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
-	12, // 5: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
-	0,  // 6: krill.v1.AuthService.GetSession:input_type -> krill.v1.GetSessionRequest
-	2,  // 7: krill.v1.AuthService.Login:input_type -> krill.v1.LoginRequest
-	4,  // 8: krill.v1.AuthService.Register:input_type -> krill.v1.RegisterRequest
-	6,  // 9: krill.v1.AuthService.Logout:input_type -> krill.v1.LogoutRequest
-	8,  // 10: krill.v1.AuthService.UpdateProfile:input_type -> krill.v1.UpdateProfileRequest
-	10, // 11: krill.v1.AuthService.ChangePassword:input_type -> krill.v1.ChangePasswordRequest
-	1,  // 12: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
-	3,  // 13: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
-	5,  // 14: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
-	7,  // 15: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
-	9,  // 16: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
-	11, // 17: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	20, // 0: krill.v1.GetSessionResponse.user:type_name -> krill.v1.User
+	21, // 1: krill.v1.GetSessionResponse.all_permissions:type_name -> krill.v1.PermissionInfo
+	22, // 2: krill.v1.GetSessionResponse.roles:type_name -> krill.v1.RoleInfo
+	20, // 3: krill.v1.LoginResponse.user:type_name -> krill.v1.User
+	20, // 4: krill.v1.RegisterResponse.user:type_name -> krill.v1.User
+	20, // 5: krill.v1.UpdateProfileResponse.user:type_name -> krill.v1.User
+	20, // 6: krill.v1.VerifyEmailResponse.user:type_name -> krill.v1.User
+	20, // 7: krill.v1.ResetPasswordResponse.user:type_name -> krill.v1.User
+	0,  // 8: krill.v1.AuthService.GetSession:input_type -> krill.v1.GetSessionRequest
+	2,  // 9: krill.v1.AuthService.Login:input_type -> krill.v1.LoginRequest
+	4,  // 10: krill.v1.AuthService.Register:input_type -> krill.v1.RegisterRequest
+	6,  // 11: krill.v1.AuthService.Logout:input_type -> krill.v1.LogoutRequest
+	8,  // 12: krill.v1.AuthService.UpdateProfile:input_type -> krill.v1.UpdateProfileRequest
+	10, // 13: krill.v1.AuthService.ChangePassword:input_type -> krill.v1.ChangePasswordRequest
+	12, // 14: krill.v1.AuthService.SendVerificationCode:input_type -> krill.v1.SendVerificationCodeRequest
+	14, // 15: krill.v1.AuthService.VerifyEmail:input_type -> krill.v1.VerifyEmailRequest
+	16, // 16: krill.v1.AuthService.RequestPasswordReset:input_type -> krill.v1.RequestPasswordResetRequest
+	18, // 17: krill.v1.AuthService.ResetPassword:input_type -> krill.v1.ResetPasswordRequest
+	1,  // 18: krill.v1.AuthService.GetSession:output_type -> krill.v1.GetSessionResponse
+	3,  // 19: krill.v1.AuthService.Login:output_type -> krill.v1.LoginResponse
+	5,  // 20: krill.v1.AuthService.Register:output_type -> krill.v1.RegisterResponse
+	7,  // 21: krill.v1.AuthService.Logout:output_type -> krill.v1.LogoutResponse
+	9,  // 22: krill.v1.AuthService.UpdateProfile:output_type -> krill.v1.UpdateProfileResponse
+	11, // 23: krill.v1.AuthService.ChangePassword:output_type -> krill.v1.ChangePasswordResponse
+	13, // 24: krill.v1.AuthService.SendVerificationCode:output_type -> krill.v1.SendVerificationCodeResponse
+	15, // 25: krill.v1.AuthService.VerifyEmail:output_type -> krill.v1.VerifyEmailResponse
+	17, // 26: krill.v1.AuthService.RequestPasswordReset:output_type -> krill.v1.RequestPasswordResetResponse
+	19, // 27: krill.v1.AuthService.ResetPassword:output_type -> krill.v1.ResetPasswordResponse
+	18, // [18:28] is the sub-list for method output_type
+	8,  // [8:18] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_auth_proto_init() }
@@ -732,7 +1144,7 @@ func file_krill_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_auth_proto_rawDesc), len(file_krill_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

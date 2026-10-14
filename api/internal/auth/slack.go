@@ -34,7 +34,9 @@ type SlackConfig struct {
 
 // Slack implements Sign in with Slack, which is OpenID Connect and works on
 // free workspaces. Unknown Slack users get a labeler account, and a Slack
-// user whose verified email matches an account is linked to it.
+// user whose verified email matches an account is linked to it. Linking an
+// account whose email was never verified drops its password and sessions,
+// since whoever set them may not own the email.
 type Slack struct {
 	cfg     SlackConfig
 	pool    *pgxpool.Pool
@@ -243,6 +245,17 @@ func (s *Slack) findOrCreate(ctx context.Context, q *db.Queries, id slackIdentit
 			if user.SlackUserID.Valid {
 				return db.User{}, userError("That email belongs to an account linked to a different Slack user.")
 			}
+			if !user.EmailVerifiedAt.Valid {
+				if err := q.ClearPassword(ctx, user.ID); err != nil {
+					return db.User{}, err
+				}
+				if err := q.DeleteUserSessions(ctx, user.ID); err != nil {
+					return db.User{}, err
+				}
+				if _, err := q.MarkEmailVerified(ctx, user.ID); err != nil {
+					return db.User{}, err
+				}
+			}
 			return q.LinkSlack(ctx, db.LinkSlackParams{ID: user.ID, SlackUserID: text(id.Sub)})
 		}
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -272,7 +285,10 @@ func (s *Slack) findOrCreate(ctx context.Context, q *db.Queries, id slackIdentit
 	if DuplicateError(err) != nil {
 		return db.User{}, userError("An account with your Slack email already exists. Sign in with your password instead.")
 	}
-	return user, err
+	if err != nil || !id.EmailVerified {
+		return user, err
+	}
+	return q.MarkEmailVerified(ctx, user.ID)
 }
 
 var usernameStrip = regexp.MustCompile(`[^a-z0-9_.-]`)
