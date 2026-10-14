@@ -18,6 +18,7 @@ type Querier interface {
 	ClearEmptyFrame(ctx context.Context, id int64) error
 	ClearPassword(ctx context.Context, id uuid.UUID) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
+	CountActiveSessions(ctx context.Context) ([]CountActiveSessionsRow, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountEmailCodeAttempt(ctx context.Context, arg CountEmailCodeAttemptParams) error
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
@@ -33,6 +34,7 @@ type Querier interface {
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	DatabaseSize(ctx context.Context) (int64, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClip(ctx context.Context, id int64) (int32, error)
 	DeleteClips(ctx context.Context, videoID int64) error

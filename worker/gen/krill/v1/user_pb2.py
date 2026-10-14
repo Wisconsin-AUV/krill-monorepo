@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/user.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"D\n\x08RoleInfo\x12\"\n\x04role\x18\x01 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\x12\x14\n\x05label\x18\x02 \x01(\tR\x05label\"\x8c\x01\n\x0ePermissionInfo\x12\x34\n\npermission\x18\x01 \x01(\x0e\x32\x14.krill.v1.PermissionR\npermission\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12\"\n\x04role\x18\x03 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\"\xe1\x03\n\x04User\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x03 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x04 \x01(\tR\x05\x65mail\x12\"\n\x04role\x18\x05 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\x12\x1a\n\x08\x64isabled\x18\x06 \x01(\x08R\x08\x64isabled\x12!\n\x0chas_password\x18\x07 \x01(\x08R\x0bhasPassword\x12!\n\x0cslack_linked\x18\x08 \x01(\x08R\x0bslackLinked\x12\x39\n\ncreated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n\rlast_login_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampR\x0blastLoginAt\x12\x36\n\x0bpermissions\x18\x0b \x03(\x0e\x32\x14.krill.v1.PermissionR\x0bpermissions\x12%\n\x0e\x65mail_verified\x18\x0c \x01(\x08R\remailVerified\x12#\n\rpending_email\x18\r \x01(\tR\x0cpendingEmail\"\x12\n\x10ListUsersRequest\"9\n\x11ListUsersResponse\x12$\n\x05users\x18\x01 \x03(\x0b\x32\x0e.krill.v1.UserR\x05users\"\x83\x01\n\x11UpdateUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x04role\x18\x02 \x01(\x0e\x32\x0e.krill.v1.RoleH\x00R\x04role\x88\x01\x01\x12\x1f\n\x08\x64isabled\x18\x03 \x01(\x08H\x01R\x08\x64isabled\x88\x01\x01\x42\x07\n\x05_roleB\x0b\n\t_disabled\"8\n\x12UpdateUserResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"D\n\x16SetUserPasswordRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"\x19\n\x17SetUserPasswordResponse\"#\n\x11\x44\x65leteUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"\x14\n\x12\x44\x65leteUserResponse*R\n\x04Role\x12\x14\n\x10ROLE_UNSPECIFIED\x10\x00\x12\x10\n\x0cROLE_LABELER\x10\x01\x12\x12\n\x0eROLE_DEVELOPER\x10\x02\x12\x0e\n\nROLE_ADMIN\x10\x03*\xd9\x01\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x14\n\x10PERMISSION_LABEL\x10\x01\x12\x1c\n\x18PERMISSION_MANAGE_VIDEOS\x10\x02\x12!\n\x1dPERMISSION_MANAGE_LABEL_TYPES\x10\x03\x12\x1d\n\x19PERMISSION_MANAGE_EXPORTS\x10\x04\x12\x1b\n\x17PERMISSION_MANAGE_USERS\x10\x05\x12\x1c\n\x18PERMISSION_REVIEW_LABELS\x10\x06\x32\xc5\x02\n\x0bUserService\x12\x46\n\tListUsers\x12\x1a.krill.v1.ListUsersRequest\x1a\x1b.krill.v1.ListUsersResponse\"\x00\x12I\n\nUpdateUser\x12\x1b.krill.v1.UpdateUserRequest\x1a\x1c.krill.v1.UpdateUserResponse\"\x00\x12X\n\x0fSetUserPassword\x12 .krill.v1.SetUserPasswordRequest\x1a!.krill.v1.SetUserPasswordResponse\"\x00\x12I\n\nDeleteUser\x12\x1b.krill.v1.DeleteUserRequest\x1a\x1c.krill.v1.DeleteUserResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tUserProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/user.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"D\n\x08RoleInfo\x12\"\n\x04role\x18\x01 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\x12\x14\n\x05label\x18\x02 \x01(\tR\x05label\"\x8c\x01\n\x0ePermissionInfo\x12\x34\n\npermission\x18\x01 \x01(\x0e\x32\x14.krill.v1.PermissionR\npermission\x12 \n\x0b\x64\x65scription\x18\x02 \x01(\tR\x0b\x64\x65scription\x12\"\n\x04role\x18\x03 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\"\x8a\x04\n\x04User\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n\x08username\x18\x03 \x01(\tR\x08username\x12\x14\n\x05\x65mail\x18\x04 \x01(\tR\x05\x65mail\x12\"\n\x04role\x18\x05 \x01(\x0e\x32\x0e.krill.v1.RoleR\x04role\x12\x1a\n\x08\x64isabled\x18\x06 \x01(\x08R\x08\x64isabled\x12!\n\x0chas_password\x18\x07 \x01(\x08R\x0bhasPassword\x12!\n\x0cslack_linked\x18\x08 \x01(\x08R\x0bslackLinked\x12\x39\n\ncreated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n\rlast_login_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampR\x0blastLoginAt\x12\x36\n\x0bpermissions\x18\x0b \x03(\x0e\x32\x14.krill.v1.PermissionR\x0bpermissions\x12%\n\x0e\x65mail_verified\x18\x0c \x01(\x08R\remailVerified\x12#\n\rpending_email\x18\r \x01(\tR\x0cpendingEmail\x12\'\n\x0f\x61\x63tive_sessions\x18\x0e \x01(\x05R\x0e\x61\x63tiveSessions\"\x12\n\x10ListUsersRequest\"9\n\x11ListUsersResponse\x12$\n\x05users\x18\x01 \x03(\x0b\x32\x0e.krill.v1.UserR\x05users\"\x83\x01\n\x11UpdateUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x04role\x18\x02 \x01(\x0e\x32\x0e.krill.v1.RoleH\x00R\x04role\x88\x01\x01\x12\x1f\n\x08\x64isabled\x18\x03 \x01(\x08H\x01R\x08\x64isabled\x88\x01\x01\x42\x07\n\x05_roleB\x0b\n\t_disabled\"8\n\x12UpdateUserResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user\"D\n\x16SetUserPasswordRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"\x19\n\x17SetUserPasswordResponse\"#\n\x11\x44\x65leteUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"\x14\n\x12\x44\x65leteUserResponse\"$\n\x12SignOutUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"\x15\n\x13SignOutUserResponse\"*\n\x18MarkEmailVerifiedRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"?\n\x19MarkEmailVerifiedResponse\x12\"\n\x04user\x18\x01 \x01(\x0b\x32\x0e.krill.v1.UserR\x04user*R\n\x04Role\x12\x14\n\x10ROLE_UNSPECIFIED\x10\x00\x12\x10\n\x0cROLE_LABELER\x10\x01\x12\x12\n\x0eROLE_DEVELOPER\x10\x02\x12\x0e\n\nROLE_ADMIN\x10\x03*\xf7\x01\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x14\n\x10PERMISSION_LABEL\x10\x01\x12\x1c\n\x18PERMISSION_MANAGE_VIDEOS\x10\x02\x12!\n\x1dPERMISSION_MANAGE_LABEL_TYPES\x10\x03\x12\x1d\n\x19PERMISSION_MANAGE_EXPORTS\x10\x04\x12\x1b\n\x17PERMISSION_MANAGE_USERS\x10\x05\x12\x1c\n\x18PERMISSION_REVIEW_LABELS\x10\x06\x12\x1c\n\x18PERMISSION_MANAGE_SYSTEM\x10\x07\x32\xf3\x03\n\x0bUserService\x12\x46\n\tListUsers\x12\x1a.krill.v1.ListUsersRequest\x1a\x1b.krill.v1.ListUsersResponse\"\x00\x12I\n\nUpdateUser\x12\x1b.krill.v1.UpdateUserRequest\x1a\x1c.krill.v1.UpdateUserResponse\"\x00\x12X\n\x0fSetUserPassword\x12 .krill.v1.SetUserPasswordRequest\x1a!.krill.v1.SetUserPasswordResponse\"\x00\x12I\n\nDeleteUser\x12\x1b.krill.v1.DeleteUserRequest\x1a\x1c.krill.v1.DeleteUserResponse\"\x00\x12L\n\x0bSignOutUser\x12\x1c.krill.v1.SignOutUserRequest\x1a\x1d.krill.v1.SignOutUserResponse\"\x00\x12^\n\x11MarkEmailVerified\x12\".krill.v1.MarkEmailVerifiedRequest\x1a#.krill.v1.MarkEmailVerifiedResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tUserProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,32 +33,40 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'krill.v1.user_pb2', _global
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.krill.v1B\tUserProtoP\001Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\242\002\003KXX\252\002\010Krill.V1\312\002\010Krill\\V1\342\002\024Krill\\V1\\GPBMetadata\352\002\tKrill::V1'
-  _globals['_ROLE']._serialized_start=1190
-  _globals['_ROLE']._serialized_end=1272
-  _globals['_PERMISSION']._serialized_start=1275
-  _globals['_PERMISSION']._serialized_end=1492
+  _globals['_ROLE']._serialized_start=1401
+  _globals['_ROLE']._serialized_end=1483
+  _globals['_PERMISSION']._serialized_start=1486
+  _globals['_PERMISSION']._serialized_end=1733
   _globals['_ROLEINFO']._serialized_start=66
   _globals['_ROLEINFO']._serialized_end=134
   _globals['_PERMISSIONINFO']._serialized_start=137
   _globals['_PERMISSIONINFO']._serialized_end=277
   _globals['_USER']._serialized_start=280
-  _globals['_USER']._serialized_end=761
-  _globals['_LISTUSERSREQUEST']._serialized_start=763
-  _globals['_LISTUSERSREQUEST']._serialized_end=781
-  _globals['_LISTUSERSRESPONSE']._serialized_start=783
-  _globals['_LISTUSERSRESPONSE']._serialized_end=840
-  _globals['_UPDATEUSERREQUEST']._serialized_start=843
-  _globals['_UPDATEUSERREQUEST']._serialized_end=974
-  _globals['_UPDATEUSERRESPONSE']._serialized_start=976
-  _globals['_UPDATEUSERRESPONSE']._serialized_end=1032
-  _globals['_SETUSERPASSWORDREQUEST']._serialized_start=1034
-  _globals['_SETUSERPASSWORDREQUEST']._serialized_end=1102
-  _globals['_SETUSERPASSWORDRESPONSE']._serialized_start=1104
-  _globals['_SETUSERPASSWORDRESPONSE']._serialized_end=1129
-  _globals['_DELETEUSERREQUEST']._serialized_start=1131
-  _globals['_DELETEUSERREQUEST']._serialized_end=1166
-  _globals['_DELETEUSERRESPONSE']._serialized_start=1168
-  _globals['_DELETEUSERRESPONSE']._serialized_end=1188
-  _globals['_USERSERVICE']._serialized_start=1495
-  _globals['_USERSERVICE']._serialized_end=1820
+  _globals['_USER']._serialized_end=802
+  _globals['_LISTUSERSREQUEST']._serialized_start=804
+  _globals['_LISTUSERSREQUEST']._serialized_end=822
+  _globals['_LISTUSERSRESPONSE']._serialized_start=824
+  _globals['_LISTUSERSRESPONSE']._serialized_end=881
+  _globals['_UPDATEUSERREQUEST']._serialized_start=884
+  _globals['_UPDATEUSERREQUEST']._serialized_end=1015
+  _globals['_UPDATEUSERRESPONSE']._serialized_start=1017
+  _globals['_UPDATEUSERRESPONSE']._serialized_end=1073
+  _globals['_SETUSERPASSWORDREQUEST']._serialized_start=1075
+  _globals['_SETUSERPASSWORDREQUEST']._serialized_end=1143
+  _globals['_SETUSERPASSWORDRESPONSE']._serialized_start=1145
+  _globals['_SETUSERPASSWORDRESPONSE']._serialized_end=1170
+  _globals['_DELETEUSERREQUEST']._serialized_start=1172
+  _globals['_DELETEUSERREQUEST']._serialized_end=1207
+  _globals['_DELETEUSERRESPONSE']._serialized_start=1209
+  _globals['_DELETEUSERRESPONSE']._serialized_end=1229
+  _globals['_SIGNOUTUSERREQUEST']._serialized_start=1231
+  _globals['_SIGNOUTUSERREQUEST']._serialized_end=1267
+  _globals['_SIGNOUTUSERRESPONSE']._serialized_start=1269
+  _globals['_SIGNOUTUSERRESPONSE']._serialized_end=1290
+  _globals['_MARKEMAILVERIFIEDREQUEST']._serialized_start=1292
+  _globals['_MARKEMAILVERIFIEDREQUEST']._serialized_end=1334
+  _globals['_MARKEMAILVERIFIEDRESPONSE']._serialized_start=1336
+  _globals['_MARKEMAILVERIFIEDRESPONSE']._serialized_end=1399
+  _globals['_USERSERVICE']._serialized_start=1736
+  _globals['_USERSERVICE']._serialized_end=2235
 # @@protoc_insertion_point(module_scope)

@@ -65,3 +65,6 @@ FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE a.drift IS NOT NULL
 GROUP BY t.label_type_id;
+
+-- name: DatabaseSize :one
+SELECT pg_database_size(current_database())::bigint;

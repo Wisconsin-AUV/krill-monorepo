@@ -1,0 +1,5 @@
+Email works
+
+@{{.Username}} sent this from the admin panel. Verification, password reset, and sign-in codes will arrive the same way.
+
+© {{.Year}} {{.Team}}

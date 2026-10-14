@@ -42,6 +42,11 @@ const (
 	UserServiceSetUserPasswordProcedure = "/krill.v1.UserService/SetUserPassword"
 	// UserServiceDeleteUserProcedure is the fully-qualified name of the UserService's DeleteUser RPC.
 	UserServiceDeleteUserProcedure = "/krill.v1.UserService/DeleteUser"
+	// UserServiceSignOutUserProcedure is the fully-qualified name of the UserService's SignOutUser RPC.
+	UserServiceSignOutUserProcedure = "/krill.v1.UserService/SignOutUser"
+	// UserServiceMarkEmailVerifiedProcedure is the fully-qualified name of the UserService's
+	// MarkEmailVerified RPC.
+	UserServiceMarkEmailVerifiedProcedure = "/krill.v1.UserService/MarkEmailVerified"
 )
 
 // UserServiceClient is a client for the krill.v1.UserService service.
@@ -53,6 +58,9 @@ type UserServiceClient interface {
 	// SetUserPassword signs the user out everywhere.
 	SetUserPassword(context.Context, *v1.SetUserPasswordRequest) (*v1.SetUserPasswordResponse, error)
 	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
+	SignOutUser(context.Context, *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error)
+	// MarkEmailVerified trusts the user's current email without a code.
+	MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error)
 }
 
 // NewUserServiceClient constructs a client for the krill.v1.UserService service. By default, it
@@ -90,15 +98,29 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("DeleteUser")),
 			connect.WithClientOptions(opts...),
 		),
+		signOutUser: connect.NewClient[v1.SignOutUserRequest, v1.SignOutUserResponse](
+			httpClient,
+			baseURL+UserServiceSignOutUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("SignOutUser")),
+			connect.WithClientOptions(opts...),
+		),
+		markEmailVerified: connect.NewClient[v1.MarkEmailVerifiedRequest, v1.MarkEmailVerifiedResponse](
+			httpClient,
+			baseURL+UserServiceMarkEmailVerifiedProcedure,
+			connect.WithSchema(userServiceMethods.ByName("MarkEmailVerified")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	listUsers       *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
-	updateUser      *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
-	setUserPassword *connect.Client[v1.SetUserPasswordRequest, v1.SetUserPasswordResponse]
-	deleteUser      *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	listUsers         *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	updateUser        *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
+	setUserPassword   *connect.Client[v1.SetUserPasswordRequest, v1.SetUserPasswordResponse]
+	deleteUser        *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	signOutUser       *connect.Client[v1.SignOutUserRequest, v1.SignOutUserResponse]
+	markEmailVerified *connect.Client[v1.MarkEmailVerifiedRequest, v1.MarkEmailVerifiedResponse]
 }
 
 // ListUsers calls krill.v1.UserService.ListUsers.
@@ -137,6 +159,24 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, req *v1.DeleteUserRe
 	return nil, err
 }
 
+// SignOutUser calls krill.v1.UserService.SignOutUser.
+func (c *userServiceClient) SignOutUser(ctx context.Context, req *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error) {
+	response, err := c.signOutUser.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// MarkEmailVerified calls krill.v1.UserService.MarkEmailVerified.
+func (c *userServiceClient) MarkEmailVerified(ctx context.Context, req *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error) {
+	response, err := c.markEmailVerified.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // UserServiceHandler is an implementation of the krill.v1.UserService service.
 type UserServiceHandler interface {
 	ListUsers(context.Context, *v1.ListUsersRequest) (*v1.ListUsersResponse, error)
@@ -146,6 +186,9 @@ type UserServiceHandler interface {
 	// SetUserPassword signs the user out everywhere.
 	SetUserPassword(context.Context, *v1.SetUserPasswordRequest) (*v1.SetUserPasswordResponse, error)
 	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
+	SignOutUser(context.Context, *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error)
+	// MarkEmailVerified trusts the user's current email without a code.
+	MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -179,6 +222,18 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("DeleteUser")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceSignOutUserHandler := connect.NewUnaryHandlerSimple(
+		UserServiceSignOutUserProcedure,
+		svc.SignOutUser,
+		connect.WithSchema(userServiceMethods.ByName("SignOutUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceMarkEmailVerifiedHandler := connect.NewUnaryHandlerSimple(
+		UserServiceMarkEmailVerifiedProcedure,
+		svc.MarkEmailVerified,
+		connect.WithSchema(userServiceMethods.ByName("MarkEmailVerified")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceListUsersProcedure:
@@ -189,6 +244,10 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceSetUserPasswordHandler.ServeHTTP(w, r)
 		case UserServiceDeleteUserProcedure:
 			userServiceDeleteUserHandler.ServeHTTP(w, r)
+		case UserServiceSignOutUserProcedure:
+			userServiceSignOutUserHandler.ServeHTTP(w, r)
+		case UserServiceMarkEmailVerifiedProcedure:
+			userServiceMarkEmailVerifiedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -212,4 +271,12 @@ func (UnimplementedUserServiceHandler) SetUserPassword(context.Context, *v1.SetU
 
 func (UnimplementedUserServiceHandler) DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.DeleteUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) SignOutUser(context.Context, *v1.SignOutUserRequest) (*v1.SignOutUserResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.SignOutUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) MarkEmailVerified(context.Context, *v1.MarkEmailVerifiedRequest) (*v1.MarkEmailVerifiedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.UserService.MarkEmailVerified is not implemented"))
 }

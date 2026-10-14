@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package krill.v1;
+
+// HostStats describes the machine a node runs on.
+message HostStats {
+  // Across all cores, from 0 to 100.
+  double cpu_percent = 1;
+  uint32 cpu_count = 2;
+  uint64 memory_used_bytes = 3;
+  uint64 memory_total_bytes = 4;
+  uint64 disk_used_bytes = 5;
+  uint64 disk_total_bytes = 6;
+  string platform = 7;
+}
+
+message GpuStats {
+  uint32 index = 1;
+  string name = 2;
+  uint64 memory_used_bytes = 3;
+  uint64 memory_total_bytes = 4;
+  // Unset when the driver doesn't report it.
+  optional double utilization_percent = 5;
+  optional double temperature_celsius = 6;
+  optional double power_watts = 7;
+}

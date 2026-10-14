@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const databaseSize = `-- name: DatabaseSize :one
+SELECT pg_database_size(current_database())::bigint
+`
+
+func (q *Queries) DatabaseSize(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, databaseSize)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const driftByLabelType = `-- name: DriftByLabelType :many
 SELECT
     t.label_type_id,

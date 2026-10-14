@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/minio/madmin-go/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -32,7 +33,10 @@ type Config struct {
 type Store struct {
 	client  *minio.Client
 	presign *minio.Client
-	bucket  string
+	// admin reports MinIO's drives. It only works with the root credentials,
+	// which Compose gives the API.
+	admin  *madmin.AdminClient
+	bucket string
 }
 
 func New(ctx context.Context, cfg Config) (*Store, error) {
@@ -48,7 +52,16 @@ func New(ctx context.Context, cfg Config) (*Store, error) {
 		}
 	}
 
-	s := &Store{client: client, presign: presign, bucket: cfg.Bucket}
+	u, _ := url.Parse(cfg.Endpoint)
+	admin, err := madmin.NewWithOptions(u.Host, &madmin.Options{
+		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
+		Secure: u.Scheme == "https",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("s3 admin client: %w", err)
+	}
+
+	s := &Store{client: client, presign: presign, admin: admin, bucket: cfg.Bucket}
 	if err := s.ensureBucket(ctx); err != nil {
 		return nil, err
 	}
@@ -227,4 +240,44 @@ func (s *Store) Remove(ctx context.Context, key string) error {
 		return fmt.Errorf("remove %s: %w", key, err)
 	}
 	return nil
+}
+
+// Ping checks that the bucket is reachable.
+func (s *Store) Ping(ctx context.Context) error {
+	ok, err := s.client.BucketExists(ctx, s.bucket)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("bucket %s is missing", s.bucket)
+	}
+	return nil
+}
+
+func (s *Store) Bucket() string {
+	return s.bucket
+}
+
+// Usage is how full MinIO's drives are. On the GPU box they are a fixed-size
+// image, so this fills up before the host's disk does.
+type Usage struct {
+	UsedBytes  uint64
+	TotalBytes uint64
+}
+
+func (s *Store) Usage(ctx context.Context) (Usage, error) {
+	info, err := s.admin.StorageInfo(ctx)
+	if err != nil {
+		return Usage{}, err
+	}
+	var u Usage
+	for _, d := range info.Disks {
+		u.UsedBytes += d.UsedSpace
+		// Like df, leave out space the filesystem reserves.
+		u.TotalBytes += d.UsedSpace + d.AvailableSpace
+	}
+	if u.TotalBytes == 0 {
+		return Usage{}, errors.New("MinIO reported no drives")
+	}
+	return u, nil
 }

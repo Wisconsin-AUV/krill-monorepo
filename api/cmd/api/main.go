@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -20,9 +21,11 @@ import (
 	"github.com/riverqueue/river/rivermigrate"
 
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/admin"
 	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/clip"
+	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/email"
@@ -43,10 +46,40 @@ import (
 	"github.com/wauv/krill/api/internal/web"
 )
 
-// version is set at build time with -ldflags "-X main.version=vX.Y.Z".
+// version is set at build time with -ldflags "-X main.version=$(git
+// describe --tags --always --dirty)".
 var version = "dev"
 
+// commitVersion names a plain go build by its commit, which Go records when
+// building inside the repository.
+func commitVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return version
+	}
+	var rev string
+	dirty := false
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			rev = s.Value
+		case "vcs.modified":
+			dirty = s.Value == "true"
+		}
+	}
+	if len(rev) < 7 {
+		return version
+	}
+	if dirty {
+		return "dev-" + rev[:7] + "-dirty"
+	}
+	return "dev-" + rev[:7]
+}
+
 func main() {
+	if version == "dev" {
+		version = commitVersion()
+	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
@@ -117,6 +150,8 @@ func run() error {
 	}
 
 	dispatcher := tracker.NewDispatcher()
+	nodes := compute.NewRegistry()
+	go nodes.SampleAPI(ctx, version)
 	workers := river.NewWorkers()
 	river.AddWorker(workers, ingest.NewWorker(pool, store, func() bool { return live.Load().cfg.EmbedAtIngest }))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
@@ -157,12 +192,21 @@ func run() error {
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
-	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher), rpcOpts))
+	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes), rpcOpts))
 	mux.Handle(krillv1connect.NewExportServiceHandler(export.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewUserServiceHandler(user.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewStatsServiceHandler(stats.NewService(pool), rpcOpts))
 	mux.Handle(krillv1connect.NewGoldServiceHandler(gold.NewService(pool, store, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewReviewServiceHandler(review.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewAdminServiceHandler(admin.NewService(admin.Deps{
+		Pool:       pool,
+		Store:      store,
+		Settings:   settingsStore,
+		Nodes:      nodes,
+		Dispatcher: dispatcher,
+		Mailer:     func() email.Sender { return live.Load().auth.Mailer },
+		Version:    version,
+	}), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

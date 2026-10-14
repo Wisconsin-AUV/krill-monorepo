@@ -20,6 +20,7 @@ const (
 	manageExports    = krillv1.Permission_PERMISSION_MANAGE_EXPORTS
 	manageUsers      = krillv1.Permission_PERMISSION_MANAGE_USERS
 	reviewLabels     = krillv1.Permission_PERMISSION_REVIEW_LABELS
+	manageSystem     = krillv1.Permission_PERMISSION_MANAGE_SYSTEM
 )
 
 // policy is the permission each procedure needs. Procedures missing from it
@@ -82,6 +83,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.WorkerServiceReportExemplarsProcedure: worker,
 	krillv1connect.WorkerServiceReportEmbedProcedure:     worker,
 	krillv1connect.WorkerServiceFailTaskProcedure:        worker,
+	krillv1connect.WorkerServiceHeartbeatProcedure:       worker,
 
 	krillv1connect.GoldServiceSetGoldFrameProcedure:    reviewLabels,
 	krillv1connect.GoldServiceGetGoldCheckProcedure:    label,
@@ -105,8 +107,16 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.ExportServiceListExportsProcedure:   manageExports,
 	krillv1connect.ExportServiceDeleteExportProcedure:  manageExports,
 
-	krillv1connect.UserServiceListUsersProcedure:       manageUsers,
-	krillv1connect.UserServiceUpdateUserProcedure:      manageUsers,
-	krillv1connect.UserServiceSetUserPasswordProcedure: manageUsers,
-	krillv1connect.UserServiceDeleteUserProcedure:      manageUsers,
+	krillv1connect.UserServiceListUsersProcedure:         manageUsers,
+	krillv1connect.UserServiceUpdateUserProcedure:        manageUsers,
+	krillv1connect.UserServiceSetUserPasswordProcedure:   manageUsers,
+	krillv1connect.UserServiceDeleteUserProcedure:        manageUsers,
+	krillv1connect.UserServiceSignOutUserProcedure:       manageUsers,
+	krillv1connect.UserServiceMarkEmailVerifiedProcedure: manageUsers,
+
+	krillv1connect.AdminServiceGetStatusProcedure:      manageSystem,
+	krillv1connect.AdminServiceListSettingsProcedure:   manageSystem,
+	krillv1connect.AdminServiceUpdateSettingsProcedure: manageSystem,
+	krillv1connect.AdminServiceSendTestEmailProcedure:  manageSystem,
+	krillv1connect.AdminServiceGetComputeProcedure:     manageSystem,
 }

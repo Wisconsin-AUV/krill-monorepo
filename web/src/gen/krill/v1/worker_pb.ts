@@ -4,15 +4,19 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Box, Point } from "./annotation_pb";
 import { file_krill_v1_annotation } from "./annotation_pb";
+import type { GpuStats, HostStats } from "./system_pb";
+import { file_krill_v1_system } from "./system_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file krill/v1/worker.proto.
  */
 export const file_krill_v1_worker: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCKSAQoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIAEIGCgR0YXNrIjsKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSFQoNZW1iZWRkaW5nX3VybBgDIAEoCSKfAQoJVHJhY2tUYXNrEgoKAmlkGAEgASgDEiMKBmZyYW1lcxgCIAMoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIgCgVwb2ludBgDIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94SAASFwoPZW1iZWRkaW5nX21vZGVsGAUgASgJQggKBnByb21wdCI9CglFbWJlZFRhc2sSCgoCaWQYASABKAMSJAoGZnJhbWVzGAIgAygLMhQua3JpbGwudjEuRW1iZWRGcmFtZSI5CgpFbWJlZEZyYW1lEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRISCgp1cGxvYWRfdXJsGAMgASgJIloKDEV4ZW1wbGFyVGFzaxIKCgJpZBgBIAEoAxIiCgVmcmFtZRgCIAEoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoKVHJhY2tlZEJveBIQCghmcmFtZV9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giZwoSUmVwb3J0VHJhY2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSIwoFYm94ZXMYAyADKAsyFC5rcmlsbC52MS5UcmFja2VkQm94EgwKBGRvbmUYBCABKAgiFQoTUmVwb3J0VHJhY2tSZXNwb25zZSJWChZSZXBvcnRFeGVtcGxhcnNSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSHAoFYm94ZXMYAyADKAsyDS5rcmlsbC52MS5Cb3giGQoXUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiNAoSUmVwb3J0RW1iZWRSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkiFQoTUmVwb3J0RW1iZWRSZXNwb25zZSIxCg9GYWlsVGFza1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVlcnJvchgCIAEoCSISChBGYWlsVGFza1Jlc3BvbnNlMo8DCg1Xb3JrZXJTZXJ2aWNlEkMKCE5leHRUYXNrEhkua3JpbGwudjEuTmV4dFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuTmV4dFRhc2tSZXNwb25zZSIAEkwKC1JlcG9ydFRyYWNrEhwua3JpbGwudjEuUmVwb3J0VHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0VHJhY2tSZXNwb25zZSIAElgKD1JlcG9ydEV4ZW1wbGFycxIgLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1JlcXVlc3QaIS5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXNwb25zZSIAEkwKC1JlcG9ydEVtYmVkEhwua3JpbGwudjEuUmVwb3J0RW1iZWRSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0RW1iZWRSZXNwb25zZSIAEkMKCEZhaWxUYXNrEhkua3JpbGwudjEuRmFpbFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuRmFpbFRhc2tSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC1dvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation]);
+  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCKSAQoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIAEIGCgR0YXNrIjsKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSFQoNZW1iZWRkaW5nX3VybBgDIAEoCSKfAQoJVHJhY2tUYXNrEgoKAmlkGAEgASgDEiMKBmZyYW1lcxgCIAMoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIgCgVwb2ludBgDIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94SAASFwoPZW1iZWRkaW5nX21vZGVsGAUgASgJQggKBnByb21wdCI9CglFbWJlZFRhc2sSCgoCaWQYASABKAMSJAoGZnJhbWVzGAIgAygLMhQua3JpbGwudjEuRW1iZWRGcmFtZSI5CgpFbWJlZEZyYW1lEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRISCgp1cGxvYWRfdXJsGAMgASgJIloKDEV4ZW1wbGFyVGFzaxIKCgJpZBgBIAEoAxIiCgVmcmFtZRgCIAEoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoKVHJhY2tlZEJveBIQCghmcmFtZV9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giZwoSUmVwb3J0VHJhY2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSIwoFYm94ZXMYAyADKAsyFC5rcmlsbC52MS5UcmFja2VkQm94EgwKBGRvbmUYBCABKAgiFQoTUmVwb3J0VHJhY2tSZXNwb25zZSJWChZSZXBvcnRFeGVtcGxhcnNSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSHAoFYm94ZXMYAyADKAsyDS5rcmlsbC52MS5Cb3giGQoXUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiNAoSUmVwb3J0RW1iZWRSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkiFQoTUmVwb3J0RW1iZWRSZXNwb25zZSIxCg9GYWlsVGFza1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVlcnJvchgCIAEoCSISChBGYWlsVGFza1Jlc3BvbnNlIvQBChBIZWFydGJlYXRSZXF1ZXN0EhMKC2luc3RhbmNlX2lkGAEgASgJEhAKCGhvc3RuYW1lGAIgASgJEg8KB3ZlcnNpb24YAyABKAkSDQoFbW9kZWwYBCABKAkSEwoLYWNjZWxlcmF0b3IYBSABKAkSLgoKc3RhcnRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASIQoEaG9zdBgHIAEoCzITLmtyaWxsLnYxLkhvc3RTdGF0cxIgCgRncHVzGAggAygLMhIua3JpbGwudjEuR3B1U3RhdHMSDwoHdGFza19pZBgJIAEoAyITChFIZWFydGJlYXRSZXNwb25zZTLXAwoNV29ya2VyU2VydmljZRJDCghOZXh0VGFzaxIZLmtyaWxsLnYxLk5leHRUYXNrUmVxdWVzdBoaLmtyaWxsLnYxLk5leHRUYXNrUmVzcG9uc2UiABJMCgtSZXBvcnRUcmFjaxIcLmtyaWxsLnYxLlJlcG9ydFRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLlJlcG9ydFRyYWNrUmVzcG9uc2UiABJYCg9SZXBvcnRFeGVtcGxhcnMSIC5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXF1ZXN0GiEua3JpbGwudjEuUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiABJMCgtSZXBvcnRFbWJlZBIcLmtyaWxsLnYxLlJlcG9ydEVtYmVkUmVxdWVzdBodLmtyaWxsLnYxLlJlcG9ydEVtYmVkUmVzcG9uc2UiABJDCghGYWlsVGFzaxIZLmtyaWxsLnYxLkZhaWxUYXNrUmVxdWVzdBoaLmtyaWxsLnYxLkZhaWxUYXNrUmVzcG9uc2UiABJGCglIZWFydGJlYXQSGi5rcmlsbC52MS5IZWFydGJlYXRSZXF1ZXN0Ghsua3JpbGwudjEuSGVhcnRiZWF0UmVzcG9uc2UiAEKMAQoMY29tLmtyaWxsLnYxQgtXb3JrZXJQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_system]);
 
 /**
  * @generated from message krill.v1.NextTaskRequest
@@ -409,6 +413,80 @@ export const FailTaskResponseSchema: GenMessage<FailTaskResponse> = /*@__PURE__*
   messageDesc(file_krill_v1_worker, 15);
 
 /**
+ * @generated from message krill.v1.HeartbeatRequest
+ */
+export type HeartbeatRequest = Message<"krill.v1.HeartbeatRequest"> & {
+  /**
+   * Random for each process, so a restarted worker shows as a new one.
+   *
+   * @generated from field: string instance_id = 1;
+   */
+  instanceId: string;
+
+  /**
+   * @generated from field: string hostname = 2;
+   */
+  hostname: string;
+
+  /**
+   * @generated from field: string version = 3;
+   */
+  version: string;
+
+  /**
+   * @generated from field: string model = 4;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string accelerator = 5;
+   */
+  accelerator: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp started_at = 6;
+   */
+  startedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: krill.v1.HostStats host = 7;
+   */
+  host?: HostStats | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.GpuStats gpus = 8;
+   */
+  gpus: GpuStats[];
+
+  /**
+   * The task being worked on, or 0 when idle.
+   *
+   * @generated from field: int64 task_id = 9;
+   */
+  taskId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.HeartbeatRequest.
+ * Use `create(HeartbeatRequestSchema)` to create a new message.
+ */
+export const HeartbeatRequestSchema: GenMessage<HeartbeatRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 16);
+
+/**
+ * @generated from message krill.v1.HeartbeatResponse
+ */
+export type HeartbeatResponse = Message<"krill.v1.HeartbeatResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.HeartbeatResponse.
+ * Use `create(HeartbeatResponseSchema)` to create a new message.
+ */
+export const HeartbeatResponseSchema: GenMessage<HeartbeatResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 17);
+
+/**
  * WorkerService is called by the GPU worker. Requests carry the shared worker
  * token instead of a user session.
  *
@@ -465,6 +543,17 @@ export const WorkerService: GenService<{
     methodKind: "unary";
     input: typeof FailTaskRequestSchema;
     output: typeof FailTaskResponseSchema;
+  },
+  /**
+   * Heartbeat reports the worker's state every few seconds for the admin
+   * panel. A worker that stops sending them shows as offline.
+   *
+   * @generated from rpc krill.v1.WorkerService.Heartbeat
+   */
+  heartbeat: {
+    methodKind: "unary";
+    input: typeof HeartbeatRequestSchema;
+    output: typeof HeartbeatResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_worker, 0);

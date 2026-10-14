@@ -11,6 +11,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 )
@@ -25,10 +26,11 @@ type Service struct {
 	pool       *pgxpool.Pool
 	q          *db.Queries
 	dispatcher *Dispatcher
+	nodes      *compute.Registry
 }
 
-func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher) *Service {
-	return &Service{pool: pool, q: db.New(pool), dispatcher: dispatcher}
+func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher, nodes *compute.Registry) *Service {
+	return &Service{pool: pool, q: db.New(pool), dispatcher: dispatcher, nodes: nodes}
 }
 
 func (s *Service) NextTask(ctx context.Context, _ *krillv1.NextTaskRequest) (*krillv1.NextTaskResponse, error) {
@@ -189,4 +191,21 @@ func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*kr
 	}
 	t.finish(errors.New(req.GetError()))
 	return &krillv1.FailTaskResponse{}, nil
+}
+
+func (s *Service) Heartbeat(_ context.Context, req *krillv1.HeartbeatRequest) (*krillv1.HeartbeatResponse, error) {
+	if req.GetInstanceId() == "" {
+		return nil, rpc.Invalid("instance_id is required")
+	}
+	s.nodes.RecordWorker(req.GetInstanceId(), compute.Report{
+		Hostname:    req.GetHostname(),
+		Version:     req.GetVersion(),
+		Model:       req.GetModel(),
+		Accelerator: req.GetAccelerator(),
+		StartedAt:   req.GetStartedAt().AsTime(),
+		Host:        req.GetHost(),
+		Gpus:        req.GetGpus(),
+		TaskID:      req.GetTaskId(),
+	})
+	return &krillv1.HeartbeatResponse{}, nil
 }

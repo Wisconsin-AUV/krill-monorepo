@@ -86,3 +86,6 @@ UPDATE users SET email_verified_at = coalesce(email_verified_at, now()) WHERE id
 
 -- name: ClearPassword :exec
 UPDATE users SET password_hash = NULL WHERE id = $1;
+
+-- name: CountActiveSessions :many
+SELECT user_id, count(*)::int AS sessions FROM sessions WHERE expires_at > now() GROUP BY user_id;

@@ -12,7 +12,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/user.proto.
  */
 export const file_krill_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSI3CghSb2xlSW5mbxIcCgRyb2xlGAEgASgOMg4ua3JpbGwudjEuUm9sZRINCgVsYWJlbBgCIAEoCSJtCg5QZXJtaXNzaW9uSW5mbxIoCgpwZXJtaXNzaW9uGAEgASgOMhQua3JpbGwudjEuUGVybWlzc2lvbhITCgtkZXNjcmlwdGlvbhgCIAEoCRIcCgRyb2xlGAMgASgOMg4ua3JpbGwudjEuUm9sZSLaAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKQoLcGVybWlzc2lvbnMYCyADKA4yFC5rcmlsbC52MS5QZXJtaXNzaW9uEhYKDmVtYWlsX3ZlcmlmaWVkGAwgASgIEhUKDXBlbmRpbmdfZW1haWwYDSABKAkiEgoQTGlzdFVzZXJzUmVxdWVzdCIyChFMaXN0VXNlcnNSZXNwb25zZRIdCgV1c2VycxgBIAMoCzIOLmtyaWxsLnYxLlVzZXIibwoRVXBkYXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkSIQoEcm9sZRgCIAEoDjIOLmtyaWxsLnYxLlJvbGVIAIgBARIVCghkaXNhYmxlZBgDIAEoCEgBiAEBQgcKBV9yb2xlQgsKCV9kaXNhYmxlZCIyChJVcGRhdGVVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLmtyaWxsLnYxLlVzZXIiNgoWU2V0VXNlclBhc3N3b3JkUmVxdWVzdBIKCgJpZBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSIZChdTZXRVc2VyUGFzc3dvcmRSZXNwb25zZSIfChFEZWxldGVVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVVc2VyUmVzcG9uc2UqUgoEUm9sZRIUChBST0xFX1VOU1BFQ0lGSUVEEAASEAoMUk9MRV9MQUJFTEVSEAESEgoOUk9MRV9ERVZFTE9QRVIQAhIOCgpST0xFX0FETUlOEAMq2QEKClBlcm1pc3Npb24SGgoWUEVSTUlTU0lPTl9VTlNQRUNJRklFRBAAEhQKEFBFUk1JU1NJT05fTEFCRUwQARIcChhQRVJNSVNTSU9OX01BTkFHRV9WSURFT1MQAhIhCh1QRVJNSVNTSU9OX01BTkFHRV9MQUJFTF9UWVBFUxADEh0KGVBFUk1JU1NJT05fTUFOQUdFX0VYUE9SVFMQBBIbChdQRVJNSVNTSU9OX01BTkFHRV9VU0VSUxAFEhwKGFBFUk1JU1NJT05fUkVWSUVXX0xBQkVMUxAGMsUCCgtVc2VyU2VydmljZRJGCglMaXN0VXNlcnMSGi5rcmlsbC52MS5MaXN0VXNlcnNSZXF1ZXN0Ghsua3JpbGwudjEuTGlzdFVzZXJzUmVzcG9uc2UiABJJCgpVcGRhdGVVc2VyEhsua3JpbGwudjEuVXBkYXRlVXNlclJlcXVlc3QaHC5rcmlsbC52MS5VcGRhdGVVc2VyUmVzcG9uc2UiABJYCg9TZXRVc2VyUGFzc3dvcmQSIC5rcmlsbC52MS5TZXRVc2VyUGFzc3dvcmRSZXF1ZXN0GiEua3JpbGwudjEuU2V0VXNlclBhc3N3b3JkUmVzcG9uc2UiABJJCgpEZWxldGVVc2VyEhsua3JpbGwudjEuRGVsZXRlVXNlclJlcXVlc3QaHC5rcmlsbC52MS5EZWxldGVVc2VyUmVzcG9uc2UiAEKKAQoMY29tLmtyaWxsLnYxQglVc2VyUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSI3CghSb2xlSW5mbxIcCgRyb2xlGAEgASgOMg4ua3JpbGwudjEuUm9sZRINCgVsYWJlbBgCIAEoCSJtCg5QZXJtaXNzaW9uSW5mbxIoCgpwZXJtaXNzaW9uGAEgASgOMhQua3JpbGwudjEuUGVybWlzc2lvbhITCgtkZXNjcmlwdGlvbhgCIAEoCRIcCgRyb2xlGAMgASgOMg4ua3JpbGwudjEuUm9sZSLzAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKQoLcGVybWlzc2lvbnMYCyADKA4yFC5rcmlsbC52MS5QZXJtaXNzaW9uEhYKDmVtYWlsX3ZlcmlmaWVkGAwgASgIEhUKDXBlbmRpbmdfZW1haWwYDSABKAkSFwoPYWN0aXZlX3Nlc3Npb25zGA4gASgFIhIKEExpc3RVc2Vyc1JlcXVlc3QiMgoRTGlzdFVzZXJzUmVzcG9uc2USHQoFdXNlcnMYASADKAsyDi5rcmlsbC52MS5Vc2VyIm8KEVVwZGF0ZVVzZXJSZXF1ZXN0EgoKAmlkGAEgASgJEiEKBHJvbGUYAiABKA4yDi5rcmlsbC52MS5Sb2xlSACIAQESFQoIZGlzYWJsZWQYAyABKAhIAYgBAUIHCgVfcm9sZUILCglfZGlzYWJsZWQiMgoSVXBkYXRlVXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIjYKFlNldFVzZXJQYXNzd29yZFJlcXVlc3QSCgoCaWQYASABKAkSEAoIcGFzc3dvcmQYAiABKAkiGQoXU2V0VXNlclBhc3N3b3JkUmVzcG9uc2UiHwoRRGVsZXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlVXNlclJlc3BvbnNlIiAKElNpZ25PdXRVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNTaWduT3V0VXNlclJlc3BvbnNlIiYKGE1hcmtFbWFpbFZlcmlmaWVkUmVxdWVzdBIKCgJpZBgBIAEoCSI5ChlNYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyKlIKBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEhAKDFJPTEVfTEFCRUxFUhABEhIKDlJPTEVfREVWRUxPUEVSEAISDgoKUk9MRV9BRE1JThADKvcBCgpQZXJtaXNzaW9uEhoKFlBFUk1JU1NJT05fVU5TUEVDSUZJRUQQABIUChBQRVJNSVNTSU9OX0xBQkVMEAESHAoYUEVSTUlTU0lPTl9NQU5BR0VfVklERU9TEAISIQodUEVSTUlTU0lPTl9NQU5BR0VfTEFCRUxfVFlQRVMQAxIdChlQRVJNSVNTSU9OX01BTkFHRV9FWFBPUlRTEAQSGwoXUEVSTUlTU0lPTl9NQU5BR0VfVVNFUlMQBRIcChhQRVJNSVNTSU9OX1JFVklFV19MQUJFTFMQBhIcChhQRVJNSVNTSU9OX01BTkFHRV9TWVNURU0QBzLzAwoLVXNlclNlcnZpY2USRgoJTGlzdFVzZXJzEhoua3JpbGwudjEuTGlzdFVzZXJzUmVxdWVzdBobLmtyaWxsLnYxLkxpc3RVc2Vyc1Jlc3BvbnNlIgASSQoKVXBkYXRlVXNlchIbLmtyaWxsLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuVXBkYXRlVXNlclJlc3BvbnNlIgASWAoPU2V0VXNlclBhc3N3b3JkEiAua3JpbGwudjEuU2V0VXNlclBhc3N3b3JkUmVxdWVzdBohLmtyaWxsLnYxLlNldFVzZXJQYXNzd29yZFJlc3BvbnNlIgASSQoKRGVsZXRlVXNlchIbLmtyaWxsLnYxLkRlbGV0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuRGVsZXRlVXNlclJlc3BvbnNlIgASTAoLU2lnbk91dFVzZXISHC5rcmlsbC52MS5TaWduT3V0VXNlclJlcXVlc3QaHS5rcmlsbC52MS5TaWduT3V0VXNlclJlc3BvbnNlIgASXgoRTWFya0VtYWlsVmVyaWZpZWQSIi5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlcXVlc3QaIy5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJVXNlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message krill.v1.RoleInfo
@@ -139,6 +139,13 @@ export type User = Message<"krill.v1.User"> & {
    * @generated from field: string pending_email = 13;
    */
   pendingEmail: string;
+
+  /**
+   * Signed-in sessions. Only ListUsers sets it.
+   *
+   * @generated from field: int32 active_sessions = 14;
+   */
+  activeSessions: number;
 };
 
 /**
@@ -290,6 +297,70 @@ export const DeleteUserResponseSchema: GenMessage<DeleteUserResponse> = /*@__PUR
   messageDesc(file_krill_v1_user, 10);
 
 /**
+ * @generated from message krill.v1.SignOutUserRequest
+ */
+export type SignOutUserRequest = Message<"krill.v1.SignOutUserRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message krill.v1.SignOutUserRequest.
+ * Use `create(SignOutUserRequestSchema)` to create a new message.
+ */
+export const SignOutUserRequestSchema: GenMessage<SignOutUserRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 11);
+
+/**
+ * @generated from message krill.v1.SignOutUserResponse
+ */
+export type SignOutUserResponse = Message<"krill.v1.SignOutUserResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.SignOutUserResponse.
+ * Use `create(SignOutUserResponseSchema)` to create a new message.
+ */
+export const SignOutUserResponseSchema: GenMessage<SignOutUserResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 12);
+
+/**
+ * @generated from message krill.v1.MarkEmailVerifiedRequest
+ */
+export type MarkEmailVerifiedRequest = Message<"krill.v1.MarkEmailVerifiedRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message krill.v1.MarkEmailVerifiedRequest.
+ * Use `create(MarkEmailVerifiedRequestSchema)` to create a new message.
+ */
+export const MarkEmailVerifiedRequestSchema: GenMessage<MarkEmailVerifiedRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 13);
+
+/**
+ * @generated from message krill.v1.MarkEmailVerifiedResponse
+ */
+export type MarkEmailVerifiedResponse = Message<"krill.v1.MarkEmailVerifiedResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message krill.v1.MarkEmailVerifiedResponse.
+ * Use `create(MarkEmailVerifiedResponseSchema)` to create a new message.
+ */
+export const MarkEmailVerifiedResponseSchema: GenMessage<MarkEmailVerifiedResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 14);
+
+/**
  * Role is ordered: each role has every permission of the roles below it.
  *
  * @generated from enum krill.v1.Role
@@ -370,6 +441,11 @@ export const Permission = {
    * @generated from enum value: PERMISSION_REVIEW_LABELS = 6;
    */
   REVIEW_LABELS: 6,
+
+  /**
+   * @generated from enum value: PERMISSION_MANAGE_SYSTEM = 7;
+   */
+  MANAGE_SYSTEM: 7,
 } as const;
 
 /**
@@ -428,6 +504,24 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof DeleteUserRequestSchema;
     output: typeof DeleteUserResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.UserService.SignOutUser
+   */
+  signOutUser: {
+    methodKind: "unary";
+    input: typeof SignOutUserRequestSchema;
+    output: typeof SignOutUserResponseSchema;
+  },
+  /**
+   * MarkEmailVerified trusts the user's current email without a code.
+   *
+   * @generated from rpc krill.v1.UserService.MarkEmailVerified
+   */
+  markEmailVerified: {
+    methodKind: "unary";
+    input: typeof MarkEmailVerifiedRequestSchema;
+    output: typeof MarkEmailVerifiedResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_user, 0);
