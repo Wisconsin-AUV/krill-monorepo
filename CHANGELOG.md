@@ -35,6 +35,9 @@ All notable changes to this project are documented here. The format follows
 - A storage page breaks the bucket down by kind and by video, finds objects no row refers to and rows whose object is gone, and deletes the orphans after checking each one again.
 - A database page shows table sizes, row counts, and migration versions, and backs the database up to MinIO with `pg_dump`, by hand or daily with `KRILL_BACKUP_SCHEDULE`. Scheduled backups beyond `KRILL_BACKUP_KEEP` are deleted, and the overview warns when the last one failed or is over a day old.
 - A logs page shows recent log records from the API and each GPU worker, with level and text filters and a live tail. Emails logged in development show their code there. Tokens, passwords, and keys are redacted.
+- Deleted videos and clips go to a trash in the admin panel, where they can be restored with their labels or deleted for good. Deleting shows an Undo button, and the trash empties itself after `KRILL_TRASH_RETENTION_DAYS` (30 by default, 0 keeps everything).
+- A label type can be merged into another, mapping its attribute values onto the other type's. The preview shows the tracks, boxes, gold frames, and export classes it changes.
+- A Content page in the admin panel re-extracts frames, regenerates SAM embeddings for stale or chosen clips, and assigns or releases clips in bulk, with the progress of each job.
 
 ### Changed
 
@@ -46,6 +49,7 @@ All notable changes to this project are documented here. The format follows
 - The compute page's queue counts GPU jobs waiting to start, not only the one waiting for a worker.
 - A clip whose embedding is interrupted by a model switch is embedded again with the new model instead of failing.
 - The API image includes `pg_dump` 17 for backups.
+- Trashed videos and clips are left out of the queue, exports, stats, gold, and reviews until they are restored.
 
 ## [0.4.0] - 2026-10-14
 

@@ -13,11 +13,13 @@ import {
   ComputerDesktopIcon,
   CpuChipIcon,
   Cog6ToothIcon,
+  FilmIcon,
   HomeIcon,
   KeyIcon,
   QuestionMarkCircleIcon,
   TicketIcon,
   QueueListIcon,
+  TrashIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
 import { Navigate, Outlet, useLocation } from 'react-router'
@@ -147,6 +149,18 @@ const sections = [
         icon: ClockIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
+    ],
+  },
+  {
+    heading: 'Content',
+    items: [
+      {
+        label: 'Content',
+        to: '/admin/content',
+        icon: FilmIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      { label: 'Trash', to: '/admin/trash', icon: TrashIcon, permission: Permission.MANAGE_SYSTEM },
     ],
   },
 ]

@@ -25,6 +25,18 @@ export function Notification({ flash, onClose }: { flash: FlashMessage; onClose:
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{flash.message}</p>
         )}
       </div>
+      {flash.action && (
+        <button
+          type="button"
+          onClick={() => {
+            flash.action?.onClick()
+            onClose()
+          }}
+          className="ml-4 shrink-0 rounded-md text-sm font-medium text-sky-600 hover:text-sky-500 focus:outline-2 focus:outline-offset-2 focus:outline-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
+        >
+          {flash.action.label}
+        </button>
+      )}
       <button
         type="button"
         onClick={onClose}

@@ -134,6 +134,16 @@ export const router = createBrowserRouter([
                     path: 'logs',
                     lazy: () => import('@/admin/LogsPage').then((m) => ({ Component: m.LogsPage })),
                   },
+                  {
+                    path: 'content',
+                    lazy: () =>
+                      import('@/admin/ContentPage').then((m) => ({ Component: m.ContentPage })),
+                  },
+                  {
+                    path: 'trash',
+                    lazy: () =>
+                      import('@/admin/TrashPage').then((m) => ({ Component: m.TrashPage })),
+                  },
                 ],
               },
               {

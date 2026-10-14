@@ -1,6 +1,7 @@
 import { createClient } from '@connectrpc/connect'
 import { AnnotationService } from '@/gen/krill/v1/annotation_pb'
 import { ClipService } from '@/gen/krill/v1/clip_pb'
+import { ContentService } from '@/gen/krill/v1/content_pb'
 import { LabelService } from '@/gen/krill/v1/label_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
 import { transport } from './transport'
@@ -9,3 +10,4 @@ export const videoClient = createClient(VideoService, transport)
 export const labelClient = createClient(LabelService, transport)
 export const annotationClient = createClient(AnnotationService, transport)
 export const clipClient = createClient(ClipService, transport)
+export const contentClient = createClient(ContentService, transport)
