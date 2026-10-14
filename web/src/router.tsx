@@ -144,6 +144,23 @@ export const router = createBrowserRouter([
                     lazy: () =>
                       import('@/admin/TrashPage').then((m) => ({ Component: m.TrashPage })),
                   },
+                  {
+                    path: 'models',
+                    lazy: () =>
+                      import('@/admin/ModelsPage').then((m) => ({ Component: m.ModelsPage })),
+                  },
+                  {
+                    path: 'models/:id',
+                    lazy: () =>
+                      import('@/admin/ModelRunPage').then((m) => ({ Component: m.ModelRunPage })),
+                  },
+                  {
+                    path: 'prelabelers',
+                    lazy: () =>
+                      import('@/admin/PrelabelersPage').then((m) => ({
+                        Component: m.PrelabelersPage,
+                      })),
+                  },
                 ],
               },
               {

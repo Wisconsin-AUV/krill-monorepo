@@ -1,6 +1,7 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { CloseButton } from '@headlessui/react'
 import {
+  AdjustmentsHorizontalIcon,
   ArchiveBoxIcon,
   ArrowLeftIcon,
   ChartBarIcon,
@@ -11,6 +12,7 @@ import {
   CommandLineIcon,
   ClipboardDocumentListIcon,
   ComputerDesktopIcon,
+  CubeIcon,
   CpuChipIcon,
   Cog6ToothIcon,
   FilmIcon,
@@ -100,6 +102,23 @@ const sections = [
         label: 'Worker tokens',
         to: '/admin/worker-tokens',
         icon: KeyIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'Pipeline',
+    items: [
+      {
+        label: 'Models',
+        to: '/admin/models',
+        icon: CubeIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Pre-labelers',
+        to: '/admin/prelabelers',
+        icon: AdjustmentsHorizontalIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
     ],

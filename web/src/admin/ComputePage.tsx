@@ -64,6 +64,9 @@ const taskNames: Record<string, string> = {
   track: 'Tracking',
   exemplar: 'Finding similar objects',
   embed: 'Embedding',
+  train: 'Training',
+  prelabel: 'Pre-labeling',
+  preview: 'Testing a pre-labeler on',
 }
 
 function Task({ task, now }: { task: RunningTask; now: number }) {
@@ -74,7 +77,7 @@ function Task({ task, now }: { task: RunningTask; now: number }) {
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-sky-400 opacity-75 motion-reduce:hidden" />
         <span className="relative inline-flex size-2 rounded-full bg-sky-500" />
       </span>
-      {taskNames[task.kind] ?? task.kind} {plural(task.frames, 'frame')}
+      {taskNames[task.kind] ?? task.kind} {task.frames > 0 && plural(task.frames, 'frame')}
       {started && (
         <span className="text-zinc-500 tabular-nums dark:text-zinc-400">
           for {formatDuration(now - started.getTime())}

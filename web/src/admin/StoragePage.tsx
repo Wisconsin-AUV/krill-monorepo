@@ -43,6 +43,7 @@ const kindNames: Record<ObjectKind, string> = {
   [ObjectKind.EXPORT]: 'Exports',
   [ObjectKind.LABEL_EXAMPLE]: 'Label examples',
   [ObjectKind.BACKUP]: 'Backups',
+  [ObjectKind.MODEL]: 'Models',
   [ObjectKind.UPLOAD]: 'Unfinished uploads',
   [ObjectKind.OTHER]: 'Other',
 }

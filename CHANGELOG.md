@@ -38,6 +38,11 @@ All notable changes to this project are documented here. The format follows
 - Deleted videos and clips go to a trash in the admin panel, where they can be restored with their labels or deleted for good. Deleting shows an Undo button, and the trash empties itself after `KRILL_TRASH_RETENTION_DAYS` (30 by default, 0 keeps everything).
 - A label type can be merged into another, mapping its attribute values onto the other type's. The preview shows the tracks, boxes, gold frames, and export classes it changes.
 - A Content page in the admin panel re-extracts frames, regenerates SAM embeddings for stale or chosen clips, and assigns or releases clips in bulk, with the progress of each job.
+- Admins can train YOLO on verified labels from the Models page, follow each epoch, and compare per-class precision, recall, and mAP on the validation and held-out test videos against the pinned model. Runs can be cancelled, and the GPU worker pauses training between batches whenever someone tracks, so clicks don't wait.
+- Retraining can run daily at a set hour once enough new labels are verified, and a scheduled model that beats the pinned one on the held-out test videos is pinned on its own.
+- Pinning a model, or rolling back to an older one, pre-labels every unlabeled frame outside the held-out test videos. Its boxes show as YOLO proposals with their confidence and go through the same accept and reject flow.
+- Classic CV pre-labelers for orange path markers and red and white slalom pipes, with HSV thresholds tuned on the Pre-labelers page against any frame.
+- Export defaults for the validation share, frame stride, and duplicate threshold are settings, and prefill the export form.
 
 ### Changed
 
@@ -50,6 +55,8 @@ All notable changes to this project are documented here. The format follows
 - A clip whose embedding is interrupted by a model switch is embedded again with the new model instead of failing.
 - The API image includes `pg_dump` 17 for backups.
 - Trashed videos and clips are left out of the queue, exports, stats, gold, and reviews until they are restored.
+- The clip queue starts with the clip whose pre-labels are least certain when videos are otherwise tied.
+- Pre-label tracks no longer wait for their last box to be accepted before exporting, since they can't drift like tracked boxes.
 
 ## [0.4.0] - 2026-10-14
 

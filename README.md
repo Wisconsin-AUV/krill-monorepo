@@ -38,6 +38,8 @@ To rotate a worker token, create a new one under Worker tokens, set it as the wo
 
 Deleted videos and clips wait in the panel's Trash until they are restored or purged. `KRILL_TRASH_RETENTION_DAYS` (30 by default) purges them after that many days, and 0 keeps them until someone empties the trash.
 
+Under Pipeline, the Models page trains YOLO on verified labels and pins the model that pre-labels, and the Pre-labelers page tunes the classic CV plugins. The first run downloads COCO weights from GitHub, so the worker needs internet access then.
+
 ## Accounts
 
 The first account to register becomes an admin. Later sign-ups are labelers, and admins promote them under Users in the admin panel. Password sign-up needs an `@wisc.edu` email, which `KRILL_SIGNUP_EMAIL_DOMAIN` changes. Set `KRILL_ALLOW_SIGNUP=false` to turn off open sign-up.
