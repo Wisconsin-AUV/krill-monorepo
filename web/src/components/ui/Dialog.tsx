@@ -39,6 +39,11 @@ export function Dialog({
               className,
               sizes[size],
               'row-start-2 w-full min-w-0 rounded-t-3xl bg-white p-(--gutter) shadow-lg ring-1 ring-zinc-950/10 [--gutter:--spacing(8)] sm:mb-auto sm:rounded-2xl dark:bg-zinc-900 dark:ring-white/10 forced-colors:outline',
+              // Fits the viewport so DialogBody scrolls instead of the panel,
+              // keeping the title, actions, and rounded corners in view. Forms
+              // wrapping the content pass the column layout through.
+              'flex max-h-[calc(100dvh-1.5rem)] flex-col sm:max-h-[calc(100dvh-2rem)]',
+              '[&>form]:flex [&>form]:min-h-0 [&>form]:flex-1 [&>form]:flex-col',
               'transition duration-100 will-change-transform data-closed:translate-y-12 data-closed:opacity-0 data-enter:ease-out data-leave:ease-in sm:data-closed:translate-y-0 sm:data-closed:data-enter:scale-95',
             )}
           >
@@ -75,7 +80,17 @@ export function DialogDescription({
 }
 
 export function DialogBody({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  return <div {...props} className={clsx(className, 'mt-6')} />
+  return (
+    <div
+      {...props}
+      className={clsx(
+        className,
+        // Spans the gutters so the scrollbar sits at the panel's edge, with a
+        // little vertical room so focus rings at the ends aren't clipped.
+        '-mx-(--gutter) mt-5 -mb-1 min-h-0 flex-1 overflow-y-auto px-(--gutter) py-1',
+      )}
+    />
+  )
 }
 
 export function DialogActions({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {

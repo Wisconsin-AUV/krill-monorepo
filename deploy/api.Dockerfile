@@ -4,6 +4,8 @@ RUN corepack enable
 COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./
+# vite.config.ts bundles ../CHANGELOG.md for the changelog dialog.
+COPY CHANGELOG.md /CHANGELOG.md
 RUN pnpm build
 
 FROM golang:1.26 AS build

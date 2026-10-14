@@ -18,7 +18,6 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { FlaggedPage, ReviewPage } from '@/pages/ReviewPage'
-import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { VideosPage } from '@/pages/VideosPage'
@@ -62,6 +61,44 @@ export const router = createBrowserRouter([
             lazy: () =>
               import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldAttemptPage })),
           },
+          // Only admins see the admin panel, so nobody else downloads it.
+          {
+            path: 'admin',
+            lazy: () => import('@/admin/AdminLayout').then((m) => ({ Component: m.AdminLayout })),
+            children: [
+              {
+                element: <RequirePermission permission={Permission.MANAGE_SYSTEM} />,
+                children: [
+                  {
+                    index: true,
+                    lazy: () =>
+                      import('@/admin/OverviewPage').then((m) => ({ Component: m.OverviewPage })),
+                  },
+                  {
+                    path: 'settings',
+                    lazy: () =>
+                      import('@/admin/SettingsPage').then((m) => ({ Component: m.SettingsPage })),
+                  },
+                  {
+                    path: 'compute',
+                    lazy: () =>
+                      import('@/admin/ComputePage').then((m) => ({ Component: m.ComputePage })),
+                  },
+                ],
+              },
+              {
+                element: <RequirePermission permission={Permission.MANAGE_USERS} />,
+                children: [
+                  {
+                    path: 'users',
+                    lazy: () =>
+                      import('@/admin/UsersPage').then((m) => ({ Component: m.UsersPage })),
+                  },
+                ],
+              },
+              { path: '*', element: <NotFound /> },
+            ],
+          },
           {
             element: <AppLayout />,
             children: [
@@ -94,10 +131,7 @@ export const router = createBrowserRouter([
                   { path: 'gold', element: <Navigate to="/review/gold" replace /> },
                 ],
               },
-              {
-                element: <RequirePermission permission={Permission.MANAGE_USERS} />,
-                children: [{ path: 'users', element: <UsersPage /> }],
-              },
+              { path: 'users', element: <Navigate to="/admin/users" replace /> },
               { path: '*', element: <NotFound /> },
             ],
           },
