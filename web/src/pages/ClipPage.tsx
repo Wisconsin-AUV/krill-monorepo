@@ -227,6 +227,32 @@ export function ClipPage() {
 
   const review = useMemo(() => reviewTracks(frames, boxes), [frames, boxes])
 
+  const frameBars = useMemo(
+    () =>
+      frames.map((f) => {
+        const byTrack = boxes[idKey(f.id)]
+        return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0).bar
+      }),
+    [frames, boxes, frameStatus],
+  )
+  const selectedBars = useMemo(() => {
+    if (selectedTrackId === null) return undefined
+    const k = idKey(selectedTrackId)
+    return frames.map((f) => (boxes[idKey(f.id)]?.[k] ? 'bg-sky-500 dark:bg-sky-400' : undefined))
+  }, [frames, boxes, selectedTrackId])
+  const driftFlags = useMemo(
+    () => frames.map((f) => review.drift.has(idKey(f.id))),
+    [frames, review],
+  )
+  const reviewMarks = useMemo(
+    () =>
+      frames.map((f) => {
+        const k = idKey(f.id)
+        return !!(k in reviewEdits ? reviewEdits[k] : f.review)
+      }),
+    [frames, reviewEdits],
+  )
+
   const typeCounts = useMemo(() => {
     const counts = new Map<bigint, number>()
     for (const t of Object.values(trackMap))
@@ -436,7 +462,6 @@ export function ClipPage() {
 
   const { video, clip } = data
   const zoomPct = fitScale > 0 ? Math.round((view.scale / fitScale) * 100) : 100
-  const selectedKey = selectedTrackId !== null ? idKey(selectedTrackId) : null
   const otherLabeler = takenByOther(clip.claim, me?.id) ? clip.claim?.user?.name : undefined
 
   const navbar = (
@@ -614,22 +639,10 @@ export function ClipPage() {
         </div>
 
         <Timeline
-          frameClass={(i) => {
-            const f = frames[i]
-            const byTrack = boxes[idKey(f.id)]
-            return frameState(frameStatus[idKey(f.id)], byTrack ? Object.keys(byTrack).length : 0)
-              .bar
-          }}
-          trackClass={
-            selectedKey
-              ? (i) =>
-                  boxes[idKey(frames[i].id)]?.[selectedKey]
-                    ? 'bg-sky-500 dark:bg-sky-400'
-                    : undefined
-              : undefined
-          }
-          flagged={(i) => review.drift.has(idKey(frames[i].id))}
-          marked={(i) => !!reviewOf(frames[i])}
+          frameClasses={frameBars}
+          trackClasses={selectedBars}
+          flagged={driftFlags}
+          marked={reviewMarks}
         />
         <ShortcutsDialog
           open={showHelp}
