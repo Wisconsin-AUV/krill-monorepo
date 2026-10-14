@@ -113,7 +113,7 @@ Pre-releases use a suffix: `v0.3.0-rc.1`. Build metadata is not used.
 
 The version lives in:
 
-- `web/package.json` (`version`)
+- `web/package.json` and `emails/package.json` (`version`)
 - `worker/pyproject.toml` (`project.version`) and `worker/src/krill_worker/__init__.py`
 - The Go API receives it at build time from the tag (`-ldflags "-X main.version=..."`)
 

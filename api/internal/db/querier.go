@@ -16,8 +16,10 @@ type Querier interface {
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
+	ClearPassword(ctx context.Context, id uuid.UUID) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
+	CountEmailCodeAttempt(ctx context.Context, arg CountEmailCodeAttemptParams) error
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
 	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
@@ -34,6 +36,7 @@ type Querier interface {
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
+	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
 	DeleteExpiredSessions(ctx context.Context) error
 	DeleteGoldFrame(ctx context.Context, frameID int64) error
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
@@ -49,6 +52,7 @@ type Querier interface {
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
 	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
+	EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, error)
 	// Queues the frames the labeler marked done since their gold check before the
 	// one on @gold_frame_id, newest first.
 	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
@@ -83,6 +87,10 @@ type Querier interface {
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) error
+	// Replaces the user's code for this purpose once the cooldown has passed. With
+	// keep_live, a code that has not expired and went to the same address is kept.
+	// No row means nothing was issued.
+	IssueEmailCode(ctx context.Context, arg IssueEmailCodeParams) (pgtype.Timestamptz, error)
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
@@ -118,7 +126,9 @@ type Querier interface {
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
 	LockUsers(ctx context.Context) error
+	MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error)
 	// Started clips that were abandoned come first so they get finished. After
 	// that, clips come from the video with the fewest clips worked on, so labels
 	// spread across as much footage as possible.
@@ -140,6 +150,7 @@ type Querier interface {
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
+	SetPendingEmail(ctx context.Context, arg SetPendingEmailParams) (User, error)
 	SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (User, error)
 	SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (int64, error)
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
@@ -158,6 +169,7 @@ type Querier interface {
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)
+	VerifyUserEmail(ctx context.Context, arg VerifyUserEmailParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

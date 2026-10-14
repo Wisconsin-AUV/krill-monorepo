@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-14
+
+### Added
+
+- Email verification: with `KRILL_EMAIL_VERIFICATION=verify`, new accounts enter a code emailed to them. Emails are sent through Resend with `KRILL_RESEND_API_KEY` and `KRILL_EMAIL_FROM`.
+- Password reset with an emailed code.
+- Sign in with an emailed code.
+- Changing your email takes effect once a code sent to the new address is entered.
+
+### Changed
+
+- Tracked boxes are dropped once only a sliver of the object is left at the frame edge.
+
+### Removed
+
+- Guideline link in the top navigation bar.
+
+### Fixed
+
+- Buttons keep their height while showing a loading spinner.
+- Deleting a single box is visible and can be done from the track panel.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added
@@ -49,6 +71,7 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Wisconsin-AUV/krill-monorepo/releases/tag/v0.1.0

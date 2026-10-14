@@ -5,9 +5,9 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
-import { useAnimate, useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
+import { useShake } from '@/components/useShake'
 import { MIN_CHAR_TYPES, MIN_PASSWORD_LENGTH, MIN_SCORE, type PasswordCheck } from '@/lib/password'
 
 function Mark({ met }: { met: boolean }) {
@@ -103,8 +103,6 @@ const passwordRules = {
   passwordrules: `minlength: ${MIN_PASSWORD_LENGTH}; required: lower; required: upper; required: digit; required: special;`,
 } as object
 
-const SHAKE_MS = 400
-
 export function PasswordInput({
   value,
   onChange,
@@ -130,25 +128,8 @@ export function PasswordInput({
 }) {
   const [visible, setVisible] = useState(false)
   const [focused, setFocused] = useState(false)
-  // The ring stays red until the latest shake has played out.
-  const [settledShake, setSettledShake] = useState(shake)
-  const shaking = shake !== settledShake
-  const [scope, animate] = useAnimate<HTMLDivElement>()
-  const reduceMotion = useReducedMotion()
+  const { scope, shaking } = useShake(shake)
   const Icon = visible ? EyeIcon : EyeSlashIcon
-
-  // Only a change after mount means a new failure, so a field that remounts
-  // with an old count stays still.
-  const lastShake = useRef(shake)
-  useEffect(() => {
-    if (shake === lastShake.current) return
-    lastShake.current = shake
-    if (!reduceMotion) {
-      void animate(scope.current, { x: [0, 5, -4, 4, -2, 0] }, { duration: SHAKE_MS / 1000 })
-    }
-    const done = setTimeout(() => setSettledShake(shake), SHAKE_MS)
-    return () => clearTimeout(done)
-  }, [shake, reduceMotion, animate, scope])
 
   const label = visible ? 'Hide password' : 'Show password'
 

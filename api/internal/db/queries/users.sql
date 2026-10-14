@@ -28,7 +28,11 @@ SELECT EXISTS (SELECT 1 FROM users WHERE username = $1);
 SELECT * FROM users ORDER BY created_at, id;
 
 -- name: UpdateUserProfile :one
-UPDATE users SET name = $2, username = $3, email = $4 WHERE id = $1 RETURNING *;
+UPDATE users
+SET name = $2, username = $3, email = $4,
+    email_verified_at = CASE WHEN email = $4 THEN email_verified_at END
+WHERE id = $1
+RETURNING *;
 
 -- name: SetUserRole :one
 UPDATE users SET role = $2 WHERE id = $1 RETURNING *;
@@ -67,3 +71,18 @@ DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2;
 
 -- name: DeleteExpiredSessions :exec
 DELETE FROM sessions WHERE expires_at <= now();
+
+-- name: VerifyUserEmail :one
+UPDATE users SET email = $2, email_verified_at = now(), pending_email = NULL WHERE id = $1 RETURNING *;
+
+-- name: SetPendingEmail :one
+UPDATE users SET pending_email = $2 WHERE id = $1 RETURNING *;
+
+-- name: EmailInUse :one
+SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND id <> $2);
+
+-- name: MarkEmailVerified :one
+UPDATE users SET email_verified_at = coalesce(email_verified_at, now()) WHERE id = $1 RETURNING *;
+
+-- name: ClearPassword :exec
+UPDATE users SET password_hash = NULL WHERE id = $1;

@@ -1,3 +1,12 @@
+// How long a step's button spins before the next step shows, so it doesn't
+// snap past before anyone sees it worked.
+export const CONTINUE_MS = 350
+
+export async function atLeastContinue<T>(work: Promise<T>): Promise<T> {
+  const [result] = await Promise.all([work, new Promise((r) => setTimeout(r, CONTINUE_MS))])
+  return result
+}
+
 // The password slot opens with the field hidden, then the field fades in.
 // Anything else that appears with it takes its space at once and fades in
 // at the same moment.
@@ -24,4 +33,22 @@ export const fadeWithPassword = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { delay: OPEN_S, duration: FADE_S, ease: 'linear' } },
   exit: { opacity: 0, transition: { duration: 0 } },
+} as const
+
+// Swaps one step's fields for the next: the old fields close as the new slot
+// opens, so the form's height moves smoothly, then the new fields fade in.
+export const swapStep = {
+  initial: revealPassword.initial,
+  animate: revealPassword.animate,
+  exit: {
+    height: 0,
+    marginTop: '-2rem',
+    opacity: 0,
+    overflow: 'hidden',
+    transition: {
+      height: { duration: OPEN_S, ease: 'easeOut' },
+      marginTop: { duration: OPEN_S, ease: 'easeOut' },
+      opacity: { duration: 0 },
+    },
+  },
 } as const

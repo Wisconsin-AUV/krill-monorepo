@@ -4,6 +4,7 @@ import { Permission } from '@/gen/krill/v1/user_pb'
 import { AppChrome, AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { RequireAuth, RequirePermission } from '@/layouts/RequireAuth'
+import { VerifyLayout } from '@/layouts/VerifyLayout'
 import { AccountPage } from '@/pages/AccountPage'
 import { AttributesPage } from '@/pages/AttributesPage'
 import { ExportsPage } from '@/pages/ExportsPage'
@@ -15,9 +16,11 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFound } from '@/pages/NotFound'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { ReviewPage } from '@/pages/ReviewPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { VideosPage } from '@/pages/VideosPage'
 
 export const router = createBrowserRouter([
@@ -34,7 +37,12 @@ export const router = createBrowserRouter([
         children: [
           { path: 'login', element: <LoginPage /> },
           { path: 'register', element: <RegisterPage /> },
+          { path: 'reset-password', element: <ResetPasswordPage /> },
         ],
+      },
+      {
+        element: <VerifyLayout />,
+        children: [{ path: 'verify', element: <VerifyEmailPage /> }],
       },
       {
         element: <RequireAuth />,

@@ -332,6 +332,15 @@ export function ClipPage() {
     labels().select(ids[(at + delta + ids.length) % ids.length])
   }
 
+  function deleteSelected() {
+    if (!frame) return
+    if (selectedTrackId === null) {
+      if (frameBoxes.length > 0) flash.info('Select a box first')
+      return
+    }
+    void labels().deleteBox(selectedTrackId, frame.id)
+  }
+
   const typeKeys = Object.fromEntries(
     types.slice(0, 9).map((t, i) => [String(i + 1), () => labels().setActiveType(t.id)]),
   )
@@ -361,10 +370,8 @@ export function ClipPage() {
           Escape: () => labels().select(null),
           Tab: () => cycleSelection(1),
           'shift+Tab': () => cycleSelection(-1),
-          Delete: () =>
-            frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
-          Backspace: () =>
-            frame && selectedTrackId !== null && void labels().deleteBox(selectedTrackId, frame.id),
+          Delete: deleteSelected,
+          Backspace: deleteSelected,
           'shift+Delete': () =>
             selectedTrackId !== null && void labels().deleteTrack(selectedTrackId),
           'shift+Backspace': () =>

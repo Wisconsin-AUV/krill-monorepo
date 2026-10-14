@@ -8,9 +8,11 @@ import (
 	"net/http/httptest"
 	"slices"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
@@ -195,6 +197,60 @@ func TestListTracksByTypeAccess(t *testing.T) {
 				t.Errorf("err = %v, want code %v", err, tt.want)
 			}
 		})
+	}
+}
+
+type authStub struct {
+	krillv1connect.UnimplementedAuthServiceHandler
+}
+
+func (authStub) VerifyEmail(context.Context, *krillv1.VerifyEmailRequest) (*krillv1.VerifyEmailResponse, error) {
+	return &krillv1.VerifyEmailResponse{}, nil
+}
+
+func TestInterceptorRequiresVerifiedEmail(t *testing.T) {
+	verified := pgtype.Timestamptz{Time: time.Now(), Valid: true}
+	users := map[string]db.User{
+		"verified":   {Role: "admin", EmailVerifiedAt: verified},
+		"unverified": {Role: "admin"},
+	}
+	lookup := func(_ context.Context, hash []byte) (db.User, error) {
+		for token, u := range users {
+			if string(hashToken(token)) == string(hash) {
+				return u, nil
+			}
+		}
+		return db.User{}, pgx.ErrNoRows
+	}
+
+	for _, required := range []bool{true, false} {
+		mux := http.NewServeMux()
+		opts := connect.WithInterceptors(NewInterceptor(lookup, "").RequireVerifiedEmail(required))
+		mux.Handle(krillv1connect.NewLabelServiceHandler(labelStub{}, opts))
+		mux.Handle(krillv1connect.NewAuthServiceHandler(authStub{}, opts))
+		srv := httptest.NewServer(mux)
+
+		for _, tt := range []struct {
+			token string
+			want  connect.Code
+		}{
+			{"verified", 0},
+			{"unverified", connect.CodePermissionDenied},
+		} {
+			if !required {
+				tt.want = 0
+			}
+			labels := krillv1connect.NewLabelServiceClient(srv.Client(), srv.URL, withCookie(tt.token))
+			_, err := labels.ListLabelTypes(t.Context(), &krillv1.ListLabelTypesRequest{})
+			if tt.want == 0 && err != nil || tt.want != 0 && connect.CodeOf(err) != tt.want {
+				t.Errorf("required=%v %s lists labels: err = %v, want code %v", required, tt.token, err, tt.want)
+			}
+			auth := krillv1connect.NewAuthServiceClient(srv.Client(), srv.URL, withCookie(tt.token))
+			if _, err := auth.VerifyEmail(t.Context(), &krillv1.VerifyEmailRequest{}); err != nil {
+				t.Errorf("required=%v %s verifies: %v", required, tt.token, err)
+			}
+		}
+		srv.Close()
 	}
 }
 
