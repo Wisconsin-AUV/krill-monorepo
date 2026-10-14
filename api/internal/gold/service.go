@@ -79,7 +79,7 @@ func (s *Service) SetGoldFrame(ctx context.Context, req *krillv1.SetGoldFrameReq
 	if f.Status == "unlabeled" {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("finish labeling the frame first"))
 	}
-	rows, err := s.q.ListFrameVerifiedBoxes(ctx, f.ID)
+	rows, err := s.q.ListFrameGoldBoxes(ctx, f.ID)
 	if err != nil {
 		return nil, rpc.Internal(err, "list boxes")
 	}
