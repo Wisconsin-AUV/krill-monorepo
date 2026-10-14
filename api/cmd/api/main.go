@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/wauv/krill/api/internal/queue"
 	"github.com/wauv/krill/api/internal/review"
 	"github.com/wauv/krill/api/internal/rpc"
+	"github.com/wauv/krill/api/internal/settings"
 	"github.com/wauv/krill/api/internal/stats"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -55,15 +57,17 @@ func main() {
 }
 
 func run() error {
-	cfg, err := config.Load()
-	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+	// Everything else can be saved in the database, so it is parsed once
+	// the database is reachable.
+	databaseURL, ok := config.Env("KRILL_DATABASE_URL")
+	if !ok {
+		return errors.New("KRILL_DATABASE_URL is required")
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		return fmt.Errorf("connect database: %w", err)
 	}
@@ -71,6 +75,16 @@ func run() error {
 	if err := db.Migrate(ctx, pool); err != nil {
 		return err
 	}
+	settingsStore, err := settings.Open(ctx, pool, config.Env)
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+	// Only env-only fields may be read from cfg. The rest come from live so
+	// changes saved in the admin panel apply without a restart.
+	cfg := settingsStore.Config()
+	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
+	var live atomic.Pointer[runtime]
+	settingsStore.OnChange(func(c config.Config) { live.Store(newRuntime(c, cookies)) })
 	migrator, err := rivermigrate.New(riverpgxv5.New(pool), nil)
 	if err != nil {
 		return fmt.Errorf("create river migrator: %w", err)
@@ -104,7 +118,7 @@ func run() error {
 
 	dispatcher := tracker.NewDispatcher()
 	workers := river.NewWorkers()
-	river.AddWorker(workers, ingest.NewWorker(pool, store, cfg.EmbedAtIngest))
+	river.AddWorker(workers, ingest.NewWorker(pool, store, func() bool { return live.Load().cfg.EmbedAtIngest }))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
@@ -126,47 +140,19 @@ func run() error {
 		return fmt.Errorf("start jobs: %w", err)
 	}
 
-	goldRouting := review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts}
-	cookies := auth.Cookies{Secure: strings.HasPrefix(cfg.PublicURL, "https://")}
-	var mailer email.Sender
-	switch {
-	case cfg.ResendAPIKey != "":
-		mailer = email.NewResend(cfg.ResendAPIKey, cfg.EmailFrom)
-	case cfg.LogEmails:
-		mailer = email.Log{}
-	}
-	signupDomain := cfg.SignupEmailDomain
-	if cfg.EmailVerification == config.VerifyOff {
-		signupDomain = ""
-	}
-	requireVerified := cfg.EmailVerification == config.VerifyCode
+	goldRouting := func() review.GoldRouting { return live.Load().gold }
 	rpcOpts := connect.WithInterceptors(
 		rpc.ErrorInterceptor{},
-		auth.NewInterceptor(db.New(pool).GetSessionUser, cfg.WorkerToken).RequireVerifiedEmail(requireVerified),
+		auth.NewInterceptor(db.New(pool).GetSessionUser, func() string { return live.Load().cfg.WorkerToken }).
+			RequireVerifiedEmail(func() bool { return live.Load().auth.RequireVerifiedEmail }),
 	)
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewHealthServiceHandler(health.NewService(version), rpcOpts))
-	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, auth.Options{
-		Cookies:              cookies,
-		AllowSignup:          cfg.AllowSignup,
-		SignupEmailDomain:    signupDomain,
-		RequireVerifiedEmail: requireVerified,
-		Mailer:               mailer,
-		SlackEnabled:         cfg.SlackClientID != "",
-		TeamName:             cfg.TeamName,
-		ClientIPHeader:       cfg.ClientIPHeader,
-	}), rpcOpts))
-	if cfg.SlackClientID != "" {
-		slack := auth.NewSlack(pool, auth.SlackConfig{
-			ClientID:     cfg.SlackClientID,
-			ClientSecret: cfg.SlackClientSecret,
-			TeamID:       cfg.SlackTeamID,
-			PublicURL:    cfg.PublicURL,
-		}, cookies)
-		mux.HandleFunc("GET /auth/slack/login", slack.Login)
-		mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
-	}
-	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, cfg.EmbedAtIngest), rpcOpts))
+	mux.Handle(krillv1connect.NewAuthServiceHandler(auth.NewService(pool, func() auth.Options { return live.Load().auth }), rpcOpts))
+	slack := auth.NewSlack(pool, func() auth.SlackConfig { return live.Load().slack }, cookies)
+	mux.HandleFunc("GET /auth/slack/login", slack.Login)
+	mux.HandleFunc("GET /auth/slack/callback", slack.Callback)
+	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, func() bool { return live.Load().cfg.EmbedAtIngest }), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
 	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
@@ -213,4 +199,46 @@ func run() error {
 		return fmt.Errorf("stop jobs: %w", err)
 	}
 	return nil
+}
+
+// runtime is what the services need from one version of the config.
+type runtime struct {
+	cfg   config.Config
+	auth  auth.Options
+	slack auth.SlackConfig
+	gold  review.GoldRouting
+}
+
+func newRuntime(cfg config.Config, cookies auth.Cookies) *runtime {
+	var mailer email.Sender
+	switch {
+	case cfg.ResendAPIKey != "":
+		mailer = email.NewResend(cfg.ResendAPIKey, cfg.EmailFrom)
+	case cfg.LogEmails:
+		mailer = email.Log{}
+	}
+	signupDomain := cfg.SignupEmailDomain
+	if cfg.EmailVerification == config.VerifyOff {
+		signupDomain = ""
+	}
+	return &runtime{
+		cfg: cfg,
+		auth: auth.Options{
+			Cookies:              cookies,
+			AllowSignup:          cfg.AllowSignup,
+			SignupEmailDomain:    signupDomain,
+			RequireVerifiedEmail: cfg.EmailVerification == config.VerifyCode,
+			Mailer:               mailer,
+			SlackEnabled:         cfg.SlackClientID != "",
+			TeamName:             cfg.TeamName,
+			ClientIPHeader:       cfg.ClientIPHeader,
+		},
+		slack: auth.SlackConfig{
+			ClientID:     cfg.SlackClientID,
+			ClientSecret: cfg.SlackClientSecret,
+			TeamID:       cfg.SlackTeamID,
+			PublicURL:    cfg.PublicURL,
+		},
+		gold: review.GoldRouting{Threshold: cfg.GoldReviewThreshold, MinAttempts: cfg.GoldReviewMinAttempts},
+	}
 }

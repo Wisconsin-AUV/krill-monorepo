@@ -38,11 +38,11 @@ type Service struct {
 	q             *db.Queries
 	store         *storage.Store
 	jobs          *river.Client[pgx.Tx]
-	embedAtIngest bool
+	embedAtIngest func() bool
 	*Presenter
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], embedAtIngest bool) *Service {
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], embedAtIngest func() bool) *Service {
 	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs, embedAtIngest: embedAtIngest, Presenter: NewPresenter(store)}
 }
 
@@ -182,7 +182,7 @@ func (s *Service) GetVideo(ctx context.Context, req *krillv1.GetVideoRequest) (*
 			Boxes:         stats.BoxCount,
 		}),
 		Clips:         out,
-		EmbedAtIngest: s.embedAtIngest,
+		EmbedAtIngest: s.embedAtIngest(),
 	}, nil
 }
 

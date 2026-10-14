@@ -45,6 +45,7 @@ type Querier interface {
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
+	DeleteSetting(ctx context.Context, key string) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
 	// Clears what an earlier run proposed on frames the new run covers.
@@ -121,6 +122,7 @@ type Querier interface {
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
+	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
 	// Each track comes with its first verified box, or its middle box when none
 	// is verified yet.
@@ -174,6 +176,7 @@ type Querier interface {
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
 	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
+	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)

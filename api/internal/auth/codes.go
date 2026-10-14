@@ -98,7 +98,7 @@ func (s *Service) origin(ctx context.Context) origin {
 // transaction, so a failed send leaves no code behind. Without resend, a live
 // code is kept and nothing is sent.
 func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, purpose string, resend bool, from origin) error {
-	if s.opts.Mailer == nil {
+	if s.opts().Mailer == nil {
 		return errNoEmail
 	}
 	account := u.ID.String()
@@ -134,7 +134,7 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 		Device:   from.device,
 		IP:       from.ip,
 		Time:     from.at.Format("2 January 2006, 15:04 UTC"),
-		Team:     s.opts.TeamName,
+		Team:     s.opts().TeamName,
 		Year:     from.at.Year(),
 		Email:    to,
 		Username: u.Username,
@@ -150,7 +150,7 @@ func (s *Service) sendCode(ctx context.Context, q *db.Queries, u db.User, to, pu
 	if err != nil {
 		return rpc.Internal(err, "render email")
 	}
-	if err := s.opts.Mailer.Send(ctx, msg); err != nil {
+	if err := s.opts().Mailer.Send(ctx, msg); err != nil {
 		slog.Error("send email", "purpose", purpose, "err", err)
 		return connect.NewError(connect.CodeAborted, errors.New("could not send the email; try again"))
 	}
@@ -274,7 +274,7 @@ func (s *Service) ResetPassword(ctx context.Context, req *krillv1.ResetPasswordR
 	if err != nil {
 		return nil, err
 	}
-	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
+	setCookie(ctx, s.opts().Cookies.LastLogin("password"))
 	return &krillv1.ResetPasswordResponse{User: ToProto(user)}, nil
 }
 
@@ -311,7 +311,7 @@ func (s *Service) SignInWithCode(ctx context.Context, req *krillv1.SignInWithCod
 // responds the same whether or not the account exists, and sends in the
 // background so the response time doesn't say either.
 func (s *Service) requestCode(ctx context.Context, login, purpose string) error {
-	if s.opts.Mailer == nil {
+	if s.opts().Mailer == nil {
 		return errNoEmail
 	}
 	ip := s.clientIP(ctx)
@@ -374,7 +374,7 @@ func (s *Service) redeemCode(ctx context.Context, login, rawCode, purpose string
 	if user, err = q.MarkEmailVerified(ctx, user.ID); err != nil {
 		return db.User{}, rpc.Internal(err, "verify email")
 	}
-	cookie, err := s.opts.Cookies.StartSession(ctx, q, user.ID)
+	cookie, err := s.opts().Cookies.StartSession(ctx, q, user.ID)
 	if err != nil {
 		return db.User{}, rpc.Internal(err, "start session")
 	}

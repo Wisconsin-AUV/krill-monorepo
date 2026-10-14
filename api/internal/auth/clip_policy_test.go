@@ -35,7 +35,7 @@ func TestDeleteClipAccess(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewClipServiceHandler(clipStub{},
-		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+		connect.WithInterceptors(NewInterceptor(lookup, workerToken("worker-token")))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 

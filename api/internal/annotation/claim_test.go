@@ -29,7 +29,7 @@ func TestEditsClaimClips(t *testing.T) {
 		t.Fatal(err)
 	}
 	q := db.New(pool)
-	s := NewService(pool, nil, nil, review.GoldRouting{})
+	s := NewService(pool, nil, nil, func() review.GoldRouting { return review.GoldRouting{} })
 
 	user := func(name, role string) db.User {
 		var u db.User

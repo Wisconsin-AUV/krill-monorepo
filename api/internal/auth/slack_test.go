@@ -9,7 +9,9 @@ import (
 )
 
 func testSlack() *Slack {
-	return NewSlack(nil, SlackConfig{ClientID: "id", ClientSecret: "secret", TeamID: "T1", PublicURL: "https://krill.test"}, Cookies{Secure: true})
+	return NewSlack(nil, func() SlackConfig {
+		return SlackConfig{ClientID: "id", ClientSecret: "secret", TeamID: "T1", PublicURL: "https://krill.test"}
+	}, Cookies{Secure: true})
 }
 
 func TestSlackLogin(t *testing.T) {
@@ -40,6 +42,23 @@ func TestSlackCallbackRejectsBadState(t *testing.T) {
 		testSlack().Callback(rec, req)
 		if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/login?error=") {
 			t.Errorf("cookie %q: Location = %q, want the login page", cookie, loc)
+		}
+	}
+}
+
+func TestSlackTurnedOffStopsSignIn(t *testing.T) {
+	s := NewSlack(nil, func() SlackConfig { return SlackConfig{PublicURL: "https://krill.test"} }, Cookies{Secure: true})
+	for _, path := range []string{"/auth/slack/login", "/auth/slack/callback?code=c&state=s"} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil)
+		req.Header.Set("Cookie", stateCookie+"=s")
+		if strings.HasPrefix(path, "/auth/slack/login") {
+			s.Login(rec, req)
+		} else {
+			s.Callback(rec, req)
+		}
+		if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/login?error=") {
+			t.Errorf("%s redirected to %q", path, loc)
 		}
 	}
 }

@@ -21,19 +21,19 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 // Interceptor loads the caller's session and enforces the role policy.
 type Interceptor struct {
 	lookup        SessionLookup
-	workerToken   string
-	verifiedEmail bool
+	workerToken   func() string
+	verifiedEmail func() bool
 }
 
 // NewInterceptor returns an interceptor that also accepts workerToken as a
 // bearer token on worker procedures. An empty token turns them off.
-func NewInterceptor(lookup SessionLookup, workerToken string) *Interceptor {
-	return &Interceptor{lookup: lookup, workerToken: workerToken}
+func NewInterceptor(lookup SessionLookup, workerToken func() string) *Interceptor {
+	return &Interceptor{lookup: lookup, workerToken: workerToken, verifiedEmail: func() bool { return false }}
 }
 
 // RequireVerifiedEmail limits accounts with an unverified email to the
-// procedures that verify it.
-func (i *Interceptor) RequireVerifiedEmail(required bool) *Interceptor {
+// procedures that verify it while required returns true.
+func (i *Interceptor) RequireVerifiedEmail(required func() bool) *Interceptor {
 	i.verifiedEmail = required
 	return i
 }
@@ -95,7 +95,7 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	if need == unverified {
 		return ctx, nil
 	}
-	if i.verifiedEmail && !s.User.EmailVerifiedAt.Valid {
+	if i.verifiedEmail() && !s.User.EmailVerifiedAt.Valid {
 		return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("verify your email to continue"))
 	}
 	if need != signedIn && !Can(ParseRole(s.User.Role), need) {
@@ -106,5 +106,6 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 
 func (i *Interceptor) isWorker(h http.Header) bool {
 	token, ok := strings.CutPrefix(h.Get("Authorization"), "Bearer ")
-	return ok && i.workerToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(i.workerToken)) == 1
+	want := i.workerToken()
+	return ok && want != "" && subtle.ConstantTimeCompare([]byte(token), []byte(want)) == 1
 }
