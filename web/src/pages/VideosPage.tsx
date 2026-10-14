@@ -48,7 +48,7 @@ export function VideosPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Heading>Videos</Heading>
-          <Text className="mt-1">Pool footage to label. Each video is split into short clips.</Text>
+          <Text className="mt-1">Footage to label. Each video is split into short clips.</Text>
         </div>
         {canManage && (
           <Button color="sky" onClick={() => setUploading(true)}>
@@ -83,7 +83,7 @@ export function VideosPage() {
             title="No videos yet"
             description={
               canManage
-                ? 'Upload pool footage to start labeling.'
+                ? 'Upload footage to start labeling.'
                 : 'A developer needs to upload footage before you can label.'
             }
           >

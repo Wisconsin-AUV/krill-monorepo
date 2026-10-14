@@ -6,13 +6,7 @@ import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
-import {
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/Dialog'
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import { Text } from '@/components/ui/Text'
@@ -80,16 +74,11 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
   return (
     <form onSubmit={submit}>
       <DialogTitle>{type ? `Edit ${type.name}` : 'New label type'}</DialogTitle>
-      <DialogDescription>
-        Attributes are set once per track and inherited by every frame in it.
-      </DialogDescription>
       <DialogBody>
         <FieldGroup>
           <Field>
             <Label>Name</Label>
-            <Description>
-              Lowercase snake_case, such as torpedo_hole. Used in exported class names.
-            </Description>
+            <Description>Lowercase snake_case, such as torpedo_hole.</Description>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -136,9 +125,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 
           <Field>
             <Label>Description</Label>
-            <Description>
-              What counts as this object. Link to the labeling guideline for edge cases.
-            </Description>
+            <Description>What counts as this object.</Description>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -160,7 +147,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 
           <Fieldset>
             <Legend>Attributes</Legend>
-            <Text>For example size with options big, small. Options are comma separated.</Text>
+            <Text>Options are comma separated.</Text>
             <div className="mt-4 space-y-3">
               {attributes.map((a) => (
                 <div key={a.id} className="flex items-start gap-2">
