@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
 import { GoldService } from '@/gen/krill/v1/gold_pb'
-import { initials } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -82,10 +81,7 @@ export function GoldPage() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar
-                          initials={initials(l.user?.name ?? '')}
-                          className="size-8 rounded-full bg-sky-600"
-                        />
+                        <Avatar seed={l.user?.id ?? ''} className="size-8" />
                         <button
                           type="button"
                           className="font-medium text-zinc-950 focus:outline-none focus-visible:underline dark:text-white"
