@@ -38,7 +38,7 @@ function Sessions({ user }: { user: User }) {
     userId: user.id,
   })
   const revoke = useRevokeSession()
-  if (isPending) return <LoadingSpinner className="mt-6" />
+  if (isPending) return <LoadingSpinner className="mt-6 size-6 text-gray-500" />
   if (error) return <QueryError title="Could not load sessions" error={error} className="mt-6" />
   if (data.sessions.length === 0) {
     return <p className="mt-4 text-sm/6 text-zinc-500 dark:text-zinc-400">Not signed in</p>
@@ -59,7 +59,7 @@ function Activity({ user }: { user: User }) {
     targetId: user.id,
     pageSize: 20,
   })
-  if (isPending) return <LoadingSpinner className="mt-6" />
+  if (isPending) return <LoadingSpinner className="mt-6 size-6 text-gray-500" />
   if (error) return <QueryError title="Could not load activity" error={error} className="mt-6" />
   if (data.entries.length === 0) {
     return <p className="mt-4 text-sm/6 text-zinc-500 dark:text-zinc-400">No changes yet</p>

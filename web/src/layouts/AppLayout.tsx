@@ -229,7 +229,7 @@ export function AppLayout() {
                 <NavbarItem key={to} to={to} current={match(pathname)}>
                   <Icon data-slot="icon" />
                   <NavbarLabel>{label}</NavbarLabel>
-                  {counts[to] > 0 && <Badge>{counts[to]}</Badge>}
+                  {counts[to] > 0 && <Badge className="-my-0.5">{counts[to]}</Badge>}
                 </NavbarItem>
               ))}
             </NavbarSection>
