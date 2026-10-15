@@ -58,6 +58,10 @@ All notable changes to this project are documented here. The format follows
 - The clip queue starts with the clip whose pre-labels are least certain when videos are otherwise tied.
 - Pre-label tracks no longer wait for their last box to be accepted before exporting, since they can't drift like tracked boxes.
 
+### Fixed
+
+- Icons in menus turn white with the highlighted item instead of staying gray, and follow the system colors in high contrast mode.
+
 ## [0.4.0] - 2026-10-14
 
 ### Added
