@@ -53,12 +53,21 @@ UPDATE users SET last_login_at = now() WHERE id = $1;
 DELETE FROM users WHERE id = $1;
 
 -- name: CreateSession :exec
-INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3);
+INSERT INTO sessions (token_hash, user_id, expires_at, ip, user_agent) VALUES ($1, $2, $3, $4, $5);
 
--- name: GetSessionUser :one
+-- name: LookupSession :one
+-- Returns the session's active user. A session not seen for five minutes is
+-- marked seen in the same statement, so most requests don't write.
+WITH seen AS (
+    UPDATE sessions
+    SET last_seen_at = now(), ip = CASE WHEN @ip::text = '' THEN sessions.ip ELSE @ip::text END
+    WHERE sessions.token_hash = @token_hash
+        AND sessions.expires_at > now()
+        AND sessions.last_seen_at < now() - interval '5 minutes'
+)
 SELECT u.* FROM sessions s
 JOIN users u ON u.id = s.user_id
-WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.disabled;
+WHERE s.token_hash = @token_hash AND s.expires_at > now() AND NOT u.disabled;
 
 -- name: DeleteSession :exec
 DELETE FROM sessions WHERE token_hash = $1;
@@ -89,3 +98,28 @@ UPDATE users SET password_hash = NULL WHERE id = $1;
 
 -- name: CountActiveSessions :many
 SELECT user_id, count(*)::int AS sessions FROM sessions WHERE expires_at > now() GROUP BY user_id;
+
+-- name: EndUserSessions :execrows
+DELETE FROM sessions WHERE user_id = $1;
+
+-- name: DeleteUserEmailCodes :exec
+DELETE FROM email_codes WHERE user_id = $1;
+
+-- name: ReleaseUserClaims :execrows
+DELETE FROM clip_claims WHERE user_id = $1;
+
+-- name: LockUserPair :many
+SELECT * FROM users WHERE id IN (@source_id::uuid, @target_id::uuid) ORDER BY id FOR UPDATE;
+
+-- name: SetMergedIdentity :one
+UPDATE users
+SET role = @role,
+    slack_user_id = @slack_user_id,
+    password_hash = @password_hash,
+    email = @email,
+    email_verified_at = @email_verified_at,
+    pending_email = CASE WHEN pending_email = @email THEN NULL ELSE pending_email END,
+    created_at = @created_at,
+    last_login_at = @last_login_at
+WHERE id = @id
+RETURNING *;

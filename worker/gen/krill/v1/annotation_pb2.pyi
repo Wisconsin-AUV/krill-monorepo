@@ -82,7 +82,7 @@ class Track(_message.Message):
     def __init__(self, id: _Optional[int] = ..., clip_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class Annotation(_message.Message):
-    __slots__ = ("id", "track_id", "frame_id", "box", "source", "status", "drift")
+    __slots__ = ("id", "track_id", "frame_id", "box", "source", "status", "drift", "confidence")
     ID_FIELD_NUMBER: _ClassVar[int]
     TRACK_ID_FIELD_NUMBER: _ClassVar[int]
     FRAME_ID_FIELD_NUMBER: _ClassVar[int]
@@ -90,6 +90,7 @@ class Annotation(_message.Message):
     SOURCE_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     DRIFT_FIELD_NUMBER: _ClassVar[int]
+    CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
     id: int
     track_id: int
     frame_id: int
@@ -97,7 +98,8 @@ class Annotation(_message.Message):
     source: AnnotationSource
     status: AnnotationStatus
     drift: bool
-    def __init__(self, id: _Optional[int] = ..., track_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., source: _Optional[_Union[AnnotationSource, str]] = ..., status: _Optional[_Union[AnnotationStatus, str]] = ..., drift: _Optional[bool] = ...) -> None: ...
+    confidence: float
+    def __init__(self, id: _Optional[int] = ..., track_id: _Optional[int] = ..., frame_id: _Optional[int] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., source: _Optional[_Union[AnnotationSource, str]] = ..., status: _Optional[_Union[AnnotationStatus, str]] = ..., drift: _Optional[bool] = ..., confidence: _Optional[float] = ...) -> None: ...
 
 class CreateTrackRequest(_message.Message):
     __slots__ = ("clip_id", "label_type_id", "attributes", "frame_id", "box")

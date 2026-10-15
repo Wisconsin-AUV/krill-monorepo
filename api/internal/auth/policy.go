@@ -65,6 +65,8 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.LabelServiceCreateLabelExampleUploadProcedure: manageLabelTypes,
 	krillv1connect.LabelServiceAddLabelExampleProcedure:          manageLabelTypes,
 	krillv1connect.LabelServiceDeleteLabelExampleProcedure:       manageLabelTypes,
+	krillv1connect.LabelServicePreviewMergeLabelTypesProcedure:   manageLabelTypes,
+	krillv1connect.LabelServiceMergeLabelTypesProcedure:          manageLabelTypes,
 
 	krillv1connect.AnnotationServiceCreateTrackProcedure:       label,
 	krillv1connect.AnnotationServiceUpdateTrackProcedure:       label,
@@ -119,4 +121,96 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.AdminServiceUpdateSettingsProcedure: manageSystem,
 	krillv1connect.AdminServiceSendTestEmailProcedure:  manageSystem,
 	krillv1connect.AdminServiceGetComputeProcedure:     manageSystem,
+
+	krillv1connect.AuditServiceListAuditLogProcedure:     manageSystem,
+	krillv1connect.AuditServiceListAuditFiltersProcedure: manageSystem,
+
+	krillv1connect.SettingsCheckServiceCheckSlackCredentialsProcedure: manageSystem,
+	krillv1connect.SettingsCheckServiceStartSlackTestProcedure:        manageSystem,
+	krillv1connect.SettingsCheckServiceGetSlackTestResultProcedure:    manageSystem,
+	krillv1connect.SettingsCheckServiceListEmailPreviewsProcedure:     manageSystem,
+	krillv1connect.SettingsCheckServiceSendEmailPreviewProcedure:      manageSystem,
+
+	krillv1connect.InsightServiceGetLabelerStatsProcedure:   manageSystem,
+	krillv1connect.InsightServiceGetLabelerTrendProcedure:   manageSystem,
+	krillv1connect.InsightServiceGetCoverageProcedure:       manageSystem,
+	krillv1connect.InsightServiceListStuckClipsProcedure:    manageSystem,
+	krillv1connect.InsightServiceReleaseStuckClipsProcedure: manageSystem,
+
+	krillv1connect.UserServiceDeactivateUserProcedure:    manageUsers,
+	krillv1connect.UserServiceReactivateUserProcedure:    manageUsers,
+	krillv1connect.UserServiceSendPasswordResetProcedure: manageUsers,
+	krillv1connect.UserServicePreviewMergeUsersProcedure: manageUsers,
+	krillv1connect.UserServiceMergeUsersProcedure:        manageUsers,
+
+	krillv1connect.SessionServiceListSessionsProcedure:    manageUsers,
+	krillv1connect.SessionServiceRevokeSessionProcedure:   manageUsers,
+	krillv1connect.SessionServiceListMySessionsProcedure:  signedIn,
+	krillv1connect.SessionServiceRevokeMySessionProcedure: signedIn,
+
+	krillv1connect.InviteServiceListInvitesProcedure:         manageUsers,
+	krillv1connect.InviteServiceCreateInviteProcedure:        manageUsers,
+	krillv1connect.InviteServiceRevokeInviteProcedure:        manageUsers,
+	krillv1connect.InviteServiceListApprovedEmailsProcedure:  manageUsers,
+	krillv1connect.InviteServiceAddApprovedEmailsProcedure:   manageUsers,
+	krillv1connect.InviteServiceRemoveApprovedEmailProcedure: manageUsers,
+	krillv1connect.InviteServiceCheckInviteProcedure:         public,
+
+	krillv1connect.ComputeServiceListJobsProcedure:          manageSystem,
+	krillv1connect.ComputeServiceRetryJobProcedure:          manageSystem,
+	krillv1connect.ComputeServiceCancelJobProcedure:         manageSystem,
+	krillv1connect.ComputeServiceSetJobPriorityProcedure:    manageSystem,
+	krillv1connect.ComputeServiceControlWorkerProcedure:     manageSystem,
+	krillv1connect.ComputeServiceListWorkerTokensProcedure:  manageSystem,
+	krillv1connect.ComputeServiceCreateWorkerTokenProcedure: manageSystem,
+	krillv1connect.ComputeServiceRevokeWorkerTokenProcedure: manageSystem,
+
+	krillv1connect.StorageServiceGetStorageReportProcedure: manageSystem,
+	krillv1connect.StorageServiceScanStorageProcedure:      manageSystem,
+	krillv1connect.StorageServiceCleanUpStorageProcedure:   manageSystem,
+
+	krillv1connect.DatabaseServiceGetDatabaseProcedure:       manageSystem,
+	krillv1connect.DatabaseServiceListBackupsProcedure:       manageSystem,
+	krillv1connect.DatabaseServiceCreateBackupProcedure:      manageSystem,
+	krillv1connect.DatabaseServiceGetBackupDownloadProcedure: manageSystem,
+	krillv1connect.DatabaseServiceDeleteBackupProcedure:      manageSystem,
+
+	// Logs include emailed codes in development and whatever else the API
+	// logs, so only admins see them.
+	krillv1connect.LogServiceListLogSourcesProcedure: manageSystem,
+	krillv1connect.LogServiceListLogsProcedure:       manageSystem,
+
+	krillv1connect.ContentServiceListTrashProcedure: manageSystem,
+	// Whoever can trash a video or clip can undo it.
+	krillv1connect.ContentServiceRestoreTrashProcedure:         manageVideos,
+	krillv1connect.ContentServicePurgeTrashProcedure:           manageSystem,
+	krillv1connect.ContentServiceEmptyTrashProcedure:           manageSystem,
+	krillv1connect.ContentServiceListContentVideosProcedure:    manageSystem,
+	krillv1connect.ContentServiceListContentClipsProcedure:     manageSystem,
+	krillv1connect.ContentServicePreviewReextractProcedure:     manageSystem,
+	krillv1connect.ContentServiceReextractVideosProcedure:      manageSystem,
+	krillv1connect.ContentServiceRegenerateEmbeddingsProcedure: manageSystem,
+	krillv1connect.ContentServiceReassignClipsProcedure:        manageSystem,
+	krillv1connect.ContentServiceListContentJobsProcedure:      manageSystem,
+
+	krillv1connect.ExportServiceGetExportDefaultsProcedure: manageExports,
+
+	krillv1connect.PipelineServiceListTrainingRunsProcedure:  manageSystem,
+	krillv1connect.PipelineServiceGetTrainingRunProcedure:    manageSystem,
+	krillv1connect.PipelineServiceStartTrainingProcedure:     manageSystem,
+	krillv1connect.PipelineServiceCancelTrainingProcedure:    manageSystem,
+	krillv1connect.PipelineServicePinModelProcedure:          manageSystem,
+	krillv1connect.PipelineServiceListPrelabelRunsProcedure:  manageSystem,
+	krillv1connect.PipelineServiceStartPrelabelProcedure:     manageSystem,
+	krillv1connect.PipelineServiceCancelPrelabelProcedure:    manageSystem,
+	krillv1connect.PipelineServiceListPrelabelersProcedure:   manageSystem,
+	krillv1connect.PipelineServiceUpdatePrelabelerProcedure:  manageSystem,
+	krillv1connect.PipelineServicePreviewPrelabelerProcedure: manageSystem,
+
+	krillv1connect.PipelineWorkerServiceRegisterPrelabelersProcedure: worker,
+	krillv1connect.PipelineWorkerServiceCheckInProcedure:             worker,
+	krillv1connect.PipelineWorkerServiceReportTrainProgressProcedure: worker,
+	krillv1connect.PipelineWorkerServiceFinishTrainProcedure:         worker,
+	krillv1connect.PipelineWorkerServiceReportPrelabelsProcedure:     worker,
+	krillv1connect.PipelineWorkerServiceReportPreviewProcedure:       worker,
 }

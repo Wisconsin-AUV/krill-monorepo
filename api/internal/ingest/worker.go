@@ -80,7 +80,7 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 		slog.Info("ingest skipped, video was deleted", "video_id", id)
 		return nil
 	}
-	video, err := q.GetVideo(ctx, id)
+	video, err := q.GetVideoInTrash(ctx, id)
 	if err != nil {
 		return fmt.Errorf("load video: %w", err)
 	}

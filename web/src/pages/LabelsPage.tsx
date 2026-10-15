@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import {
   ArrowDownIcon,
+  ArrowsPointingInIcon,
   ArrowUpIcon,
   PencilSquareIcon,
   PlusIcon,
@@ -12,6 +13,7 @@ import { useState } from 'react'
 import { ConfirmAlert } from '@/components/ConfirmAlert'
 import { EmptyState } from '@/components/EmptyState'
 import { LabelTypeDialog } from '@/components/LabelTypeDialog'
+import { MergeLabelTypeDialog } from '@/components/MergeLabelTypeDialog'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { QueryError } from '@/components/ui/Callout'
@@ -40,6 +42,7 @@ export function LabelsPage() {
   const { data, isPending, error } = useQuery(LabelService.method.listLabelTypes, {})
   const [editing, setEditing] = useState<bigint | 'new' | null>(null)
   const [deleting, setDeleting] = useState<LabelType | null>(null)
+  const [merging, setMerging] = useState<LabelType | null>(null)
   const [seeding, setSeeding] = useState(false)
   const types = data?.labelTypes ?? []
   const { data: driftData } = useQuery(StatsService.method.getDriftStats, {})
@@ -208,6 +211,15 @@ export function LabelsPage() {
                     </Button>
                     <Button
                       plain
+                      aria-label={`Merge ${t.name} into another type`}
+                      title="Merge"
+                      disabled={types.length < 2}
+                      onClick={() => setMerging(t)}
+                    >
+                      <ArrowsPointingInIcon data-slot="icon" />
+                    </Button>
+                    <Button
+                      plain
                       aria-label={`Delete ${t.name}`}
                       title={t.trackCount > 0 ? 'In use by tracks' : undefined}
                       disabled={t.trackCount > 0}
@@ -228,6 +240,7 @@ export function LabelsPage() {
         type={types.find((t) => t.id === editing)}
         onClose={() => setEditing(null)}
       />
+      <MergeLabelTypeDialog source={merging} types={types} onClose={() => setMerging(null)} />
       <ConfirmAlert
         open={deleting !== null}
         onClose={() => {

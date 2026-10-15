@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+import "krill/v1/user.proto";
+
+// InviteService manages invite links and pre-approved emails, which let
+// people sign up while sign-up is closed or outside the sign-up domain.
+service InviteService {
+  // ListInvites returns every invite, newest first.
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse) {}
+  // CreateInvite returns the only copy of the invite's link.
+  rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse) {}
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse) {}
+  rpc ListApprovedEmails(ListApprovedEmailsRequest) returns (ListApprovedEmailsResponse) {}
+  // AddApprovedEmails approves each email again if it was already used.
+  rpc AddApprovedEmails(AddApprovedEmailsRequest) returns (AddApprovedEmailsResponse) {}
+  rpc RemoveApprovedEmail(RemoveApprovedEmailRequest) returns (RemoveApprovedEmailResponse) {}
+  // CheckInvite tells the sign-up page whether an invite link still works.
+  rpc CheckInvite(CheckInviteRequest) returns (CheckInviteResponse) {}
+}
+
+enum InviteState {
+  INVITE_STATE_UNSPECIFIED = 0;
+  INVITE_STATE_ACTIVE = 1;
+  INVITE_STATE_EXPIRED = 2;
+  INVITE_STATE_REVOKED = 3;
+  INVITE_STATE_USED_UP = 4;
+}
+
+message InviteUse {
+  Profile user = 1;
+  google.protobuf.Timestamp used_at = 2;
+}
+
+message Invite {
+  int64 id = 1;
+  Role role = 2;
+  int32 max_uses = 3;
+  int32 uses = 4;
+  string note = 5;
+  // Where the link was emailed. Empty when it wasn't.
+  string email = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp revoked_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  // Unset when the creator's account was deleted.
+  Profile created_by = 10;
+  // Accounts that signed up with it and still exist.
+  repeated InviteUse used_by = 11;
+  InviteState state = 12;
+}
+
+message ListInvitesRequest {}
+
+message ListInvitesResponse {
+  repeated Invite invites = 1;
+}
+
+message CreateInviteRequest {
+  // Defaults to labeler.
+  Role role = 1;
+  // From 1 to 100.
+  int32 max_uses = 2;
+  // From 1 hour to 90 days.
+  int32 expires_in_hours = 3;
+  string note = 4;
+  // Emails the link here when set. Fails with FailedPrecondition when the
+  // server can't send email.
+  string email = 5;
+}
+
+message CreateInviteResponse {
+  Invite invite = 1;
+  string url = 2;
+}
+
+message RevokeInviteRequest {
+  int64 id = 1;
+}
+
+message RevokeInviteResponse {
+  Invite invite = 1;
+}
+
+message ApprovedEmail {
+  string email = 1;
+  Role role = 2;
+  // Unset when the creator's account was deleted.
+  Profile created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  // Unset until the email signs up, and after that account is deleted.
+  Profile used_by = 5;
+  google.protobuf.Timestamp used_at = 6;
+}
+
+message ListApprovedEmailsRequest {}
+
+message ListApprovedEmailsResponse {
+  repeated ApprovedEmail approved_emails = 1;
+}
+
+message AddApprovedEmailsRequest {
+  repeated string emails = 1;
+  // Defaults to labeler.
+  Role role = 2;
+}
+
+message AddApprovedEmailsResponse {
+  repeated ApprovedEmail approved_emails = 1;
+}
+
+message RemoveApprovedEmailRequest {
+  string email = 1;
+}
+
+message RemoveApprovedEmailResponse {}
+
+message CheckInviteRequest {
+  string token = 1;
+}
+
+message CheckInviteResponse {
+  bool valid = 1;
+  Role role = 2;
+  // Where the link was emailed, to fill in the sign-up form.
+  string email = 3;
+}

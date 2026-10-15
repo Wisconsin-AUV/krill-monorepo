@@ -644,6 +644,9 @@ export const VideoService: GenService<{
     output: typeof UpdateVideoResponseSchema;
   },
   /**
+   * DeleteVideo moves the video to the trash, where ContentService can
+   * restore it.
+   *
    * @generated from rpc krill.v1.VideoService.DeleteVideo
    */
   deleteVideo: {

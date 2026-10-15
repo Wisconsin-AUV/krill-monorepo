@@ -11,8 +11,10 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/compute"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/logs"
 	"github.com/wauv/krill/api/internal/rpc"
 )
 
@@ -27,10 +29,25 @@ type Service struct {
 	q          *db.Queries
 	dispatcher *Dispatcher
 	nodes      *compute.Registry
+	model      func() string
+	logs       *logs.Hub
 }
 
 func NewService(pool *pgxpool.Pool, dispatcher *Dispatcher, nodes *compute.Registry) *Service {
 	return &Service{pool: pool, q: db.New(pool), dispatcher: dispatcher, nodes: nodes}
+}
+
+// WithModel tells workers in heartbeat responses to run the SAM model model
+// returns.
+func (s *Service) WithModel(model func() string) *Service {
+	s.model = model
+	return s
+}
+
+// WithLogs keeps the log records workers send with heartbeats in hub.
+func (s *Service) WithLogs(hub *logs.Hub) *Service {
+	s.logs = hub
+	return s
 }
 
 func (s *Service) NextTask(ctx context.Context, _ *krillv1.NextTaskRequest) (*krillv1.NextTaskResponse, error) {
@@ -193,11 +210,12 @@ func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*kr
 	return &krillv1.FailTaskResponse{}, nil
 }
 
-func (s *Service) Heartbeat(_ context.Context, req *krillv1.HeartbeatRequest) (*krillv1.HeartbeatResponse, error) {
+func (s *Service) Heartbeat(ctx context.Context, req *krillv1.HeartbeatRequest) (*krillv1.HeartbeatResponse, error) {
 	if req.GetInstanceId() == "" {
 		return nil, rpc.Invalid("instance_id is required")
 	}
-	s.nodes.RecordWorker(req.GetInstanceId(), compute.Report{
+	token, _ := auth.WorkerFrom(ctx)
+	cmd := s.nodes.RecordWorker(req.GetInstanceId(), compute.Report{
 		Hostname:    req.GetHostname(),
 		Version:     req.GetVersion(),
 		Model:       req.GetModel(),
@@ -206,6 +224,31 @@ func (s *Service) Heartbeat(_ context.Context, req *krillv1.HeartbeatRequest) (*
 		Host:        req.GetHost(),
 		Gpus:        req.GetGpus(),
 		TaskID:      req.GetTaskId(),
+		Sam: compute.Sam{
+			State:             req.GetModelState(),
+			Error:             req.GetModelError(),
+			AllocatedBytes:    req.GetModelMemoryAllocatedBytes(),
+			ReservedBytes:     req.GetModelMemoryReservedBytes(),
+			Pinned:            req.GetPinnedModel() != "",
+			SupportsExemplars: req.GetSupportsExemplars(),
+			Cached:            req.GetCachedModels(),
+		},
+		TokenName: token.TokenName,
+		CommandID: req.GetCommandId(),
 	})
-	return &krillv1.HeartbeatResponse{}, nil
+	if s.logs != nil {
+		s.logs.RecordWorker(req.GetInstanceId(), req.GetHostname(), req.GetLogs())
+	}
+	res := &krillv1.HeartbeatResponse{Command: cmd}
+	if s.model != nil {
+		res.Model = s.model()
+	}
+	// The task's job was cancelled, timed out, or ran before an API restart,
+	// so nothing will accept its results.
+	if id := req.GetTaskId(); id != 0 {
+		if _, ok := s.dispatcher.get(id); !ok {
+			res.CancelTaskId = id
+		}
+	}
+	return res, nil
 }

@@ -45,6 +45,9 @@ const (
 	// ExportServiceDeleteExportProcedure is the fully-qualified name of the ExportService's
 	// DeleteExport RPC.
 	ExportServiceDeleteExportProcedure = "/krill.v1.ExportService/DeleteExport"
+	// ExportServiceGetExportDefaultsProcedure is the fully-qualified name of the ExportService's
+	// GetExportDefaults RPC.
+	ExportServiceGetExportDefaultsProcedure = "/krill.v1.ExportService/GetExportDefaults"
 )
 
 // ExportServiceClient is a client for the krill.v1.ExportService service.
@@ -54,6 +57,8 @@ type ExportServiceClient interface {
 	CreateExport(context.Context, *v1.CreateExportRequest) (*v1.CreateExportResponse, error)
 	ListExports(context.Context, *v1.ListExportsRequest) (*v1.ListExportsResponse, error)
 	DeleteExport(context.Context, *v1.DeleteExportRequest) (*v1.DeleteExportResponse, error)
+	// GetExportDefaults returns the options set in the admin panel.
+	GetExportDefaults(context.Context, *v1.GetExportDefaultsRequest) (*v1.GetExportDefaultsResponse, error)
 }
 
 // NewExportServiceClient constructs a client for the krill.v1.ExportService service. By default, it
@@ -91,15 +96,22 @@ func NewExportServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(exportServiceMethods.ByName("DeleteExport")),
 			connect.WithClientOptions(opts...),
 		),
+		getExportDefaults: connect.NewClient[v1.GetExportDefaultsRequest, v1.GetExportDefaultsResponse](
+			httpClient,
+			baseURL+ExportServiceGetExportDefaultsProcedure,
+			connect.WithSchema(exportServiceMethods.ByName("GetExportDefaults")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // exportServiceClient implements ExportServiceClient.
 type exportServiceClient struct {
-	previewExport *connect.Client[v1.PreviewExportRequest, v1.PreviewExportResponse]
-	createExport  *connect.Client[v1.CreateExportRequest, v1.CreateExportResponse]
-	listExports   *connect.Client[v1.ListExportsRequest, v1.ListExportsResponse]
-	deleteExport  *connect.Client[v1.DeleteExportRequest, v1.DeleteExportResponse]
+	previewExport     *connect.Client[v1.PreviewExportRequest, v1.PreviewExportResponse]
+	createExport      *connect.Client[v1.CreateExportRequest, v1.CreateExportResponse]
+	listExports       *connect.Client[v1.ListExportsRequest, v1.ListExportsResponse]
+	deleteExport      *connect.Client[v1.DeleteExportRequest, v1.DeleteExportResponse]
+	getExportDefaults *connect.Client[v1.GetExportDefaultsRequest, v1.GetExportDefaultsResponse]
 }
 
 // PreviewExport calls krill.v1.ExportService.PreviewExport.
@@ -138,6 +150,15 @@ func (c *exportServiceClient) DeleteExport(ctx context.Context, req *v1.DeleteEx
 	return nil, err
 }
 
+// GetExportDefaults calls krill.v1.ExportService.GetExportDefaults.
+func (c *exportServiceClient) GetExportDefaults(ctx context.Context, req *v1.GetExportDefaultsRequest) (*v1.GetExportDefaultsResponse, error) {
+	response, err := c.getExportDefaults.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ExportServiceHandler is an implementation of the krill.v1.ExportService service.
 type ExportServiceHandler interface {
 	// PreviewExport plans an export without writing anything.
@@ -145,6 +166,8 @@ type ExportServiceHandler interface {
 	CreateExport(context.Context, *v1.CreateExportRequest) (*v1.CreateExportResponse, error)
 	ListExports(context.Context, *v1.ListExportsRequest) (*v1.ListExportsResponse, error)
 	DeleteExport(context.Context, *v1.DeleteExportRequest) (*v1.DeleteExportResponse, error)
+	// GetExportDefaults returns the options set in the admin panel.
+	GetExportDefaults(context.Context, *v1.GetExportDefaultsRequest) (*v1.GetExportDefaultsResponse, error)
 }
 
 // NewExportServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -178,6 +201,12 @@ func NewExportServiceHandler(svc ExportServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(exportServiceMethods.ByName("DeleteExport")),
 		connect.WithHandlerOptions(opts...),
 	)
+	exportServiceGetExportDefaultsHandler := connect.NewUnaryHandlerSimple(
+		ExportServiceGetExportDefaultsProcedure,
+		svc.GetExportDefaults,
+		connect.WithSchema(exportServiceMethods.ByName("GetExportDefaults")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.ExportService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ExportServicePreviewExportProcedure:
@@ -188,6 +217,8 @@ func NewExportServiceHandler(svc ExportServiceHandler, opts ...connect.HandlerOp
 			exportServiceListExportsHandler.ServeHTTP(w, r)
 		case ExportServiceDeleteExportProcedure:
 			exportServiceDeleteExportHandler.ServeHTTP(w, r)
+		case ExportServiceGetExportDefaultsProcedure:
+			exportServiceGetExportDefaultsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -211,4 +242,8 @@ func (UnimplementedExportServiceHandler) ListExports(context.Context, *v1.ListEx
 
 func (UnimplementedExportServiceHandler) DeleteExport(context.Context, *v1.DeleteExportRequest) (*v1.DeleteExportResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.ExportService.DeleteExport is not implemented"))
+}
+
+func (UnimplementedExportServiceHandler) GetExportDefaults(context.Context, *v1.GetExportDefaultsRequest) (*v1.GetExportDefaultsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.ExportService.GetExportDefaults is not implemented"))
 }

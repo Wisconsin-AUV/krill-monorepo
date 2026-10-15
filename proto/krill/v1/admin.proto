@@ -3,6 +3,7 @@ syntax = "proto3";
 package krill.v1;
 
 import "google/protobuf/timestamp.proto";
+import "krill/v1/compute.proto";
 import "krill/v1/system.proto";
 
 // AdminService backs the admin panel.
@@ -176,6 +177,8 @@ message GetComputeResponse {
   GpuQueue queue = 2;
   int32 sample_interval_seconds = 3;
   ObjectStorage storage = 4;
+  // The SAM model workers are told to run.
+  string sam_model = 30;
 }
 
 // ObjectStorage is how full MinIO's drives are, where frames, embeddings,
@@ -211,6 +214,11 @@ message ComputeNode {
   repeated ComputeSample history = 12;
   // Unset when idle.
   RunningTask task = 13;
+  // Workers only.
+  WorkerModel sam = 30;
+  // The worker token's name, or KRILL_WORKER_TOKEN for the one in the
+  // environment.
+  string token_name = 31;
 }
 
 message ComputeSample {
@@ -234,7 +242,8 @@ message RunningTask {
   google.protobuf.Timestamp started_at = 4;
 }
 
-// GpuQueue counts tasks waiting for a worker.
+// GpuQueue counts GPU jobs queued or waiting for a worker to pick up their
+// task.
 message GpuQueue {
   // Tracking and exemplar searches someone is waiting on.
   int32 interactive = 1;

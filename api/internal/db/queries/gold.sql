@@ -7,17 +7,18 @@ JOIN tracks t ON t.id = a.track_id
 WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id;
 
--- name: InsertGoldFrame :exec
+-- name: InsertGoldFrame :execrows
 INSERT INTO gold_frames (frame_id, boxes, created_by) VALUES (@frame_id, @boxes, @created_by::uuid)
 ON CONFLICT (frame_id) DO NOTHING;
 
--- name: DeleteGoldFrame :exec
+-- name: DeleteGoldFrame :execrows
 DELETE FROM gold_frames WHERE frame_id = $1;
 
 -- name: GetGoldFrame :one
 SELECT g.frame_id, g.boxes, f.idx, f.video_id, v.width, v.height
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE g.frame_id = $1;
 
@@ -42,6 +43,7 @@ ON CONFLICT (frame_id, user_id) DO NOTHING;
 SELECT count(*)::int
 FROM frames
 WHERE status_by = @user_id::uuid
+    AND clip_id IN (SELECT id FROM live_clips)
     AND status_at > coalesce(
         (SELECT max(created_at) FROM gold_attempts WHERE user_id = @user_id::uuid),
         '-infinity'::timestamptz
@@ -54,6 +56,7 @@ WHERE status_by = @user_id::uuid
 SELECT g.frame_id
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 WHERE v.status = 'ready'
     AND g.created_by IS DISTINCT FROM @user_id::uuid
@@ -79,19 +82,26 @@ SELECT
     sum(ga.iou_sum)::float8 AS iou_sum,
     (
         SELECT avg(r.score) FROM (
-            SELECT score FROM gold_attempts WHERE user_id = u.id ORDER BY created_at DESC LIMIT @recent::int
+            SELECT a.score FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+            WHERE a.user_id = u.id ORDER BY a.created_at DESC LIMIT @recent::int
         ) r
     )::float8 AS recent_score
 FROM gold_attempts ga
+JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN users u ON u.id = ga.user_id
 GROUP BY u.id;
 
 -- name: RecentGoldScore :one
 SELECT
-    (SELECT count(*) FROM gold_attempts WHERE user_id = @user_id::uuid)::int AS attempts,
+    (
+        SELECT count(*) FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+        WHERE a.user_id = @user_id::uuid
+    )::int AS attempts,
     coalesce((
         SELECT avg(r.score) FROM (
-            SELECT score FROM gold_attempts WHERE user_id = @user_id::uuid ORDER BY created_at DESC LIMIT @recent::int
+            SELECT a.score FROM gold_attempts a JOIN frames f ON f.id = a.frame_id JOIN live_clips c ON c.id = f.clip_id
+            WHERE a.user_id = @user_id::uuid ORDER BY a.created_at DESC LIMIT @recent::int
         ) r
     ), 0)::float8 AS recent_score;
 
@@ -101,6 +111,7 @@ SELECT
 INSERT INTO reviews (frame_id, reason)
 SELECT f.id, @reason::text
 FROM frames f
+JOIN live_clips c ON c.id = f.clip_id
 WHERE f.status_by = @user_id::uuid
     AND f.status_at > coalesce(
         (SELECT max(created_at) FROM gold_attempts WHERE user_id = @user_id::uuid AND frame_id <> @gold_frame_id::bigint),
@@ -118,6 +129,7 @@ SELECT
 FROM gold_attempts ga
 JOIN gold_frames g ON g.frame_id = ga.frame_id
 JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 JOIN users u ON u.id = ga.user_id
 WHERE ga.frame_id = @frame_id AND ga.user_id = @user_id;
@@ -129,6 +141,7 @@ SELECT
     u.id AS user_id, u.name, u.username, u.role, u.created_at AS user_created_at
 FROM gold_attempts ga
 JOIN frames f ON f.id = ga.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 JOIN users u ON u.id = ga.user_id
 WHERE (sqlc.narg(user_id)::uuid IS NULL OR ga.user_id = sqlc.narg(user_id)::uuid)
@@ -149,6 +162,7 @@ SELECT
     coalesce(avg(ga.score), 0)::float8 AS mean_score
 FROM gold_frames g
 JOIN frames f ON f.id = g.frame_id
+JOIN live_clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 LEFT JOIN gold_attempts ga ON ga.frame_id = g.frame_id
 GROUP BY g.frame_id, f.id, v.id

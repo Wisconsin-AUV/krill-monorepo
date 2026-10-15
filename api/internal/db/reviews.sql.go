@@ -13,7 +13,11 @@ import (
 )
 
 const countOpenReviews = `-- name: CountOpenReviews :one
-SELECT count(*)::int FROM reviews WHERE resolved_at IS NULL
+SELECT count(*)::int
+FROM reviews r
+JOIN frames f ON f.id = r.frame_id
+JOIN live_clips c ON c.id = f.clip_id
+WHERE r.resolved_at IS NULL
 `
 
 func (q *Queries) CountOpenReviews(ctx context.Context) (int32, error) {
@@ -160,7 +164,7 @@ JOIN clips c ON c.id = f.clip_id
 JOIN videos v ON v.id = f.video_id
 LEFT JOIN users u ON u.id = r.created_by
 LEFT JOIN users l ON l.id = f.status_by
-WHERE r.resolved_at IS NULL AND ($1::text IS NULL OR r.reason = $1::text)
+WHERE r.resolved_at IS NULL AND c.deleted_at IS NULL AND v.deleted_at IS NULL AND ($1::text IS NULL OR r.reason = $1::text)
 ORDER BY r.created_at DESC, r.id DESC
 `
 

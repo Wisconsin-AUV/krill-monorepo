@@ -927,6 +927,568 @@ func (x *MarkEmailVerifiedResponse) GetUser() *User {
 	return nil
 }
 
+type DeactivateUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivateUserRequest) Reset() {
+	*x = DeactivateUserRequest{}
+	mi := &file_krill_v1_user_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateUserRequest) ProtoMessage() {}
+
+func (x *DeactivateUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateUserRequest.ProtoReflect.Descriptor instead.
+func (*DeactivateUserRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DeactivateUserRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeactivateUserResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	User           *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	SessionsEnded  int64                  `protobuf:"varint,2,opt,name=sessions_ended,json=sessionsEnded,proto3" json:"sessions_ended,omitempty"`
+	ClaimsReleased int64                  `protobuf:"varint,3,opt,name=claims_released,json=claimsReleased,proto3" json:"claims_released,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *DeactivateUserResponse) Reset() {
+	*x = DeactivateUserResponse{}
+	mi := &file_krill_v1_user_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateUserResponse) ProtoMessage() {}
+
+func (x *DeactivateUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateUserResponse.ProtoReflect.Descriptor instead.
+func (*DeactivateUserResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DeactivateUserResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *DeactivateUserResponse) GetSessionsEnded() int64 {
+	if x != nil {
+		return x.SessionsEnded
+	}
+	return 0
+}
+
+func (x *DeactivateUserResponse) GetClaimsReleased() int64 {
+	if x != nil {
+		return x.ClaimsReleased
+	}
+	return 0
+}
+
+type ReactivateUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReactivateUserRequest) Reset() {
+	*x = ReactivateUserRequest{}
+	mi := &file_krill_v1_user_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReactivateUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReactivateUserRequest) ProtoMessage() {}
+
+func (x *ReactivateUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReactivateUserRequest.ProtoReflect.Descriptor instead.
+func (*ReactivateUserRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ReactivateUserRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ReactivateUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReactivateUserResponse) Reset() {
+	*x = ReactivateUserResponse{}
+	mi := &file_krill_v1_user_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReactivateUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReactivateUserResponse) ProtoMessage() {}
+
+func (x *ReactivateUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReactivateUserResponse.ProtoReflect.Descriptor instead.
+func (*ReactivateUserResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ReactivateUserResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type SendPasswordResetRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPasswordResetRequest) Reset() {
+	*x = SendPasswordResetRequest{}
+	mi := &file_krill_v1_user_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPasswordResetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPasswordResetRequest) ProtoMessage() {}
+
+func (x *SendPasswordResetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPasswordResetRequest.ProtoReflect.Descriptor instead.
+func (*SendPasswordResetRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SendPasswordResetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type SendPasswordResetResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPasswordResetResponse) Reset() {
+	*x = SendPasswordResetResponse{}
+	mi := &file_krill_v1_user_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPasswordResetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPasswordResetResponse) ProtoMessage() {}
+
+func (x *SendPasswordResetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPasswordResetResponse.ProtoReflect.Descriptor instead.
+func (*SendPasswordResetResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{20}
+}
+
+// MergeCount is how many of one kind of record a merge moves.
+type MergeCount struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Like "Boxes drawn" or "Gold checks".
+	Label string `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Moved int64  `protobuf:"varint,2,opt,name=moved,proto3" json:"moved,omitempty"`
+	// Records the target already had, so the source's are deleted instead.
+	Dropped       int64 `protobuf:"varint,3,opt,name=dropped,proto3" json:"dropped,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeCount) Reset() {
+	*x = MergeCount{}
+	mi := &file_krill_v1_user_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeCount) ProtoMessage() {}
+
+func (x *MergeCount) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeCount.ProtoReflect.Descriptor instead.
+func (*MergeCount) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *MergeCount) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *MergeCount) GetMoved() int64 {
+	if x != nil {
+		return x.Moved
+	}
+	return 0
+}
+
+func (x *MergeCount) GetDropped() int64 {
+	if x != nil {
+		return x.Dropped
+	}
+	return 0
+}
+
+type PreviewMergeUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceId      string                 `protobuf:"bytes,1,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetId      string                 `protobuf:"bytes,2,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewMergeUsersRequest) Reset() {
+	*x = PreviewMergeUsersRequest{}
+	mi := &file_krill_v1_user_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMergeUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMergeUsersRequest) ProtoMessage() {}
+
+func (x *PreviewMergeUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMergeUsersRequest.ProtoReflect.Descriptor instead.
+func (*PreviewMergeUsersRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *PreviewMergeUsersRequest) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *PreviewMergeUsersRequest) GetTargetId() string {
+	if x != nil {
+		return x.TargetId
+	}
+	return ""
+}
+
+type PreviewMergeUsersResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Source *User                  `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Target *User                  `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	// The target as it will be after the merge.
+	Result *User `protobuf:"bytes,3,opt,name=result,proto3" json:"result,omitempty"`
+	// Only kinds with something to move.
+	Counts        []*MergeCount `protobuf:"bytes,4,rep,name=counts,proto3" json:"counts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewMergeUsersResponse) Reset() {
+	*x = PreviewMergeUsersResponse{}
+	mi := &file_krill_v1_user_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMergeUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMergeUsersResponse) ProtoMessage() {}
+
+func (x *PreviewMergeUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMergeUsersResponse.ProtoReflect.Descriptor instead.
+func (*PreviewMergeUsersResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *PreviewMergeUsersResponse) GetSource() *User {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+func (x *PreviewMergeUsersResponse) GetTarget() *User {
+	if x != nil {
+		return x.Target
+	}
+	return nil
+}
+
+func (x *PreviewMergeUsersResponse) GetResult() *User {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+func (x *PreviewMergeUsersResponse) GetCounts() []*MergeCount {
+	if x != nil {
+		return x.Counts
+	}
+	return nil
+}
+
+type MergeUsersRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Deleted by the merge. It can't be the caller.
+	SourceId      string `protobuf:"bytes,1,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetId      string `protobuf:"bytes,2,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeUsersRequest) Reset() {
+	*x = MergeUsersRequest{}
+	mi := &file_krill_v1_user_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeUsersRequest) ProtoMessage() {}
+
+func (x *MergeUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeUsersRequest.ProtoReflect.Descriptor instead.
+func (*MergeUsersRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *MergeUsersRequest) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *MergeUsersRequest) GetTargetId() string {
+	if x != nil {
+		return x.TargetId
+	}
+	return ""
+}
+
+type MergeUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	Counts        []*MergeCount          `protobuf:"bytes,2,rep,name=counts,proto3" json:"counts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeUsersResponse) Reset() {
+	*x = MergeUsersResponse{}
+	mi := &file_krill_v1_user_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeUsersResponse) ProtoMessage() {}
+
+func (x *MergeUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_user_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeUsersResponse.ProtoReflect.Descriptor instead.
+func (*MergeUsersResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_user_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *MergeUsersResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *MergeUsersResponse) GetCounts() []*MergeCount {
+	if x != nil {
+		return x.Counts
+	}
+	return nil
+}
+
 var File_krill_v1_user_proto protoreflect.FileDescriptor
 
 const file_krill_v1_user_proto_rawDesc = "" +
@@ -982,7 +1544,39 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\x18MarkEmailVerifiedRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"?\n" +
 	"\x19MarkEmailVerifiedResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user*R\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"'\n" +
+	"\x15DeactivateUserRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x8c\x01\n" +
+	"\x16DeactivateUserResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\x12%\n" +
+	"\x0esessions_ended\x18\x02 \x01(\x03R\rsessionsEnded\x12'\n" +
+	"\x0fclaims_released\x18\x03 \x01(\x03R\x0eclaimsReleased\"'\n" +
+	"\x15ReactivateUserRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"<\n" +
+	"\x16ReactivateUserResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"*\n" +
+	"\x18SendPasswordResetRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
+	"\x19SendPasswordResetResponse\"R\n" +
+	"\n" +
+	"MergeCount\x12\x14\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
+	"\x05moved\x18\x02 \x01(\x03R\x05moved\x12\x18\n" +
+	"\adropped\x18\x03 \x01(\x03R\adropped\"T\n" +
+	"\x18PreviewMergeUsersRequest\x12\x1b\n" +
+	"\tsource_id\x18\x01 \x01(\tR\bsourceId\x12\x1b\n" +
+	"\ttarget_id\x18\x02 \x01(\tR\btargetId\"\xc1\x01\n" +
+	"\x19PreviewMergeUsersResponse\x12&\n" +
+	"\x06source\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x06source\x12&\n" +
+	"\x06target\x18\x02 \x01(\v2\x0e.krill.v1.UserR\x06target\x12&\n" +
+	"\x06result\x18\x03 \x01(\v2\x0e.krill.v1.UserR\x06result\x12,\n" +
+	"\x06counts\x18\x04 \x03(\v2\x14.krill.v1.MergeCountR\x06counts\"M\n" +
+	"\x11MergeUsersRequest\x12\x1b\n" +
+	"\tsource_id\x18\x01 \x01(\tR\bsourceId\x12\x1b\n" +
+	"\ttarget_id\x18\x02 \x01(\tR\btargetId\"f\n" +
+	"\x12MergeUsersResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\x12,\n" +
+	"\x06counts\x18\x02 \x03(\v2\x14.krill.v1.MergeCountR\x06counts*R\n" +
 	"\x04Role\x12\x14\n" +
 	"\x10ROLE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fROLE_LABELER\x10\x01\x12\x12\n" +
@@ -998,7 +1592,7 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\x19PERMISSION_MANAGE_EXPORTS\x10\x04\x12\x1b\n" +
 	"\x17PERMISSION_MANAGE_USERS\x10\x05\x12\x1c\n" +
 	"\x18PERMISSION_REVIEW_LABELS\x10\x06\x12\x1c\n" +
-	"\x18PERMISSION_MANAGE_SYSTEM\x10\a2\xf3\x03\n" +
+	"\x18PERMISSION_MANAGE_SYSTEM\x10\a2\xac\a\n" +
 	"\vUserService\x12F\n" +
 	"\tListUsers\x12\x1a.krill.v1.ListUsersRequest\x1a\x1b.krill.v1.ListUsersResponse\"\x00\x12I\n" +
 	"\n" +
@@ -1007,7 +1601,13 @@ const file_krill_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"DeleteUser\x12\x1b.krill.v1.DeleteUserRequest\x1a\x1c.krill.v1.DeleteUserResponse\"\x00\x12L\n" +
 	"\vSignOutUser\x12\x1c.krill.v1.SignOutUserRequest\x1a\x1d.krill.v1.SignOutUserResponse\"\x00\x12^\n" +
-	"\x11MarkEmailVerified\x12\".krill.v1.MarkEmailVerifiedRequest\x1a#.krill.v1.MarkEmailVerifiedResponse\"\x00B\x8a\x01\n" +
+	"\x11MarkEmailVerified\x12\".krill.v1.MarkEmailVerifiedRequest\x1a#.krill.v1.MarkEmailVerifiedResponse\"\x00\x12U\n" +
+	"\x0eDeactivateUser\x12\x1f.krill.v1.DeactivateUserRequest\x1a .krill.v1.DeactivateUserResponse\"\x00\x12U\n" +
+	"\x0eReactivateUser\x12\x1f.krill.v1.ReactivateUserRequest\x1a .krill.v1.ReactivateUserResponse\"\x00\x12^\n" +
+	"\x11SendPasswordReset\x12\".krill.v1.SendPasswordResetRequest\x1a#.krill.v1.SendPasswordResetResponse\"\x00\x12^\n" +
+	"\x11PreviewMergeUsers\x12\".krill.v1.PreviewMergeUsersRequest\x1a#.krill.v1.PreviewMergeUsersResponse\"\x00\x12I\n" +
+	"\n" +
+	"MergeUsers\x12\x1b.krill.v1.MergeUsersRequest\x1a\x1c.krill.v1.MergeUsersResponse\"\x00B\x8a\x01\n" +
 	"\fcom.krill.v1B\tUserProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -1023,7 +1623,7 @@ func file_krill_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_krill_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_krill_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_krill_v1_user_proto_goTypes = []any{
 	(Role)(0),                         // 0: krill.v1.Role
 	(Permission)(0),                   // 1: krill.v1.Permission
@@ -1042,37 +1642,66 @@ var file_krill_v1_user_proto_goTypes = []any{
 	(*SignOutUserResponse)(nil),       // 14: krill.v1.SignOutUserResponse
 	(*MarkEmailVerifiedRequest)(nil),  // 15: krill.v1.MarkEmailVerifiedRequest
 	(*MarkEmailVerifiedResponse)(nil), // 16: krill.v1.MarkEmailVerifiedResponse
-	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
+	(*DeactivateUserRequest)(nil),     // 17: krill.v1.DeactivateUserRequest
+	(*DeactivateUserResponse)(nil),    // 18: krill.v1.DeactivateUserResponse
+	(*ReactivateUserRequest)(nil),     // 19: krill.v1.ReactivateUserRequest
+	(*ReactivateUserResponse)(nil),    // 20: krill.v1.ReactivateUserResponse
+	(*SendPasswordResetRequest)(nil),  // 21: krill.v1.SendPasswordResetRequest
+	(*SendPasswordResetResponse)(nil), // 22: krill.v1.SendPasswordResetResponse
+	(*MergeCount)(nil),                // 23: krill.v1.MergeCount
+	(*PreviewMergeUsersRequest)(nil),  // 24: krill.v1.PreviewMergeUsersRequest
+	(*PreviewMergeUsersResponse)(nil), // 25: krill.v1.PreviewMergeUsersResponse
+	(*MergeUsersRequest)(nil),         // 26: krill.v1.MergeUsersRequest
+	(*MergeUsersResponse)(nil),        // 27: krill.v1.MergeUsersResponse
+	(*timestamppb.Timestamp)(nil),     // 28: google.protobuf.Timestamp
 }
 var file_krill_v1_user_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.RoleInfo.role:type_name -> krill.v1.Role
 	1,  // 1: krill.v1.PermissionInfo.permission:type_name -> krill.v1.Permission
 	0,  // 2: krill.v1.PermissionInfo.role:type_name -> krill.v1.Role
 	0,  // 3: krill.v1.User.role:type_name -> krill.v1.Role
-	17, // 4: krill.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	17, // 5: krill.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
+	28, // 4: krill.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	28, // 5: krill.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
 	1,  // 6: krill.v1.User.permissions:type_name -> krill.v1.Permission
 	4,  // 7: krill.v1.ListUsersResponse.users:type_name -> krill.v1.User
 	0,  // 8: krill.v1.UpdateUserRequest.role:type_name -> krill.v1.Role
 	4,  // 9: krill.v1.UpdateUserResponse.user:type_name -> krill.v1.User
 	4,  // 10: krill.v1.MarkEmailVerifiedResponse.user:type_name -> krill.v1.User
-	5,  // 11: krill.v1.UserService.ListUsers:input_type -> krill.v1.ListUsersRequest
-	7,  // 12: krill.v1.UserService.UpdateUser:input_type -> krill.v1.UpdateUserRequest
-	9,  // 13: krill.v1.UserService.SetUserPassword:input_type -> krill.v1.SetUserPasswordRequest
-	11, // 14: krill.v1.UserService.DeleteUser:input_type -> krill.v1.DeleteUserRequest
-	13, // 15: krill.v1.UserService.SignOutUser:input_type -> krill.v1.SignOutUserRequest
-	15, // 16: krill.v1.UserService.MarkEmailVerified:input_type -> krill.v1.MarkEmailVerifiedRequest
-	6,  // 17: krill.v1.UserService.ListUsers:output_type -> krill.v1.ListUsersResponse
-	8,  // 18: krill.v1.UserService.UpdateUser:output_type -> krill.v1.UpdateUserResponse
-	10, // 19: krill.v1.UserService.SetUserPassword:output_type -> krill.v1.SetUserPasswordResponse
-	12, // 20: krill.v1.UserService.DeleteUser:output_type -> krill.v1.DeleteUserResponse
-	14, // 21: krill.v1.UserService.SignOutUser:output_type -> krill.v1.SignOutUserResponse
-	16, // 22: krill.v1.UserService.MarkEmailVerified:output_type -> krill.v1.MarkEmailVerifiedResponse
-	17, // [17:23] is the sub-list for method output_type
-	11, // [11:17] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	4,  // 11: krill.v1.DeactivateUserResponse.user:type_name -> krill.v1.User
+	4,  // 12: krill.v1.ReactivateUserResponse.user:type_name -> krill.v1.User
+	4,  // 13: krill.v1.PreviewMergeUsersResponse.source:type_name -> krill.v1.User
+	4,  // 14: krill.v1.PreviewMergeUsersResponse.target:type_name -> krill.v1.User
+	4,  // 15: krill.v1.PreviewMergeUsersResponse.result:type_name -> krill.v1.User
+	23, // 16: krill.v1.PreviewMergeUsersResponse.counts:type_name -> krill.v1.MergeCount
+	4,  // 17: krill.v1.MergeUsersResponse.user:type_name -> krill.v1.User
+	23, // 18: krill.v1.MergeUsersResponse.counts:type_name -> krill.v1.MergeCount
+	5,  // 19: krill.v1.UserService.ListUsers:input_type -> krill.v1.ListUsersRequest
+	7,  // 20: krill.v1.UserService.UpdateUser:input_type -> krill.v1.UpdateUserRequest
+	9,  // 21: krill.v1.UserService.SetUserPassword:input_type -> krill.v1.SetUserPasswordRequest
+	11, // 22: krill.v1.UserService.DeleteUser:input_type -> krill.v1.DeleteUserRequest
+	13, // 23: krill.v1.UserService.SignOutUser:input_type -> krill.v1.SignOutUserRequest
+	15, // 24: krill.v1.UserService.MarkEmailVerified:input_type -> krill.v1.MarkEmailVerifiedRequest
+	17, // 25: krill.v1.UserService.DeactivateUser:input_type -> krill.v1.DeactivateUserRequest
+	19, // 26: krill.v1.UserService.ReactivateUser:input_type -> krill.v1.ReactivateUserRequest
+	21, // 27: krill.v1.UserService.SendPasswordReset:input_type -> krill.v1.SendPasswordResetRequest
+	24, // 28: krill.v1.UserService.PreviewMergeUsers:input_type -> krill.v1.PreviewMergeUsersRequest
+	26, // 29: krill.v1.UserService.MergeUsers:input_type -> krill.v1.MergeUsersRequest
+	6,  // 30: krill.v1.UserService.ListUsers:output_type -> krill.v1.ListUsersResponse
+	8,  // 31: krill.v1.UserService.UpdateUser:output_type -> krill.v1.UpdateUserResponse
+	10, // 32: krill.v1.UserService.SetUserPassword:output_type -> krill.v1.SetUserPasswordResponse
+	12, // 33: krill.v1.UserService.DeleteUser:output_type -> krill.v1.DeleteUserResponse
+	14, // 34: krill.v1.UserService.SignOutUser:output_type -> krill.v1.SignOutUserResponse
+	16, // 35: krill.v1.UserService.MarkEmailVerified:output_type -> krill.v1.MarkEmailVerifiedResponse
+	18, // 36: krill.v1.UserService.DeactivateUser:output_type -> krill.v1.DeactivateUserResponse
+	20, // 37: krill.v1.UserService.ReactivateUser:output_type -> krill.v1.ReactivateUserResponse
+	22, // 38: krill.v1.UserService.SendPasswordReset:output_type -> krill.v1.SendPasswordResetResponse
+	25, // 39: krill.v1.UserService.PreviewMergeUsers:output_type -> krill.v1.PreviewMergeUsersResponse
+	27, // 40: krill.v1.UserService.MergeUsers:output_type -> krill.v1.MergeUsersResponse
+	30, // [30:41] is the sub-list for method output_type
+	19, // [19:30] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_user_proto_init() }
@@ -1087,7 +1716,7 @@ func file_krill_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_user_proto_rawDesc), len(file_krill_v1_user_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

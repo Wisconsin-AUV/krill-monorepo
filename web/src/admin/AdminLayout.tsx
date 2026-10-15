@@ -1,11 +1,27 @@
 import { useQuery } from '@connectrpc/connect-query'
 import { CloseButton } from '@headlessui/react'
 import {
+  AdjustmentsHorizontalIcon,
+  ArchiveBoxIcon,
   ArrowLeftIcon,
+  ChartBarIcon,
+  ClockIcon,
+  EnvelopeIcon,
+  TableCellsIcon,
+  CircleStackIcon,
+  CommandLineIcon,
+  ClipboardDocumentListIcon,
+  ComputerDesktopIcon,
+  CubeIcon,
   CpuChipIcon,
   Cog6ToothIcon,
+  FilmIcon,
   HomeIcon,
+  KeyIcon,
   QuestionMarkCircleIcon,
+  TicketIcon,
+  QueueListIcon,
+  TrashIcon,
   UsersIcon,
 } from '@heroicons/react/20/solid'
 import { Navigate, Outlet, useLocation } from 'react-router'
@@ -30,20 +46,141 @@ import { useChangelog } from '@/changelog/store'
 import { UserAvatar, UserMenu } from '@/layouts/AppLayout'
 import { can, canAdmin, useUser } from '@/lib/auth'
 
-const items = [
-  { label: 'Overview', to: '/admin', icon: HomeIcon, permission: Permission.MANAGE_SYSTEM },
-  { label: 'Users', to: '/admin/users', icon: UsersIcon, permission: Permission.MANAGE_USERS },
+const sections = [
   {
-    label: 'Settings',
-    to: '/admin/settings',
-    icon: Cog6ToothIcon,
-    permission: Permission.MANAGE_SYSTEM,
+    heading: 'System',
+    items: [
+      { label: 'Overview', to: '/admin', icon: HomeIcon, permission: Permission.MANAGE_SYSTEM },
+      {
+        label: 'Settings',
+        to: '/admin/settings',
+        icon: Cog6ToothIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Emails',
+        to: '/admin/emails',
+        icon: EnvelopeIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Storage',
+        to: '/admin/storage',
+        icon: ArchiveBoxIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Database',
+        to: '/admin/database',
+        icon: CircleStackIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Logs',
+        to: '/admin/logs',
+        icon: CommandLineIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
   },
   {
-    label: 'Compute',
-    to: '/admin/compute',
-    icon: CpuChipIcon,
-    permission: Permission.MANAGE_SYSTEM,
+    heading: 'Compute',
+    items: [
+      {
+        label: 'Compute',
+        to: '/admin/compute',
+        icon: CpuChipIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Jobs',
+        to: '/admin/jobs',
+        icon: QueueListIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Worker tokens',
+        to: '/admin/worker-tokens',
+        icon: KeyIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'Pipeline',
+    items: [
+      {
+        label: 'Models',
+        to: '/admin/models',
+        icon: CubeIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Pre-labelers',
+        to: '/admin/prelabelers',
+        icon: AdjustmentsHorizontalIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'People',
+    items: [
+      { label: 'Users', to: '/admin/users', icon: UsersIcon, permission: Permission.MANAGE_USERS },
+      {
+        label: 'Invites',
+        to: '/admin/invites',
+        icon: TicketIcon,
+        permission: Permission.MANAGE_USERS,
+      },
+      {
+        label: 'Sessions',
+        to: '/admin/sessions',
+        icon: ComputerDesktopIcon,
+        permission: Permission.MANAGE_USERS,
+      },
+      {
+        label: 'Audit log',
+        to: '/admin/audit',
+        icon: ClipboardDocumentListIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'Labeling',
+    items: [
+      {
+        label: 'Labelers',
+        to: '/admin/labelers',
+        icon: ChartBarIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Coverage',
+        to: '/admin/coverage',
+        icon: TableCellsIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Stuck clips',
+        to: '/admin/stuck',
+        icon: ClockIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+    ],
+  },
+  {
+    heading: 'Content',
+    items: [
+      {
+        label: 'Content',
+        to: '/admin/content',
+        icon: FilmIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      { label: 'Trash', to: '/admin/trash', icon: TrashIcon, permission: Permission.MANAGE_SYSTEM },
+    ],
   },
 ]
 
@@ -107,18 +244,22 @@ export function AdminLayout() {
             </div>
           </SidebarHeader>
           <SidebarBody>
-            <SidebarSection>
-              <SidebarHeading>Admin</SidebarHeading>
-              {items
-                .filter((i) => can(user, i.permission))
-                .map(({ label, to, icon: Icon }) => (
-                  <SidebarItem key={to} to={to} current={current(to)}>
-                    <Icon data-slot="icon" />
-                    <SidebarLabel>{label}</SidebarLabel>
-                    {to === '/admin' && updateAvailable && <Dot label="Update available" />}
-                  </SidebarItem>
-                ))}
-            </SidebarSection>
+            {sections.map(({ heading, items }) => {
+              const visible = items.filter((i) => can(user, i.permission))
+              if (visible.length === 0) return null
+              return (
+                <SidebarSection key={heading}>
+                  <SidebarHeading>{heading}</SidebarHeading>
+                  {visible.map(({ label, to, icon: Icon }) => (
+                    <SidebarItem key={to} to={to} current={current(to)}>
+                      <Icon data-slot="icon" />
+                      <SidebarLabel>{label}</SidebarLabel>
+                      {to === '/admin' && updateAvailable && <Dot label="Update available" />}
+                    </SidebarItem>
+                  ))}
+                </SidebarSection>
+              )
+            })}
           </SidebarBody>
           {user && (
             <SidebarFooter className="max-lg:hidden">

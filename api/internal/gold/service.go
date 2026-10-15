@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
 	"github.com/wauv/krill/api/internal/annotation"
+	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/auth"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/review"
@@ -36,13 +38,14 @@ var errAnswered = connect.NewError(connect.CodeFailedPrecondition, errors.New("y
 
 type Service struct {
 	krillv1connect.UnimplementedGoldServiceHandler
+	pool    *pgxpool.Pool
 	q       *db.Queries
 	present *video.Presenter
 	routing func() review.GoldRouting
 }
 
 func NewService(pool *pgxpool.Pool, store *storage.Store, routing func() review.GoldRouting) *Service {
-	return &Service{q: db.New(pool), present: video.NewPresenter(store), routing: routing}
+	return &Service{pool: pool, q: db.New(pool), present: video.NewPresenter(store), routing: routing}
 }
 
 // Due returns a gold frame for the labeler to answer, or 0 when they are not
@@ -66,20 +69,52 @@ func Due(ctx context.Context, q *db.Queries, userID uuid.UUID) (int64, error) {
 }
 
 func (s *Service) SetGoldFrame(ctx context.Context, req *krillv1.SetGoldFrameRequest) (*krillv1.SetGoldFrameResponse, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	record := func(action string) error {
+		name, err := audit.FrameName(ctx, q, req.GetFrameId())
+		if err != nil {
+			return rpc.DBError(err, "frame")
+		}
+		err = audit.Record(ctx, q, audit.Entry{
+			Action:     action,
+			TargetType: audit.TargetFrame,
+			TargetID:   strconv.FormatInt(req.GetFrameId(), 10),
+			TargetName: name,
+		})
+		if err != nil {
+			return rpc.Internal(err, "record audit entry")
+		}
+		return nil
+	}
+
 	if !req.GetGold() {
-		if err := s.q.DeleteGoldFrame(ctx, req.GetFrameId()); err != nil {
+		n, err := q.DeleteGoldFrame(ctx, req.GetFrameId())
+		if err != nil {
 			return nil, rpc.Internal(err, "delete gold frame")
+		}
+		if n > 0 {
+			if err := record(audit.GoldUnset); err != nil {
+				return nil, err
+			}
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return nil, rpc.Internal(err, "commit")
 		}
 		return &krillv1.SetGoldFrameResponse{}, nil
 	}
-	f, err := s.q.GetFrame(ctx, req.GetFrameId())
+	f, err := q.GetFrame(ctx, req.GetFrameId())
 	if err != nil {
 		return nil, rpc.DBError(err, "frame")
 	}
 	if f.Status == "unlabeled" {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("finish labeling the frame first"))
 	}
-	rows, err := s.q.ListFrameGoldBoxes(ctx, f.ID)
+	rows, err := q.ListFrameGoldBoxes(ctx, f.ID)
 	if err != nil {
 		return nil, rpc.Internal(err, "list boxes")
 	}
@@ -95,9 +130,17 @@ func (s *Service) SetGoldFrame(ctx context.Context, req *krillv1.SetGoldFrameReq
 	if err != nil {
 		return nil, rpc.Internal(err, "encode boxes")
 	}
-	err = s.q.InsertGoldFrame(ctx, db.InsertGoldFrameParams{FrameID: f.ID, Boxes: raw, CreatedBy: auth.CallerID(ctx)})
+	n, err := q.InsertGoldFrame(ctx, db.InsertGoldFrameParams{FrameID: f.ID, Boxes: raw, CreatedBy: auth.CallerID(ctx)})
 	if err != nil {
 		return nil, rpc.Internal(err, "save gold frame")
+	}
+	if n > 0 {
+		if err := record(audit.GoldSet); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	return &krillv1.SetGoldFrameResponse{}, nil
 }

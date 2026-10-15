@@ -30,6 +30,7 @@ import { refreshSession, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
+import { SlackCheck } from './SlackCheck'
 
 // An edit is a new value, or dropping the saved one for the default.
 type Edit = { value: string } | { useDefault: true }
@@ -287,8 +288,14 @@ export function SettingsPage() {
                   />
                 ))}
                 {group === 'Email' && (
-                  <TestEmailButton disabled={items.some((s) => s.key in edits)} />
+                  <div className="flex flex-wrap gap-3">
+                    <TestEmailButton disabled={items.some((s) => s.key in edits)} />
+                    <Button plain to="/admin/emails">
+                      Preview emails
+                    </Button>
+                  </div>
                 )}
+                {group === 'Slack' && <SlackCheck disabled={items.some((s) => s.key in edits)} />}
               </FieldGroup>
             </Section>
           ))}

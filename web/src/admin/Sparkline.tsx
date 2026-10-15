@@ -15,6 +15,7 @@ export function Sparkline({
   label,
   format,
   interval,
+  pointLabel,
 }: {
   values: (number | undefined)[]
   max: number
@@ -22,6 +23,8 @@ export function Sparkline({
   format: (v: number) => string
   // Seconds between samples.
   interval: number
+  // Names a point in place of how long ago it was sampled.
+  pointLabel?: (i: number) => string
 }) {
   const id = useId()
   const [hover, setHover] = useState<number | null>(null)
@@ -61,7 +64,7 @@ export function Sparkline({
         }}
         onPointerLeave={() => setHover(null)}
       >
-        <title>{`${label} over the last ${ago((n - 1) * interval)}`}</title>
+        <title>{pointLabel ? label : `${label} over the last ${ago((n - 1) * interval)}`}</title>
         <defs>
           <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor="currentColor" stopOpacity="0.25" />
@@ -106,7 +109,10 @@ export function Sparkline({
           }}
         >
           {hv === undefined ? 'No data' : format(hv)}
-          <span className="text-zinc-400"> · {ago((n - 1 - hover) * interval)} ago</span>
+          <span className="text-zinc-400">
+            {' · '}
+            {pointLabel ? pointLabel(hover) : `${ago((n - 1 - hover) * interval)} ago`}
+          </span>
         </div>
       )}
     </div>

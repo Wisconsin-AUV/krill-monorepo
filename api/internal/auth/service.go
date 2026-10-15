@@ -100,6 +100,13 @@ func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) 
 		}
 		out.SignupEnabled = n == 0
 	}
+	if !out.SignupEnabled {
+		open, err := s.q.ApprovedSignupOpen(ctx)
+		if err != nil {
+			return nil, rpc.Internal(err, "check approved emails")
+		}
+		out.ApprovedSignupOpen = open
+	}
 	return out, nil
 }
 
@@ -185,9 +192,6 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
-	if !InEmailDomain(p.Email, s.opts().SignupEmailDomain) {
-		return nil, rpc.Invalid("sign up with your @%s email", s.opts().SignupEmailDomain)
-	}
 	if err := ValidatePassword(req.GetPassword()); err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -202,12 +206,13 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
-	role, err := newUserRole(ctx, q, s.opts().AllowSignup)
+	rules := signupRules{allowSignup: s.opts().AllowSignup, emailDomain: s.opts().SignupEmailDomain}
+	g, err := grantSignup(ctx, q, rules, strings.TrimSpace(req.GetInviteToken()), p.Email, true)
 	if err != nil {
-		return nil, err
+		return nil, signupError(err)
 	}
 	user, err := q.CreateUser(ctx, db.CreateUserParams{
-		Name: p.Name, Username: p.Username, Email: p.Email, PasswordHash: text(hash), Role: role,
+		Name: p.Name, Username: p.Username, Email: p.Email, PasswordHash: text(hash), Role: g.role,
 	})
 	if err != nil {
 		if dup := DuplicateError(err); dup != nil {
@@ -215,6 +220,9 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 			return nil, dup
 		}
 		return nil, rpc.Internal(err, "create user")
+	}
+	if err := g.record(ctx, q, user.ID); err != nil {
+		return nil, rpc.Internal(err, "redeem invite")
 	}
 	// Sent before commit so the account isn't created when the email fails.
 	if s.opts().RequireVerifiedEmail {
@@ -234,24 +242,17 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	return &krillv1.RegisterResponse{User: ToProto(user)}, nil
 }
 
-// newUserRole makes the first account an admin so a fresh install can be set
-// up without touching the database. The table lock stops two first sign-ups
-// from both becoming admin.
-func newUserRole(ctx context.Context, q *db.Queries, allowSignup bool) (string, error) {
-	if err := q.LockUsers(ctx); err != nil {
-		return "", rpc.Internal(err, "lock users")
+func signupError(err error) error {
+	var domain errDomain
+	switch {
+	case errors.Is(err, errInviteUsed):
+		return connect.NewError(connect.CodeFailedPrecondition, err)
+	case errors.Is(err, errClosed):
+		return connect.NewError(connect.CodePermissionDenied, err)
+	case errors.As(err, &domain):
+		return rpc.Invalid("%s", err)
 	}
-	n, err := q.CountUsers(ctx)
-	if err != nil {
-		return "", rpc.Internal(err, "count users")
-	}
-	if n == 0 {
-		return "admin", nil
-	}
-	if !allowSignup {
-		return "", connect.NewError(connect.CodePermissionDenied, errors.New("sign-up is closed; ask an admin for an account"))
-	}
-	return "labeler", nil
+	return rpc.Internal(err, "check sign-up")
 }
 
 func (s *Service) Logout(ctx context.Context, _ *krillv1.LogoutRequest) (*krillv1.LogoutResponse, error) {

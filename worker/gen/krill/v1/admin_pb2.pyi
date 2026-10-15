@@ -1,6 +1,7 @@
 import datetime
 
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
+from krill.v1 import compute_pb2 as _compute_pb2
 from krill.v1 import system_pb2 as _system_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -239,16 +240,18 @@ class GetComputeRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class GetComputeResponse(_message.Message):
-    __slots__ = ("nodes", "queue", "sample_interval_seconds", "storage")
+    __slots__ = ("nodes", "queue", "sample_interval_seconds", "storage", "sam_model")
     NODES_FIELD_NUMBER: _ClassVar[int]
     QUEUE_FIELD_NUMBER: _ClassVar[int]
     SAMPLE_INTERVAL_SECONDS_FIELD_NUMBER: _ClassVar[int]
     STORAGE_FIELD_NUMBER: _ClassVar[int]
+    SAM_MODEL_FIELD_NUMBER: _ClassVar[int]
     nodes: _containers.RepeatedCompositeFieldContainer[ComputeNode]
     queue: GpuQueue
     sample_interval_seconds: int
     storage: ObjectStorage
-    def __init__(self, nodes: _Optional[_Iterable[_Union[ComputeNode, _Mapping]]] = ..., queue: _Optional[_Union[GpuQueue, _Mapping]] = ..., sample_interval_seconds: _Optional[int] = ..., storage: _Optional[_Union[ObjectStorage, _Mapping]] = ...) -> None: ...
+    sam_model: str
+    def __init__(self, nodes: _Optional[_Iterable[_Union[ComputeNode, _Mapping]]] = ..., queue: _Optional[_Union[GpuQueue, _Mapping]] = ..., sample_interval_seconds: _Optional[int] = ..., storage: _Optional[_Union[ObjectStorage, _Mapping]] = ..., sam_model: _Optional[str] = ...) -> None: ...
 
 class ObjectStorage(_message.Message):
     __slots__ = ("used_bytes", "total_bytes", "error")
@@ -261,7 +264,7 @@ class ObjectStorage(_message.Message):
     def __init__(self, used_bytes: _Optional[int] = ..., total_bytes: _Optional[int] = ..., error: _Optional[str] = ...) -> None: ...
 
 class ComputeNode(_message.Message):
-    __slots__ = ("id", "role", "hostname", "version", "online", "last_seen", "started_at", "model", "accelerator", "host", "gpus", "history", "task")
+    __slots__ = ("id", "role", "hostname", "version", "online", "last_seen", "started_at", "model", "accelerator", "host", "gpus", "history", "task", "sam", "token_name")
     ID_FIELD_NUMBER: _ClassVar[int]
     ROLE_FIELD_NUMBER: _ClassVar[int]
     HOSTNAME_FIELD_NUMBER: _ClassVar[int]
@@ -275,6 +278,8 @@ class ComputeNode(_message.Message):
     GPUS_FIELD_NUMBER: _ClassVar[int]
     HISTORY_FIELD_NUMBER: _ClassVar[int]
     TASK_FIELD_NUMBER: _ClassVar[int]
+    SAM_FIELD_NUMBER: _ClassVar[int]
+    TOKEN_NAME_FIELD_NUMBER: _ClassVar[int]
     id: str
     role: NodeRole
     hostname: str
@@ -288,7 +293,9 @@ class ComputeNode(_message.Message):
     gpus: _containers.RepeatedCompositeFieldContainer[_system_pb2.GpuStats]
     history: _containers.RepeatedCompositeFieldContainer[ComputeSample]
     task: RunningTask
-    def __init__(self, id: _Optional[str] = ..., role: _Optional[_Union[NodeRole, str]] = ..., hostname: _Optional[str] = ..., version: _Optional[str] = ..., online: _Optional[bool] = ..., last_seen: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., model: _Optional[str] = ..., accelerator: _Optional[str] = ..., host: _Optional[_Union[_system_pb2.HostStats, _Mapping]] = ..., gpus: _Optional[_Iterable[_Union[_system_pb2.GpuStats, _Mapping]]] = ..., history: _Optional[_Iterable[_Union[ComputeSample, _Mapping]]] = ..., task: _Optional[_Union[RunningTask, _Mapping]] = ...) -> None: ...
+    sam: _compute_pb2.WorkerModel
+    token_name: str
+    def __init__(self, id: _Optional[str] = ..., role: _Optional[_Union[NodeRole, str]] = ..., hostname: _Optional[str] = ..., version: _Optional[str] = ..., online: _Optional[bool] = ..., last_seen: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., model: _Optional[str] = ..., accelerator: _Optional[str] = ..., host: _Optional[_Union[_system_pb2.HostStats, _Mapping]] = ..., gpus: _Optional[_Iterable[_Union[_system_pb2.GpuStats, _Mapping]]] = ..., history: _Optional[_Iterable[_Union[ComputeSample, _Mapping]]] = ..., task: _Optional[_Union[RunningTask, _Mapping]] = ..., sam: _Optional[_Union[_compute_pb2.WorkerModel, _Mapping]] = ..., token_name: _Optional[str] = ...) -> None: ...
 
 class ComputeSample(_message.Message):
     __slots__ = ("at", "cpu_percent", "memory_used_bytes", "gpus")

@@ -12,7 +12,7 @@ service AuthService {
   // Login accepts a username or an email.
   rpc Login(LoginRequest) returns (LoginResponse) {}
   // Register creates a labeler and signs them in. The first account is an
-  // admin.
+  // admin. An invite or a pre-approved email sets the role instead.
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
   rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}
@@ -49,6 +49,9 @@ message GetSessionResponse {
   bool email_verification_required = 7;
   // The API can email sign-in and password reset codes.
   bool email_codes_enabled = 8;
+  // Some pre-approved emails haven't signed up yet, so the sign-up form is
+  // shown even while sign-up is closed.
+  bool approved_signup_open = 27;
 }
 
 message LoginRequest {
@@ -65,6 +68,9 @@ message RegisterRequest {
   string username = 2;
   string email = 3;
   string password = 4;
+  // From an invite link. It lets the account sign up while sign-up is closed
+  // or outside the sign-up domain, with the invite's role.
+  string invite_token = 27;
 }
 
 message RegisterResponse {

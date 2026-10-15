@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTemplatesFillEveryField(t *testing.T) {
@@ -43,6 +44,24 @@ func TestTemplatesFillEveryField(t *testing.T) {
 	}
 }
 
+// html/template replaces a URL it doesn't trust in an href, which would leave
+// the invite button going nowhere.
+func TestInviteLinksToTheInvite(t *testing.T) {
+	url := "https://krill.example.com/register?invite=3q2-7wE_AAAA"
+	m, err := InviteEmail("bucky@wisc.edu", Invite{
+		Inviter: "Bucky", Role: "labeler", URL: url, Expires: "on 21 October 2026", Team: "WAUV", Year: 2026,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(m.HTML, `href="`+url+`"`) {
+		t.Error("HTML doesn't link to the invite")
+	}
+	if !strings.Contains(m.Text, url) || strings.Contains(m.HTML+m.Text, "{{") {
+		t.Error("text is missing the invite link or has an unfilled action")
+	}
+}
+
 func TestResendSend(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -67,5 +86,25 @@ func TestResendSend(t *testing.T) {
 	r.apiKey = "wrong"
 	if err := r.Send(context.Background(), Message{To: "bucky@wisc.edu"}); err == nil {
 		t.Error("expected an error when Resend rejects the request")
+	}
+}
+
+// A template without a preview would be missing from the admin panel.
+func TestEveryTemplateHasAPreview(t *testing.T) {
+	got, err := Previews(Sample{To: "bucky@wisc.edu", Username: "bucky", Team: "WAUV", Now: time.Now()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	previewed := map[string]bool{}
+	for _, p := range got {
+		previewed[p.Name] = true
+		if strings.Contains(p.Message.HTML+p.Message.Text, "{{") {
+			t.Errorf("%s: unfilled template action", p.Name)
+		}
+	}
+	for _, tmpl := range htmlTemplates.Templates() {
+		if name := strings.TrimSuffix(tmpl.Name(), ".html"); !previewed[name] {
+			t.Errorf("%s has no preview", name)
+		}
 	}
 }

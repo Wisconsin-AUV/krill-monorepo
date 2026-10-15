@@ -185,6 +185,12 @@ func checkCode(ctx context.Context, q *db.Queries, userID uuid.UUID, purpose, co
 	return row.Email, true, q.DeleteEmailCode(ctx, key)
 }
 
+// SendPasswordReset emails u a password reset code on an admin's behalf. It
+// is sent with q, so a failed send rolls back with the caller's transaction.
+func (s *Service) SendPasswordReset(ctx context.Context, q *db.Queries, u db.User) error {
+	return s.sendCode(ctx, q, u, u.Email, purposeReset, true, s.origin(ctx))
+}
+
 func (s *Service) SendVerificationCode(ctx context.Context, req *krillv1.SendVerificationCodeRequest) (*krillv1.SendVerificationCodeResponse, error) {
 	sess, _ := SessionFrom(ctx)
 	to := verifyTarget(sess.User)

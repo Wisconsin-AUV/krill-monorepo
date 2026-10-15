@@ -31,3 +31,20 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	return nil
 }
+
+// SchemaVersion returns the newest migration applied and the newest this
+// build has.
+func SchemaVersion(ctx context.Context, pool *pgxpool.Pool) (current, latest int64, err error) {
+	dir, err := fs.Sub(migrations, "migrations")
+	if err != nil {
+		return 0, 0, fmt.Errorf("open migrations: %w", err)
+	}
+	sqlDB := stdlib.OpenDBFromPool(pool)
+	defer func() { _ = sqlDB.Close() }()
+
+	provider, err := goose.NewProvider(goose.DialectPostgres, sqlDB, dir)
+	if err != nil {
+		return 0, 0, fmt.Errorf("create migration provider: %w", err)
+	}
+	return provider.GetVersions(ctx)
+}

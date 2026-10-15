@@ -84,6 +84,83 @@ export const router = createBrowserRouter([
                     lazy: () =>
                       import('@/admin/ComputePage').then((m) => ({ Component: m.ComputePage })),
                   },
+                  {
+                    path: 'audit',
+                    lazy: () =>
+                      import('@/admin/AuditPage').then((m) => ({ Component: m.AuditPage })),
+                  },
+                  {
+                    path: 'emails',
+                    lazy: () =>
+                      import('@/admin/EmailsPage').then((m) => ({ Component: m.EmailsPage })),
+                  },
+                  {
+                    path: 'labelers',
+                    lazy: () =>
+                      import('@/admin/LabelersPage').then((m) => ({ Component: m.LabelersPage })),
+                  },
+                  {
+                    path: 'coverage',
+                    lazy: () =>
+                      import('@/admin/CoveragePage').then((m) => ({ Component: m.CoveragePage })),
+                  },
+                  {
+                    path: 'stuck',
+                    lazy: () =>
+                      import('@/admin/StuckPage').then((m) => ({ Component: m.StuckPage })),
+                  },
+                  {
+                    path: 'jobs',
+                    lazy: () => import('@/admin/JobsPage').then((m) => ({ Component: m.JobsPage })),
+                  },
+                  {
+                    path: 'worker-tokens',
+                    lazy: () =>
+                      import('@/admin/WorkerTokensPage').then((m) => ({
+                        Component: m.WorkerTokensPage,
+                      })),
+                  },
+                  {
+                    path: 'storage',
+                    lazy: () =>
+                      import('@/admin/StoragePage').then((m) => ({ Component: m.StoragePage })),
+                  },
+                  {
+                    path: 'database',
+                    lazy: () =>
+                      import('@/admin/DatabasePage').then((m) => ({ Component: m.DatabasePage })),
+                  },
+                  {
+                    path: 'logs',
+                    lazy: () => import('@/admin/LogsPage').then((m) => ({ Component: m.LogsPage })),
+                  },
+                  {
+                    path: 'content',
+                    lazy: () =>
+                      import('@/admin/ContentPage').then((m) => ({ Component: m.ContentPage })),
+                  },
+                  {
+                    path: 'trash',
+                    lazy: () =>
+                      import('@/admin/TrashPage').then((m) => ({ Component: m.TrashPage })),
+                  },
+                  {
+                    path: 'models',
+                    lazy: () =>
+                      import('@/admin/ModelsPage').then((m) => ({ Component: m.ModelsPage })),
+                  },
+                  {
+                    path: 'models/:id',
+                    lazy: () =>
+                      import('@/admin/ModelRunPage').then((m) => ({ Component: m.ModelRunPage })),
+                  },
+                  {
+                    path: 'prelabelers',
+                    lazy: () =>
+                      import('@/admin/PrelabelersPage').then((m) => ({
+                        Component: m.PrelabelersPage,
+                      })),
+                  },
                 ],
               },
               {
@@ -93,6 +170,23 @@ export const router = createBrowserRouter([
                     path: 'users',
                     lazy: () =>
                       import('@/admin/UsersPage').then((m) => ({ Component: m.UsersPage })),
+                  },
+                  {
+                    path: 'users/:id',
+                    lazy: () =>
+                      import('@/admin/UserDetailPage').then((m) => ({
+                        Component: m.UserDetailPage,
+                      })),
+                  },
+                  {
+                    path: 'invites',
+                    lazy: () =>
+                      import('@/admin/InvitesPage').then((m) => ({ Component: m.InvitesPage })),
+                  },
+                  {
+                    path: 'sessions',
+                    lazy: () =>
+                      import('@/admin/SessionsPage').then((m) => ({ Component: m.SessionsPage })),
                   },
                 ],
               },

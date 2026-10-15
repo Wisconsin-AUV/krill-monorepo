@@ -9,8 +9,8 @@ import "krill/v1/video.proto";
 service ClipService {
   // GetClip returns everything the labeling view needs for one clip.
   rpc GetClip(GetClipRequest) returns (GetClipResponse) {}
-  // DeleteClip removes a clip with its frames and labels, and renumbers the
-  // clips after it so the video has no gap.
+  // DeleteClip moves a clip to the trash and renumbers the clips after it so
+  // the video has no gap. Restoring it puts it back in its place.
   rpc DeleteClip(DeleteClipRequest) returns (DeleteClipResponse) {}
 }
 

@@ -60,6 +60,10 @@ services:
       KRILL_GOLD_REVIEW_THRESHOLD: ${KRILL_GOLD_REVIEW_THRESHOLD:-}
       KRILL_GOLD_REVIEW_MIN_ATTEMPTS: ${KRILL_GOLD_REVIEW_MIN_ATTEMPTS:-}
       KRILL_UPDATE_CHECK: ${KRILL_UPDATE_CHECK:-}
+      KRILL_STUCK_CLAIM_DAYS: ${KRILL_STUCK_CLAIM_DAYS:-}
+      KRILL_BACKUP_SCHEDULE: ${KRILL_BACKUP_SCHEDULE:-}
+      KRILL_BACKUP_KEEP: ${KRILL_BACKUP_KEEP:-}
+      KRILL_TRASH_RETENTION_DAYS: ${KRILL_TRASH_RETENTION_DAYS:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -77,15 +81,18 @@ services:
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"
       KRILL_API_URL: http://api:8080
       KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
-      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-facebook/sam2.1-hiera-small}
+      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-}
       HF_TOKEN: ${HF_TOKEN:-}
     devices:
       - /dev/kfd
       - /dev/dri
-    volumes: [hfcache:/root/.cache/huggingface]
+    # Training's data loader workers pass batches through shared memory.
+    shm_size: 2gb
+    volumes: [hfcache:/root/.cache/huggingface, krillcache:/root/.cache/krill]
     depends_on: [api]
 
 volumes:
   pgdata:
   miniodata:
   hfcache:
+  krillcache:

@@ -55,6 +55,12 @@ func validateEmail(email string) error {
 	return nil
 }
 
+// NormalizeEmail lowercases an email the way accounts store it.
+func NormalizeEmail(email string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	return email, validateEmail(email)
+}
+
 func InEmailDomain(email, domain string) bool {
 	return domain == "" || strings.HasSuffix(email, "@"+domain)
 }

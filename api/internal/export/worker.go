@@ -101,21 +101,9 @@ func (w *Worker) export(ctx context.Context, id int64) error {
 		return errors.New("no frames to export")
 	}
 
-	pr, pw := io.Pipe()
-	upload := make(chan error, 1)
-	go func() {
-		err := w.store.Put(ctx, storage.DatasetKey(id), pr, -1, "application/zip")
-		_ = pr.CloseWithError(err)
-		upload <- err
-	}()
-
-	counter := &countingWriter{w: pw}
 	lastSave := time.Now()
 	manifest := Manifest{Name: ds.Name, CreatedAt: ds.CreatedAt.Time, Version: w.version, Options: ds.Options, Stats: statsJSON}
-	open := func(ctx context.Context, f Frame) (io.ReadCloser, error) {
-		return w.store.Get(ctx, storage.FrameKey(f.VideoID, f.Idx))
-	}
-	writeErr := Write(ctx, counter, plan, manifest, open, func(done, total int) {
+	size, err := Upload(ctx, w.store, storage.DatasetKey(id), plan, manifest, func(done, total int) {
 		if time.Since(lastSave) < time.Second {
 			return
 		}
@@ -125,17 +113,38 @@ func (w *Worker) export(ctx context.Context, id int64) error {
 			slog.Warn("save export progress", "dataset_id", id, "err", err)
 		}
 	})
-	_ = pw.CloseWithError(writeErr)
-	if err := <-upload; err != nil {
-		return errors.Join(writeErr, err)
-	}
-	if writeErr != nil {
-		return writeErr
+	if err != nil {
+		return err
 	}
 
-	if err := q.FinishDataset(ctx, db.FinishDatasetParams{ID: id, SizeBytes: counter.n}); err != nil {
+	if err := q.FinishDataset(ctx, db.FinishDatasetParams{ID: id, SizeBytes: size}); err != nil {
 		return fmt.Errorf("finish dataset: %w", err)
 	}
-	slog.Info("export finished", "dataset_id", id, "images", len(plan.Items), "bytes", counter.n)
+	slog.Info("export finished", "dataset_id", id, "images", len(plan.Items), "bytes", size)
 	return nil
+}
+
+// Upload writes the planned dataset to key as a zip and returns its size.
+func Upload(ctx context.Context, store *storage.Store, key string, plan Plan, manifest Manifest, onProgress func(done, total int)) (int64, error) {
+	pr, pw := io.Pipe()
+	upload := make(chan error, 1)
+	go func() {
+		err := store.Put(ctx, key, pr, -1, "application/zip")
+		_ = pr.CloseWithError(err)
+		upload <- err
+	}()
+
+	counter := &countingWriter{w: pw}
+	open := func(ctx context.Context, f Frame) (io.ReadCloser, error) {
+		return store.Get(ctx, storage.FrameKey(f.VideoID, f.Idx))
+	}
+	writeErr := Write(ctx, counter, plan, manifest, open, onProgress)
+	_ = pw.CloseWithError(writeErr)
+	if err := <-upload; err != nil {
+		return 0, errors.Join(writeErr, err)
+	}
+	if writeErr != nil {
+		return 0, writeErr
+	}
+	return counter.n, nil
 }

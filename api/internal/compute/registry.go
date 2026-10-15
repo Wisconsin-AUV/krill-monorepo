@@ -3,6 +3,7 @@
 package compute
 
 import (
+	"errors"
 	"slices"
 	"sync"
 	"time"
@@ -34,6 +35,22 @@ type Report struct {
 	Host        *krillv1.HostStats
 	Gpus        []*krillv1.GpuStats
 	TaskID      int64
+	// Workers only.
+	Sam       Sam
+	TokenName string
+	// CommandID is the last command the worker finished.
+	CommandID uint64
+}
+
+// Sam is a worker's SAM model.
+type Sam struct {
+	State             krillv1.ModelLoadState
+	Error             string
+	AllocatedBytes    uint64
+	ReservedBytes     uint64
+	Pinned            bool
+	SupportsExemplars bool
+	Cached            []string
 }
 
 type node struct {
@@ -42,6 +59,8 @@ type node struct {
 	last     Report
 	lastSeen time.Time
 	history  []*krillv1.ComputeSample
+	// command is resent with every heartbeat until the worker finishes it.
+	command *krillv1.WorkerCommand
 }
 
 type Registry struct {
@@ -65,8 +84,9 @@ func (r *Registry) RecordAPI(rep Report) {
 	r.api.record(rep, r.now())
 }
 
-// RecordWorker stores a worker heartbeat.
-func (r *Registry) RecordWorker(id string, rep Report) {
+// RecordWorker stores a worker heartbeat and returns the command the worker
+// has not finished, or nil.
+func (r *Registry) RecordWorker(id string, rep Report) *krillv1.WorkerCommand {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	n, ok := r.nodes[id]
@@ -75,6 +95,32 @@ func (r *Registry) RecordWorker(id string, rep Report) {
 		r.nodes[id] = n
 	}
 	n.record(rep, r.now())
+	if n.command != nil && rep.CommandID >= n.command.GetId() {
+		n.command = nil
+	}
+	return n.command
+}
+
+var ErrUnknownWorker = errors.New("worker is not connected")
+
+// Command queues action for an online worker's next heartbeat, replacing a
+// command it has not finished.
+func (r *Registry) Command(id string, action krillv1.WorkerAction) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n, ok := r.nodes[id]
+	now := r.now()
+	if !ok || now.Sub(n.lastSeen) >= offlineAfter {
+		return ErrUnknownWorker
+	}
+	// Workers skip ids they have seen, so ids must keep growing across API
+	// restarts, which reset everything kept here.
+	next := max(uint64(now.UnixNano()), n.last.CommandID+1) //nolint:gosec // the clock is after 1970
+	if n.command != nil {
+		next = max(next, n.command.GetId()+1)
+	}
+	n.command = &krillv1.WorkerCommand{Id: next, Action: action}
+	return nil
 }
 
 func (n *node) record(rep Report, at time.Time) {
@@ -99,10 +145,13 @@ func (n *node) record(rep Report, at time.Time) {
 
 // Worker is what the rest of the API needs to know about a worker.
 type Worker struct {
-	ID      string
-	Version string
-	Model   string
-	Online  bool
+	ID        string
+	Hostname  string
+	Version   string
+	Model     string
+	Online    bool
+	TokenName string
+	TaskID    int64
 }
 
 // Workers lists workers seen in the last hour, online ones first.
@@ -113,10 +162,13 @@ func (r *Registry) Workers() []Worker {
 	var out []Worker
 	for _, n := range r.sortedWorkers(now) {
 		out = append(out, Worker{
-			ID:      n.id,
-			Version: n.last.Version,
-			Model:   n.last.Model,
-			Online:  now.Sub(n.lastSeen) < offlineAfter,
+			ID:        n.id,
+			Hostname:  n.last.Hostname,
+			Version:   n.last.Version,
+			Model:     n.last.Model,
+			Online:    now.Sub(n.lastSeen) < offlineAfter,
+			TokenName: n.last.TokenName,
+			TaskID:    n.last.TaskID,
 		})
 	}
 	return out
@@ -186,6 +238,22 @@ func (n *node) proto(now time.Time) *krillv1.ComputeNode {
 	if online {
 		out.Host = n.last.Host
 		out.Gpus = n.last.Gpus
+	}
+	if n.role == krillv1.NodeRole_NODE_ROLE_WORKER {
+		s := n.last.Sam
+		out.TokenName = n.last.TokenName
+		out.Sam = &krillv1.WorkerModel{
+			State:                s.State,
+			Error:                s.Error,
+			MemoryAllocatedBytes: s.AllocatedBytes,
+			MemoryReservedBytes:  s.ReservedBytes,
+			Pinned:               s.Pinned,
+			SupportsExemplars:    s.SupportsExemplars,
+			Cached:               s.Cached,
+		}
+		if online && n.command != nil {
+			out.Sam.PendingAction = n.command.GetAction()
+		}
 	}
 	return out
 }

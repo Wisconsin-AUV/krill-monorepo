@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
+	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/taxonomy"
 )
 
 const (
-	maxStride            = 100
-	maxDedupDistance     = 16
-	maxValFraction       = 0.5
+	maxStride            = config.MaxExportStride
+	maxDedupDistance     = config.MaxExportDedupDistance
+	maxValFraction       = config.MaxExportValFraction
 	defaultDedupDistance = 4
 )
 

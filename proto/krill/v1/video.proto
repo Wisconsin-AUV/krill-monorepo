@@ -15,6 +15,8 @@ service VideoService {
   rpc ListVideos(ListVideosRequest) returns (ListVideosResponse) {}
   rpc GetVideo(GetVideoRequest) returns (GetVideoResponse) {}
   rpc UpdateVideo(UpdateVideoRequest) returns (UpdateVideoResponse) {}
+  // DeleteVideo moves the video to the trash, where ContentService can
+  // restore it.
   rpc DeleteVideo(DeleteVideoRequest) returns (DeleteVideoResponse) {}
 }
 

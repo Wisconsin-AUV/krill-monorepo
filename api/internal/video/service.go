@@ -3,8 +3,6 @@ package video
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log/slog"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,6 +19,7 @@ import (
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/trash"
 )
 
 const (
@@ -143,7 +142,9 @@ func (s *Service) ListVideos(ctx context.Context, _ *krillv1.ListVideosRequest) 
 	}
 	out := make([]*krillv1.Video, len(rows))
 	for i, r := range rows {
-		out[i] = s.Video(ctx, r.Video, Stats{Clips: r.ClipCount, LabeledFrames: r.LabeledFrameCount, Boxes: r.BoxCount})
+		out[i] = s.Video(ctx, r.Video, Stats{
+			Clips: r.ClipCount, LabeledFrames: r.LabeledFrameCount, Boxes: r.BoxCount, Thumbnail: r.ThumbnailFrame,
+		})
 	}
 	return &krillv1.ListVideosResponse{Videos: out}, nil
 }
@@ -180,6 +181,7 @@ func (s *Service) GetVideo(ctx context.Context, req *krillv1.GetVideoRequest) (*
 			Clips:         int32(len(clips)), //nolint:gosec // clip counts fit in int32
 			LabeledFrames: stats.LabeledFrameCount,
 			Boxes:         stats.BoxCount,
+			Thumbnail:     stats.ThumbnailFrame,
 		}),
 		Clips:         out,
 		EmbedAtIngest: s.embedAtIngest(),
@@ -206,9 +208,23 @@ func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoReque
 		params.Split = pgtype.Text{String: split, Valid: true}
 	}
 
-	v, err := s.q.UpdateVideo(ctx, params)
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	v, err := q.UpdateVideo(ctx, params)
 	if err != nil {
 		return nil, rpc.DBError(err, "video")
+	}
+	if HeldOut(v.Split) {
+		if err := ClearPrelabels(ctx, q, v.ID); err != nil {
+			return nil, rpc.Internal(err, "remove proposals")
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	clipCount, err := s.q.CountClips(ctx, v.ID)
 	if err != nil {
@@ -219,26 +235,21 @@ func (s *Service) UpdateVideo(ctx context.Context, req *krillv1.UpdateVideoReque
 		return nil, rpc.Internal(err, "count labels")
 	}
 	return &krillv1.UpdateVideoResponse{Video: s.Video(ctx, v, Stats{
-		Clips: clipCount, LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount,
+		Clips: clipCount, LabeledFrames: stats.LabeledFrameCount, Boxes: stats.BoxCount, Thumbnail: stats.ThumbnailFrame,
 	})}, nil
 }
 
 func (s *Service) DeleteVideo(ctx context.Context, req *krillv1.DeleteVideoRequest) (*krillv1.DeleteVideoResponse, error) {
-	id := req.GetId()
-	n, err := s.q.DeleteVideo(ctx, id)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return nil, rpc.Internal(err, "delete video")
+		return nil, rpc.Internal(err, "begin")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("video %d not found", id))
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := trash.TrashVideo(ctx, s.q.WithTx(tx), req.GetId()); err != nil {
+		return nil, err
 	}
-	if err := s.store.AbortMultipartUploads(ctx, storage.VideoSourceKey(id)); err != nil {
-		slog.Error("abort video upload", "video_id", id, "err", err)
-	}
-	if err := s.store.RemovePrefix(ctx, storage.VideoPrefix(id)); err != nil {
-		// The rows are gone, so the objects are unreachable. Log instead of
-		// failing a delete that already happened.
-		slog.Error("remove video objects", "video_id", id, "err", err)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	return &krillv1.DeleteVideoResponse{}, nil
 }

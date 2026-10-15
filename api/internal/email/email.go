@@ -68,6 +68,22 @@ func TestEmail(to string, t Test) (Message, error) {
 	return render(to, "Krill can send email", "test-email", t)
 }
 
+// Invite fills in the template for an emailed invite link.
+type Invite struct {
+	Inviter string
+	// Role reads like "labeler".
+	Role string
+	URL  string
+	// Expires reads like "on 21 October 2026".
+	Expires string
+	Team    string
+	Year    int
+}
+
+func InviteEmail(to string, i Invite) (Message, error) {
+	return render(to, i.Inviter+" invited you to Krill", "invite", i)
+}
+
 func render(to, subject, name string, data any) (Message, error) {
 	var html, text bytes.Buffer
 	if err := htmlTemplates.ExecuteTemplate(&html, name+".html", data); err != nil {

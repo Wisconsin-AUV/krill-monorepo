@@ -1326,8 +1326,10 @@ type GetComputeResponse struct {
 	Queue                 *GpuQueue      `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
 	SampleIntervalSeconds int32          `protobuf:"varint,3,opt,name=sample_interval_seconds,json=sampleIntervalSeconds,proto3" json:"sample_interval_seconds,omitempty"`
 	Storage               *ObjectStorage `protobuf:"bytes,4,opt,name=storage,proto3" json:"storage,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// The SAM model workers are told to run.
+	SamModel      string `protobuf:"bytes,30,opt,name=sam_model,json=samModel,proto3" json:"sam_model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetComputeResponse) Reset() {
@@ -1386,6 +1388,13 @@ func (x *GetComputeResponse) GetStorage() *ObjectStorage {
 		return x.Storage
 	}
 	return nil
+}
+
+func (x *GetComputeResponse) GetSamModel() string {
+	if x != nil {
+		return x.SamModel
+	}
+	return ""
 }
 
 // ObjectStorage is how full MinIO's drives are, where frames, embeddings,
@@ -1469,7 +1478,12 @@ type ComputeNode struct {
 	// Oldest first.
 	History []*ComputeSample `protobuf:"bytes,12,rep,name=history,proto3" json:"history,omitempty"`
 	// Unset when idle.
-	Task          *RunningTask `protobuf:"bytes,13,opt,name=task,proto3" json:"task,omitempty"`
+	Task *RunningTask `protobuf:"bytes,13,opt,name=task,proto3" json:"task,omitempty"`
+	// Workers only.
+	Sam *WorkerModel `protobuf:"bytes,30,opt,name=sam,proto3" json:"sam,omitempty"`
+	// The worker token's name, or KRILL_WORKER_TOKEN for the one in the
+	// environment.
+	TokenName     string `protobuf:"bytes,31,opt,name=token_name,json=tokenName,proto3" json:"token_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1593,6 +1607,20 @@ func (x *ComputeNode) GetTask() *RunningTask {
 		return x.Task
 	}
 	return nil
+}
+
+func (x *ComputeNode) GetSam() *WorkerModel {
+	if x != nil {
+		return x.Sam
+	}
+	return nil
+}
+
+func (x *ComputeNode) GetTokenName() string {
+	if x != nil {
+		return x.TokenName
+	}
+	return ""
 }
 
 type ComputeSample struct {
@@ -1785,7 +1813,8 @@ func (x *RunningTask) GetStartedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// GpuQueue counts tasks waiting for a worker.
+// GpuQueue counts GPU jobs queued or waiting for a worker to pick up their
+// task.
 type GpuQueue struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Tracking and exemplar searches someone is waiting on.
@@ -1844,7 +1873,7 @@ var File_krill_v1_admin_proto protoreflect.FileDescriptor
 
 const file_krill_v1_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x14krill/v1/admin.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15krill/v1/system.proto\",\n" +
+	"\x14krill/v1/admin.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16krill/v1/compute.proto\x1a\x15krill/v1/system.proto\",\n" +
 	"\x10GetStatusRequest\x12\x18\n" +
 	"\arefresh\x18\x01 \x01(\bR\arefresh\"\xb1\x01\n" +
 	"\x11GetStatusResponse\x121\n" +
@@ -1918,18 +1947,19 @@ const file_krill_v1_admin_proto_rawDesc = "" +
 	"\x15SendTestEmailResponse\x12\x0e\n" +
 	"\x02to\x18\x01 \x01(\tR\x02to\x12\x16\n" +
 	"\x06logged\x18\x02 \x01(\bR\x06logged\"\x13\n" +
-	"\x11GetComputeRequest\"\xd6\x01\n" +
+	"\x11GetComputeRequest\"\xf3\x01\n" +
 	"\x12GetComputeResponse\x12+\n" +
 	"\x05nodes\x18\x01 \x03(\v2\x15.krill.v1.ComputeNodeR\x05nodes\x12(\n" +
 	"\x05queue\x18\x02 \x01(\v2\x12.krill.v1.GpuQueueR\x05queue\x126\n" +
 	"\x17sample_interval_seconds\x18\x03 \x01(\x05R\x15sampleIntervalSeconds\x121\n" +
-	"\astorage\x18\x04 \x01(\v2\x17.krill.v1.ObjectStorageR\astorage\"e\n" +
+	"\astorage\x18\x04 \x01(\v2\x17.krill.v1.ObjectStorageR\astorage\x12\x1b\n" +
+	"\tsam_model\x18\x1e \x01(\tR\bsamModel\"e\n" +
 	"\rObjectStorage\x12\x1d\n" +
 	"\n" +
 	"used_bytes\x18\x01 \x01(\x04R\tusedBytes\x12\x1f\n" +
 	"\vtotal_bytes\x18\x02 \x01(\x04R\n" +
 	"totalBytes\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xee\x03\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xb6\x04\n" +
 	"\vComputeNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x12.krill.v1.NodeRoleR\x04role\x12\x1a\n" +
@@ -1945,7 +1975,10 @@ const file_krill_v1_admin_proto_rawDesc = "" +
 	" \x01(\v2\x13.krill.v1.HostStatsR\x04host\x12&\n" +
 	"\x04gpus\x18\v \x03(\v2\x12.krill.v1.GpuStatsR\x04gpus\x121\n" +
 	"\ahistory\x18\f \x03(\v2\x17.krill.v1.ComputeSampleR\ahistory\x12)\n" +
-	"\x04task\x18\r \x01(\v2\x15.krill.v1.RunningTaskR\x04task\"\xb1\x01\n" +
+	"\x04task\x18\r \x01(\v2\x15.krill.v1.RunningTaskR\x04task\x12'\n" +
+	"\x03sam\x18\x1e \x01(\v2\x15.krill.v1.WorkerModelR\x03sam\x12\x1d\n" +
+	"\n" +
+	"token_name\x18\x1f \x01(\tR\ttokenName\"\xb1\x01\n" +
 	"\rComputeSample\x12*\n" +
 	"\x02at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x1f\n" +
 	"\vcpu_percent\x18\x02 \x01(\x01R\n" +
@@ -2052,6 +2085,7 @@ var file_krill_v1_admin_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),  // 29: google.protobuf.Timestamp
 	(*HostStats)(nil),              // 30: krill.v1.HostStats
 	(*GpuStats)(nil),               // 31: krill.v1.GpuStats
+	(*WorkerModel)(nil),            // 32: krill.v1.WorkerModel
 }
 var file_krill_v1_admin_proto_depIdxs = []int32{
 	7,  // 0: krill.v1.GetStatusResponse.version:type_name -> krill.v1.VersionStatus
@@ -2079,24 +2113,25 @@ var file_krill_v1_admin_proto_depIdxs = []int32{
 	31, // 22: krill.v1.ComputeNode.gpus:type_name -> krill.v1.GpuStats
 	25, // 23: krill.v1.ComputeNode.history:type_name -> krill.v1.ComputeSample
 	27, // 24: krill.v1.ComputeNode.task:type_name -> krill.v1.RunningTask
-	29, // 25: krill.v1.ComputeSample.at:type_name -> google.protobuf.Timestamp
-	26, // 26: krill.v1.ComputeSample.gpus:type_name -> krill.v1.GpuSample
-	29, // 27: krill.v1.RunningTask.started_at:type_name -> google.protobuf.Timestamp
-	5,  // 28: krill.v1.AdminService.GetStatus:input_type -> krill.v1.GetStatusRequest
-	11, // 29: krill.v1.AdminService.ListSettings:input_type -> krill.v1.ListSettingsRequest
-	16, // 30: krill.v1.AdminService.UpdateSettings:input_type -> krill.v1.UpdateSettingsRequest
-	19, // 31: krill.v1.AdminService.SendTestEmail:input_type -> krill.v1.SendTestEmailRequest
-	21, // 32: krill.v1.AdminService.GetCompute:input_type -> krill.v1.GetComputeRequest
-	6,  // 33: krill.v1.AdminService.GetStatus:output_type -> krill.v1.GetStatusResponse
-	12, // 34: krill.v1.AdminService.ListSettings:output_type -> krill.v1.ListSettingsResponse
-	17, // 35: krill.v1.AdminService.UpdateSettings:output_type -> krill.v1.UpdateSettingsResponse
-	20, // 36: krill.v1.AdminService.SendTestEmail:output_type -> krill.v1.SendTestEmailResponse
-	22, // 37: krill.v1.AdminService.GetCompute:output_type -> krill.v1.GetComputeResponse
-	33, // [33:38] is the sub-list for method output_type
-	28, // [28:33] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	32, // 25: krill.v1.ComputeNode.sam:type_name -> krill.v1.WorkerModel
+	29, // 26: krill.v1.ComputeSample.at:type_name -> google.protobuf.Timestamp
+	26, // 27: krill.v1.ComputeSample.gpus:type_name -> krill.v1.GpuSample
+	29, // 28: krill.v1.RunningTask.started_at:type_name -> google.protobuf.Timestamp
+	5,  // 29: krill.v1.AdminService.GetStatus:input_type -> krill.v1.GetStatusRequest
+	11, // 30: krill.v1.AdminService.ListSettings:input_type -> krill.v1.ListSettingsRequest
+	16, // 31: krill.v1.AdminService.UpdateSettings:input_type -> krill.v1.UpdateSettingsRequest
+	19, // 32: krill.v1.AdminService.SendTestEmail:input_type -> krill.v1.SendTestEmailRequest
+	21, // 33: krill.v1.AdminService.GetCompute:input_type -> krill.v1.GetComputeRequest
+	6,  // 34: krill.v1.AdminService.GetStatus:output_type -> krill.v1.GetStatusResponse
+	12, // 35: krill.v1.AdminService.ListSettings:output_type -> krill.v1.ListSettingsResponse
+	17, // 36: krill.v1.AdminService.UpdateSettings:output_type -> krill.v1.UpdateSettingsResponse
+	20, // 37: krill.v1.AdminService.SendTestEmail:output_type -> krill.v1.SendTestEmailResponse
+	22, // 38: krill.v1.AdminService.GetCompute:output_type -> krill.v1.GetComputeResponse
+	34, // [34:39] is the sub-list for method output_type
+	29, // [29:34] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_admin_proto_init() }
@@ -2104,6 +2139,7 @@ func file_krill_v1_admin_proto_init() {
 	if File_krill_v1_admin_proto != nil {
 		return
 	}
+	file_krill_v1_compute_proto_init()
 	file_krill_v1_system_proto_init()
 	file_krill_v1_admin_proto_msgTypes[21].OneofWrappers = []any{}
 	type x struct{}

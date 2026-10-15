@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+
+// SessionService lists signed-in browsers. Admins see everyone's, and
+// everyone sees their own.
+service SessionService {
+  // ListSessions lists unexpired sessions, most recently active first.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {}
+  rpc ListMySessions(ListMySessionsRequest) returns (ListMySessionsResponse) {}
+  // RevokeMySession can't revoke the caller's current session; sign out
+  // instead.
+  rpc RevokeMySession(RevokeMySessionRequest) returns (RevokeMySessionResponse) {}
+}
+
+message Session {
+  // A random ID, unrelated to the session's token.
+  string id = 1;
+  Profile user = 2;
+  // Where the session was last seen from.
+  string ip = 3;
+  // Browser and OS read from the user agent, like "Firefox on macOS".
+  string device = 4;
+  string user_agent = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // Updated every few minutes while the session is in use.
+  google.protobuf.Timestamp last_seen_at = 7;
+  google.protobuf.Timestamp expires_at = 8;
+  // The session making this request.
+  bool current = 9;
+}
+
+message ListSessionsRequest {
+  // Empty lists every user's sessions.
+  string user_id = 1;
+}
+
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message RevokeSessionRequest {
+  string id = 1;
+}
+
+message RevokeSessionResponse {}
+
+message ListMySessionsRequest {}
+
+message ListMySessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message RevokeMySessionRequest {
+  string id = 1;
+}
+
+message RevokeMySessionResponse {}

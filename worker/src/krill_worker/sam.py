@@ -16,6 +16,7 @@ from transformers import (
 )
 
 from krill_worker import attention
+from krill_worker.models import supports_exemplars
 from krill_worker.prelabelers import Frame
 from krill_worker.track import Box, Embedding, PointPrompt, Prompt, mask_box
 
@@ -46,13 +47,11 @@ class SamTracker:
     """Tracks one object through streamed frames with SAM 3 or SAM 2.1."""
 
     def __init__(self, model_id: str, device: str = "cuda") -> None:
-        sam3 = "sam3" in model_id
+        sam3 = supports_exemplars(model_id)
         model_cls = Sam3TrackerVideoModel if sam3 else Sam2VideoModel
         processor_cls = Sam3TrackerVideoProcessor if sam3 else Sam2VideoProcessor
         self.model_id = model_id
         self.device = device
-        # SAM 2.1 only segments what it is pointed at. SAM 3 can also find
-        # every object that matches a visual exemplar.
         self.supports_exemplars = sam3
         self._attn = attention_implementation(device)
         self._detector: Any = None

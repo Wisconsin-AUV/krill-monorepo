@@ -1,0 +1,423 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/annotation.proto";
+import "krill/v1/export.proto";
+
+// PipelineService trains YOLO on verified labels, picks the model that
+// pre-labels unlabeled frames, and configures the classic CV pre-labelers.
+// Held-out test videos are never trained on or pre-labeled.
+service PipelineService {
+  rpc ListTrainingRuns(ListTrainingRunsRequest) returns (ListTrainingRunsResponse) {}
+  rpc GetTrainingRun(GetTrainingRunRequest) returns (GetTrainingRunResponse) {}
+  // StartTraining queues a run. Unset config fields come from the retrain
+  // and export settings.
+  rpc StartTraining(StartTrainingRequest) returns (StartTrainingResponse) {}
+  // CancelTraining stops a run that hasn't finished. A worker training it
+  // stops at its next batch.
+  rpc CancelTraining(CancelTrainingRequest) returns (CancelTrainingResponse) {}
+  // PinModel makes a finished run's model the one that pre-labels, and
+  // pre-labels with it. Pinning an older run rolls back.
+  rpc PinModel(PinModelRequest) returns (PinModelResponse) {}
+  rpc ListPrelabelRuns(ListPrelabelRunsRequest) returns (ListPrelabelRunsResponse) {}
+  // StartPrelabel proposes boxes on every unlabeled frame, replacing the
+  // proposals an earlier run of the same source left there.
+  rpc StartPrelabel(StartPrelabelRequest) returns (StartPrelabelResponse) {}
+  rpc CancelPrelabel(CancelPrelabelRequest) returns (CancelPrelabelResponse) {}
+  // ListPrelabelers lists the classic CV plugins GPU workers have offered.
+  rpc ListPrelabelers(ListPrelabelersRequest) returns (ListPrelabelersResponse) {}
+  rpc UpdatePrelabeler(UpdatePrelabelerRequest) returns (UpdatePrelabelerResponse) {}
+  // PreviewPrelabeler runs a plugin with unsaved params on one frame.
+  rpc PreviewPrelabeler(PreviewPrelabelerRequest) returns (PreviewPrelabelerResponse) {}
+}
+
+enum ModelSize {
+  MODEL_SIZE_UNSPECIFIED = 0;
+  MODEL_SIZE_NANO = 1;
+  MODEL_SIZE_SMALL = 2;
+}
+
+message TrainConfig {
+  ModelSize size = 1;
+  int32 epochs = 2;
+  // Pixels on the long side, a multiple of 32.
+  int32 image_size = 3;
+  int32 batch = 4;
+  // Fine-tunes this run's model instead of starting from COCO weights. The
+  // size then comes from that run.
+  int64 base_run_id = 5;
+  ExportOptions dataset = 6;
+}
+
+enum TrainingStatus {
+  TRAINING_STATUS_UNSPECIFIED = 0;
+  TRAINING_STATUS_QUEUED = 1;
+  // Writing the dataset and waiting for a GPU worker.
+  TRAINING_STATUS_PREPARING = 2;
+  TRAINING_STATUS_TRAINING = 3;
+  // Scoring the best epoch on val and the held-out test videos.
+  TRAINING_STATUS_EVALUATING = 4;
+  TRAINING_STATUS_SUCCEEDED = 5;
+  TRAINING_STATUS_FAILED = 6;
+  TRAINING_STATUS_CANCELLED = 7;
+}
+
+enum TrainingTrigger {
+  TRAINING_TRIGGER_UNSPECIFIED = 0;
+  TRAINING_TRIGGER_MANUAL = 1;
+  TRAINING_TRIGGER_SCHEDULE = 2;
+}
+
+message EpochMetrics {
+  // From 1.
+  int32 epoch = 1;
+  double box_loss = 2;
+  double cls_loss = 3;
+  double precision = 4;
+  double recall = 5;
+  double map50 = 6;
+  double map50_95 = 7;
+}
+
+message ClassMetrics {
+  string name = 1;
+  int32 images = 2;
+  int32 instances = 3;
+  double precision = 4;
+  double recall = 5;
+  double map50 = 6;
+  double map50_95 = 7;
+}
+
+message EvalMetrics {
+  ClassMetrics all = 1;
+  // Classes with at least one instance in the split.
+  repeated ClassMetrics classes = 2;
+}
+
+message TrainingRun {
+  int64 id = 1;
+  TrainingStatus status = 2;
+  TrainingTrigger trigger = 3;
+  // Empty for scheduled runs.
+  string created_by = 4;
+  TrainConfig config = 5;
+  ExportStats dataset = 6;
+  // Epochs finished so far.
+  int32 epoch = 7;
+  repeated EpochMetrics history = 8;
+  EvalMetrics val = 9;
+  // On held-out test videos. Unset when none have labels.
+  EvalMetrics test = 10;
+  // The model pinned when the run finished, scored on this run's val and
+  // test images. Unset when nothing was pinned or its classes differ.
+  int64 baseline_run_id = 11;
+  EvalMetrics baseline_val = 12;
+  EvalMetrics baseline_test = 13;
+  bool pinned = 14;
+  string error = 15;
+  // The end of the worker's training log. Only GetTrainingRun sets it.
+  string log = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp started_at = 18;
+  google.protobuf.Timestamp finished_at = 19;
+  // Presigned download of the weights. Only GetTrainingRun sets it.
+  string weights_url = 20;
+  int64 weights_bytes = 21;
+  // The GPU the worker trained on.
+  string device = 22;
+  // Verified boxes outside held-out videos when the run was queued.
+  int32 verified_boxes = 23;
+}
+
+message RetrainSchedule {
+  // Hour of the day in the API's time zone, or -1 when off.
+  int32 hour = 1;
+  string time_zone = 2;
+  int32 min_new_labels = 3;
+  // Verified boxes added or changed since the last run was queued.
+  int32 new_labels = 4;
+  bool auto_pin = 5;
+  // Unset when off.
+  google.protobuf.Timestamp next_check = 6;
+}
+
+message ListTrainingRunsRequest {}
+
+message ListTrainingRunsResponse {
+  // Newest first.
+  repeated TrainingRun runs = 1;
+  int64 pinned_run_id = 2;
+  // The config a run started now gets for fields left unset.
+  TrainConfig defaults = 3;
+  RetrainSchedule schedule = 4;
+}
+
+message GetTrainingRunRequest {
+  int64 id = 1;
+}
+
+message GetTrainingRunResponse {
+  TrainingRun run = 1;
+  // The pinned model's own metrics, from when it was trained. Unset when
+  // nothing is pinned or the run is the pinned one.
+  TrainingRun pinned = 2;
+}
+
+message StartTrainingRequest {
+  TrainConfig config = 1;
+}
+
+message StartTrainingResponse {
+  TrainingRun run = 1;
+}
+
+message CancelTrainingRequest {
+  int64 id = 1;
+}
+
+message CancelTrainingResponse {}
+
+message PinModelRequest {
+  int64 id = 1;
+}
+
+message PinModelResponse {
+  PrelabelRun prelabel = 1;
+}
+
+enum PrelabelSource {
+  PRELABEL_SOURCE_UNSPECIFIED = 0;
+  // The pinned YOLO model.
+  PRELABEL_SOURCE_YOLO = 1;
+  // The enabled classic CV plugins.
+  PRELABEL_SOURCE_CV = 2;
+}
+
+enum PrelabelStatus {
+  PRELABEL_STATUS_UNSPECIFIED = 0;
+  PRELABEL_STATUS_QUEUED = 1;
+  PRELABEL_STATUS_RUNNING = 2;
+  PRELABEL_STATUS_SUCCEEDED = 3;
+  PRELABEL_STATUS_FAILED = 4;
+  PRELABEL_STATUS_CANCELLED = 5;
+}
+
+message PrelabelRun {
+  int64 id = 1;
+  PrelabelSource source = 2;
+  // The model, for YOLO runs.
+  int64 training_run_id = 3;
+  PrelabelStatus status = 4;
+  int32 clips_total = 5;
+  int32 clips_done = 6;
+  // Unlabeled frames the run looked at.
+  int32 frames = 7;
+  int32 proposals = 8;
+  string error = 9;
+  // Empty when pinning by schedule started it.
+  string created_by = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp finished_at = 12;
+}
+
+message ListPrelabelRunsRequest {}
+
+message ListPrelabelRunsResponse {
+  // Newest first, at most 20.
+  repeated PrelabelRun runs = 1;
+  // Proposals from each source no labeler has accepted or removed yet.
+  int32 open_yolo_proposals = 2;
+  int32 open_cv_proposals = 3;
+}
+
+message StartPrelabelRequest {
+  PrelabelSource source = 1;
+}
+
+message StartPrelabelResponse {
+  PrelabelRun run = 1;
+}
+
+message CancelPrelabelRequest {
+  int64 id = 1;
+}
+
+message CancelPrelabelResponse {}
+
+enum ParamKind {
+  PARAM_KIND_UNSPECIFIED = 0;
+  PARAM_KIND_INT = 1;
+  PARAM_KIND_FLOAT = 2;
+  PARAM_KIND_BOOL = 3;
+  PARAM_KIND_HSV_RANGE = 4;
+}
+
+// HsvRange is in OpenCV's units: hue from 0 to 179, saturation and value
+// from 0 to 255. Hue wraps around when h_min is above h_max, which red needs.
+message HsvRange {
+  int32 h_min = 1;
+  int32 s_min = 2;
+  int32 v_min = 3;
+  int32 h_max = 4;
+  int32 s_max = 5;
+  int32 v_max = 6;
+}
+
+message ParamValue {
+  string name = 1;
+  oneof value {
+    double number = 2;
+    bool flag = 3;
+    HsvRange hsv = 4;
+  }
+}
+
+message ParamSpec {
+  string name = 1;
+  string label = 2;
+  ParamKind kind = 3;
+  // Bounds and step for numbers.
+  double min = 4;
+  double max = 5;
+  double step = 6;
+  ParamValue default_value = 7;
+}
+
+// PrelabelerSpec is what a worker's plugin produces and the params it takes.
+message PrelabelerSpec {
+  string name = 1;
+  string title = 2;
+  // Each kind of object the plugin finds, like red and white for slalom pipes.
+  repeated string outputs = 3;
+  repeated ParamSpec params = 4;
+  // The plugin's boxes are axis-aligned bounds of rotated objects.
+  bool oriented = 5;
+}
+
+// PrelabelerOutput maps one of a plugin's outputs to the label it proposes.
+message PrelabelerOutput {
+  string name = 1;
+  // 0 drops the output's boxes.
+  int64 label_type_id = 2;
+  map<string, string> attributes = 3;
+}
+
+message Prelabeler {
+  PrelabelerSpec spec = 1;
+  bool enabled = 2;
+  // Every param in the spec, saved or default.
+  repeated ParamValue params = 3;
+  // One per output in the spec.
+  repeated PrelabelerOutput outputs = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  string updated_by = 6;
+}
+
+message ListPrelabelersRequest {}
+
+message ListPrelabelersResponse {
+  repeated Prelabeler prelabelers = 1;
+}
+
+message UpdatePrelabelerRequest {
+  string name = 1;
+  bool enabled = 2;
+  repeated ParamValue params = 3;
+  repeated PrelabelerOutput outputs = 4;
+}
+
+message UpdatePrelabelerResponse {
+  Prelabeler prelabeler = 1;
+}
+
+message PreviewPrelabelerRequest {
+  string name = 1;
+  repeated ParamValue params = 2;
+  int64 frame_id = 3;
+}
+
+message PreviewBox {
+  string output = 1;
+  // Axis-aligned, as it would be saved.
+  Box box = 2;
+  float confidence = 3;
+  // The rotated box's corners, for oriented plugins.
+  repeated Point corners = 4;
+}
+
+message PreviewPrelabelerResponse {
+  repeated PreviewBox boxes = 1;
+  // Presigned PNG of the pixels the thresholds kept.
+  string mask_url = 2;
+  string frame_url = 3;
+  int32 took_ms = 4;
+}
+
+// PrelabelFrame is a frame for a GPU worker to pre-label.
+message PrelabelFrame {
+  int64 id = 1;
+  // Presigned URL for the worker, not the browser.
+  string url = 2;
+}
+
+// TrainTask trains YOLO on a dataset exported in the Ultralytics layout.
+message TrainTask {
+  int64 id = 1;
+  int64 run_id = 2;
+  // Presigned zip of images/, labels/, and data.yaml.
+  string dataset_url = 3;
+  // Class names in id order.
+  repeated string classes = 4;
+  ModelSize size = 5;
+  int32 epochs = 6;
+  int32 image_size = 7;
+  int32 batch = 8;
+  // Weights to start from. Empty starts from COCO weights of size.
+  string base_weights_url = 9;
+  // The pinned model, to score on the same val and test images. Empty when
+  // there is none to compare.
+  string baseline_weights_url = 10;
+  // Presigned PUT for the best epoch's weights.
+  string weights_upload_url = 11;
+  bool has_test = 12;
+}
+
+// PluginConfig is a CV plugin with the params to run it with.
+message PluginConfig {
+  string name = 1;
+  repeated ParamValue params = 2;
+}
+
+message YoloModel {
+  // Stored as the model version on each box.
+  string version = 1;
+  string weights_url = 2;
+  float min_confidence = 3;
+  int32 image_size = 4;
+}
+
+message CvPlugins {
+  repeated PluginConfig plugins = 1;
+}
+
+// PrelabelTask proposes boxes on frames of one clip.
+message PrelabelTask {
+  int64 id = 1;
+  repeated PrelabelFrame frames = 2;
+  oneof model {
+    YoloModel yolo = 3;
+    CvPlugins cv = 4;
+  }
+}
+
+// PreviewTask runs one CV plugin on one frame and uploads its mask.
+message PreviewTask {
+  int64 id = 1;
+  PrelabelFrame frame = 2;
+  PluginConfig plugin = 3;
+  // Presigned PUT for a PNG of the pixels the thresholds kept.
+  string mask_upload_url = 4;
+}

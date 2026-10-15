@@ -15,13 +15,52 @@ All notable changes to this project are documented here. The format follows
 - Admins can search users, sign a user out everywhere, and mark an email verified.
 - A test email can be sent from the settings page.
 - A help menu in the top bar lists what's new and opens the changelog in the app, with a dot until you've seen the latest release.
+- An audit log in the admin panel records who changed users, settings, videos, clips, label types, exports, gold frames, and reviews, and when. Secret settings are logged as changed without their value.
+- The settings page checks the Slack client ID and secret with Slack, and runs a test Slack sign-in that comes back with the workspace without signing you in. Problems name the setting to fix, or the exact redirect URL to add in Slack.
+- An emails page in the admin panel previews every email as it is sent, in HTML and text, and sends any of them to you.
+- A labelers page shows each person's frames, drawn boxes, proposals kept and rejected, how often reviewers corrected their frames, active time, and gold accuracy for a day, week, month, or all time, with trends per person.
+- A coverage page counts verified and proposed boxes per label type and video, leaves held-out test videos out of the totals, and flags label types with few boxes or few videos.
+- A stuck clips page lists claimed clips nobody has edited for a few days, `KRILL_STUCK_CLAIM_DAYS` by default, and releases them back to the queue.
+- Invite links with a role, a number of uses, and an expiry, which work while sign-up is closed and with Sign in with Slack. Admins can email the link, see who used it, and revoke it.
+- Pre-approved emails can sign up once with a set role, whatever the sign-up settings.
+- Admins can deactivate an account, which signs it out everywhere, blocks every way of signing in, and frees its clips. Its labels keep its name.
+- Admins can email a user a password reset code.
+- Admins can merge two accounts that belong to the same person. A preview shows what moves, and the kept account gets the other's sign-in methods and the higher role.
+- Each user has a page in the admin panel with their sessions and history.
+- A sessions page shows who is signed in, from which browser and address, and when they were last active, and revokes any session. Everyone can see and revoke their own sessions on the Account page.
+- A jobs page lists every ingest, embedding, tracking, similar-object search, and export with its state, attempts, errors, timing, who started it, and which GPU worker runs it. Admins can retry, cancel, and reprioritize jobs. Cancelling a GPU job stops it on the worker.
+- The SAM model is a setting in the admin panel, from SAM 2.1 tiny to large or SAM 3. Workers switch between tasks unless their own `KRILL_SAM_MODEL` pins one.
+- The compute page shows each worker's model, whether it's loaded, the GPU memory it holds, the models it has downloaded, its token, and its last heartbeat, with buttons to warm the model up or unload it.
+- Worker tokens can be created and revoked in the admin panel, alongside `KRILL_WORKER_TOKEN`, so a worker's token can be rotated without restarting the API.
+- A storage page breaks the bucket down by kind and by video, finds objects no row refers to and rows whose object is gone, and deletes the orphans after checking each one again.
+- A database page shows table sizes, row counts, and migration versions, and backs the database up to MinIO with `pg_dump`, by hand or daily with `KRILL_BACKUP_SCHEDULE`. Scheduled backups beyond `KRILL_BACKUP_KEEP` are deleted, and the overview warns when the last one failed or is over a day old.
+- A logs page shows recent log records from the API and each GPU worker, with level and text filters and a live tail. Emails logged in development show their code there. Tokens, passwords, and keys are redacted.
+- Deleted videos and clips go to a trash in the admin panel, where they can be restored with their labels or deleted for good. Deleting shows an Undo button, and the trash empties itself after `KRILL_TRASH_RETENTION_DAYS` (30 by default, 0 keeps everything).
+- A label type can be merged into another, mapping its attribute values onto the other type's. The preview shows the tracks, boxes, gold frames, and export classes it changes.
+- A Content page in the admin panel re-extracts frames, regenerates SAM embeddings for stale or chosen clips, and assigns or releases clips in bulk, with the progress of each job.
+- Admins can train YOLO on verified labels from the Models page, follow each epoch, and compare per-class precision, recall, and mAP on the validation and held-out test videos against the pinned model. Runs can be cancelled, and the GPU worker pauses training between batches whenever someone tracks, so clicks don't wait.
+- Retraining can run daily at a set hour once enough new labels are verified, and a scheduled model that beats the pinned one on the held-out test videos is pinned on its own.
+- Pinning a model, or rolling back to an older one, pre-labels every unlabeled frame outside the held-out test videos. Its boxes show as YOLO proposals with their confidence and go through the same accept and reject flow. A rejected proposal isn't proposed again on that frame, nor is one moved far from where it was. Proposals whose label or attributes a labeler changed stay through later runs. Moving a video to the test split removes its YOLO and CV proposals.
+- Classic CV pre-labelers for orange path markers and red and white slalom pipes, with HSV thresholds tuned on the Pre-labelers page against any frame.
+- Export defaults for the validation share, frame stride, and duplicate threshold are settings, and prefill the export form.
 
 ### Changed
 
 - Users moved from the top bar into the admin panel, and `/users` redirects there.
+- Disabling a user is now called deactivating, and also frees the clips they were working on.
 - The version moved from the top bar into the help menu.
 - An empty `KRILL_` variable now counts as unset. To accept any email domain from the environment, set `KRILL_EMAIL_VERIFICATION=off`.
 - Docker Compose no longer fills in defaults for settings the admin panel can change.
+- The compute page's queue counts GPU jobs waiting to start, not only the one waiting for a worker.
+- A clip whose embedding is interrupted by a model switch is embedded again with the new model instead of failing.
+- The API image includes `pg_dump` 17 for backups.
+- Trashed videos and clips are left out of the queue, exports, stats, gold, and reviews until they are restored.
+- The clip queue starts with the clip whose pre-labels are least certain when videos are otherwise tied.
+- Pre-label tracks no longer wait for their last box to be accepted before exporting, since they can't drift like tracked boxes.
+
+### Fixed
+
+- Icons in menus turn white with the highlighted item instead of staying gray, and follow the system colors in high contrast mode.
 
 ## [0.4.0] - 2026-10-14
 

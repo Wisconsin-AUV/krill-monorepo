@@ -57,6 +57,17 @@ func since(p krillv1.Period, now time.Time) (time.Time, bool, error) {
 	}
 }
 
+// Location reads a request's time zone the way the stats pages do.
+func Location(name string) (*time.Location, error) {
+	return location(name)
+}
+
+// PeriodStart returns when the period containing now started, in now's
+// location, and false for PERIOD_ALL_TIME.
+func PeriodStart(p krillv1.Period, now time.Time) (time.Time, bool, error) {
+	return since(p, now)
+}
+
 type streaks struct {
 	current, longest int32
 }

@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestLoadRequiresDatabaseURL(t *testing.T) {
 	t.Setenv("KRILL_DATABASE_URL", "")
@@ -72,5 +75,40 @@ func TestLoadVerifyNeedsResendOffLocalhost(t *testing.T) {
 	t.Setenv("KRILL_EMAIL_FROM", "Krill <noreply@krill.example.com>")
 	if cfg, err := Load(); err != nil || cfg.LogEmails {
 		t.Errorf("Resend should send emails: %v", err)
+	}
+}
+
+func TestLoadRejectsPipelineSettingsOutOfRange(t *testing.T) {
+	tests := []struct{ key, value string }{
+		{"KRILL_EXPORT_VAL_FRACTION", "0.6"},
+		{"KRILL_EXPORT_STRIDE", "0"},
+		{"KRILL_EXPORT_STRIDE", "101"},
+		{"KRILL_EXPORT_DEDUP_DISTANCE", "17"},
+		{"KRILL_RETRAIN_HOUR", "24"},
+		{"KRILL_RETRAIN_IMAGE_SIZE", "650"},
+		{"KRILL_RETRAIN_BATCH", "0"},
+		{"KRILL_PRELABEL_CONFIDENCE", "1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.key+"="+tt.value, func(t *testing.T) {
+			t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+			t.Setenv(tt.key, tt.value)
+			_, err := Load()
+			var fe *FieldError
+			if !errors.As(err, &fe) || fe.Key != tt.key {
+				t.Errorf("err = %v, want one about %s", err, tt.key)
+			}
+		})
+	}
+}
+
+func TestLoadRetrainHour(t *testing.T) {
+	t.Setenv("KRILL_DATABASE_URL", "postgres://localhost/krill")
+	for value, want := range map[string]int{"": -1, "off": -1, "0": 0, "23": 23} {
+		t.Setenv("KRILL_RETRAIN_HOUR", value)
+		cfg, err := Load()
+		if err != nil || cfg.RetrainHour != want {
+			t.Errorf("KRILL_RETRAIN_HOUR=%q: hour %d, %v, want %d", value, cfg.RetrainHour, err, want)
+		}
 	}
 }

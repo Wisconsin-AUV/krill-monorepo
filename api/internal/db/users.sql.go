@@ -62,17 +62,25 @@ func (q *Queries) CountUsers(ctx context.Context) (int32, error) {
 }
 
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)
+INSERT INTO sessions (token_hash, user_id, expires_at, ip, user_agent) VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateSessionParams struct {
 	TokenHash []byte             `json:"token_hash"`
 	UserID    uuid.UUID          `json:"user_id"`
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Ip        string             `json:"ip"`
+	UserAgent string             `json:"user_agent"`
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
-	_, err := q.db.Exec(ctx, createSession, arg.TokenHash, arg.UserID, arg.ExpiresAt)
+	_, err := q.db.Exec(ctx, createSession,
+		arg.TokenHash,
+		arg.UserID,
+		arg.ExpiresAt,
+		arg.Ip,
+		arg.UserAgent,
+	)
 	return err
 }
 
@@ -162,6 +170,15 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
+const deleteUserEmailCodes = `-- name: DeleteUserEmailCodes :exec
+DELETE FROM email_codes WHERE user_id = $1
+`
+
+func (q *Queries) DeleteUserEmailCodes(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUserEmailCodes, userID)
+	return err
+}
+
 const deleteUserSessions = `-- name: DeleteUserSessions :exec
 DELETE FROM sessions WHERE user_id = $1
 `
@@ -187,30 +204,16 @@ func (q *Queries) EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, e
 	return exists, err
 }
 
-const getSessionUser = `-- name: GetSessionUser :one
-SELECT u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at, u.email_verified_at, u.pending_email FROM sessions s
-JOIN users u ON u.id = s.user_id
-WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.disabled
+const endUserSessions = `-- name: EndUserSessions :execrows
+DELETE FROM sessions WHERE user_id = $1
 `
 
-func (q *Queries) GetSessionUser(ctx context.Context, tokenHash []byte) (User, error) {
-	row := q.db.QueryRow(ctx, getSessionUser, tokenHash)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Username,
-		&i.Email,
-		&i.PasswordHash,
-		&i.Role,
-		&i.SlackUserID,
-		&i.Disabled,
-		&i.CreatedAt,
-		&i.LastLoginAt,
-		&i.EmailVerifiedAt,
-		&i.PendingEmail,
-	)
-	return i, err
+func (q *Queries) EndUserSessions(ctx context.Context, userID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, endUserSessions, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getUser = `-- name: GetUser :one
@@ -375,6 +378,48 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const lockUserPair = `-- name: LockUserPair :many
+SELECT id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email FROM users WHERE id IN ($1::uuid, $2::uuid) ORDER BY id FOR UPDATE
+`
+
+type LockUserPairParams struct {
+	SourceID uuid.UUID `json:"source_id"`
+	TargetID uuid.UUID `json:"target_id"`
+}
+
+func (q *Queries) LockUserPair(ctx context.Context, arg LockUserPairParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, lockUserPair, arg.SourceID, arg.TargetID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.Email,
+			&i.PasswordHash,
+			&i.Role,
+			&i.SlackUserID,
+			&i.Disabled,
+			&i.CreatedAt,
+			&i.LastLoginAt,
+			&i.EmailVerifiedAt,
+			&i.PendingEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockUsers = `-- name: LockUsers :exec
 LOCK TABLE users IN SHARE ROW EXCLUSIVE MODE
 `
@@ -384,12 +429,118 @@ func (q *Queries) LockUsers(ctx context.Context) error {
 	return err
 }
 
+const lookupSession = `-- name: LookupSession :one
+WITH seen AS (
+    UPDATE sessions
+    SET last_seen_at = now(), ip = CASE WHEN $2::text = '' THEN sessions.ip ELSE $2::text END
+    WHERE sessions.token_hash = $1
+        AND sessions.expires_at > now()
+        AND sessions.last_seen_at < now() - interval '5 minutes'
+)
+SELECT u.id, u.name, u.username, u.email, u.password_hash, u.role, u.slack_user_id, u.disabled, u.created_at, u.last_login_at, u.email_verified_at, u.pending_email FROM sessions s
+JOIN users u ON u.id = s.user_id
+WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.disabled
+`
+
+type LookupSessionParams struct {
+	TokenHash []byte `json:"token_hash"`
+	Ip        string `json:"ip"`
+}
+
+// Returns the session's active user. A session not seen for five minutes is
+// marked seen in the same statement, so most requests don't write.
+func (q *Queries) LookupSession(ctx context.Context, arg LookupSessionParams) (User, error) {
+	row := q.db.QueryRow(ctx, lookupSession, arg.TokenHash, arg.Ip)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.SlackUserID,
+		&i.Disabled,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
+	)
+	return i, err
+}
+
 const markEmailVerified = `-- name: MarkEmailVerified :one
 UPDATE users SET email_verified_at = coalesce(email_verified_at, now()) WHERE id = $1 RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
 `
 
 func (q *Queries) MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, markEmailVerified, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.SlackUserID,
+		&i.Disabled,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.EmailVerifiedAt,
+		&i.PendingEmail,
+	)
+	return i, err
+}
+
+const releaseUserClaims = `-- name: ReleaseUserClaims :execrows
+DELETE FROM clip_claims WHERE user_id = $1
+`
+
+func (q *Queries) ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, releaseUserClaims, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setMergedIdentity = `-- name: SetMergedIdentity :one
+UPDATE users
+SET role = $1,
+    slack_user_id = $2,
+    password_hash = $3,
+    email = $4,
+    email_verified_at = $5,
+    pending_email = CASE WHEN pending_email = $4 THEN NULL ELSE pending_email END,
+    created_at = $6,
+    last_login_at = $7
+WHERE id = $8
+RETURNING id, name, username, email, password_hash, role, slack_user_id, disabled, created_at, last_login_at, email_verified_at, pending_email
+`
+
+type SetMergedIdentityParams struct {
+	Role            string             `json:"role"`
+	SlackUserID     pgtype.Text        `json:"slack_user_id"`
+	PasswordHash    pgtype.Text        `json:"password_hash"`
+	Email           string             `json:"email"`
+	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	LastLoginAt     pgtype.Timestamptz `json:"last_login_at"`
+	ID              uuid.UUID          `json:"id"`
+}
+
+func (q *Queries) SetMergedIdentity(ctx context.Context, arg SetMergedIdentityParams) (User, error) {
+	row := q.db.QueryRow(ctx, setMergedIdentity,
+		arg.Role,
+		arg.SlackUserID,
+		arg.PasswordHash,
+		arg.Email,
+		arg.EmailVerifiedAt,
+		arg.CreatedAt,
+		arg.LastLoginAt,
+		arg.ID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

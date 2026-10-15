@@ -1,9 +1,10 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
-import { useQuery } from '@connectrpc/connect-query'
+import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { CircleStackIcon, CpuChipIcon, ServerIcon } from '@heroicons/react/20/solid'
 import { EmptyState } from '@/components/EmptyState'
 import { Meter } from '@/components/Meter'
-import { Badge } from '@/components/ui/Badge'
+import { Badge, BadgeButton, type BadgeColor } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { QueryError } from '@/components/ui/Callout'
 import { Heading } from '@/components/ui/Heading'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -17,8 +18,12 @@ import {
   NodeRole,
   type RunningTask,
 } from '@/gen/krill/v1/admin_pb'
+import { ComputeService } from '@/gen/krill/v1/compute_pb'
 import type { GpuStats } from '@/gen/krill/v1/system_pb'
+import { ModelLoadState, WorkerAction } from '@/gen/krill/v1/worker_pb'
+import { flash } from '@/lib/flash'
 import { formatBytes, formatDuration, formatRelative, plural } from '@/lib/format'
+import { invalidateService } from '@/lib/queryClient'
 import { Sparkline } from './Sparkline'
 
 const INTERVAL = 5
@@ -59,6 +64,9 @@ const taskNames: Record<string, string> = {
   track: 'Tracking',
   exemplar: 'Finding similar objects',
   embed: 'Embedding',
+  train: 'Training',
+  prelabel: 'Pre-labeling',
+  preview: 'Testing a pre-labeler on',
 }
 
 function Task({ task, now }: { task: RunningTask; now: number }) {
@@ -69,7 +77,7 @@ function Task({ task, now }: { task: RunningTask; now: number }) {
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-sky-400 opacity-75 motion-reduce:hidden" />
         <span className="relative inline-flex size-2 rounded-full bg-sky-500" />
       </span>
-      {taskNames[task.kind] ?? task.kind} {plural(task.frames, 'frame')}
+      {taskNames[task.kind] ?? task.kind} {task.frames > 0 && plural(task.frames, 'frame')}
       {started && (
         <span className="text-zinc-500 tabular-nums dark:text-zinc-400">
           for {formatDuration(now - started.getTime())}
@@ -128,12 +136,98 @@ function Gpu({ gpu, history }: { gpu: GpuStats; history: ComputeSample[] }) {
   )
 }
 
-function NodeCard({ node, now }: { node: ComputeNode; now: number }) {
+const samModels: Record<string, string> = {
+  'facebook/sam2.1-hiera-tiny': 'SAM 2.1 tiny',
+  'facebook/sam2.1-hiera-small': 'SAM 2.1 small',
+  'facebook/sam2.1-hiera-base-plus': 'SAM 2.1 base plus',
+  'facebook/sam2.1-hiera-large': 'SAM 2.1 large',
+  'facebook/sam3': 'SAM 3',
+}
+const samName = (id: string) => samModels[id] ?? id
+
+const modelStates: Record<ModelLoadState, { label: string; color: BadgeColor }> = {
+  [ModelLoadState.UNSPECIFIED]: { label: 'Unknown', color: 'zinc' },
+  [ModelLoadState.UNLOADED]: { label: 'Unloaded', color: 'zinc' },
+  [ModelLoadState.LOADING]: { label: 'Loading', color: 'amber' },
+  [ModelLoadState.READY]: { label: 'Ready', color: 'green' },
+  [ModelLoadState.ERROR]: { label: 'Failed to load', color: 'red' },
+}
+
+function WorkerModelRow({ node, wanted }: { node: ComputeNode; wanted: string }) {
+  const sam = node.sam
+  const control = useMutation(ComputeService.method.controlWorker, {
+    onSuccess: () => invalidateService(AdminService),
+    onError: (err) => flash.error('Could not reach the worker', err),
+  })
+  if (!sam) return null
+  const state = modelStates[sam.state]
+  const pending = sam.pendingAction !== WorkerAction.UNSPECIFIED || control.isPending
+  const switching = !sam.pinned && wanted !== '' && node.model !== wanted
+  const send = (action: WorkerAction) => control.mutate({ workerId: node.id, action })
+  const loaded = sam.state === ModelLoadState.READY
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-zinc-950/5 px-6 py-4 dark:border-white/5">
+      <div className="min-w-0 flex-1">
+        <p className="flex flex-wrap items-center gap-2 text-sm/6">
+          <span className="font-medium text-zinc-950 dark:text-white">{samName(node.model)}</span>
+          <Badge color={state.color}>{state.label}</Badge>
+          {sam.pinned && <Badge title="Set by the worker's KRILL_SAM_MODEL">Pinned</Badge>}
+          {switching && <Badge color="sky">Switching to {samName(wanted)}</Badge>}
+          {sam.supportsExemplars && <Badge color="violet">Similar objects</Badge>}
+        </p>
+        <p className="text-sm/6 text-zinc-500 tabular-nums dark:text-zinc-400">
+          {[
+            loaded &&
+              sam.memoryReservedBytes > 0n &&
+              `${formatBytes(Number(sam.memoryAllocatedBytes))} allocated · ${formatBytes(Number(sam.memoryReservedBytes))} reserved`,
+            node.tokenName && `Token ${node.tokenName}`,
+            node.lastSeen && `heartbeat ${formatRelative(timestampDate(node.lastSeen))}`,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+        {sam.error && (
+          <p className="text-sm/6 break-words text-red-700 dark:text-red-400">{sam.error}</p>
+        )}
+        {sam.cached.length > 0 && (
+          <p className="text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Downloaded: {sam.cached.map(samName).join(', ')}
+          </p>
+        )}
+      </div>
+      {node.online && (
+        <div className="flex gap-2">
+          <Button
+            outline
+            disabled={pending || sam.state === ModelLoadState.LOADING || (loaded && !switching)}
+            onClick={() => send(WorkerAction.WARM_UP)}
+          >
+            {sam.pendingAction === WorkerAction.WARM_UP ? 'Warming up' : 'Warm up'}
+          </Button>
+          <Button
+            outline
+            disabled={
+              pending ||
+              sam.state === ModelLoadState.UNLOADED ||
+              sam.state === ModelLoadState.LOADING
+            }
+            onClick={() => send(WorkerAction.UNLOAD)}
+          >
+            {sam.pendingAction === WorkerAction.UNLOAD ? 'Unloading' : 'Unload'}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NodeCard({ node, now, wanted }: { node: ComputeNode; now: number; wanted: string }) {
   const api = node.role === NodeRole.API
   const Icon = api ? ServerIcon : CpuChipIcon
   const host = node.host
   const started = node.startedAt && timestampDate(node.startedAt)
-  const details = [node.model, node.accelerator, host?.platform].filter(Boolean)
+  const details = [node.accelerator, host?.platform].filter(Boolean)
 
   return (
     <section className="rounded-xl ring-1 ring-zinc-950/10 dark:ring-white/10">
@@ -162,6 +256,7 @@ function NodeCard({ node, now }: { node: ComputeNode; now: number }) {
         </div>
         {node.task && <Task task={node.task} now={now} />}
       </header>
+      {!api && <WorkerModelRow node={node} wanted={wanted} />}
       {!node.online ? (
         <p className="p-6 text-sm/6 text-zinc-500 dark:text-zinc-400">
           Last seen {node.lastSeen ? formatRelative(timestampDate(node.lastSeen)) : 'never'}
@@ -259,11 +354,19 @@ function Storage({ storage }: { storage: ObjectStorage }) {
 
 function Queue({ queue }: { queue: GpuQueue }) {
   const waiting = queue.interactive + queue.background
-  if (waiting === 0) return <Badge>Queue empty</Badge>
+  if (waiting === 0) return <BadgeButton to="/admin/jobs">Queue empty</BadgeButton>
   return (
     <div className="flex gap-2">
-      {queue.interactive > 0 && <Badge color="sky">{queue.interactive} waiting for tracking</Badge>}
-      {queue.background > 0 && <Badge>{queue.background} embeddings queued</Badge>}
+      {queue.interactive > 0 && (
+        <BadgeButton color="sky" to="/admin/jobs?state=queued">
+          {queue.interactive} waiting for tracking
+        </BadgeButton>
+      )}
+      {queue.background > 0 && (
+        <BadgeButton to="/admin/jobs?kind=embed&state=queued">
+          {queue.background} embeddings queued
+        </BadgeButton>
+      )}
     </div>
   )
 }
@@ -292,7 +395,7 @@ export function ComputePage() {
         <div className="mt-8 space-y-6">
           {data.storage && <Storage storage={data.storage} />}
           {data.nodes.map((n) => (
-            <NodeCard key={n.id} node={n} now={dataUpdatedAt} />
+            <NodeCard key={n.id} node={n} now={dataUpdatedAt} wanted={data.samModel} />
           ))}
           {workers.length === 0 && (
             <EmptyState

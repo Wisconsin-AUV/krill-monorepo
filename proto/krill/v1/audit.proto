@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+
+// AuditService lists who changed what.
+service AuditService {
+  // ListAuditLog returns entries newest first.
+  rpc ListAuditLog(ListAuditLogRequest) returns (ListAuditLogResponse) {}
+  // ListAuditFilters returns the actions and actors that appear in the log.
+  rpc ListAuditFilters(ListAuditFiltersRequest) returns (ListAuditFiltersResponse) {}
+}
+
+message AuditEntry {
+  int64 id = 1;
+  google.protobuf.Timestamp at = 2;
+  // Unset when the actor's account was deleted, or nobody was signed in.
+  Profile actor = 3;
+  // The actor's name when the entry was recorded.
+  string actor_name = 4;
+  // Dotted verb, like clip.delete or user.role.
+  string action = 5;
+  // Like user, clip, or setting. Empty when the action has no target.
+  string target_type = 6;
+  string target_id = 7;
+  // The target's name when the entry was recorded.
+  string target_name = 8;
+  // Depends on the action. Changes are {"from": ..., "to": ...}.
+  google.protobuf.Struct details = 9;
+  string ip = 10;
+}
+
+message ListAuditLogRequest {
+  // Empty lists every actor.
+  string actor_id = 1;
+  // Only actions starting with this, like "user." or "clip.delete".
+  string action_prefix = 2;
+  // Set both to list one target's entries.
+  string target_type = 3;
+  string target_id = 4;
+  // Defaults to 50, at most 200.
+  int32 page_size = 5;
+  string page_token = 6;
+}
+
+message ListAuditLogResponse {
+  repeated AuditEntry entries = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
+}
+
+message ListAuditFiltersRequest {}
+
+message ListAuditFiltersResponse {
+  // Sorted.
+  repeated string actions = 1;
+  // Users with at least one entry, sorted by name.
+  repeated Profile actors = 2;
+}

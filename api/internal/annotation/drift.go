@@ -9,6 +9,10 @@ const (
 	maxDriftAreaRatio = 1.5
 )
 
+// DuplicateIoU is the overlap above which two boxes of a frame are taken to
+// be the same object.
+const DuplicateIoU = 0.5
+
 type Rect struct {
 	X, Y, W, H float64
 }

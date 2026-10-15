@@ -12,7 +12,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/user.proto.
  */
 export const file_krill_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSI3CghSb2xlSW5mbxIcCgRyb2xlGAEgASgOMg4ua3JpbGwudjEuUm9sZRINCgVsYWJlbBgCIAEoCSJtCg5QZXJtaXNzaW9uSW5mbxIoCgpwZXJtaXNzaW9uGAEgASgOMhQua3JpbGwudjEuUGVybWlzc2lvbhITCgtkZXNjcmlwdGlvbhgCIAEoCRIcCgRyb2xlGAMgASgOMg4ua3JpbGwudjEuUm9sZSLzAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKQoLcGVybWlzc2lvbnMYCyADKA4yFC5rcmlsbC52MS5QZXJtaXNzaW9uEhYKDmVtYWlsX3ZlcmlmaWVkGAwgASgIEhUKDXBlbmRpbmdfZW1haWwYDSABKAkSFwoPYWN0aXZlX3Nlc3Npb25zGA4gASgFIhIKEExpc3RVc2Vyc1JlcXVlc3QiMgoRTGlzdFVzZXJzUmVzcG9uc2USHQoFdXNlcnMYASADKAsyDi5rcmlsbC52MS5Vc2VyIm8KEVVwZGF0ZVVzZXJSZXF1ZXN0EgoKAmlkGAEgASgJEiEKBHJvbGUYAiABKA4yDi5rcmlsbC52MS5Sb2xlSACIAQESFQoIZGlzYWJsZWQYAyABKAhIAYgBAUIHCgVfcm9sZUILCglfZGlzYWJsZWQiMgoSVXBkYXRlVXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIjYKFlNldFVzZXJQYXNzd29yZFJlcXVlc3QSCgoCaWQYASABKAkSEAoIcGFzc3dvcmQYAiABKAkiGQoXU2V0VXNlclBhc3N3b3JkUmVzcG9uc2UiHwoRRGVsZXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlVXNlclJlc3BvbnNlIiAKElNpZ25PdXRVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNTaWduT3V0VXNlclJlc3BvbnNlIiYKGE1hcmtFbWFpbFZlcmlmaWVkUmVxdWVzdBIKCgJpZBgBIAEoCSI5ChlNYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyKlIKBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEhAKDFJPTEVfTEFCRUxFUhABEhIKDlJPTEVfREVWRUxPUEVSEAISDgoKUk9MRV9BRE1JThADKvcBCgpQZXJtaXNzaW9uEhoKFlBFUk1JU1NJT05fVU5TUEVDSUZJRUQQABIUChBQRVJNSVNTSU9OX0xBQkVMEAESHAoYUEVSTUlTU0lPTl9NQU5BR0VfVklERU9TEAISIQodUEVSTUlTU0lPTl9NQU5BR0VfTEFCRUxfVFlQRVMQAxIdChlQRVJNSVNTSU9OX01BTkFHRV9FWFBPUlRTEAQSGwoXUEVSTUlTU0lPTl9NQU5BR0VfVVNFUlMQBRIcChhQRVJNSVNTSU9OX1JFVklFV19MQUJFTFMQBhIcChhQRVJNSVNTSU9OX01BTkFHRV9TWVNURU0QBzLzAwoLVXNlclNlcnZpY2USRgoJTGlzdFVzZXJzEhoua3JpbGwudjEuTGlzdFVzZXJzUmVxdWVzdBobLmtyaWxsLnYxLkxpc3RVc2Vyc1Jlc3BvbnNlIgASSQoKVXBkYXRlVXNlchIbLmtyaWxsLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuVXBkYXRlVXNlclJlc3BvbnNlIgASWAoPU2V0VXNlclBhc3N3b3JkEiAua3JpbGwudjEuU2V0VXNlclBhc3N3b3JkUmVxdWVzdBohLmtyaWxsLnYxLlNldFVzZXJQYXNzd29yZFJlc3BvbnNlIgASSQoKRGVsZXRlVXNlchIbLmtyaWxsLnYxLkRlbGV0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuRGVsZXRlVXNlclJlc3BvbnNlIgASTAoLU2lnbk91dFVzZXISHC5rcmlsbC52MS5TaWduT3V0VXNlclJlcXVlc3QaHS5rcmlsbC52MS5TaWduT3V0VXNlclJlc3BvbnNlIgASXgoRTWFya0VtYWlsVmVyaWZpZWQSIi5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlcXVlc3QaIy5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJVXNlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChNrcmlsbC92MS91c2VyLnByb3RvEghrcmlsbC52MSI3CghSb2xlSW5mbxIcCgRyb2xlGAEgASgOMg4ua3JpbGwudjEuUm9sZRINCgVsYWJlbBgCIAEoCSJtCg5QZXJtaXNzaW9uSW5mbxIoCgpwZXJtaXNzaW9uGAEgASgOMhQua3JpbGwudjEuUGVybWlzc2lvbhITCgtkZXNjcmlwdGlvbhgCIAEoCRIcCgRyb2xlGAMgASgOMg4ua3JpbGwudjEuUm9sZSLzAgoEVXNlchIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhAKCHVzZXJuYW1lGAMgASgJEg0KBWVtYWlsGAQgASgJEhwKBHJvbGUYBSABKA4yDi5rcmlsbC52MS5Sb2xlEhAKCGRpc2FibGVkGAYgASgIEhQKDGhhc19wYXNzd29yZBgHIAEoCBIUCgxzbGFja19saW5rZWQYCCABKAgSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF9sb2dpbl9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKQoLcGVybWlzc2lvbnMYCyADKA4yFC5rcmlsbC52MS5QZXJtaXNzaW9uEhYKDmVtYWlsX3ZlcmlmaWVkGAwgASgIEhUKDXBlbmRpbmdfZW1haWwYDSABKAkSFwoPYWN0aXZlX3Nlc3Npb25zGA4gASgFIhIKEExpc3RVc2Vyc1JlcXVlc3QiMgoRTGlzdFVzZXJzUmVzcG9uc2USHQoFdXNlcnMYASADKAsyDi5rcmlsbC52MS5Vc2VyIm8KEVVwZGF0ZVVzZXJSZXF1ZXN0EgoKAmlkGAEgASgJEiEKBHJvbGUYAiABKA4yDi5rcmlsbC52MS5Sb2xlSACIAQESFQoIZGlzYWJsZWQYAyABKAhIAYgBAUIHCgVfcm9sZUILCglfZGlzYWJsZWQiMgoSVXBkYXRlVXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIjYKFlNldFVzZXJQYXNzd29yZFJlcXVlc3QSCgoCaWQYASABKAkSEAoIcGFzc3dvcmQYAiABKAkiGQoXU2V0VXNlclBhc3N3b3JkUmVzcG9uc2UiHwoRRGVsZXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlVXNlclJlc3BvbnNlIiAKElNpZ25PdXRVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNTaWduT3V0VXNlclJlc3BvbnNlIiYKGE1hcmtFbWFpbFZlcmlmaWVkUmVxdWVzdBIKCgJpZBgBIAEoCSI5ChlNYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyIiMKFURlYWN0aXZhdGVVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCSJnChZEZWFjdGl2YXRlVXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi5rcmlsbC52MS5Vc2VyEhYKDnNlc3Npb25zX2VuZGVkGAIgASgDEhcKD2NsYWltc19yZWxlYXNlZBgDIAEoAyIjChVSZWFjdGl2YXRlVXNlclJlcXVlc3QSCgoCaWQYASABKAkiNgoWUmVhY3RpdmF0ZVVzZXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlciImChhTZW5kUGFzc3dvcmRSZXNldFJlcXVlc3QSCgoCaWQYASABKAkiGwoZU2VuZFBhc3N3b3JkUmVzZXRSZXNwb25zZSI7CgpNZXJnZUNvdW50Eg0KBWxhYmVsGAEgASgJEg0KBW1vdmVkGAIgASgDEg8KB2Ryb3BwZWQYAyABKAMiQAoYUHJldmlld01lcmdlVXNlcnNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoCRIRCgl0YXJnZXRfaWQYAiABKAkioQEKGVByZXZpZXdNZXJnZVVzZXJzUmVzcG9uc2USHgoGc291cmNlGAEgASgLMg4ua3JpbGwudjEuVXNlchIeCgZ0YXJnZXQYAiABKAsyDi5rcmlsbC52MS5Vc2VyEh4KBnJlc3VsdBgDIAEoCzIOLmtyaWxsLnYxLlVzZXISJAoGY291bnRzGAQgAygLMhQua3JpbGwudjEuTWVyZ2VDb3VudCI5ChFNZXJnZVVzZXJzUmVxdWVzdBIRCglzb3VyY2VfaWQYASABKAkSEQoJdGFyZ2V0X2lkGAIgASgJIlgKEk1lcmdlVXNlcnNSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4ua3JpbGwudjEuVXNlchIkCgZjb3VudHMYAiADKAsyFC5rcmlsbC52MS5NZXJnZUNvdW50KlIKBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEhAKDFJPTEVfTEFCRUxFUhABEhIKDlJPTEVfREVWRUxPUEVSEAISDgoKUk9MRV9BRE1JThADKvcBCgpQZXJtaXNzaW9uEhoKFlBFUk1JU1NJT05fVU5TUEVDSUZJRUQQABIUChBQRVJNSVNTSU9OX0xBQkVMEAESHAoYUEVSTUlTU0lPTl9NQU5BR0VfVklERU9TEAISIQodUEVSTUlTU0lPTl9NQU5BR0VfTEFCRUxfVFlQRVMQAxIdChlQRVJNSVNTSU9OX01BTkFHRV9FWFBPUlRTEAQSGwoXUEVSTUlTU0lPTl9NQU5BR0VfVVNFUlMQBRIcChhQRVJNSVNTSU9OX1JFVklFV19MQUJFTFMQBhIcChhQRVJNSVNTSU9OX01BTkFHRV9TWVNURU0QBzKsBwoLVXNlclNlcnZpY2USRgoJTGlzdFVzZXJzEhoua3JpbGwudjEuTGlzdFVzZXJzUmVxdWVzdBobLmtyaWxsLnYxLkxpc3RVc2Vyc1Jlc3BvbnNlIgASSQoKVXBkYXRlVXNlchIbLmtyaWxsLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuVXBkYXRlVXNlclJlc3BvbnNlIgASWAoPU2V0VXNlclBhc3N3b3JkEiAua3JpbGwudjEuU2V0VXNlclBhc3N3b3JkUmVxdWVzdBohLmtyaWxsLnYxLlNldFVzZXJQYXNzd29yZFJlc3BvbnNlIgASSQoKRGVsZXRlVXNlchIbLmtyaWxsLnYxLkRlbGV0ZVVzZXJSZXF1ZXN0Ghwua3JpbGwudjEuRGVsZXRlVXNlclJlc3BvbnNlIgASTAoLU2lnbk91dFVzZXISHC5rcmlsbC52MS5TaWduT3V0VXNlclJlcXVlc3QaHS5rcmlsbC52MS5TaWduT3V0VXNlclJlc3BvbnNlIgASXgoRTWFya0VtYWlsVmVyaWZpZWQSIi5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlcXVlc3QaIy5rcmlsbC52MS5NYXJrRW1haWxWZXJpZmllZFJlc3BvbnNlIgASVQoORGVhY3RpdmF0ZVVzZXISHy5rcmlsbC52MS5EZWFjdGl2YXRlVXNlclJlcXVlc3QaIC5rcmlsbC52MS5EZWFjdGl2YXRlVXNlclJlc3BvbnNlIgASVQoOUmVhY3RpdmF0ZVVzZXISHy5rcmlsbC52MS5SZWFjdGl2YXRlVXNlclJlcXVlc3QaIC5rcmlsbC52MS5SZWFjdGl2YXRlVXNlclJlc3BvbnNlIgASXgoRU2VuZFBhc3N3b3JkUmVzZXQSIi5rcmlsbC52MS5TZW5kUGFzc3dvcmRSZXNldFJlcXVlc3QaIy5rcmlsbC52MS5TZW5kUGFzc3dvcmRSZXNldFJlc3BvbnNlIgASXgoRUHJldmlld01lcmdlVXNlcnMSIi5rcmlsbC52MS5QcmV2aWV3TWVyZ2VVc2Vyc1JlcXVlc3QaIy5rcmlsbC52MS5QcmV2aWV3TWVyZ2VVc2Vyc1Jlc3BvbnNlIgASSQoKTWVyZ2VVc2VycxIbLmtyaWxsLnYxLk1lcmdlVXNlcnNSZXF1ZXN0Ghwua3JpbGwudjEuTWVyZ2VVc2Vyc1Jlc3BvbnNlIgBCigEKDGNvbS5rcmlsbC52MUIJVXNlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message krill.v1.RoleInfo
@@ -361,6 +361,251 @@ export const MarkEmailVerifiedResponseSchema: GenMessage<MarkEmailVerifiedRespon
   messageDesc(file_krill_v1_user, 14);
 
 /**
+ * @generated from message krill.v1.DeactivateUserRequest
+ */
+export type DeactivateUserRequest = Message<"krill.v1.DeactivateUserRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message krill.v1.DeactivateUserRequest.
+ * Use `create(DeactivateUserRequestSchema)` to create a new message.
+ */
+export const DeactivateUserRequestSchema: GenMessage<DeactivateUserRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 15);
+
+/**
+ * @generated from message krill.v1.DeactivateUserResponse
+ */
+export type DeactivateUserResponse = Message<"krill.v1.DeactivateUserResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+
+  /**
+   * @generated from field: int64 sessions_ended = 2;
+   */
+  sessionsEnded: bigint;
+
+  /**
+   * @generated from field: int64 claims_released = 3;
+   */
+  claimsReleased: bigint;
+};
+
+/**
+ * Describes the message krill.v1.DeactivateUserResponse.
+ * Use `create(DeactivateUserResponseSchema)` to create a new message.
+ */
+export const DeactivateUserResponseSchema: GenMessage<DeactivateUserResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 16);
+
+/**
+ * @generated from message krill.v1.ReactivateUserRequest
+ */
+export type ReactivateUserRequest = Message<"krill.v1.ReactivateUserRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message krill.v1.ReactivateUserRequest.
+ * Use `create(ReactivateUserRequestSchema)` to create a new message.
+ */
+export const ReactivateUserRequestSchema: GenMessage<ReactivateUserRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 17);
+
+/**
+ * @generated from message krill.v1.ReactivateUserResponse
+ */
+export type ReactivateUserResponse = Message<"krill.v1.ReactivateUserResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message krill.v1.ReactivateUserResponse.
+ * Use `create(ReactivateUserResponseSchema)` to create a new message.
+ */
+export const ReactivateUserResponseSchema: GenMessage<ReactivateUserResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 18);
+
+/**
+ * @generated from message krill.v1.SendPasswordResetRequest
+ */
+export type SendPasswordResetRequest = Message<"krill.v1.SendPasswordResetRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message krill.v1.SendPasswordResetRequest.
+ * Use `create(SendPasswordResetRequestSchema)` to create a new message.
+ */
+export const SendPasswordResetRequestSchema: GenMessage<SendPasswordResetRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 19);
+
+/**
+ * @generated from message krill.v1.SendPasswordResetResponse
+ */
+export type SendPasswordResetResponse = Message<"krill.v1.SendPasswordResetResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.SendPasswordResetResponse.
+ * Use `create(SendPasswordResetResponseSchema)` to create a new message.
+ */
+export const SendPasswordResetResponseSchema: GenMessage<SendPasswordResetResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 20);
+
+/**
+ * MergeCount is how many of one kind of record a merge moves.
+ *
+ * @generated from message krill.v1.MergeCount
+ */
+export type MergeCount = Message<"krill.v1.MergeCount"> & {
+  /**
+   * Like "Boxes drawn" or "Gold checks".
+   *
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: int64 moved = 2;
+   */
+  moved: bigint;
+
+  /**
+   * Records the target already had, so the source's are deleted instead.
+   *
+   * @generated from field: int64 dropped = 3;
+   */
+  dropped: bigint;
+};
+
+/**
+ * Describes the message krill.v1.MergeCount.
+ * Use `create(MergeCountSchema)` to create a new message.
+ */
+export const MergeCountSchema: GenMessage<MergeCount> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 21);
+
+/**
+ * @generated from message krill.v1.PreviewMergeUsersRequest
+ */
+export type PreviewMergeUsersRequest = Message<"krill.v1.PreviewMergeUsersRequest"> & {
+  /**
+   * @generated from field: string source_id = 1;
+   */
+  sourceId: string;
+
+  /**
+   * @generated from field: string target_id = 2;
+   */
+  targetId: string;
+};
+
+/**
+ * Describes the message krill.v1.PreviewMergeUsersRequest.
+ * Use `create(PreviewMergeUsersRequestSchema)` to create a new message.
+ */
+export const PreviewMergeUsersRequestSchema: GenMessage<PreviewMergeUsersRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 22);
+
+/**
+ * @generated from message krill.v1.PreviewMergeUsersResponse
+ */
+export type PreviewMergeUsersResponse = Message<"krill.v1.PreviewMergeUsersResponse"> & {
+  /**
+   * @generated from field: krill.v1.User source = 1;
+   */
+  source?: User | undefined;
+
+  /**
+   * @generated from field: krill.v1.User target = 2;
+   */
+  target?: User | undefined;
+
+  /**
+   * The target as it will be after the merge.
+   *
+   * @generated from field: krill.v1.User result = 3;
+   */
+  result?: User | undefined;
+
+  /**
+   * Only kinds with something to move.
+   *
+   * @generated from field: repeated krill.v1.MergeCount counts = 4;
+   */
+  counts: MergeCount[];
+};
+
+/**
+ * Describes the message krill.v1.PreviewMergeUsersResponse.
+ * Use `create(PreviewMergeUsersResponseSchema)` to create a new message.
+ */
+export const PreviewMergeUsersResponseSchema: GenMessage<PreviewMergeUsersResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 23);
+
+/**
+ * @generated from message krill.v1.MergeUsersRequest
+ */
+export type MergeUsersRequest = Message<"krill.v1.MergeUsersRequest"> & {
+  /**
+   * Deleted by the merge. It can't be the caller.
+   *
+   * @generated from field: string source_id = 1;
+   */
+  sourceId: string;
+
+  /**
+   * @generated from field: string target_id = 2;
+   */
+  targetId: string;
+};
+
+/**
+ * Describes the message krill.v1.MergeUsersRequest.
+ * Use `create(MergeUsersRequestSchema)` to create a new message.
+ */
+export const MergeUsersRequestSchema: GenMessage<MergeUsersRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 24);
+
+/**
+ * @generated from message krill.v1.MergeUsersResponse
+ */
+export type MergeUsersResponse = Message<"krill.v1.MergeUsersResponse"> & {
+  /**
+   * @generated from field: krill.v1.User user = 1;
+   */
+  user?: User | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.MergeCount counts = 2;
+   */
+  counts: MergeCount[];
+};
+
+/**
+ * Describes the message krill.v1.MergeUsersResponse.
+ * Use `create(MergeUsersResponseSchema)` to create a new message.
+ */
+export const MergeUsersResponseSchema: GenMessage<MergeUsersResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_user, 25);
+
+/**
  * Role is ordered: each role has every permission of the roles below it.
  *
  * @generated from enum krill.v1.Role
@@ -522,6 +767,61 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof MarkEmailVerifiedRequestSchema;
     output: typeof MarkEmailVerifiedResponseSchema;
+  },
+  /**
+   * DeactivateUser signs the user out everywhere and releases their clip
+   * claims. They can't sign in by any method until reactivated. Their labels
+   * stay attributed to them.
+   *
+   * @generated from rpc krill.v1.UserService.DeactivateUser
+   */
+  deactivateUser: {
+    methodKind: "unary";
+    input: typeof DeactivateUserRequestSchema;
+    output: typeof DeactivateUserResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.UserService.ReactivateUser
+   */
+  reactivateUser: {
+    methodKind: "unary";
+    input: typeof ReactivateUserRequestSchema;
+    output: typeof ReactivateUserResponseSchema;
+  },
+  /**
+   * SendPasswordReset emails the user a password reset code. It fails with
+   * FailedPrecondition when the server can't send email.
+   *
+   * @generated from rpc krill.v1.UserService.SendPasswordReset
+   */
+  sendPasswordReset: {
+    methodKind: "unary";
+    input: typeof SendPasswordResetRequestSchema;
+    output: typeof SendPasswordResetResponseSchema;
+  },
+  /**
+   * PreviewMergeUsers says what MergeUsers would move, without changing
+   * anything.
+   *
+   * @generated from rpc krill.v1.UserService.PreviewMergeUsers
+   */
+  previewMergeUsers: {
+    methodKind: "unary";
+    input: typeof PreviewMergeUsersRequestSchema;
+    output: typeof PreviewMergeUsersResponseSchema;
+  },
+  /**
+   * MergeUsers moves everything the source account did to the target, gives
+   * the target the source's sign-in methods it lacks and the higher of the
+   * two roles, and deletes the source. Where both have the same record, like
+   * a gold check on the same frame, the target's is kept.
+   *
+   * @generated from rpc krill.v1.UserService.MergeUsers
+   */
+  mergeUsers: {
+    methodKind: "unary";
+    input: typeof MergeUsersRequestSchema;
+    output: typeof MergeUsersResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_user, 0);

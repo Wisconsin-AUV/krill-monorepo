@@ -36,6 +36,7 @@ import { Text } from '@/components/ui/Text'
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService, VideoStatus, type Clip } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
+import { contentClient } from '@/lib/clients'
 import { flash } from '@/lib/flash'
 import { formatDuration, formatFps, formatNumber, formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
@@ -125,9 +126,17 @@ export function VideoPage() {
     onError: (err) => flash.error('Could not restart ingest', err),
   })
   const remove = useMutation(VideoService.method.deleteVideo, {
-    onSuccess: async () => {
+    onSuccess: async (_, { id: trashed }) => {
       await invalidateService(VideoService)
-      flash.success('Video deleted')
+      if (trashed !== undefined) {
+        flash.undoable('Video moved to trash', () => {
+          contentClient
+            .restoreTrash({ videoIds: [trashed] })
+            .then(() => invalidateService(VideoService))
+            .then(() => navigate(`/videos/${trashed}`))
+            .catch((err: unknown) => flash.error('Could not restore video', err))
+        })
+      }
       navigate('/videos')
     },
   })
@@ -192,7 +201,7 @@ export function VideoPage() {
                 )}
                 <DropdownItem onClick={() => setDeleting(true)}>
                   <TrashIcon data-slot="icon" />
-                  <DropdownLabel>Delete video</DropdownLabel>
+                  <DropdownLabel>Move to trash</DropdownLabel>
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -329,9 +338,9 @@ export function VideoPage() {
         onConfirm={() => remove.mutate({ id: video.id })}
         busy={remove.isPending}
         error={remove.error}
-        title={`Delete ${video.name}?`}
-        description="This removes the video, its frames, and every label on them. It cannot be undone."
-        confirmLabel="Delete video"
+        title={`Move ${video.name} to trash?`}
+        description={`${plural(video.clipCount, 'clip')} · ${plural(video.boxCount, 'box', 'boxes')}`}
+        confirmLabel="Move to trash"
       />
     </PageContentBlock>
   )

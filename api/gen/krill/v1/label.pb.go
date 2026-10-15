@@ -1052,6 +1052,487 @@ func (*DeleteLabelExampleResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_label_proto_rawDescGZIP(), []int{18}
 }
 
+// AttributeValueMapping says what a source track's attribute value becomes.
+type AttributeValueMapping struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SourceAttribute string                 `protobuf:"bytes,1,opt,name=source_attribute,json=sourceAttribute,proto3" json:"source_attribute,omitempty"`
+	SourceOption    string                 `protobuf:"bytes,2,opt,name=source_option,json=sourceOption,proto3" json:"source_option,omitempty"`
+	// Both empty drops the value.
+	TargetAttribute string `protobuf:"bytes,3,opt,name=target_attribute,json=targetAttribute,proto3" json:"target_attribute,omitempty"`
+	TargetOption    string `protobuf:"bytes,4,opt,name=target_option,json=targetOption,proto3" json:"target_option,omitempty"`
+	// Tracks of the source type with this value.
+	TrackCount    int32 `protobuf:"varint,5,opt,name=track_count,json=trackCount,proto3" json:"track_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AttributeValueMapping) Reset() {
+	*x = AttributeValueMapping{}
+	mi := &file_krill_v1_label_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AttributeValueMapping) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AttributeValueMapping) ProtoMessage() {}
+
+func (x *AttributeValueMapping) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AttributeValueMapping.ProtoReflect.Descriptor instead.
+func (*AttributeValueMapping) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *AttributeValueMapping) GetSourceAttribute() string {
+	if x != nil {
+		return x.SourceAttribute
+	}
+	return ""
+}
+
+func (x *AttributeValueMapping) GetSourceOption() string {
+	if x != nil {
+		return x.SourceOption
+	}
+	return ""
+}
+
+func (x *AttributeValueMapping) GetTargetAttribute() string {
+	if x != nil {
+		return x.TargetAttribute
+	}
+	return ""
+}
+
+func (x *AttributeValueMapping) GetTargetOption() string {
+	if x != nil {
+		return x.TargetOption
+	}
+	return ""
+}
+
+func (x *AttributeValueMapping) GetTrackCount() int32 {
+	if x != nil {
+		return x.TrackCount
+	}
+	return 0
+}
+
+type ExportClassChange struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	OldId int32                  `protobuf:"varint,2,opt,name=old_id,json=oldId,proto3" json:"old_id,omitempty"`
+	// -1 when the class is gone.
+	NewId int32 `protobuf:"varint,3,opt,name=new_id,json=newId,proto3" json:"new_id,omitempty"`
+	// For the source's classes, the target class its boxes export as. Empty
+	// when the mapping leaves a target attribute unset.
+	Becomes       string `protobuf:"bytes,4,opt,name=becomes,proto3" json:"becomes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportClassChange) Reset() {
+	*x = ExportClassChange{}
+	mi := &file_krill_v1_label_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportClassChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportClassChange) ProtoMessage() {}
+
+func (x *ExportClassChange) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportClassChange.ProtoReflect.Descriptor instead.
+func (*ExportClassChange) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ExportClassChange) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ExportClassChange) GetOldId() int32 {
+	if x != nil {
+		return x.OldId
+	}
+	return 0
+}
+
+func (x *ExportClassChange) GetNewId() int32 {
+	if x != nil {
+		return x.NewId
+	}
+	return 0
+}
+
+func (x *ExportClassChange) GetBecomes() string {
+	if x != nil {
+		return x.Becomes
+	}
+	return ""
+}
+
+type PreviewMergeLabelTypesRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	SourceId int64                  `protobuf:"varint,1,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetId int64                  `protobuf:"varint,2,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	// Empty uses the default: same attribute and option names.
+	Mappings      []*AttributeValueMapping `protobuf:"bytes,3,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewMergeLabelTypesRequest) Reset() {
+	*x = PreviewMergeLabelTypesRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMergeLabelTypesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMergeLabelTypesRequest) ProtoMessage() {}
+
+func (x *PreviewMergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMergeLabelTypesRequest.ProtoReflect.Descriptor instead.
+func (*PreviewMergeLabelTypesRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *PreviewMergeLabelTypesRequest) GetSourceId() int64 {
+	if x != nil {
+		return x.SourceId
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesRequest) GetTargetId() int64 {
+	if x != nil {
+		return x.TargetId
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesRequest) GetMappings() []*AttributeValueMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+type PreviewMergeLabelTypesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Counts include tracks in the trash, which move too.
+	TrackCount        int32 `protobuf:"varint,1,opt,name=track_count,json=trackCount,proto3" json:"track_count,omitempty"`
+	BoxCount          int32 `protobuf:"varint,2,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	ClipCount         int32 `protobuf:"varint,3,opt,name=clip_count,json=clipCount,proto3" json:"clip_count,omitempty"`
+	VideoCount        int32 `protobuf:"varint,4,opt,name=video_count,json=videoCount,proto3" json:"video_count,omitempty"`
+	TrashedTrackCount int32 `protobuf:"varint,5,opt,name=trashed_track_count,json=trashedTrackCount,proto3" json:"trashed_track_count,omitempty"`
+	// Gold keys and attempts are rewritten. Scores already given stay.
+	GoldFrameCount   int32 `protobuf:"varint,6,opt,name=gold_frame_count,json=goldFrameCount,proto3" json:"gold_frame_count,omitempty"`
+	GoldAttemptCount int32 `protobuf:"varint,7,opt,name=gold_attempt_count,json=goldAttemptCount,proto3" json:"gold_attempt_count,omitempty"`
+	OpenReviewCount  int32 `protobuf:"varint,8,opt,name=open_review_count,json=openReviewCount,proto3" json:"open_review_count,omitempty"`
+	// Deleted with the source.
+	ExampleCount int32 `protobuf:"varint,9,opt,name=example_count,json=exampleCount,proto3" json:"example_count,omitempty"`
+	// Every option of the source's attributes, and every value its tracks
+	// have.
+	Mappings []*AttributeValueMapping `protobuf:"bytes,10,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	// Classes whose export ID changes or that go away.
+	ClassChanges []*ExportClassChange `protobuf:"bytes,11,rep,name=class_changes,json=classChanges,proto3" json:"class_changes,omitempty"`
+	// Target attributes no mapping fills, which merged tracks will be
+	// missing.
+	UnfilledAttributes []string `protobuf:"bytes,12,rep,name=unfilled_attributes,json=unfilledAttributes,proto3" json:"unfilled_attributes,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *PreviewMergeLabelTypesResponse) Reset() {
+	*x = PreviewMergeLabelTypesResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMergeLabelTypesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMergeLabelTypesResponse) ProtoMessage() {}
+
+func (x *PreviewMergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMergeLabelTypesResponse.ProtoReflect.Descriptor instead.
+func (*PreviewMergeLabelTypesResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetTrackCount() int32 {
+	if x != nil {
+		return x.TrackCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetClipCount() int32 {
+	if x != nil {
+		return x.ClipCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetVideoCount() int32 {
+	if x != nil {
+		return x.VideoCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetTrashedTrackCount() int32 {
+	if x != nil {
+		return x.TrashedTrackCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetGoldFrameCount() int32 {
+	if x != nil {
+		return x.GoldFrameCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetGoldAttemptCount() int32 {
+	if x != nil {
+		return x.GoldAttemptCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetOpenReviewCount() int32 {
+	if x != nil {
+		return x.OpenReviewCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetExampleCount() int32 {
+	if x != nil {
+		return x.ExampleCount
+	}
+	return 0
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetMappings() []*AttributeValueMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetClassChanges() []*ExportClassChange {
+	if x != nil {
+		return x.ClassChanges
+	}
+	return nil
+}
+
+func (x *PreviewMergeLabelTypesResponse) GetUnfilledAttributes() []string {
+	if x != nil {
+		return x.UnfilledAttributes
+	}
+	return nil
+}
+
+type MergeLabelTypesRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	SourceId int64                  `protobuf:"varint,1,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetId int64                  `protobuf:"varint,2,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	// Values without a mapping are dropped.
+	Mappings      []*AttributeValueMapping `protobuf:"bytes,3,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeLabelTypesRequest) Reset() {
+	*x = MergeLabelTypesRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeLabelTypesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeLabelTypesRequest) ProtoMessage() {}
+
+func (x *MergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeLabelTypesRequest.ProtoReflect.Descriptor instead.
+func (*MergeLabelTypesRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *MergeLabelTypesRequest) GetSourceId() int64 {
+	if x != nil {
+		return x.SourceId
+	}
+	return 0
+}
+
+func (x *MergeLabelTypesRequest) GetTargetId() int64 {
+	if x != nil {
+		return x.TargetId
+	}
+	return 0
+}
+
+func (x *MergeLabelTypesRequest) GetMappings() []*AttributeValueMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+type MergeLabelTypesResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TrackCount     int32                  `protobuf:"varint,1,opt,name=track_count,json=trackCount,proto3" json:"track_count,omitempty"`
+	BoxCount       int32                  `protobuf:"varint,2,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	GoldFrameCount int32                  `protobuf:"varint,3,opt,name=gold_frame_count,json=goldFrameCount,proto3" json:"gold_frame_count,omitempty"`
+	// Attribute values dropped across all tracks.
+	DroppedValueCount int32 `protobuf:"varint,4,opt,name=dropped_value_count,json=droppedValueCount,proto3" json:"dropped_value_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *MergeLabelTypesResponse) Reset() {
+	*x = MergeLabelTypesResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeLabelTypesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeLabelTypesResponse) ProtoMessage() {}
+
+func (x *MergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeLabelTypesResponse.ProtoReflect.Descriptor instead.
+func (*MergeLabelTypesResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *MergeLabelTypesResponse) GetTrackCount() int32 {
+	if x != nil {
+		return x.TrackCount
+	}
+	return 0
+}
+
+func (x *MergeLabelTypesResponse) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
+func (x *MergeLabelTypesResponse) GetGoldFrameCount() int32 {
+	if x != nil {
+		return x.GoldFrameCount
+	}
+	return 0
+}
+
+func (x *MergeLabelTypesResponse) GetDroppedValueCount() int32 {
+	if x != nil {
+		return x.DroppedValueCount
+	}
+	return 0
+}
+
 var File_krill_v1_label_proto protoreflect.FileDescriptor
 
 const file_krill_v1_label_proto_rawDesc = "" +
@@ -1131,7 +1612,50 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\aexample\x18\x01 \x01(\v2\x16.krill.v1.LabelExampleR\aexample\"+\n" +
 	"\x19DeleteLabelExampleRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1c\n" +
-	"\x1aDeleteLabelExampleResponse2\x85\x06\n" +
+	"\x1aDeleteLabelExampleResponse\"\xd8\x01\n" +
+	"\x15AttributeValueMapping\x12)\n" +
+	"\x10source_attribute\x18\x01 \x01(\tR\x0fsourceAttribute\x12#\n" +
+	"\rsource_option\x18\x02 \x01(\tR\fsourceOption\x12)\n" +
+	"\x10target_attribute\x18\x03 \x01(\tR\x0ftargetAttribute\x12#\n" +
+	"\rtarget_option\x18\x04 \x01(\tR\ftargetOption\x12\x1f\n" +
+	"\vtrack_count\x18\x05 \x01(\x05R\n" +
+	"trackCount\"o\n" +
+	"\x11ExportClassChange\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
+	"\x06old_id\x18\x02 \x01(\x05R\x05oldId\x12\x15\n" +
+	"\x06new_id\x18\x03 \x01(\x05R\x05newId\x12\x18\n" +
+	"\abecomes\x18\x04 \x01(\tR\abecomes\"\x96\x01\n" +
+	"\x1dPreviewMergeLabelTypesRequest\x12\x1b\n" +
+	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
+	"\ttarget_id\x18\x02 \x01(\x03R\btargetId\x12;\n" +
+	"\bmappings\x18\x03 \x03(\v2\x1f.krill.v1.AttributeValueMappingR\bmappings\"\xa7\x04\n" +
+	"\x1ePreviewMergeLabelTypesResponse\x12\x1f\n" +
+	"\vtrack_count\x18\x01 \x01(\x05R\n" +
+	"trackCount\x12\x1b\n" +
+	"\tbox_count\x18\x02 \x01(\x05R\bboxCount\x12\x1d\n" +
+	"\n" +
+	"clip_count\x18\x03 \x01(\x05R\tclipCount\x12\x1f\n" +
+	"\vvideo_count\x18\x04 \x01(\x05R\n" +
+	"videoCount\x12.\n" +
+	"\x13trashed_track_count\x18\x05 \x01(\x05R\x11trashedTrackCount\x12(\n" +
+	"\x10gold_frame_count\x18\x06 \x01(\x05R\x0egoldFrameCount\x12,\n" +
+	"\x12gold_attempt_count\x18\a \x01(\x05R\x10goldAttemptCount\x12*\n" +
+	"\x11open_review_count\x18\b \x01(\x05R\x0fopenReviewCount\x12#\n" +
+	"\rexample_count\x18\t \x01(\x05R\fexampleCount\x12;\n" +
+	"\bmappings\x18\n" +
+	" \x03(\v2\x1f.krill.v1.AttributeValueMappingR\bmappings\x12@\n" +
+	"\rclass_changes\x18\v \x03(\v2\x1b.krill.v1.ExportClassChangeR\fclassChanges\x12/\n" +
+	"\x13unfilled_attributes\x18\f \x03(\tR\x12unfilledAttributes\"\x8f\x01\n" +
+	"\x16MergeLabelTypesRequest\x12\x1b\n" +
+	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
+	"\ttarget_id\x18\x02 \x01(\x03R\btargetId\x12;\n" +
+	"\bmappings\x18\x03 \x03(\v2\x1f.krill.v1.AttributeValueMappingR\bmappings\"\xb1\x01\n" +
+	"\x17MergeLabelTypesResponse\x12\x1f\n" +
+	"\vtrack_count\x18\x01 \x01(\x05R\n" +
+	"trackCount\x12\x1b\n" +
+	"\tbox_count\x18\x02 \x01(\x05R\bboxCount\x12(\n" +
+	"\x10gold_frame_count\x18\x03 \x01(\x05R\x0egoldFrameCount\x12.\n" +
+	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount2\xce\a\n" +
 	"\fLabelService\x12U\n" +
 	"\x0eListLabelTypes\x12\x1f.krill.v1.ListLabelTypesRequest\x1a .krill.v1.ListLabelTypesResponse\"\x00\x12X\n" +
 	"\x0fCreateLabelType\x12 .krill.v1.CreateLabelTypeRequest\x1a!.krill.v1.CreateLabelTypeResponse\"\x00\x12X\n" +
@@ -1140,7 +1664,9 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x11ReorderLabelTypes\x12\".krill.v1.ReorderLabelTypesRequest\x1a#.krill.v1.ReorderLabelTypesResponse\"\x00\x12s\n" +
 	"\x18CreateLabelExampleUpload\x12).krill.v1.CreateLabelExampleUploadRequest\x1a*.krill.v1.CreateLabelExampleUploadResponse\"\x00\x12X\n" +
 	"\x0fAddLabelExample\x12 .krill.v1.AddLabelExampleRequest\x1a!.krill.v1.AddLabelExampleResponse\"\x00\x12a\n" +
-	"\x12DeleteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00B\x8b\x01\n" +
+	"\x12DeleteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00\x12m\n" +
+	"\x16PreviewMergeLabelTypes\x12'.krill.v1.PreviewMergeLabelTypesRequest\x1a(.krill.v1.PreviewMergeLabelTypesResponse\"\x00\x12X\n" +
+	"\x0fMergeLabelTypes\x12 .krill.v1.MergeLabelTypesRequest\x1a!.krill.v1.MergeLabelTypesResponse\"\x00B\x8b\x01\n" +
 	"\fcom.krill.v1B\n" +
 	"LabelProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
@@ -1156,7 +1682,7 @@ func file_krill_v1_label_proto_rawDescGZIP() []byte {
 	return file_krill_v1_label_proto_rawDescData
 }
 
-var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_krill_v1_label_proto_goTypes = []any{
 	(*LabelAttribute)(nil),                   // 0: krill.v1.LabelAttribute
 	(*LabelType)(nil),                        // 1: krill.v1.LabelType
@@ -1177,6 +1703,12 @@ var file_krill_v1_label_proto_goTypes = []any{
 	(*AddLabelExampleResponse)(nil),          // 16: krill.v1.AddLabelExampleResponse
 	(*DeleteLabelExampleRequest)(nil),        // 17: krill.v1.DeleteLabelExampleRequest
 	(*DeleteLabelExampleResponse)(nil),       // 18: krill.v1.DeleteLabelExampleResponse
+	(*AttributeValueMapping)(nil),            // 19: krill.v1.AttributeValueMapping
+	(*ExportClassChange)(nil),                // 20: krill.v1.ExportClassChange
+	(*PreviewMergeLabelTypesRequest)(nil),    // 21: krill.v1.PreviewMergeLabelTypesRequest
+	(*PreviewMergeLabelTypesResponse)(nil),   // 22: krill.v1.PreviewMergeLabelTypesResponse
+	(*MergeLabelTypesRequest)(nil),           // 23: krill.v1.MergeLabelTypesRequest
+	(*MergeLabelTypesResponse)(nil),          // 24: krill.v1.MergeLabelTypesResponse
 }
 var file_krill_v1_label_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
@@ -1188,27 +1720,35 @@ var file_krill_v1_label_proto_depIdxs = []int32{
 	1,  // 6: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
 	1,  // 7: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
 	2,  // 8: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
-	3,  // 9: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
-	5,  // 10: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
-	7,  // 11: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
-	9,  // 12: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
-	11, // 13: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
-	13, // 14: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
-	15, // 15: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
-	17, // 16: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
-	4,  // 17: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
-	6,  // 18: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
-	8,  // 19: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
-	10, // 20: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
-	12, // 21: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
-	14, // 22: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
-	16, // 23: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
-	18, // 24: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
-	17, // [17:25] is the sub-list for method output_type
-	9,  // [9:17] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	19, // 9: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	19, // 10: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
+	20, // 11: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
+	19, // 12: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	3,  // 13: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
+	5,  // 14: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
+	7,  // 15: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
+	9,  // 16: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
+	11, // 17: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
+	13, // 18: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
+	15, // 19: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
+	17, // 20: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
+	21, // 21: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
+	23, // 22: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
+	4,  // 23: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
+	6,  // 24: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
+	8,  // 25: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
+	10, // 26: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
+	12, // 27: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
+	14, // 28: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
+	16, // 29: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
+	18, // 30: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
+	22, // 31: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
+	24, // 32: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
+	23, // [23:33] is the sub-list for method output_type
+	13, // [13:23] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_label_proto_init() }
@@ -1222,7 +1762,7 @@ func file_krill_v1_label_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_label_proto_rawDesc), len(file_krill_v1_label_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
