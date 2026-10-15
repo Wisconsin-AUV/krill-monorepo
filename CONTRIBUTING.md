@@ -109,7 +109,7 @@ Other types (`docs`, `chore`, `refactor`, `test`, `build`, `ci`, `style`) do not
 
 While we are `0.y.z`, the API is not stable. Breaking changes bump MINOR instead of MAJOR. We move to `1.0.0` once the tool is used for real labeling sessions.
 
-Pre-releases use a suffix: `v0.4.0-rc.1`. Build metadata is not used.
+Pre-releases use a suffix: `v0.5.0-rc.1`. Build metadata is not used.
 
 The version lives in:
 
