@@ -57,6 +57,7 @@ var Permissions = []PermissionDef{
 	{krillv1.Permission_PERMISSION_MANAGE_EXPORTS, "Create and download exports", krillv1.Role_ROLE_DEVELOPER},
 	{krillv1.Permission_PERMISSION_MANAGE_USERS, "Manage users and their roles", krillv1.Role_ROLE_ADMIN},
 	{krillv1.Permission_PERMISSION_REVIEW_LABELS, "Pick gold frames, see labeler accuracy, and resolve reviews", krillv1.Role_ROLE_DEVELOPER},
+	{krillv1.Permission_PERMISSION_MANAGE_SYSTEM, "See server status, compute, and the audit log, and change settings", krillv1.Role_ROLE_ADMIN},
 }
 
 func Can(role krillv1.Role, p krillv1.Permission) bool {

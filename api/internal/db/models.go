@@ -25,6 +25,54 @@ type Annotation struct {
 	CreatedBy    pgtype.UUID        `json:"created_by"`
 	UpdatedBy    pgtype.UUID        `json:"updated_by"`
 	Drift        pgtype.Text        `json:"drift"`
+	Confidence   pgtype.Float4      `json:"confidence"`
+}
+
+type ApprovedEmail struct {
+	Email     string             `json:"email"`
+	Role      string             `json:"role"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UsedBy    pgtype.UUID        `json:"used_by"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
+type AuditLog struct {
+	ID         int64              `json:"id"`
+	At         pgtype.Timestamptz `json:"at"`
+	Actor      pgtype.UUID        `json:"actor"`
+	ActorName  string             `json:"actor_name"`
+	Action     string             `json:"action"`
+	TargetType string             `json:"target_type"`
+	TargetID   string             `json:"target_id"`
+	TargetName string             `json:"target_name"`
+	Details    []byte             `json:"details"`
+	Ip         string             `json:"ip"`
+}
+
+type Backup struct {
+	ID         int64              `json:"id"`
+	Status     string             `json:"status"`
+	Scheduled  bool               `json:"scheduled"`
+	ObjectKey  string             `json:"object_key"`
+	SizeBytes  int64              `json:"size_bytes"`
+	Error      string             `json:"error"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+}
+
+type BoxEvent struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	FrameID     int64              `json:"frame_id"`
+	TrackID     int64              `json:"track_id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Source      string             `json:"source"`
+	LabelerID   pgtype.UUID        `json:"labeler_id"`
+	MarkedAt    pgtype.Timestamptz `json:"marked_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Clip struct {
@@ -35,12 +83,23 @@ type Clip struct {
 	FrameCount int32              `json:"frame_count"`
 	EmbeddedAt pgtype.Timestamptz `json:"embedded_at"`
 	EmbedModel string             `json:"embed_model"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy  pgtype.UUID        `json:"deleted_by"`
 }
 
 type ClipClaim struct {
 	ClipID   int64              `json:"clip_id"`
 	UserID   uuid.UUID          `json:"user_id"`
 	ActiveAt pgtype.Timestamptz `json:"active_at"`
+}
+
+type ContentJob struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	Summary     string             `json:"summary"`
+	RiverJobIds []int64            `json:"river_job_ids"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Dataset struct {
@@ -97,6 +156,26 @@ type GoldFrame struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type Invite struct {
+	ID        int64              `json:"id"`
+	TokenHash []byte             `json:"token_hash"`
+	Role      string             `json:"role"`
+	MaxUses   int32              `json:"max_uses"`
+	Uses      int32              `json:"uses"`
+	Note      string             `json:"note"`
+	Email     string             `json:"email"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type InviteUse struct {
+	InviteID int64              `json:"invite_id"`
+	UserID   uuid.UUID          `json:"user_id"`
+	UsedAt   pgtype.Timestamptz `json:"used_at"`
+}
+
 type LabelExample struct {
 	ID          int64              `json:"id"`
 	LabelTypeID int64              `json:"label_type_id"`
@@ -117,6 +196,47 @@ type LabelType struct {
 	Guideline   string             `json:"guideline"`
 }
 
+type LiveClip struct {
+	ID      int64 `json:"id"`
+	VideoID int64 `json:"video_id"`
+}
+
+type PrelabelRun struct {
+	ID            int64              `json:"id"`
+	Source        string             `json:"source"`
+	TrainingRunID pgtype.Int8        `json:"training_run_id"`
+	Status        string             `json:"status"`
+	ClipsTotal    int32              `json:"clips_total"`
+	ClipsDone     int32              `json:"clips_done"`
+	Frames        int32              `json:"frames"`
+	Proposals     int32              `json:"proposals"`
+	Error         string             `json:"error"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	FinishedAt    pgtype.Timestamptz `json:"finished_at"`
+}
+
+type Prelabeler struct {
+	Name      string             `json:"name"`
+	Spec      []byte             `json:"spec"`
+	Enabled   bool               `json:"enabled"`
+	Params    []byte             `json:"params"`
+	Outputs   []byte             `json:"outputs"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
+type RejectedPrelabel struct {
+	ID          int64              `json:"id"`
+	FrameID     int64              `json:"frame_id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	X           float64            `json:"x"`
+	Y           float64            `json:"y"`
+	Width       float64            `json:"width"`
+	Height      float64            `json:"height"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Review struct {
 	ID         int64              `json:"id"`
 	FrameID    int64              `json:"frame_id"`
@@ -129,18 +249,95 @@ type Review struct {
 }
 
 type Session struct {
-	TokenHash []byte             `json:"token_hash"`
-	UserID    uuid.UUID          `json:"user_id"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	TokenHash  []byte             `json:"token_hash"`
+	UserID     uuid.UUID          `json:"user_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	ID         uuid.UUID          `json:"id"`
+	Ip         string             `json:"ip"`
+	UserAgent  string             `json:"user_agent"`
+	LastSeenAt pgtype.Timestamptz `json:"last_seen_at"`
+}
+
+type Setting struct {
+	Key       string             `json:"key"`
+	Value     string             `json:"value"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
+type StorageOrphan struct {
+	ScanID     int64              `json:"scan_id"`
+	Key        string             `json:"key"`
+	UploadID   string             `json:"upload_id"`
+	Kind       string             `json:"kind"`
+	SizeBytes  int64              `json:"size_bytes"`
+	ModifiedAt pgtype.Timestamptz `json:"modified_at"`
+}
+
+type StorageScan struct {
+	ID                int64              `json:"id"`
+	Status            string             `json:"status"`
+	Error             string             `json:"error"`
+	CreatedBy         pgtype.UUID        `json:"created_by"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	FinishedAt        pgtype.Timestamptz `json:"finished_at"`
+	Categories        []byte             `json:"categories"`
+	CleanupStatus     string             `json:"cleanup_status"`
+	CleanupError      string             `json:"cleanup_error"`
+	CleanupBy         pgtype.UUID        `json:"cleanup_by"`
+	CleanupFinishedAt pgtype.Timestamptz `json:"cleanup_finished_at"`
+	DeletedObjects    int64              `json:"deleted_objects"`
+	DeletedBytes      int64              `json:"deleted_bytes"`
+	SkippedObjects    int64              `json:"skipped_objects"`
+}
+
+type StorageScanVideo struct {
+	ScanID         int64 `json:"scan_id"`
+	VideoID        int64 `json:"video_id"`
+	FrameBytes     int64 `json:"frame_bytes"`
+	Frames         int64 `json:"frames"`
+	EmbeddingBytes int64 `json:"embedding_bytes"`
+	Embeddings     int64 `json:"embeddings"`
+	SourceBytes    int64 `json:"source_bytes"`
+	OrphanBytes    int64 `json:"orphan_bytes"`
 }
 
 type Track struct {
-	ID          int64              `json:"id"`
-	ClipID      int64              `json:"clip_id"`
-	LabelTypeID int64              `json:"label_type_id"`
-	Attributes  []byte             `json:"attributes"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID                  int64              `json:"id"`
+	ClipID              int64              `json:"clip_id"`
+	LabelTypeID         int64              `json:"label_type_id"`
+	Attributes          []byte             `json:"attributes"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	ClassEdited         bool               `json:"class_edited"`
+	ProposedLabelTypeID pgtype.Int8        `json:"proposed_label_type_id"`
+}
+
+type TrainingRun struct {
+	ID                  int64              `json:"id"`
+	Status              string             `json:"status"`
+	Trigger             string             `json:"trigger"`
+	CreatedBy           pgtype.UUID        `json:"created_by"`
+	Config              []byte             `json:"config"`
+	Dataset             []byte             `json:"dataset"`
+	Classes             []byte             `json:"classes"`
+	VerifiedBoxes       int32              `json:"verified_boxes"`
+	Epochs              int32              `json:"epochs"`
+	Epoch               int32              `json:"epoch"`
+	History             []byte             `json:"history"`
+	ValMetrics          []byte             `json:"val_metrics"`
+	TestMetrics         []byte             `json:"test_metrics"`
+	BaselineRunID       pgtype.Int8        `json:"baseline_run_id"`
+	BaselineValMetrics  []byte             `json:"baseline_val_metrics"`
+	BaselineTestMetrics []byte             `json:"baseline_test_metrics"`
+	WeightsBytes        int64              `json:"weights_bytes"`
+	Device              string             `json:"device"`
+	Log                 string             `json:"log"`
+	Error               string             `json:"error"`
+	Pinned              bool               `json:"pinned"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	StartedAt           pgtype.Timestamptz `json:"started_at"`
+	FinishedAt          pgtype.Timestamptz `json:"finished_at"`
 }
 
 type User struct {
@@ -174,4 +371,16 @@ type Video struct {
 	DurationMs     int64              `json:"duration_ms"`
 	FrameCount     int32              `json:"frame_count"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy      pgtype.UUID        `json:"deleted_by"`
+}
+
+type WorkerToken struct {
+	ID         int64              `json:"id"`
+	Name       string             `json:"name"`
+	TokenHash  []byte             `json:"token_hash"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }

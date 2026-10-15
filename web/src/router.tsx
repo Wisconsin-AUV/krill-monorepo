@@ -18,7 +18,6 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { FlaggedPage, ReviewPage } from '@/pages/ReviewPage'
-import { UsersPage } from '@/pages/UsersPage'
 import { VideoPage } from '@/pages/VideoPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { VideosPage } from '@/pages/VideosPage'
@@ -62,6 +61,138 @@ export const router = createBrowserRouter([
             lazy: () =>
               import('@/pages/GoldCheckPage').then((m) => ({ Component: m.GoldAttemptPage })),
           },
+          // Only admins see the admin panel, so nobody else downloads it.
+          {
+            path: 'admin',
+            lazy: () => import('@/admin/AdminLayout').then((m) => ({ Component: m.AdminLayout })),
+            children: [
+              {
+                element: <RequirePermission permission={Permission.MANAGE_SYSTEM} />,
+                children: [
+                  {
+                    index: true,
+                    lazy: () =>
+                      import('@/admin/OverviewPage').then((m) => ({ Component: m.OverviewPage })),
+                  },
+                  {
+                    path: 'settings',
+                    lazy: () =>
+                      import('@/admin/SettingsPage').then((m) => ({ Component: m.SettingsPage })),
+                  },
+                  {
+                    path: 'compute',
+                    lazy: () =>
+                      import('@/admin/ComputePage').then((m) => ({ Component: m.ComputePage })),
+                  },
+                  {
+                    path: 'audit',
+                    lazy: () =>
+                      import('@/admin/AuditPage').then((m) => ({ Component: m.AuditPage })),
+                  },
+                  {
+                    path: 'emails',
+                    lazy: () =>
+                      import('@/admin/EmailsPage').then((m) => ({ Component: m.EmailsPage })),
+                  },
+                  {
+                    path: 'labelers',
+                    lazy: () =>
+                      import('@/admin/LabelersPage').then((m) => ({ Component: m.LabelersPage })),
+                  },
+                  {
+                    path: 'coverage',
+                    lazy: () =>
+                      import('@/admin/CoveragePage').then((m) => ({ Component: m.CoveragePage })),
+                  },
+                  {
+                    path: 'stuck',
+                    lazy: () =>
+                      import('@/admin/StuckPage').then((m) => ({ Component: m.StuckPage })),
+                  },
+                  {
+                    path: 'jobs',
+                    lazy: () => import('@/admin/JobsPage').then((m) => ({ Component: m.JobsPage })),
+                  },
+                  {
+                    path: 'worker-tokens',
+                    lazy: () =>
+                      import('@/admin/WorkerTokensPage').then((m) => ({
+                        Component: m.WorkerTokensPage,
+                      })),
+                  },
+                  {
+                    path: 'storage',
+                    lazy: () =>
+                      import('@/admin/StoragePage').then((m) => ({ Component: m.StoragePage })),
+                  },
+                  {
+                    path: 'database',
+                    lazy: () =>
+                      import('@/admin/DatabasePage').then((m) => ({ Component: m.DatabasePage })),
+                  },
+                  {
+                    path: 'logs',
+                    lazy: () => import('@/admin/LogsPage').then((m) => ({ Component: m.LogsPage })),
+                  },
+                  {
+                    path: 'content',
+                    lazy: () =>
+                      import('@/admin/ContentPage').then((m) => ({ Component: m.ContentPage })),
+                  },
+                  {
+                    path: 'trash',
+                    lazy: () =>
+                      import('@/admin/TrashPage').then((m) => ({ Component: m.TrashPage })),
+                  },
+                  {
+                    path: 'models',
+                    lazy: () =>
+                      import('@/admin/ModelsPage').then((m) => ({ Component: m.ModelsPage })),
+                  },
+                  {
+                    path: 'models/:id',
+                    lazy: () =>
+                      import('@/admin/ModelRunPage').then((m) => ({ Component: m.ModelRunPage })),
+                  },
+                  {
+                    path: 'prelabelers',
+                    lazy: () =>
+                      import('@/admin/PrelabelersPage').then((m) => ({
+                        Component: m.PrelabelersPage,
+                      })),
+                  },
+                ],
+              },
+              {
+                element: <RequirePermission permission={Permission.MANAGE_USERS} />,
+                children: [
+                  {
+                    path: 'users',
+                    lazy: () =>
+                      import('@/admin/UsersPage').then((m) => ({ Component: m.UsersPage })),
+                  },
+                  {
+                    path: 'users/:id',
+                    lazy: () =>
+                      import('@/admin/UserDetailPage').then((m) => ({
+                        Component: m.UserDetailPage,
+                      })),
+                  },
+                  {
+                    path: 'invites',
+                    lazy: () =>
+                      import('@/admin/InvitesPage').then((m) => ({ Component: m.InvitesPage })),
+                  },
+                  {
+                    path: 'sessions',
+                    lazy: () =>
+                      import('@/admin/SessionsPage').then((m) => ({ Component: m.SessionsPage })),
+                  },
+                ],
+              },
+              { path: '*', element: <NotFound /> },
+            ],
+          },
           {
             element: <AppLayout />,
             children: [
@@ -94,10 +225,7 @@ export const router = createBrowserRouter([
                   { path: 'gold', element: <Navigate to="/review/gold" replace /> },
                 ],
               },
-              {
-                element: <RequirePermission permission={Permission.MANAGE_USERS} />,
-                children: [{ path: 'users', element: <UsersPage /> }],
-              },
+              { path: 'users', element: <Navigate to="/admin/users" replace /> },
               { path: '*', element: <NotFound /> },
             ],
           },

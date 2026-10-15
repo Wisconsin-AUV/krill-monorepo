@@ -71,7 +71,7 @@ func testService(t *testing.T) (*Service, inbox) {
 		t.Fatal(err)
 	}
 	mail := make(inbox, 10)
-	return NewService(pool, Options{RequireVerifiedEmail: true, Mailer: mail}), mail
+	return NewService(pool, func() Options { return Options{RequireVerifiedEmail: true, Mailer: mail} }), mail
 }
 
 func testUser(t *testing.T, s *Service, verified bool) db.User {

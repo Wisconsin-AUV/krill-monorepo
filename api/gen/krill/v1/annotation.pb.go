@@ -383,7 +383,9 @@ type Annotation struct {
 	Status  AnnotationStatus       `protobuf:"varint,6,opt,name=status,proto3,enum=krill.v1.AnnotationStatus" json:"status,omitempty"`
 	// The tracker's box jumped in size or position from the track's previous
 	// box, and no labeler has accepted or edited it yet.
-	Drift         bool `protobuf:"varint,7,opt,name=drift,proto3" json:"drift,omitempty"`
+	Drift bool `protobuf:"varint,7,opt,name=drift,proto3" json:"drift,omitempty"`
+	// How sure a YOLO or CV pre-labeler was, from 0 to 1.
+	Confidence    *float32 `protobuf:"fixed32,40,opt,name=confidence,proto3,oneof" json:"confidence,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -465,6 +467,13 @@ func (x *Annotation) GetDrift() bool {
 		return x.Drift
 	}
 	return false
+}
+
+func (x *Annotation) GetConfidence() float32 {
+	if x != nil && x.Confidence != nil {
+		return *x.Confidence
+	}
+	return 0
 }
 
 type CreateTrackRequest struct {
@@ -1793,7 +1802,7 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf1\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa5\x02\n" +
 	"\n" +
 	"Annotation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
@@ -1802,7 +1811,11 @@ const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\x03box\x18\x04 \x01(\v2\r.krill.v1.BoxR\x03box\x122\n" +
 	"\x06source\x18\x05 \x01(\x0e2\x1a.krill.v1.AnnotationSourceR\x06source\x122\n" +
 	"\x06status\x18\x06 \x01(\x0e2\x1a.krill.v1.AnnotationStatusR\x06status\x12\x14\n" +
-	"\x05drift\x18\a \x01(\bR\x05drift\"\x9a\x02\n" +
+	"\x05drift\x18\a \x01(\bR\x05drift\x12#\n" +
+	"\n" +
+	"confidence\x18( \x01(\x02H\x00R\n" +
+	"confidence\x88\x01\x01B\r\n" +
+	"\v_confidence\"\x9a\x02\n" +
 	"\x12CreateTrackRequest\x12\x17\n" +
 	"\aclip_id\x18\x01 \x01(\x03R\x06clipId\x12\"\n" +
 	"\rlabel_type_id\x18\x02 \x01(\x03R\vlabelTypeId\x12L\n" +
@@ -2040,6 +2053,7 @@ func file_krill_v1_annotation_proto_init() {
 	if File_krill_v1_annotation_proto != nil {
 		return
 	}
+	file_krill_v1_annotation_proto_msgTypes[3].OneofWrappers = []any{}
 	file_krill_v1_annotation_proto_msgTypes[6].OneofWrappers = []any{}
 	file_krill_v1_annotation_proto_msgTypes[18].OneofWrappers = []any{
 		(*TrackObjectRequest_Point)(nil),

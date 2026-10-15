@@ -29,7 +29,7 @@ WHERE a.frame_id = $3
     AND a.status <> 'rejected'
     AND (cardinality($4::bigint[]) = 0 OR a.track_id = ANY($4::bigint[]))
 ON CONFLICT (track_id, frame_id) DO NOTHING
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
 `
 
 type CopyAnnotationsParams struct {
@@ -69,6 +69,7 @@ func (q *Queries) CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams
 			&i.CreatedBy,
 			&i.UpdatedBy,
 			&i.Drift,
+			&i.Confidence,
 		); err != nil {
 			return nil, err
 		}
@@ -105,7 +106,7 @@ func (q *Queries) CountTrackAnnotations(ctx context.Context, trackID int64) (int
 const createTrack = `-- name: CreateTrack :one
 INSERT INTO tracks (clip_id, label_type_id, attributes)
 VALUES ($1, $2, $3)
-RETURNING id, clip_id, label_type_id, attributes, created_at
+RETURNING id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id
 `
 
 type CreateTrackParams struct {
@@ -123,13 +124,19 @@ func (q *Queries) CreateTrack(ctx context.Context, arg CreateTrackParams) (Track
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }
 
 const deleteAnnotation = `-- name: DeleteAnnotation :one
-DELETE FROM annotations WHERE track_id = $1 AND frame_id = $2
-RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = track_id)::bigint AS clip_id
+DELETE FROM annotations a
+WHERE a.track_id = $1 AND a.frame_id = $2
+    AND EXISTS (
+        SELECT 1 FROM tracks t JOIN live_clips c ON c.id = t.clip_id WHERE t.id = a.track_id
+    )
+RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = a.track_id)::bigint AS clip_id
 `
 
 type DeleteAnnotationParams struct {
@@ -145,8 +152,10 @@ func (q *Queries) DeleteAnnotation(ctx context.Context, arg DeleteAnnotationPara
 }
 
 const deleteTrack = `-- name: DeleteTrack :one
-DELETE FROM tracks WHERE id = $1
-RETURNING clip_id
+DELETE FROM tracks t
+USING clips c, videos v
+WHERE t.id = $1 AND c.id = t.clip_id AND v.id = c.video_id AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+RETURNING t.clip_id
 `
 
 func (q *Queries) DeleteTrack(ctx context.Context, id int64) (int64, error) {
@@ -157,7 +166,10 @@ func (q *Queries) DeleteTrack(ctx context.Context, id int64) (int64, error) {
 }
 
 const getFrame = `-- name: GetFrame :one
-SELECT id, video_id, clip_id, idx, phash, status, status_by, status_at FROM frames WHERE id = $1
+SELECT f.id, f.video_id, f.clip_id, f.idx, f.phash, f.status, f.status_by, f.status_at FROM frames f
+JOIN clips c ON c.id = f.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE f.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL
 `
 
 func (q *Queries) GetFrame(ctx context.Context, id int64) (Frame, error) {
@@ -177,7 +189,10 @@ func (q *Queries) GetFrame(ctx context.Context, id int64) (Frame, error) {
 }
 
 const getTrack = `-- name: GetTrack :one
-SELECT id, clip_id, label_type_id, attributes, created_at FROM tracks WHERE id = $1
+SELECT t.id, t.clip_id, t.label_type_id, t.attributes, t.created_at, t.class_edited, t.proposed_label_type_id FROM tracks t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE t.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL
 `
 
 func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
@@ -189,12 +204,14 @@ func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }
 
 const listClipAnnotations = `-- name: ListClipAnnotations :many
-SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift
+SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift, a.confidence
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE t.clip_id = $1
@@ -226,6 +243,7 @@ func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Anno
 			&i.CreatedBy,
 			&i.UpdatedBy,
 			&i.Drift,
+			&i.Confidence,
 		); err != nil {
 			return nil, err
 		}
@@ -238,7 +256,7 @@ func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Anno
 }
 
 const listClipTracks = `-- name: ListClipTracks :many
-SELECT id, clip_id, label_type_id, attributes, created_at FROM tracks WHERE clip_id = $1 ORDER BY id
+SELECT id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id FROM tracks WHERE clip_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, error) {
@@ -256,6 +274,8 @@ func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, er
 			&i.LabelTypeID,
 			&i.Attributes,
 			&i.CreatedAt,
+			&i.ClassEdited,
+			&i.ProposedLabelTypeID,
 		); err != nil {
 			return nil, err
 		}
@@ -272,6 +292,7 @@ SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
     b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
 FROM tracks t
 JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
 JOIN label_types lt ON lt.id = t.label_type_id
 JOIN LATERAL (
     SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
@@ -289,6 +310,8 @@ JOIN LATERAL (
     LIMIT 1
 ) b ON true
 WHERE t.label_type_id = $1
+    AND c.deleted_at IS NULL
+    AND v.deleted_at IS NULL
     AND ($2::bigint = 0 OR c.video_id = $2::bigint)
     AND t.id > $3::bigint
     AND (NOT $4::bool OR EXISTS (
@@ -374,7 +397,8 @@ UPDATE frames SET
         WHEN status = $1 THEN status_at
         ELSE now()
     END
-WHERE id = $3
+WHERE frames.id = $3
+    AND frames.clip_id IN (SELECT lc.id FROM live_clips lc)
 RETURNING status, clip_id
 `
 
@@ -398,19 +422,25 @@ func (q *Queries) SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) 
 }
 
 const updateTrack = `-- name: UpdateTrack :one
-UPDATE tracks SET label_type_id = $2, attributes = $3
-WHERE id = $1
-RETURNING id, clip_id, label_type_id, attributes, created_at
+UPDATE tracks SET label_type_id = $1, attributes = $2, class_edited = class_edited OR $3
+WHERE id = $4
+RETURNING id, clip_id, label_type_id, attributes, created_at, class_edited, proposed_label_type_id
 `
 
 type UpdateTrackParams struct {
-	ID          int64  `json:"id"`
 	LabelTypeID int64  `json:"label_type_id"`
 	Attributes  []byte `json:"attributes"`
+	ClassEdited bool   `json:"class_edited"`
+	ID          int64  `json:"id"`
 }
 
 func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error) {
-	row := q.db.QueryRow(ctx, updateTrack, arg.ID, arg.LabelTypeID, arg.Attributes)
+	row := q.db.QueryRow(ctx, updateTrack,
+		arg.LabelTypeID,
+		arg.Attributes,
+		arg.ClassEdited,
+		arg.ID,
+	)
 	var i Track
 	err := row.Scan(
 		&i.ID,
@@ -418,6 +448,8 @@ func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track
 		&i.LabelTypeID,
 		&i.Attributes,
 		&i.CreatedAt,
+		&i.ClassEdited,
+		&i.ProposedLabelTypeID,
 	)
 	return i, err
 }
@@ -433,10 +465,11 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     source = 'human',
     status = 'verified',
     model_version = '',
+    confidence = NULL,
     drift = CASE WHEN annotations.drift = 'flagged' THEN 'reviewed' ELSE annotations.drift END,
     updated_by = excluded.updated_by,
     updated_at = now()
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
 `
 
 type UpsertAnnotationParams struct {
@@ -476,6 +509,7 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		&i.CreatedBy,
 		&i.UpdatedBy,
 		&i.Drift,
+		&i.Confidence,
 	)
 	return i, err
 }

@@ -12,6 +12,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const assignClips = `-- name: AssignClips :execrows
+INSERT INTO clip_claims (clip_id, user_id)
+SELECT unnest($1::bigint[]), $2::uuid
+ON CONFLICT (clip_id) DO UPDATE SET user_id = excluded.user_id, active_at = now()
+`
+
+type AssignClipsParams struct {
+	ClipIds []int64   `json:"clip_ids"`
+	UserID  uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) AssignClips(ctx context.Context, arg AssignClipsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, assignClips, arg.ClipIds, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const claimClip = `-- name: ClaimClip :execrows
 INSERT INTO clip_claims (clip_id, user_id) VALUES ($1, $2)
 ON CONFLICT (clip_id) DO UPDATE SET user_id = excluded.user_id, active_at = now()
@@ -87,7 +106,7 @@ SELECT
     (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count
 FROM clips c
 JOIN videos v ON v.id = c.video_id
-WHERE v.status = 'ready'
+WHERE v.status = 'ready' AND c.deleted_at IS NULL AND v.deleted_at IS NULL
 ORDER BY v.created_at DESC, v.id DESC, c.idx
 `
 
@@ -127,10 +146,93 @@ func (q *Queries) ListClipProgress(ctx context.Context) ([]ListClipProgressRow, 
 	return items, nil
 }
 
+const listContentClips = `-- name: ListContentClips :many
+SELECT
+    c.id, c.video_id, v.name AS video_name, c.idx, c.frame_count, c.embedded_at, c.embed_model,
+    (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
+    (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count,
+    cc.active_at AS claim_active_at,
+    u.id AS claimant_id, u.name AS claimant_name, u.username AS claimant_username,
+    u.role AS claimant_role, u.created_at AS claimant_created_at
+FROM clips c
+JOIN videos v ON v.id = c.video_id
+LEFT JOIN clip_claims cc ON cc.clip_id = c.id
+LEFT JOIN users u ON u.id = cc.user_id
+WHERE c.deleted_at IS NULL
+    AND v.deleted_at IS NULL
+    AND ($1::bigint IS NULL OR c.video_id = $1::bigint)
+    AND ($2::uuid IS NULL OR cc.user_id = $2::uuid)
+    AND ($1::bigint IS NOT NULL OR $2::uuid IS NOT NULL OR cc.clip_id IS NOT NULL)
+ORDER BY v.created_at DESC, v.id DESC, c.idx
+LIMIT $3::int
+`
+
+type ListContentClipsParams struct {
+	VideoID  pgtype.Int8 `json:"video_id"`
+	Claimant pgtype.UUID `json:"claimant"`
+	Lim      int32       `json:"lim"`
+}
+
+type ListContentClipsRow struct {
+	ID                int64              `json:"id"`
+	VideoID           int64              `json:"video_id"`
+	VideoName         string             `json:"video_name"`
+	Idx               int32              `json:"idx"`
+	FrameCount        int32              `json:"frame_count"`
+	EmbeddedAt        pgtype.Timestamptz `json:"embedded_at"`
+	EmbedModel        string             `json:"embed_model"`
+	LabeledFrameCount int32              `json:"labeled_frame_count"`
+	BoxCount          int32              `json:"box_count"`
+	ClaimActiveAt     pgtype.Timestamptz `json:"claim_active_at"`
+	ClaimantID        pgtype.UUID        `json:"claimant_id"`
+	ClaimantName      pgtype.Text        `json:"claimant_name"`
+	ClaimantUsername  pgtype.Text        `json:"claimant_username"`
+	ClaimantRole      pgtype.Text        `json:"claimant_role"`
+	ClaimantCreatedAt pgtype.Timestamptz `json:"claimant_created_at"`
+}
+
+// Clips for the admin panel, by video or by who holds them. With neither
+// filter it lists every claimed clip.
+func (q *Queries) ListContentClips(ctx context.Context, arg ListContentClipsParams) ([]ListContentClipsRow, error) {
+	rows, err := q.db.Query(ctx, listContentClips, arg.VideoID, arg.Claimant, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListContentClipsRow
+	for rows.Next() {
+		var i ListContentClipsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.VideoID,
+			&i.VideoName,
+			&i.Idx,
+			&i.FrameCount,
+			&i.EmbeddedAt,
+			&i.EmbedModel,
+			&i.LabeledFrameCount,
+			&i.BoxCount,
+			&i.ClaimActiveAt,
+			&i.ClaimantID,
+			&i.ClaimantName,
+			&i.ClaimantUsername,
+			&i.ClaimantRole,
+			&i.ClaimantCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOpenClips = `-- name: ListOpenClips :many
 SELECT
-    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model,
-    v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at,
+    c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model, c.deleted_at, c.deleted_by,
+    v.id, v.name, v.filename, v.notes, v.status, v.error, v.ingest_progress, v.split, v.extract_fps, v.width, v.height, v.fps, v.duration_ms, v.frame_count, v.created_at, v.deleted_at, v.deleted_by,
     (SELECT count(*) FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')::int AS labeled_frame_count,
     (SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id WHERE t.clip_id = c.id)::int AS box_count
 FROM clip_claims cc
@@ -138,6 +240,8 @@ JOIN clips c ON c.id = cc.clip_id
 JOIN videos v ON v.id = c.video_id
 WHERE cc.user_id = $1
     AND v.status = 'ready'
+    AND c.deleted_at IS NULL
+    AND v.deleted_at IS NULL
     AND EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status = 'unlabeled')
 ORDER BY cc.active_at DESC
 `
@@ -166,6 +270,8 @@ func (q *Queries) ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOp
 			&i.Clip.FrameCount,
 			&i.Clip.EmbeddedAt,
 			&i.Clip.EmbedModel,
+			&i.Clip.DeletedAt,
+			&i.Clip.DeletedBy,
 			&i.Video.ID,
 			&i.Video.Name,
 			&i.Video.Filename,
@@ -181,8 +287,76 @@ func (q *Queries) ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOp
 			&i.Video.DurationMs,
 			&i.Video.FrameCount,
 			&i.Video.CreatedAt,
+			&i.Video.DeletedAt,
+			&i.Video.DeletedBy,
 			&i.LabeledFrameCount,
 			&i.BoxCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockClipClaim = `-- name: LockClipClaim :one
+SELECT cc.user_id, cc.active_at, u.name
+FROM clip_claims cc
+JOIN users u ON u.id = cc.user_id
+WHERE cc.clip_id = $1
+FOR UPDATE OF cc
+`
+
+type LockClipClaimRow struct {
+	UserID   uuid.UUID          `json:"user_id"`
+	ActiveAt pgtype.Timestamptz `json:"active_at"`
+	Name     string             `json:"name"`
+}
+
+func (q *Queries) LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error) {
+	row := q.db.QueryRow(ctx, lockClipClaim, clipID)
+	var i LockClipClaimRow
+	err := row.Scan(&i.UserID, &i.ActiveAt, &i.Name)
+	return i, err
+}
+
+const lockLiveClips = `-- name: LockLiveClips :many
+SELECT c.id, c.idx, v.name AS video_name, cc.user_id AS claimant_id, u.name AS claimant_name
+FROM clips c
+JOIN videos v ON v.id = c.video_id
+LEFT JOIN clip_claims cc ON cc.clip_id = c.id
+LEFT JOIN users u ON u.id = cc.user_id
+WHERE c.id = ANY($1::bigint[]) AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+ORDER BY c.id
+FOR UPDATE OF c
+`
+
+type LockLiveClipsRow struct {
+	ID           int64       `json:"id"`
+	Idx          int32       `json:"idx"`
+	VideoName    string      `json:"video_name"`
+	ClaimantID   pgtype.UUID `json:"claimant_id"`
+	ClaimantName pgtype.Text `json:"claimant_name"`
+}
+
+func (q *Queries) LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error) {
+	rows, err := q.db.Query(ctx, lockLiveClips, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LockLiveClipsRow
+	for rows.Next() {
+		var i LockLiveClipsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Idx,
+			&i.VideoName,
+			&i.ClaimantID,
+			&i.ClaimantName,
 		); err != nil {
 			return nil, err
 		}
@@ -198,8 +372,10 @@ const nextClip = `-- name: NextClip :one
 WITH worked AS (
     SELECT c.video_id, count(*) AS clips
     FROM clips c
-    WHERE EXISTS (SELECT 1 FROM clip_claims cc WHERE cc.clip_id = c.id)
+    WHERE c.deleted_at IS NULL AND (
+        EXISTS (SELECT 1 FROM clip_claims cc WHERE cc.clip_id = c.id)
         OR EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled')
+    )
     GROUP BY c.video_id
 )
 SELECT c.id
@@ -208,12 +384,20 @@ JOIN videos v ON v.id = c.video_id
 LEFT JOIN clip_claims cc ON cc.clip_id = c.id
 LEFT JOIN worked w ON w.video_id = c.video_id
 WHERE v.status = 'ready'
+    AND c.deleted_at IS NULL
+    AND v.deleted_at IS NULL
     AND c.id <> $1
     AND (cc.clip_id IS NULL OR cc.active_at < $2)
     AND EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status = 'unlabeled')
 ORDER BY
     EXISTS (SELECT 1 FROM frames f WHERE f.clip_id = c.id AND f.status <> 'unlabeled') DESC,
     coalesce(w.clips, 0),
+    (
+        SELECT min(a.confidence)
+        FROM annotations a
+        JOIN frames f ON f.id = a.frame_id
+        WHERE f.clip_id = c.id AND f.status = 'unlabeled' AND a.status = 'proposed'
+    ) NULLS LAST,
     random()
 LIMIT 1
 FOR UPDATE OF c SKIP LOCKED
@@ -226,7 +410,8 @@ type NextClipParams struct {
 
 // Started clips that were abandoned come first so they get finished. After
 // that, clips come from the video with the fewest clips worked on, so labels
-// spread across as much footage as possible.
+// spread across as much footage as possible, and among those the clip with
+// the least certain pre-label goes first.
 func (q *Queries) NextClip(ctx context.Context, arg NextClipParams) (int64, error) {
 	row := q.db.QueryRow(ctx, nextClip, arg.SkipClipID, arg.StaleBefore)
 	var id int64

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/minio/madmin-go/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -32,7 +33,10 @@ type Config struct {
 type Store struct {
 	client  *minio.Client
 	presign *minio.Client
-	bucket  string
+	// admin reports MinIO's drives. It only works with the root credentials,
+	// which Compose gives the API.
+	admin  *madmin.AdminClient
+	bucket string
 }
 
 func New(ctx context.Context, cfg Config) (*Store, error) {
@@ -48,7 +52,16 @@ func New(ctx context.Context, cfg Config) (*Store, error) {
 		}
 	}
 
-	s := &Store{client: client, presign: presign, bucket: cfg.Bucket}
+	u, _ := url.Parse(cfg.Endpoint)
+	admin, err := madmin.NewWithOptions(u.Host, &madmin.Options{
+		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
+		Secure: u.Scheme == "https",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("s3 admin client: %w", err)
+	}
+
+	s := &Store{client: client, presign: presign, admin: admin, bucket: cfg.Bucket}
 	if err := s.ensureBucket(ctx); err != nil {
 		return nil, err
 	}
@@ -187,6 +200,22 @@ func (s *Store) Put(ctx context.Context, key string, r io.Reader, size int64, co
 	return nil
 }
 
+// streamPartSize bounds the memory PutStream buffers. minio-go's default for
+// an unknown size is over 500 MiB a part.
+const streamPartSize = 64 << 20
+
+// PutStream uploads r, whose length is unknown, in parts of streamPartSize.
+func (s *Store) PutStream(ctx context.Context, key string, r io.Reader, contentType string) error {
+	_, err := s.client.PutObject(ctx, s.bucket, key, r, -1, minio.PutObjectOptions{
+		ContentType: contentType,
+		PartSize:    streamPartSize,
+	})
+	if err != nil {
+		return fmt.Errorf("put %s: %w", key, err)
+	}
+	return nil
+}
+
 func (s *Store) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
 	if err != nil {
@@ -222,9 +251,94 @@ func (s *Store) RemovePrefix(ctx context.Context, prefix string) error {
 	return errors.Join(errs...)
 }
 
+// RemoveKeys removes the objects that exist among keys.
+func (s *Store) RemoveKeys(ctx context.Context, keys []string) error {
+	objects := make(chan minio.ObjectInfo)
+	go func() {
+		defer close(objects)
+		for _, k := range keys {
+			select {
+			case objects <- minio.ObjectInfo{Key: k}:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	var errs []error
+	for res := range s.client.RemoveObjects(ctx, s.bucket, objects, minio.RemoveObjectsOptions{}) {
+		if minio.ToErrorResponse(res.Err).Code == minio.NoSuchKey {
+			continue
+		}
+		errs = append(errs, fmt.Errorf("remove %s: %w", res.ObjectName, res.Err))
+	}
+	if err := ctx.Err(); err != nil {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
+}
+
+// Size totals the objects under prefix with keys after startAfter, up to and
+// including until. Empty bounds are open.
+func (s *Store) Size(ctx context.Context, prefix, startAfter, until string) (int64, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var total int64
+	opts := minio.ListObjectsOptions{Prefix: prefix, Recursive: true, StartAfter: startAfter}
+	for obj := range s.client.ListObjects(ctx, s.bucket, opts) {
+		if obj.Err != nil {
+			return 0, fmt.Errorf("list %s: %w", prefix, obj.Err)
+		}
+		if until != "" && obj.Key > until {
+			break
+		}
+		total += obj.Size
+	}
+	return total, nil
+}
+
 func (s *Store) Remove(ctx context.Context, key string) error {
 	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
 		return fmt.Errorf("remove %s: %w", key, err)
 	}
 	return nil
+}
+
+// Ping checks that the bucket is reachable.
+func (s *Store) Ping(ctx context.Context) error {
+	ok, err := s.client.BucketExists(ctx, s.bucket)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("bucket %s is missing", s.bucket)
+	}
+	return nil
+}
+
+func (s *Store) Bucket() string {
+	return s.bucket
+}
+
+// Usage is how full MinIO's drives are. On the GPU box they are a fixed-size
+// image, so this fills up before the host's disk does.
+type Usage struct {
+	UsedBytes  uint64
+	TotalBytes uint64
+}
+
+func (s *Store) Usage(ctx context.Context) (Usage, error) {
+	info, err := s.admin.StorageInfo(ctx)
+	if err != nil {
+		return Usage{}, err
+	}
+	var u Usage
+	for _, d := range info.Disks {
+		u.UsedBytes += d.UsedSpace
+		// Like df, leave out space the filesystem reserves.
+		u.TotalBytes += d.UsedSpace + d.AvailableSpace
+	}
+	if u.TotalBytes == 0 {
+		return Usage{}, errors.New("MinIO reported no drives")
+	}
+	return u, nil
 }

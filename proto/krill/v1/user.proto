@@ -13,6 +13,25 @@ service UserService {
   // SetUserPassword signs the user out everywhere.
   rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) {}
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+  rpc SignOutUser(SignOutUserRequest) returns (SignOutUserResponse) {}
+  // MarkEmailVerified trusts the user's current email without a code.
+  rpc MarkEmailVerified(MarkEmailVerifiedRequest) returns (MarkEmailVerifiedResponse) {}
+  // DeactivateUser signs the user out everywhere and releases their clip
+  // claims. They can't sign in by any method until reactivated. Their labels
+  // stay attributed to them.
+  rpc DeactivateUser(DeactivateUserRequest) returns (DeactivateUserResponse) {}
+  rpc ReactivateUser(ReactivateUserRequest) returns (ReactivateUserResponse) {}
+  // SendPasswordReset emails the user a password reset code. It fails with
+  // FailedPrecondition when the server can't send email.
+  rpc SendPasswordReset(SendPasswordResetRequest) returns (SendPasswordResetResponse) {}
+  // PreviewMergeUsers says what MergeUsers would move, without changing
+  // anything.
+  rpc PreviewMergeUsers(PreviewMergeUsersRequest) returns (PreviewMergeUsersResponse) {}
+  // MergeUsers moves everything the source account did to the target, gives
+  // the target the source's sign-in methods it lacks and the higher of the
+  // two roles, and deletes the source. Where both have the same record, like
+  // a gold check on the same frame, the target's is kept.
+  rpc MergeUsers(MergeUsersRequest) returns (MergeUsersResponse) {}
 }
 
 // Role is ordered: each role has every permission of the roles below it.
@@ -33,6 +52,7 @@ enum Permission {
   PERMISSION_MANAGE_EXPORTS = 4;
   PERMISSION_MANAGE_USERS = 5;
   PERMISSION_REVIEW_LABELS = 6;
+  PERMISSION_MANAGE_SYSTEM = 7;
 }
 
 message RoleInfo {
@@ -64,6 +84,8 @@ message User {
   bool email_verified = 12;
   // A new email waiting for its verification code. Empty when there is none.
   string pending_email = 13;
+  // Signed-in sessions. Only ListUsers sets it.
+  int32 active_sessions = 14;
 }
 
 message ListUsersRequest {}
@@ -95,3 +117,75 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {}
+
+message SignOutUserRequest {
+  string id = 1;
+}
+
+message SignOutUserResponse {}
+
+message MarkEmailVerifiedRequest {
+  string id = 1;
+}
+
+message MarkEmailVerifiedResponse {
+  User user = 1;
+}
+
+message DeactivateUserRequest {
+  string id = 1;
+}
+
+message DeactivateUserResponse {
+  User user = 1;
+  int64 sessions_ended = 2;
+  int64 claims_released = 3;
+}
+
+message ReactivateUserRequest {
+  string id = 1;
+}
+
+message ReactivateUserResponse {
+  User user = 1;
+}
+
+message SendPasswordResetRequest {
+  string id = 1;
+}
+
+message SendPasswordResetResponse {}
+
+// MergeCount is how many of one kind of record a merge moves.
+message MergeCount {
+  // Like "Boxes drawn" or "Gold checks".
+  string label = 1;
+  int64 moved = 2;
+  // Records the target already had, so the source's are deleted instead.
+  int64 dropped = 3;
+}
+
+message PreviewMergeUsersRequest {
+  string source_id = 1;
+  string target_id = 2;
+}
+
+message PreviewMergeUsersResponse {
+  User source = 1;
+  User target = 2;
+  // The target as it will be after the merge.
+  User result = 3;
+  // Only kinds with something to move.
+  repeated MergeCount counts = 4;
+}
+
+message MergeUsersRequest {
+  // Deleted by the merge. It can't be the caller.
+  string source_id = 1;
+  string target_id = 2;
+}
+
+message MergeUsersResponse {
+  User user = 1;
+  repeated MergeCount counts = 2;
+}

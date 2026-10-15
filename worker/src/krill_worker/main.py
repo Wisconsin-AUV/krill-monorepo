@@ -1,35 +1,30 @@
+import gc
 import logging
 import os
 import time
-import urllib.request
-from collections import deque
 from collections.abc import Callable, Iterable, Iterator
-from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Protocol, TypeVar
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Protocol
 
-import cv2
-import numpy as np
-from krill.v1 import annotation_pb2, worker_pb2
+from krill.v1 import annotation_pb2, pipeline_pb2, pipeline_worker_pb2, worker_pb2
 
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
+from krill_worker.frames import decode_frame, fetch, prefetch, upload
+from krill_worker.heartbeat import Heartbeat
+from krill_worker.logs import LogBuffer
+from krill_worker.models import ModelLoadError, Models
+from krill_worker.pipeline import YoloModels, run_prelabel, run_preview
 from krill_worker.prelabelers import Frame
+from krill_worker.prelabelers.plugins import PLUGINS
+from krill_worker.stats import accelerator, gpu_stats
 from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt, drop_cut_off
+from krill_worker.train import run_train
 
 log = logging.getLogger(__name__)
 
-
-DEFAULT_MODEL = "facebook/sam2.1-hiera-small"
-# SAM resizes to about 1024 pixels, so larger frames only cost decode time.
-MAX_SIDE = 1024
 REPORT_EVERY = 2.0
 RETRY_DELAY = 5.0
-# Downloads run this many frames ahead of the GPU. Embeddings are about 8 MB
-# each, so reading a whole clip ahead would hold gigabytes.
-PREFETCH = 16
-
-T = TypeVar("T")
-R = TypeVar("R")
 
 
 class Tracker(Protocol):
@@ -47,44 +42,17 @@ class Tracker(Protocol):
     def load_embedding(self, data: bytes) -> Embedding: ...
 
 
-def decode_frame(data: bytes) -> Frame:
-    bgr = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
-    if bgr is None:
-        raise ValueError("frame is not a valid image")
-    h, w = bgr.shape[:2]
-    scale = MAX_SIDE / max(h, w)
-    if scale < 1:
-        bgr = cv2.resize(bgr, (round(w * scale), round(h * scale)), interpolation=cv2.INTER_AREA)
-    return np.asarray(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB), dtype=np.uint8)
+class TaskCancelledError(Exception):
+    """The API stopped waiting on the task, so its results would be thrown away."""
 
 
-def fetch(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=30) as res:
-        data: bytes = res.read()
-        return data
+def never() -> bool:
+    return False
 
 
-def upload(url: str, data: bytes) -> None:
-    req = urllib.request.Request(
-        url, data=data, method="PUT", headers={"Content-Type": "application/octet-stream"}
-    )
-    with urllib.request.urlopen(req, timeout=30):
-        pass
-
-
-def prefetch(fn: Callable[[T], R], items: Iterable[T]) -> Iterator[R]:
-    """Yield fn of each item in order, computing up to PREFETCH ahead in threads."""
-    with ThreadPoolExecutor(8) as pool:
-        pending: deque[Future[R]] = deque()
-        for item in items:
-            pending.append(pool.submit(fn, item))
-            if len(pending) > PREFETCH:
-                yield pending.popleft().result()
-        while pending:
-            yield pending.popleft().result()
-
-
-def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
+def run_track(
+    api: Api, tracker: Tracker, task: worker_pb2.TrackTask, cancelled: Callable[[], bool] = never
+) -> None:
     prompt: Prompt
     if task.HasField("point"):
         prompt = PointPrompt(task.point.x, task.point.y)
@@ -110,6 +78,8 @@ def run_track(api: Api, tracker: Tracker, task: worker_pb2.TrackTask) -> None:
     batch: list[worker_pb2.TrackedBox] = []
     found = 0
     for frame_id, box in zip(ids, drop_cut_off(tracker.track(frames, prompt)), strict=True):
+        if cancelled():
+            raise TaskCancelledError
         if box is not None:
             x, y, w, h = box
             box_msg = annotation_pb2.Box(x=x, y=y, width=w, height=h)
@@ -136,7 +106,7 @@ def run_exemplar(api: Api, tracker: Tracker, task: worker_pb2.ExemplarTask) -> N
     if not tracker.supports_exemplars:
         raise ValueError(
             f"Finding similar objects needs a SAM 3 model, but the GPU worker runs "
-            f"{tracker.model_id}. Set KRILL_SAM_MODEL to a SAM 3 model."
+            f"{tracker.model_id}. Choose SAM 3 as the SAM model in the admin panel."
         )
     start = time.monotonic()
     frame = decode_frame(fetch(task.frame.url))
@@ -155,14 +125,16 @@ def run_embed(
     tracker: Tracker,
     task: worker_pb2.EmbedTask,
     put: Callable[[str, bytes], None] = upload,
+    cancelled: Callable[[], bool] = never,
 ) -> None:
     start = time.monotonic()
     frames = prefetch(lambda f: decode_frame(fetch(f.url)), task.frames)
     with ThreadPoolExecutor(4) as uploads:
-        pending = [
-            uploads.submit(put, f.upload_url, tracker.embed(frame))
-            for f, frame in zip(task.frames, frames, strict=True)
-        ]
+        pending = []
+        for f, frame in zip(task.frames, frames, strict=True):
+            if cancelled():
+                raise TaskCancelledError
+            pending.append(uploads.submit(put, f.upload_url, tracker.embed(frame)))
         for p in pending:
             p.result()
     api.report_embed(worker_pb2.ReportEmbedRequest(task_id=task.id, model=tracker.model_id))
@@ -174,50 +146,152 @@ def run_embed(
     )
 
 
-def run_task(api: Api, tracker: Tracker, res: worker_pb2.NextTaskResponse) -> None:
+Task = (
+    worker_pb2.TrackTask
+    | worker_pb2.ExemplarTask
+    | worker_pb2.EmbedTask
+    | pipeline_pb2.TrainTask
+    | pipeline_pb2.PrelabelTask
+    | pipeline_pb2.PreviewTask
+)
+
+
+def run_task(
+    api: Api,
+    tracker: Tracker,
+    res: worker_pb2.NextTaskResponse,
+    cancelled: Callable[[], bool] = never,
+) -> None:
     kind = res.WhichOneof("task")
     if kind is None:
         return
-    task: worker_pb2.TrackTask | worker_pb2.ExemplarTask | worker_pb2.EmbedTask = getattr(res, kind)
+    task: Task = getattr(res, kind)
     try:
         if kind == "track":
-            run_track(api, tracker, res.track)
+            run_track(api, tracker, res.track, cancelled)
         elif kind == "exemplar":
             run_exemplar(api, tracker, res.exemplar)
+        elif kind == "embed":
+            run_embed(api, tracker, res.embed, cancelled=cancelled)
         else:
-            run_embed(api, tracker, res.embed)
+            raise ValueError(f"this worker cannot run {kind} tasks")
+    except TaskCancelledError:
+        log.info("stopped task %d", task.id)
     except ApiError as e:
         log.warning("task %d dropped by the API: %s", task.id, e)
     except Exception as e:
         log.exception("task %d failed", task.id)
+        fail(api, task.id, str(e))
+
+
+def fail(api: Api, task_id: int, error: str) -> None:
+    try:
+        api.fail_task(task_id, error)
+    except (ApiError, OSError):
+        log.exception("report failure for task %d", task_id)
+
+
+def serve(
+    api: Api,
+    models: Models[Any],
+    yolo: YoloModels,
+    heartbeat: Heartbeat,
+    res: worker_pb2.NextTaskResponse,
+) -> None:
+    """Run the task, loading the SAM model first for the tasks that need it.
+
+    Training serves the tasks that come in meanwhile through this too, so
+    they nest inside it.
+    """
+    kind = res.WhichOneof("task")
+    if kind is None:
+        return
+    task: Task = getattr(res, kind)
+    with heartbeat.working(task.id):
         try:
-            api.fail_task(task.id, str(e))
-        except (ApiError, OSError):
-            log.exception("report failure for task %d", task.id)
+            if kind == "train":
+                run_train(api, res.train, lambda r: serve(api, models, yolo, heartbeat, r))
+            elif kind == "prelabel":
+                run_prelabel(api, res.prelabel, yolo)
+            elif kind == "preview":
+                run_preview(api, res.preview)
+            else:
+                models.run(lambda tracker: run_task(api, tracker, res, heartbeat.cancelled))
+        except ModelLoadError as e:
+            log.exception("task %d failed", task.id)
+            fail(api, task.id, str(e))
+        except ApiError as e:
+            log.warning("task %d dropped by the API: %s", task.id, e)
+        except Exception as e:
+            log.exception("task %d failed", task.id)
+            fail(api, task.id, str(e))
+
+
+def register_prelabelers(api: Api) -> bool:
+    """Offer the CV plugins to the admin panel. Returns whether it worked."""
+    req = pipeline_worker_pb2.RegisterPrelabelersRequest(
+        prelabelers=[p.spec() for p in PLUGINS.values()]
+    )
+    try:
+        api.register_prelabelers(req)
+    except (ApiError, OSError) as e:
+        log.warning("register pre-labelers: %s", e)
+        return False
+    return True
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logs = LogBuffer()
+    logging.getLogger().addHandler(logs)
     log.info("krill-worker %s starting", __version__)
     # Imported here so everything else works without torch installed.
+    import torch
+
     from krill_worker.sam import SamTracker
+
+    def load(model_id: str) -> SamTracker:
+        tracker = SamTracker(model_id)
+        tracker.warm_up()
+        return tracker
+
+    def memory() -> tuple[int, int]:
+        if not torch.cuda.is_available():
+            return 0, 0
+        return torch.cuda.memory_allocated(), torch.cuda.memory_reserved()
+
+    def release() -> None:
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     api = Api(
         os.environ.get("KRILL_API_URL", "http://localhost:8080"), os.environ["KRILL_WORKER_TOKEN"]
     )
-    tracker = SamTracker(os.environ.get("KRILL_SAM_MODEL", DEFAULT_MODEL))
-    tracker.warm_up()
-    log.info("loaded %s", tracker.model_id)
+    pinned = os.environ.get("KRILL_SAM_MODEL", "").strip()
+    models = Models(load, pinned, memory, release)
+    heartbeat = Heartbeat(api, models, accelerator(torch), lambda: gpu_stats(torch), logs)
+    # One heartbeat first, so the worker loads the model the API asks for.
+    try:
+        heartbeat.beat()
+    except (ApiError, OSError) as e:
+        log.warning("first heartbeat failed, loading %s: %s", models.wanted, e)
+    heartbeat.start()
+    models.warm_up()
 
+    yolo = YoloModels()
+    registered = False
     while True:
+        models.sync()
+        registered = registered or register_prelabelers(api)
         try:
             res = api.next_task()
         except (ApiError, OSError) as e:
             log.warning("poll failed, retrying in %.0fs: %s", RETRY_DELAY, e)
             time.sleep(RETRY_DELAY)
             continue
-        run_task(api, tracker, res)
+        serve(api, models, yolo, heartbeat, res)
 
 
 if __name__ == "__main__":

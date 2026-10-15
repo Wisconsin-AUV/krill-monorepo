@@ -16,25 +16,33 @@ type priority int
 const (
 	interactive priority = iota
 	background
+	// training is handed out only when nothing else waits, and a worker
+	// training checks in between batches to run whatever arrives meanwhile.
+	training
 	numPriorities
 )
 
 type task struct {
 	id       int64
 	priority priority
+	// jobID is the River job the task belongs to.
+	jobID int64
 	// trackID is 0 for exemplar and embed tasks.
 	trackID int64
 	msg     *krillv1.NextTaskResponse
 	frames  map[int64]bool
 	// model is set by ReportEmbed before done is signaled.
 	model atomic.Pointer[string]
-	// picked is closed when a worker takes the task.
-	picked chan struct{}
+	// picked is closed when a worker takes the task, at pickedAt.
+	picked   chan struct{}
+	pickedAt time.Time
 	// progress gets a signal on each report, and done gets the result.
 	progress chan struct{}
 	done     chan error
 	// found gets an exemplar task's boxes before done is signalled.
 	found chan exemplarResult
+	// idle overrides idleTimeout when set.
+	idle time.Duration
 }
 
 type exemplarResult struct {
@@ -126,12 +134,19 @@ func (d *Dispatcher) push(t *task) {
 
 // take pops the oldest task of the highest priority, or nil.
 func (d *Dispatcher) take() *task {
+	return d.takeBefore(numPriorities)
+}
+
+// takeBefore pops the oldest task of the highest priority that comes before
+// limit, or nil.
+func (d *Dispatcher) takeBefore(limit priority) *task {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	for p := range d.pending {
+	for p := range limit {
 		if q := d.pending[p]; len(q) > 0 {
 			t := q[0]
 			d.pending[p] = q[1:]
+			t.pickedAt = time.Now()
 			close(t.picked)
 			if d.hasPending() {
 				d.wake()
@@ -221,4 +236,63 @@ func (d *Dispatcher) get(id int64) (*task, bool) {
 	defer d.mu.Unlock()
 	t, ok := d.running[id]
 	return t, ok
+}
+
+// Queue counts the tasks waiting for a worker.
+func (d *Dispatcher) Queue() (waitingInteractive, waitingBackground int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return len(d.pending[interactive]), len(d.pending[background])
+}
+
+// TaskInfo describes a task a worker is running.
+type TaskInfo struct {
+	ID        int64
+	JobID     int64
+	Kind      string
+	Frames    int
+	StartedAt time.Time
+}
+
+// Running describes task id if a worker has taken it and not finished.
+func (d *Dispatcher) Running(id int64) (TaskInfo, bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	t, ok := d.running[id]
+	if !ok || t.pickedAt.IsZero() {
+		return TaskInfo{}, false
+	}
+	return t.info(), true
+}
+
+// Jobs describes every task waiting for or running on a worker, by River job.
+// StartedAt is zero while a task waits.
+func (d *Dispatcher) Jobs() map[int64]TaskInfo {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	out := make(map[int64]TaskInfo, len(d.running))
+	for _, t := range d.running {
+		out[t.jobID] = t.info()
+	}
+	return out
+}
+
+// info needs d.mu held, since take writes pickedAt.
+func (t *task) info() TaskInfo {
+	info := TaskInfo{ID: t.id, JobID: t.jobID, StartedAt: t.pickedAt}
+	switch m := t.msg.GetTask().(type) {
+	case *krillv1.NextTaskResponse_Track:
+		info.Kind, info.Frames = "track", len(m.Track.GetFrames())
+	case *krillv1.NextTaskResponse_Exemplar:
+		info.Kind, info.Frames = "exemplar", 1
+	case *krillv1.NextTaskResponse_Embed:
+		info.Kind, info.Frames = "embed", len(m.Embed.GetFrames())
+	case *krillv1.NextTaskResponse_Train:
+		info.Kind = "train"
+	case *krillv1.NextTaskResponse_Prelabel:
+		info.Kind, info.Frames = "prelabel", len(m.Prelabel.GetFrames())
+	case *krillv1.NextTaskResponse_Preview:
+		info.Kind, info.Frames = "preview", 1
+	}
+	return info
 }

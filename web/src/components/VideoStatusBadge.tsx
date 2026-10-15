@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/Badge'
 import { VideoStatus, type Video } from '@/gen/krill/v1/video_pb'
 import { statusMeta } from '@/lib/video'
 
-export function VideoStatusBadge({ video }: { video: Video }) {
+export function VideoStatusBadge({ video }: { video: Pick<Video, 'status' | 'ingestProgress'> }) {
   const { label, color } = statusMeta[video.status]
   return (
     <Badge color={color}>

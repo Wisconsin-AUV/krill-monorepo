@@ -46,6 +46,8 @@ const (
 	WorkerServiceReportEmbedProcedure = "/krill.v1.WorkerService/ReportEmbed"
 	// WorkerServiceFailTaskProcedure is the fully-qualified name of the WorkerService's FailTask RPC.
 	WorkerServiceFailTaskProcedure = "/krill.v1.WorkerService/FailTask"
+	// WorkerServiceHeartbeatProcedure is the fully-qualified name of the WorkerService's Heartbeat RPC.
+	WorkerServiceHeartbeatProcedure = "/krill.v1.WorkerService/Heartbeat"
 )
 
 // WorkerServiceClient is a client for the krill.v1.WorkerService service.
@@ -62,6 +64,9 @@ type WorkerServiceClient interface {
 	// uploaded.
 	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
+	// Heartbeat reports the worker's state every few seconds for the admin
+	// panel. A worker that stops sending them shows as offline.
+	Heartbeat(context.Context, *v1.HeartbeatRequest) (*v1.HeartbeatResponse, error)
 }
 
 // NewWorkerServiceClient constructs a client for the krill.v1.WorkerService service. By default, it
@@ -105,6 +110,12 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(workerServiceMethods.ByName("FailTask")),
 			connect.WithClientOptions(opts...),
 		),
+		heartbeat: connect.NewClient[v1.HeartbeatRequest, v1.HeartbeatResponse](
+			httpClient,
+			baseURL+WorkerServiceHeartbeatProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("Heartbeat")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -115,6 +126,7 @@ type workerServiceClient struct {
 	reportExemplars *connect.Client[v1.ReportExemplarsRequest, v1.ReportExemplarsResponse]
 	reportEmbed     *connect.Client[v1.ReportEmbedRequest, v1.ReportEmbedResponse]
 	failTask        *connect.Client[v1.FailTaskRequest, v1.FailTaskResponse]
+	heartbeat       *connect.Client[v1.HeartbeatRequest, v1.HeartbeatResponse]
 }
 
 // NextTask calls krill.v1.WorkerService.NextTask.
@@ -162,6 +174,15 @@ func (c *workerServiceClient) FailTask(ctx context.Context, req *v1.FailTaskRequ
 	return nil, err
 }
 
+// Heartbeat calls krill.v1.WorkerService.Heartbeat.
+func (c *workerServiceClient) Heartbeat(ctx context.Context, req *v1.HeartbeatRequest) (*v1.HeartbeatResponse, error) {
+	response, err := c.heartbeat.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // WorkerServiceHandler is an implementation of the krill.v1.WorkerService service.
 type WorkerServiceHandler interface {
 	// NextTask waits up to 30 seconds for work and returns no task if none
@@ -176,6 +197,9 @@ type WorkerServiceHandler interface {
 	// uploaded.
 	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
+	// Heartbeat reports the worker's state every few seconds for the admin
+	// panel. A worker that stops sending them shows as offline.
+	Heartbeat(context.Context, *v1.HeartbeatRequest) (*v1.HeartbeatResponse, error)
 }
 
 // NewWorkerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -215,6 +239,12 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(workerServiceMethods.ByName("FailTask")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workerServiceHeartbeatHandler := connect.NewUnaryHandlerSimple(
+		WorkerServiceHeartbeatProcedure,
+		svc.Heartbeat,
+		connect.WithSchema(workerServiceMethods.ByName("Heartbeat")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.WorkerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WorkerServiceNextTaskProcedure:
@@ -227,6 +257,8 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 			workerServiceReportEmbedHandler.ServeHTTP(w, r)
 		case WorkerServiceFailTaskProcedure:
 			workerServiceFailTaskHandler.ServeHTTP(w, r)
+		case WorkerServiceHeartbeatProcedure:
+			workerServiceHeartbeatHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -254,4 +286,8 @@ func (UnimplementedWorkerServiceHandler) ReportEmbed(context.Context, *v1.Report
 
 func (UnimplementedWorkerServiceHandler) FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.FailTask is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) Heartbeat(context.Context, *v1.HeartbeatRequest) (*v1.HeartbeatResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.Heartbeat is not implemented"))
 }

@@ -9,10 +9,12 @@ import {
   HomeIcon,
   Squares2X2Icon,
   TagIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
   TrophyIcon,
   UserCircleIcon,
-  UsersIcon,
 } from '@heroicons/react/20/solid'
+import { lazy, Suspense, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
@@ -46,11 +48,12 @@ import {
 } from '@/components/ui/Sidebar'
 import { StackedLayout } from '@/components/ui/StackedLayout'
 import { UploadTray } from '@/components/UploadTray'
+import { HelpMenu } from '@/changelog/HelpMenu'
+import { useChangelog } from '@/changelog/store'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
-import { HealthService } from '@/gen/krill/v1/health_pb'
 import { ReviewService } from '@/gen/krill/v1/review_pb'
 import { Permission, type User } from '@/gen/krill/v1/user_pb'
-import { can, useRoleLabel, useUser } from '@/lib/auth'
+import { can, canAdmin, useRoleLabel, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { GUIDELINE_URL } from '@/lib/links'
 import { queryClient } from '@/lib/queryClient'
@@ -106,21 +109,24 @@ const navItems = [
     permission: Permission.REVIEW_LABELS,
     match: (p: string) => p.startsWith('/review'),
   },
-  {
-    label: 'Users',
-    to: '/users',
-    icon: UsersIcon,
-    permission: Permission.MANAGE_USERS,
-    match: (p: string) => p.startsWith('/users'),
-  },
 ]
 
-function UserAvatar({ user }: { user: User }) {
+export function UserAvatar({ user }: { user: User }) {
   return <Avatar seed={user.id} />
 }
 
-function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top start' }) {
+export function UserMenu({
+  user,
+  anchor,
+  changelog = false,
+}: {
+  user: User
+  anchor: 'bottom end' | 'top start'
+  // For layouts without the help menu in their top bar.
+  changelog?: boolean
+}) {
   const roleLabel = useRoleLabel()
+  const showChangelog = useChangelog((s) => s.show)
   const navigate = useNavigate()
   const logout = useMutation(AuthService.method.logout, {
     onSuccess: () => {
@@ -147,6 +153,18 @@ function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top st
         <UserCircleIcon data-slot="icon" />
         <DropdownLabel>Account</DropdownLabel>
       </DropdownItem>
+      {canAdmin(user) && (
+        <DropdownItem to="/admin">
+          <ShieldCheckIcon data-slot="icon" />
+          <DropdownLabel>Admin</DropdownLabel>
+        </DropdownItem>
+      )}
+      {changelog && (
+        <DropdownItem onClick={() => showChangelog()}>
+          <SparklesIcon data-slot="icon" />
+          <DropdownLabel>Changelog</DropdownLabel>
+        </DropdownItem>
+      )}
       <DropdownItem onClick={() => logout.mutate({})} disabled={logout.isPending}>
         <ArrowRightStartOnRectangleIcon data-slot="icon" />
         <DropdownLabel>Sign out</DropdownLabel>
@@ -155,11 +173,20 @@ function UserMenu({ user, anchor }: { user: User; anchor: 'bottom end' | 'top st
   )
 }
 
-function Version() {
-  const { data } = useQuery(HealthService.method.check, {})
-  if (!data) return null
+const ChangelogDialog = lazy(() =>
+  import('@/changelog/ChangelogDialog').then((m) => ({ default: m.ChangelogDialog })),
+)
+
+// Mounted on first open and kept, so closing still animates.
+function Changelog() {
+  const open = useChangelog((s) => s.open)
+  const [loaded, setLoaded] = useState(false)
+  if (open && !loaded) setLoaded(true)
+  if (!loaded) return null
   return (
-    <span className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">{data.version}</span>
+    <Suspense>
+      <ChangelogDialog />
+    </Suspense>
   )
 }
 
@@ -172,6 +199,7 @@ export function AppChrome() {
       <FlashMessageRender />
       <Outlet />
       <UploadTray />
+      <Changelog />
     </>
   )
 }
@@ -201,13 +229,23 @@ export function AppLayout() {
                 <NavbarItem key={to} to={to} current={match(pathname)}>
                   <Icon data-slot="icon" />
                   <NavbarLabel>{label}</NavbarLabel>
-                  {counts[to] > 0 && <Badge>{counts[to]}</Badge>}
+                  {counts[to] > 0 && <Badge className="-my-0.5">{counts[to]}</Badge>}
                 </NavbarItem>
               ))}
             </NavbarSection>
             <NavbarSpacer />
             <NavbarSection>
-              <Version />
+              <HelpMenu />
+              {canAdmin(user) && (
+                <NavbarItem
+                  to="/admin"
+                  current={false}
+                  aria-label="Admin"
+                  className="max-lg:hidden"
+                >
+                  <ShieldCheckIcon data-slot="icon" />
+                </NavbarItem>
+              )}
               {user && (
                 <Dropdown>
                   <DropdownButton as={NavbarItem} aria-label="Account menu">
@@ -238,6 +276,12 @@ export function AppLayout() {
               </SidebarSection>
             </SidebarBody>
             <SidebarFooter>
+              {canAdmin(user) && (
+                <SidebarItem to="/admin">
+                  <ShieldCheckIcon data-slot="icon" />
+                  <SidebarLabel>Admin</SidebarLabel>
+                </SidebarItem>
+              )}
               <SidebarItem to={GUIDELINE_URL} target="_blank" rel="noreferrer">
                 <BookOpenIcon data-slot="icon" />
                 <SidebarLabel>Labeling guideline</SidebarLabel>

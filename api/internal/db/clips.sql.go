@@ -7,21 +7,46 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteClip = `-- name: DeleteClip :one
-DELETE FROM clips WHERE id = $1 RETURNING idx
+const addClipFrames = `-- name: AddClipFrames :one
+UPDATE videos v SET frame_count = v.frame_count + c.frame_count
+FROM clips c
+WHERE c.id = $1 AND v.id = c.video_id AND c.deleted_at IS NOT NULL AND v.deleted_at IS NULL
+RETURNING v.id AS video_id
 `
 
-func (q *Queries) DeleteClip(ctx context.Context, id int64) (int32, error) {
+func (q *Queries) AddClipFrames(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRow(ctx, addClipFrames, id)
+	var video_id int64
+	err := row.Scan(&video_id)
+	return video_id, err
+}
+
+const deleteClip = `-- name: DeleteClip :one
+DELETE FROM clips WHERE id = $1 AND deleted_at IS NOT NULL
+RETURNING video_id, start_frame, frame_count
+`
+
+type DeleteClipRow struct {
+	VideoID    int64 `json:"video_id"`
+	StartFrame int32 `json:"start_frame"`
+	FrameCount int32 `json:"frame_count"`
+}
+
+func (q *Queries) DeleteClip(ctx context.Context, id int64) (DeleteClipRow, error) {
 	row := q.db.QueryRow(ctx, deleteClip, id)
-	var idx int32
-	err := row.Scan(&idx)
-	return idx, err
+	var i DeleteClipRow
+	err := row.Scan(&i.VideoID, &i.StartFrame, &i.FrameCount)
+	return i, err
 }
 
 const getClip = `-- name: GetClip :one
-SELECT id, video_id, idx, start_frame, frame_count, embedded_at, embed_model FROM clips WHERE id = $1
+SELECT c.id, c.video_id, c.idx, c.start_frame, c.frame_count, c.embedded_at, c.embed_model, c.deleted_at, c.deleted_by FROM clips c
+JOIN videos v ON v.id = c.video_id
+WHERE c.id = $1 AND c.deleted_at IS NULL AND v.deleted_at IS NULL
 `
 
 func (q *Queries) GetClip(ctx context.Context, id int64) (Clip, error) {
@@ -35,6 +60,8 @@ func (q *Queries) GetClip(ctx context.Context, id int64) (Clip, error) {
 		&i.FrameCount,
 		&i.EmbeddedAt,
 		&i.EmbedModel,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -59,8 +86,12 @@ func (q *Queries) GetClipLabelStats(ctx context.Context, clipID int64) (GetClipL
 
 const getNeighbourClips = `-- name: GetNeighbourClips :one
 SELECT
-    coalesce((SELECT p.id FROM clips p WHERE p.video_id = c.video_id AND p.idx = c.idx - 1), 0)::bigint AS previous_id,
-    coalesce((SELECT n.id FROM clips n WHERE n.video_id = c.video_id AND n.idx = c.idx + 1), 0)::bigint AS next_id
+    coalesce((
+        SELECT p.id FROM clips p WHERE p.video_id = c.video_id AND p.idx = c.idx - 1 AND p.deleted_at IS NULL
+    ), 0)::bigint AS previous_id,
+    coalesce((
+        SELECT n.id FROM clips n WHERE n.video_id = c.video_id AND n.idx = c.idx + 1 AND n.deleted_at IS NULL
+    ), 0)::bigint AS next_id
 FROM clips c
 WHERE c.id = $1
 `
@@ -110,20 +141,57 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 	return items, nil
 }
 
-const parkClipsAfter = `-- name: ParkClipsAfter :exec
-UPDATE clips SET idx = -idx WHERE video_id = $1 AND idx > $2
+const numberClips = `-- name: NumberClips :exec
+UPDATE clips c SET idx = n.idx
+FROM (
+    SELECT l.id, (row_number() OVER (ORDER BY l.start_frame, l.id) - 1)::int AS idx
+    FROM clips l
+    WHERE l.video_id = $1 AND l.deleted_at IS NULL
+) n
+WHERE c.id = n.id
 `
 
-type ParkClipsAfterParams struct {
-	VideoID int64 `json:"video_id"`
-	Idx     int32 `json:"idx"`
+// Clips never overlap, so start_frame keeps a restored clip where it was.
+func (q *Queries) NumberClips(ctx context.Context, videoID int64) error {
+	_, err := q.db.Exec(ctx, numberClips, videoID)
+	return err
 }
 
-// The unique (video_id, idx) constraint is checked row by row, so shifting
-// every later clip down by one in a single UPDATE can collide with a row that
-// hasn't moved yet. Parking them at negative indexes first avoids that.
-func (q *Queries) ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error {
-	_, err := q.db.Exec(ctx, parkClipsAfter, arg.VideoID, arg.Idx)
+const parkClips = `-- name: ParkClips :exec
+UPDATE clips SET idx = -1 - idx WHERE video_id = $1 AND deleted_at IS NULL
+`
+
+// The unique index on (video_id, idx) is checked row by row, so renumbering
+// in one UPDATE can collide with a row that hasn't moved yet. Parking them
+// at negative indexes first avoids that.
+func (q *Queries) ParkClips(ctx context.Context, videoID int64) error {
+	_, err := q.db.Exec(ctx, parkClips, videoID)
+	return err
+}
+
+const releaseClipClaims = `-- name: ReleaseClipClaims :execrows
+DELETE FROM clip_claims WHERE clip_id = ANY($1::bigint[])
+`
+
+func (q *Queries) ReleaseClipClaims(ctx context.Context, clipIds []int64) (int64, error) {
+	result, err := q.db.Exec(ctx, releaseClipClaims, clipIds)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const restoreClip = `-- name: RestoreClip :exec
+UPDATE clips c SET deleted_at = NULL, deleted_by = NULL, idx = (
+    SELECT least(min(l.idx), 0) - 1 FROM clips l WHERE l.video_id = c.video_id AND l.deleted_at IS NULL
+)
+WHERE c.id = $1
+`
+
+// Run after ParkClips. A live clip may hold the index the clip had, so it
+// comes back parked below the others until NumberClips.
+func (q *Queries) RestoreClip(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, restoreClip, id)
 	return err
 }
 
@@ -144,10 +212,13 @@ func (q *Queries) SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams
 const subtractClipFrames = `-- name: SubtractClipFrames :one
 UPDATE videos v SET frame_count = v.frame_count - c.frame_count
 FROM clips c
-WHERE c.id = $1 AND v.id = c.video_id
+WHERE c.id = $1 AND v.id = c.video_id AND c.deleted_at IS NULL AND v.deleted_at IS NULL
 RETURNING v.id AS video_id
 `
 
+// Locks the video row before touching its clips, so two clips trashed or
+// restored in one video renumber one after the other instead of
+// deadlocking.
 func (q *Queries) SubtractClipFrames(ctx context.Context, id int64) (int64, error) {
 	row := q.db.QueryRow(ctx, subtractClipFrames, id)
 	var video_id int64
@@ -155,11 +226,16 @@ func (q *Queries) SubtractClipFrames(ctx context.Context, id int64) (int64, erro
 	return video_id, err
 }
 
-const unparkClips = `-- name: UnparkClips :exec
-UPDATE clips SET idx = -idx - 1 WHERE video_id = $1 AND idx < 0
+const trashClip = `-- name: TrashClip :exec
+UPDATE clips SET deleted_at = now(), deleted_by = $1::uuid WHERE id = $2
 `
 
-func (q *Queries) UnparkClips(ctx context.Context, videoID int64) error {
-	_, err := q.db.Exec(ctx, unparkClips, videoID)
+type TrashClipParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	ID     int64       `json:"id"`
+}
+
+func (q *Queries) TrashClip(ctx context.Context, arg TrashClipParams) error {
+	_, err := q.db.Exec(ctx, trashClip, arg.UserID, arg.ID)
 	return err
 }

@@ -9,6 +9,7 @@ package krillv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -20,6 +21,113 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type ModelLoadState int32
+
+const (
+	ModelLoadState_MODEL_LOAD_STATE_UNSPECIFIED ModelLoadState = 0
+	// Nothing is loaded. The next task loads the model.
+	ModelLoadState_MODEL_LOAD_STATE_UNLOADED ModelLoadState = 1
+	ModelLoadState_MODEL_LOAD_STATE_LOADING  ModelLoadState = 2
+	ModelLoadState_MODEL_LOAD_STATE_READY    ModelLoadState = 3
+	ModelLoadState_MODEL_LOAD_STATE_ERROR    ModelLoadState = 4
+)
+
+// Enum value maps for ModelLoadState.
+var (
+	ModelLoadState_name = map[int32]string{
+		0: "MODEL_LOAD_STATE_UNSPECIFIED",
+		1: "MODEL_LOAD_STATE_UNLOADED",
+		2: "MODEL_LOAD_STATE_LOADING",
+		3: "MODEL_LOAD_STATE_READY",
+		4: "MODEL_LOAD_STATE_ERROR",
+	}
+	ModelLoadState_value = map[string]int32{
+		"MODEL_LOAD_STATE_UNSPECIFIED": 0,
+		"MODEL_LOAD_STATE_UNLOADED":    1,
+		"MODEL_LOAD_STATE_LOADING":     2,
+		"MODEL_LOAD_STATE_READY":       3,
+		"MODEL_LOAD_STATE_ERROR":       4,
+	}
+)
+
+func (x ModelLoadState) Enum() *ModelLoadState {
+	p := new(ModelLoadState)
+	*p = x
+	return p
+}
+
+func (x ModelLoadState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ModelLoadState) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_worker_proto_enumTypes[0].Descriptor()
+}
+
+func (ModelLoadState) Type() protoreflect.EnumType {
+	return &file_krill_v1_worker_proto_enumTypes[0]
+}
+
+func (x ModelLoadState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ModelLoadState.Descriptor instead.
+func (ModelLoadState) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{0}
+}
+
+type WorkerAction int32
+
+const (
+	WorkerAction_WORKER_ACTION_UNSPECIFIED WorkerAction = 0
+	// Load the model and compile its kernels now instead of on the next task.
+	WorkerAction_WORKER_ACTION_WARM_UP WorkerAction = 1
+	// Free the GPU memory. The next task loads the model again.
+	WorkerAction_WORKER_ACTION_UNLOAD WorkerAction = 2
+)
+
+// Enum value maps for WorkerAction.
+var (
+	WorkerAction_name = map[int32]string{
+		0: "WORKER_ACTION_UNSPECIFIED",
+		1: "WORKER_ACTION_WARM_UP",
+		2: "WORKER_ACTION_UNLOAD",
+	}
+	WorkerAction_value = map[string]int32{
+		"WORKER_ACTION_UNSPECIFIED": 0,
+		"WORKER_ACTION_WARM_UP":     1,
+		"WORKER_ACTION_UNLOAD":      2,
+	}
+)
+
+func (x WorkerAction) Enum() *WorkerAction {
+	p := new(WorkerAction)
+	*p = x
+	return p
+}
+
+func (x WorkerAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WorkerAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_worker_proto_enumTypes[1].Descriptor()
+}
+
+func (WorkerAction) Type() protoreflect.EnumType {
+	return &file_krill_v1_worker_proto_enumTypes[1]
+}
+
+func (x WorkerAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WorkerAction.Descriptor instead.
+func (WorkerAction) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{1}
+}
 
 type NextTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -64,6 +172,9 @@ type NextTaskResponse struct {
 	//	*NextTaskResponse_Track
 	//	*NextTaskResponse_Exemplar
 	//	*NextTaskResponse_Embed
+	//	*NextTaskResponse_Train
+	//	*NextTaskResponse_Prelabel
+	//	*NextTaskResponse_Preview
 	Task          isNextTaskResponse_Task `protobuf_oneof:"task"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -133,6 +244,33 @@ func (x *NextTaskResponse) GetEmbed() *EmbedTask {
 	return nil
 }
 
+func (x *NextTaskResponse) GetTrain() *TrainTask {
+	if x != nil {
+		if x, ok := x.Task.(*NextTaskResponse_Train); ok {
+			return x.Train
+		}
+	}
+	return nil
+}
+
+func (x *NextTaskResponse) GetPrelabel() *PrelabelTask {
+	if x != nil {
+		if x, ok := x.Task.(*NextTaskResponse_Prelabel); ok {
+			return x.Prelabel
+		}
+	}
+	return nil
+}
+
+func (x *NextTaskResponse) GetPreview() *PreviewTask {
+	if x != nil {
+		if x, ok := x.Task.(*NextTaskResponse_Preview); ok {
+			return x.Preview
+		}
+	}
+	return nil
+}
+
 type isNextTaskResponse_Task interface {
 	isNextTaskResponse_Task()
 }
@@ -149,11 +287,29 @@ type NextTaskResponse_Embed struct {
 	Embed *EmbedTask `protobuf:"bytes,3,opt,name=embed,proto3,oneof"`
 }
 
+type NextTaskResponse_Train struct {
+	Train *TrainTask `protobuf:"bytes,10,opt,name=train,proto3,oneof"`
+}
+
+type NextTaskResponse_Prelabel struct {
+	Prelabel *PrelabelTask `protobuf:"bytes,11,opt,name=prelabel,proto3,oneof"`
+}
+
+type NextTaskResponse_Preview struct {
+	Preview *PreviewTask `protobuf:"bytes,12,opt,name=preview,proto3,oneof"`
+}
+
 func (*NextTaskResponse_Track) isNextTaskResponse_Task() {}
 
 func (*NextTaskResponse_Exemplar) isNextTaskResponse_Task() {}
 
 func (*NextTaskResponse_Embed) isNextTaskResponse_Task() {}
+
+func (*NextTaskResponse_Train) isNextTaskResponse_Task() {}
+
+func (*NextTaskResponse_Prelabel) isNextTaskResponse_Task() {}
+
+func (*NextTaskResponse_Preview) isNextTaskResponse_Task() {}
 
 type TaskFrame struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -933,16 +1089,328 @@ func (*FailTaskResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_worker_proto_rawDescGZIP(), []int{15}
 }
 
+type HeartbeatRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Random for each process, so a restarted worker shows as a new one.
+	InstanceId  string                 `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	Hostname    string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Version     string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Model       string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
+	Accelerator string                 `protobuf:"bytes,5,opt,name=accelerator,proto3" json:"accelerator,omitempty"`
+	StartedAt   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	Host        *HostStats             `protobuf:"bytes,7,opt,name=host,proto3" json:"host,omitempty"`
+	Gpus        []*GpuStats            `protobuf:"bytes,8,rep,name=gpus,proto3" json:"gpus,omitempty"`
+	// The task being worked on, or 0 when idle.
+	TaskId int64 `protobuf:"varint,9,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// Log records not yet sent, oldest first. A worker resends them until a
+	// heartbeat succeeds, so the API skips seqs it already has.
+	Logs       []*LogRecord   `protobuf:"bytes,20,rep,name=logs,proto3" json:"logs,omitempty"`
+	ModelState ModelLoadState `protobuf:"varint,30,opt,name=model_state,json=modelState,proto3,enum=krill.v1.ModelLoadState" json:"model_state,omitempty"`
+	// Why the model failed to load.
+	ModelError string `protobuf:"bytes,31,opt,name=model_error,json=modelError,proto3" json:"model_error,omitempty"`
+	// Torch memory once the model loaded and warmed up.
+	ModelMemoryAllocatedBytes uint64 `protobuf:"varint,32,opt,name=model_memory_allocated_bytes,json=modelMemoryAllocatedBytes,proto3" json:"model_memory_allocated_bytes,omitempty"`
+	ModelMemoryReservedBytes  uint64 `protobuf:"varint,33,opt,name=model_memory_reserved_bytes,json=modelMemoryReservedBytes,proto3" json:"model_memory_reserved_bytes,omitempty"`
+	// Set when the worker's own KRILL_SAM_MODEL picks the model, which then
+	// ignores HeartbeatResponse.model.
+	PinnedModel string `protobuf:"bytes,34,opt,name=pinned_model,json=pinnedModel,proto3" json:"pinned_model,omitempty"`
+	// SAM models already downloaded to the worker.
+	CachedModels []string `protobuf:"bytes,35,rep,name=cached_models,json=cachedModels,proto3" json:"cached_models,omitempty"`
+	// The last command the worker finished, so the API stops sending it.
+	CommandId uint64 `protobuf:"varint,36,opt,name=command_id,json=commandId,proto3" json:"command_id,omitempty"`
+	// Whether the model can run exemplar tasks.
+	SupportsExemplars bool `protobuf:"varint,37,opt,name=supports_exemplars,json=supportsExemplars,proto3" json:"supports_exemplars,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *HeartbeatRequest) Reset() {
+	*x = HeartbeatRequest{}
+	mi := &file_krill_v1_worker_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeartbeatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeartbeatRequest) ProtoMessage() {}
+
+func (x *HeartbeatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_worker_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeartbeatRequest.ProtoReflect.Descriptor instead.
+func (*HeartbeatRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *HeartbeatRequest) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetAccelerator() string {
+	if x != nil {
+		return x.Accelerator
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *HeartbeatRequest) GetHost() *HostStats {
+	if x != nil {
+		return x.Host
+	}
+	return nil
+}
+
+func (x *HeartbeatRequest) GetGpus() []*GpuStats {
+	if x != nil {
+		return x.Gpus
+	}
+	return nil
+}
+
+func (x *HeartbeatRequest) GetTaskId() int64 {
+	if x != nil {
+		return x.TaskId
+	}
+	return 0
+}
+
+func (x *HeartbeatRequest) GetLogs() []*LogRecord {
+	if x != nil {
+		return x.Logs
+	}
+	return nil
+}
+
+func (x *HeartbeatRequest) GetModelState() ModelLoadState {
+	if x != nil {
+		return x.ModelState
+	}
+	return ModelLoadState_MODEL_LOAD_STATE_UNSPECIFIED
+}
+
+func (x *HeartbeatRequest) GetModelError() string {
+	if x != nil {
+		return x.ModelError
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetModelMemoryAllocatedBytes() uint64 {
+	if x != nil {
+		return x.ModelMemoryAllocatedBytes
+	}
+	return 0
+}
+
+func (x *HeartbeatRequest) GetModelMemoryReservedBytes() uint64 {
+	if x != nil {
+		return x.ModelMemoryReservedBytes
+	}
+	return 0
+}
+
+func (x *HeartbeatRequest) GetPinnedModel() string {
+	if x != nil {
+		return x.PinnedModel
+	}
+	return ""
+}
+
+func (x *HeartbeatRequest) GetCachedModels() []string {
+	if x != nil {
+		return x.CachedModels
+	}
+	return nil
+}
+
+func (x *HeartbeatRequest) GetCommandId() uint64 {
+	if x != nil {
+		return x.CommandId
+	}
+	return 0
+}
+
+func (x *HeartbeatRequest) GetSupportsExemplars() bool {
+	if x != nil {
+		return x.SupportsExemplars
+	}
+	return false
+}
+
+type HeartbeatResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The SAM model to switch to between tasks. Empty leaves the worker's
+	// default.
+	Model string `protobuf:"bytes,30,opt,name=model,proto3" json:"model,omitempty"`
+	// Sent in every response until the worker reports its id.
+	Command *WorkerCommand `protobuf:"bytes,31,opt,name=command,proto3" json:"command,omitempty"`
+	// A task the API no longer waits on, such as a cancelled job. The worker
+	// stops it without reporting a failure.
+	CancelTaskId  int64 `protobuf:"varint,32,opt,name=cancel_task_id,json=cancelTaskId,proto3" json:"cancel_task_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HeartbeatResponse) Reset() {
+	*x = HeartbeatResponse{}
+	mi := &file_krill_v1_worker_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeartbeatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeartbeatResponse) ProtoMessage() {}
+
+func (x *HeartbeatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_worker_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeartbeatResponse.ProtoReflect.Descriptor instead.
+func (*HeartbeatResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *HeartbeatResponse) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *HeartbeatResponse) GetCommand() *WorkerCommand {
+	if x != nil {
+		return x.Command
+	}
+	return nil
+}
+
+func (x *HeartbeatResponse) GetCancelTaskId() int64 {
+	if x != nil {
+		return x.CancelTaskId
+	}
+	return 0
+}
+
+type WorkerCommand struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Action        WorkerAction           `protobuf:"varint,2,opt,name=action,proto3,enum=krill.v1.WorkerAction" json:"action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkerCommand) Reset() {
+	*x = WorkerCommand{}
+	mi := &file_krill_v1_worker_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkerCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkerCommand) ProtoMessage() {}
+
+func (x *WorkerCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_worker_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkerCommand.ProtoReflect.Descriptor instead.
+func (*WorkerCommand) Descriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *WorkerCommand) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *WorkerCommand) GetAction() WorkerAction {
+	if x != nil {
+		return x.Action
+	}
+	return WorkerAction_WORKER_ACTION_UNSPECIFIED
+}
+
 var File_krill_v1_worker_proto protoreflect.FileDescriptor
 
 const file_krill_v1_worker_proto_rawDesc = "" +
 	"\n" +
-	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x19krill/v1/annotation.proto\"\x11\n" +
-	"\x0fNextTaskRequest\"\xaa\x01\n" +
+	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x12krill/v1/log.proto\x1a\x17krill/v1/pipeline.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
+	"\x0fNextTaskRequest\"\xc0\x02\n" +
 	"\x10NextTaskResponse\x12+\n" +
 	"\x05track\x18\x01 \x01(\v2\x13.krill.v1.TrackTaskH\x00R\x05track\x124\n" +
 	"\bexemplar\x18\x02 \x01(\v2\x16.krill.v1.ExemplarTaskH\x00R\bexemplar\x12+\n" +
-	"\x05embed\x18\x03 \x01(\v2\x13.krill.v1.EmbedTaskH\x00R\x05embedB\x06\n" +
+	"\x05embed\x18\x03 \x01(\v2\x13.krill.v1.EmbedTaskH\x00R\x05embed\x12+\n" +
+	"\x05train\x18\n" +
+	" \x01(\v2\x13.krill.v1.TrainTaskH\x00R\x05train\x124\n" +
+	"\bprelabel\x18\v \x01(\v2\x16.krill.v1.PrelabelTaskH\x00R\bprelabel\x121\n" +
+	"\apreview\x18\f \x01(\v2\x15.krill.v1.PreviewTaskH\x00R\apreviewB\x06\n" +
 	"\x04task\"R\n" +
 	"\tTaskFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
@@ -990,13 +1458,55 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x0fFailTaskRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\"\x12\n" +
-	"\x10FailTaskResponse2\x8f\x03\n" +
+	"\x10FailTaskResponse\"\xe1\x05\n" +
+	"\x10HeartbeatRequest\x12\x1f\n" +
+	"\vinstance_id\x18\x01 \x01(\tR\n" +
+	"instanceId\x12\x1a\n" +
+	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x14\n" +
+	"\x05model\x18\x04 \x01(\tR\x05model\x12 \n" +
+	"\vaccelerator\x18\x05 \x01(\tR\vaccelerator\x129\n" +
+	"\n" +
+	"started_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12'\n" +
+	"\x04host\x18\a \x01(\v2\x13.krill.v1.HostStatsR\x04host\x12&\n" +
+	"\x04gpus\x18\b \x03(\v2\x12.krill.v1.GpuStatsR\x04gpus\x12\x17\n" +
+	"\atask_id\x18\t \x01(\x03R\x06taskId\x12'\n" +
+	"\x04logs\x18\x14 \x03(\v2\x13.krill.v1.LogRecordR\x04logs\x129\n" +
+	"\vmodel_state\x18\x1e \x01(\x0e2\x18.krill.v1.ModelLoadStateR\n" +
+	"modelState\x12\x1f\n" +
+	"\vmodel_error\x18\x1f \x01(\tR\n" +
+	"modelError\x12?\n" +
+	"\x1cmodel_memory_allocated_bytes\x18  \x01(\x04R\x19modelMemoryAllocatedBytes\x12=\n" +
+	"\x1bmodel_memory_reserved_bytes\x18! \x01(\x04R\x18modelMemoryReservedBytes\x12!\n" +
+	"\fpinned_model\x18\" \x01(\tR\vpinnedModel\x12#\n" +
+	"\rcached_models\x18# \x03(\tR\fcachedModels\x12\x1d\n" +
+	"\n" +
+	"command_id\x18$ \x01(\x04R\tcommandId\x12-\n" +
+	"\x12supports_exemplars\x18% \x01(\bR\x11supportsExemplars\"\x82\x01\n" +
+	"\x11HeartbeatResponse\x12\x14\n" +
+	"\x05model\x18\x1e \x01(\tR\x05model\x121\n" +
+	"\acommand\x18\x1f \x01(\v2\x17.krill.v1.WorkerCommandR\acommand\x12$\n" +
+	"\x0ecancel_task_id\x18  \x01(\x03R\fcancelTaskId\"O\n" +
+	"\rWorkerCommand\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
+	"\x06action\x18\x02 \x01(\x0e2\x16.krill.v1.WorkerActionR\x06action*\xa7\x01\n" +
+	"\x0eModelLoadState\x12 \n" +
+	"\x1cMODEL_LOAD_STATE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19MODEL_LOAD_STATE_UNLOADED\x10\x01\x12\x1c\n" +
+	"\x18MODEL_LOAD_STATE_LOADING\x10\x02\x12\x1a\n" +
+	"\x16MODEL_LOAD_STATE_READY\x10\x03\x12\x1a\n" +
+	"\x16MODEL_LOAD_STATE_ERROR\x10\x04*b\n" +
+	"\fWorkerAction\x12\x1d\n" +
+	"\x19WORKER_ACTION_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15WORKER_ACTION_WARM_UP\x10\x01\x12\x18\n" +
+	"\x14WORKER_ACTION_UNLOAD\x10\x022\xd7\x03\n" +
 	"\rWorkerService\x12C\n" +
 	"\bNextTask\x12\x19.krill.v1.NextTaskRequest\x1a\x1a.krill.v1.NextTaskResponse\"\x00\x12L\n" +
 	"\vReportTrack\x12\x1c.krill.v1.ReportTrackRequest\x1a\x1d.krill.v1.ReportTrackResponse\"\x00\x12X\n" +
 	"\x0fReportExemplars\x12 .krill.v1.ReportExemplarsRequest\x1a!.krill.v1.ReportExemplarsResponse\"\x00\x12L\n" +
 	"\vReportEmbed\x12\x1c.krill.v1.ReportEmbedRequest\x1a\x1d.krill.v1.ReportEmbedResponse\"\x00\x12C\n" +
-	"\bFailTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00B\x8c\x01\n" +
+	"\bFailTask\x12\x19.krill.v1.FailTaskRequest\x1a\x1a.krill.v1.FailTaskResponse\"\x00\x12F\n" +
+	"\tHeartbeat\x12\x1a.krill.v1.HeartbeatRequest\x1a\x1b.krill.v1.HeartbeatResponse\"\x00B\x8c\x01\n" +
 	"\fcom.krill.v1B\vWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -1011,55 +1521,80 @@ func file_krill_v1_worker_proto_rawDescGZIP() []byte {
 	return file_krill_v1_worker_proto_rawDescData
 }
 
-var file_krill_v1_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_krill_v1_worker_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_krill_v1_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_krill_v1_worker_proto_goTypes = []any{
-	(*NextTaskRequest)(nil),         // 0: krill.v1.NextTaskRequest
-	(*NextTaskResponse)(nil),        // 1: krill.v1.NextTaskResponse
-	(*TaskFrame)(nil),               // 2: krill.v1.TaskFrame
-	(*TrackTask)(nil),               // 3: krill.v1.TrackTask
-	(*EmbedTask)(nil),               // 4: krill.v1.EmbedTask
-	(*EmbedFrame)(nil),              // 5: krill.v1.EmbedFrame
-	(*ExemplarTask)(nil),            // 6: krill.v1.ExemplarTask
-	(*TrackedBox)(nil),              // 7: krill.v1.TrackedBox
-	(*ReportTrackRequest)(nil),      // 8: krill.v1.ReportTrackRequest
-	(*ReportTrackResponse)(nil),     // 9: krill.v1.ReportTrackResponse
-	(*ReportExemplarsRequest)(nil),  // 10: krill.v1.ReportExemplarsRequest
-	(*ReportExemplarsResponse)(nil), // 11: krill.v1.ReportExemplarsResponse
-	(*ReportEmbedRequest)(nil),      // 12: krill.v1.ReportEmbedRequest
-	(*ReportEmbedResponse)(nil),     // 13: krill.v1.ReportEmbedResponse
-	(*FailTaskRequest)(nil),         // 14: krill.v1.FailTaskRequest
-	(*FailTaskResponse)(nil),        // 15: krill.v1.FailTaskResponse
-	(*Point)(nil),                   // 16: krill.v1.Point
-	(*Box)(nil),                     // 17: krill.v1.Box
+	(ModelLoadState)(0),             // 0: krill.v1.ModelLoadState
+	(WorkerAction)(0),               // 1: krill.v1.WorkerAction
+	(*NextTaskRequest)(nil),         // 2: krill.v1.NextTaskRequest
+	(*NextTaskResponse)(nil),        // 3: krill.v1.NextTaskResponse
+	(*TaskFrame)(nil),               // 4: krill.v1.TaskFrame
+	(*TrackTask)(nil),               // 5: krill.v1.TrackTask
+	(*EmbedTask)(nil),               // 6: krill.v1.EmbedTask
+	(*EmbedFrame)(nil),              // 7: krill.v1.EmbedFrame
+	(*ExemplarTask)(nil),            // 8: krill.v1.ExemplarTask
+	(*TrackedBox)(nil),              // 9: krill.v1.TrackedBox
+	(*ReportTrackRequest)(nil),      // 10: krill.v1.ReportTrackRequest
+	(*ReportTrackResponse)(nil),     // 11: krill.v1.ReportTrackResponse
+	(*ReportExemplarsRequest)(nil),  // 12: krill.v1.ReportExemplarsRequest
+	(*ReportExemplarsResponse)(nil), // 13: krill.v1.ReportExemplarsResponse
+	(*ReportEmbedRequest)(nil),      // 14: krill.v1.ReportEmbedRequest
+	(*ReportEmbedResponse)(nil),     // 15: krill.v1.ReportEmbedResponse
+	(*FailTaskRequest)(nil),         // 16: krill.v1.FailTaskRequest
+	(*FailTaskResponse)(nil),        // 17: krill.v1.FailTaskResponse
+	(*HeartbeatRequest)(nil),        // 18: krill.v1.HeartbeatRequest
+	(*HeartbeatResponse)(nil),       // 19: krill.v1.HeartbeatResponse
+	(*WorkerCommand)(nil),           // 20: krill.v1.WorkerCommand
+	(*TrainTask)(nil),               // 21: krill.v1.TrainTask
+	(*PrelabelTask)(nil),            // 22: krill.v1.PrelabelTask
+	(*PreviewTask)(nil),             // 23: krill.v1.PreviewTask
+	(*Point)(nil),                   // 24: krill.v1.Point
+	(*Box)(nil),                     // 25: krill.v1.Box
+	(*timestamppb.Timestamp)(nil),   // 26: google.protobuf.Timestamp
+	(*HostStats)(nil),               // 27: krill.v1.HostStats
+	(*GpuStats)(nil),                // 28: krill.v1.GpuStats
+	(*LogRecord)(nil),               // 29: krill.v1.LogRecord
 }
 var file_krill_v1_worker_proto_depIdxs = []int32{
-	3,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
-	6,  // 1: krill.v1.NextTaskResponse.exemplar:type_name -> krill.v1.ExemplarTask
-	4,  // 2: krill.v1.NextTaskResponse.embed:type_name -> krill.v1.EmbedTask
-	2,  // 3: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
-	16, // 4: krill.v1.TrackTask.point:type_name -> krill.v1.Point
-	17, // 5: krill.v1.TrackTask.box:type_name -> krill.v1.Box
-	5,  // 6: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
-	2,  // 7: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
-	17, // 8: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
-	17, // 9: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
-	7,  // 10: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
-	17, // 11: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
-	0,  // 12: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
-	8,  // 13: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
-	10, // 14: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
-	12, // 15: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
-	14, // 16: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
-	1,  // 17: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
-	9,  // 18: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
-	11, // 19: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
-	13, // 20: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
-	15, // 21: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
-	17, // [17:22] is the sub-list for method output_type
-	12, // [12:17] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	5,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
+	8,  // 1: krill.v1.NextTaskResponse.exemplar:type_name -> krill.v1.ExemplarTask
+	6,  // 2: krill.v1.NextTaskResponse.embed:type_name -> krill.v1.EmbedTask
+	21, // 3: krill.v1.NextTaskResponse.train:type_name -> krill.v1.TrainTask
+	22, // 4: krill.v1.NextTaskResponse.prelabel:type_name -> krill.v1.PrelabelTask
+	23, // 5: krill.v1.NextTaskResponse.preview:type_name -> krill.v1.PreviewTask
+	4,  // 6: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
+	24, // 7: krill.v1.TrackTask.point:type_name -> krill.v1.Point
+	25, // 8: krill.v1.TrackTask.box:type_name -> krill.v1.Box
+	7,  // 9: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
+	4,  // 10: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
+	25, // 11: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
+	25, // 12: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
+	9,  // 13: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
+	25, // 14: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
+	26, // 15: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
+	27, // 16: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
+	28, // 17: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
+	29, // 18: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
+	0,  // 19: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
+	20, // 20: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
+	1,  // 21: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
+	2,  // 22: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
+	10, // 23: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
+	12, // 24: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
+	14, // 25: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
+	16, // 26: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
+	18, // 27: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
+	3,  // 28: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
+	11, // 29: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
+	13, // 30: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
+	15, // 31: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
+	17, // 32: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
+	19, // 33: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
+	28, // [28:34] is the sub-list for method output_type
+	22, // [22:28] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_worker_proto_init() }
@@ -1068,10 +1603,16 @@ func file_krill_v1_worker_proto_init() {
 		return
 	}
 	file_krill_v1_annotation_proto_init()
+	file_krill_v1_log_proto_init()
+	file_krill_v1_pipeline_proto_init()
+	file_krill_v1_system_proto_init()
 	file_krill_v1_worker_proto_msgTypes[1].OneofWrappers = []any{
 		(*NextTaskResponse_Track)(nil),
 		(*NextTaskResponse_Exemplar)(nil),
 		(*NextTaskResponse_Embed)(nil),
+		(*NextTaskResponse_Train)(nil),
+		(*NextTaskResponse_Prelabel)(nil),
+		(*NextTaskResponse_Preview)(nil),
 	}
 	file_krill_v1_worker_proto_msgTypes[3].OneofWrappers = []any{
 		(*TrackTask_Point)(nil),
@@ -1082,13 +1623,14 @@ func file_krill_v1_worker_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_worker_proto_rawDesc), len(file_krill_v1_worker_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   16,
+			NumEnums:      2,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_krill_v1_worker_proto_goTypes,
 		DependencyIndexes: file_krill_v1_worker_proto_depIdxs,
+		EnumInfos:         file_krill_v1_worker_proto_enumTypes,
 		MessageInfos:      file_krill_v1_worker_proto_msgTypes,
 	}.Build()
 	File_krill_v1_worker_proto = out.File

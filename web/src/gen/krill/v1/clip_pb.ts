@@ -191,8 +191,8 @@ export const ClipService: GenService<{
     output: typeof GetClipResponseSchema;
   },
   /**
-   * DeleteClip removes a clip with its frames and labels, and renumbers the
-   * clips after it so the video has no gap.
+   * DeleteClip moves a clip to the trash and renumbers the clips after it so
+   * the video has no gap. Restoring it puts it back in its place.
    *
    * @generated from rpc krill.v1.ClipService.DeleteClip
    */

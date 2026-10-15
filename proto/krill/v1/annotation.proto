@@ -87,6 +87,8 @@ message Annotation {
   // The tracker's box jumped in size or position from the track's previous
   // box, and no labeler has accepted or edited it yet.
   bool drift = 7;
+  // How sure a YOLO or CV pre-labeler was, from 0 to 1.
+  optional float confidence = 40;
 }
 
 message CreateTrackRequest {

@@ -22,7 +22,7 @@ dev:
     @echo "Postgres :5432, MinIO :9000 (console :9001). Run 'just api' and 'just web' in separate shells."
 
 api:
-    cd api && go run ./cmd/api
+    cd api && go run -ldflags "-X main.version=$(git describe --tags --always --dirty)" ./cmd/api
 
 web:
     cd web && pnpm dev
@@ -60,7 +60,7 @@ test:
 
 # build the api image (which bundles the web app) and the ROCm worker image
 build version="dev":
-    docker build -f deploy/api.Dockerfile --build-arg VERSION={{version}} -t krill-api:{{version}} .
+    docker build -f deploy/api.Dockerfile --build-arg VERSION=$(git describe --tags --always --dirty) -t krill-api:{{version}} .
     docker build -f deploy/worker.Dockerfile -t krill-worker:{{version}}-rocm .
 
 build-worker-cuda version="dev":

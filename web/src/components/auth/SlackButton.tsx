@@ -25,12 +25,21 @@ function SlackLogo() {
   )
 }
 
-export function SlackButton({ label, lastUsed = false }: { label: string; lastUsed?: boolean }) {
+export function SlackButton({
+  label,
+  lastUsed = false,
+  invite,
+}: {
+  label: string
+  lastUsed?: boolean
+  invite?: string
+}) {
+  const to = invite ? `/auth/slack/login?invite=${encodeURIComponent(invite)}` : '/auth/slack/login'
   return (
     <>
       <OrDivider />
       <div className="relative">
-        <Button outline to="/auth/slack/login" reloadDocument className="w-full">
+        <Button outline to={to} reloadDocument className="w-full">
           <SlackLogo />
           {label}
         </Button>

@@ -1,0 +1,249 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+import "krill/v1/video.proto";
+
+// ContentService manages videos and clips from the admin panel: the trash,
+// and bulk actions that run as background jobs.
+service ContentService {
+  rpc ListTrash(ListTrashRequest) returns (ListTrashResponse) {}
+  // RestoreTrash brings items back with their labels. Claims were released
+  // when they were trashed and stay released.
+  rpc RestoreTrash(RestoreTrashRequest) returns (RestoreTrashResponse) {}
+  // PurgeTrash deletes items for good. Their frames and embeddings are
+  // removed from storage by a background job.
+  rpc PurgeTrash(PurgeTrashRequest) returns (PurgeTrashResponse) {}
+  rpc EmptyTrash(EmptyTrashRequest) returns (EmptyTrashResponse) {}
+
+  rpc ListContentVideos(ListContentVideosRequest) returns (ListContentVideosResponse) {}
+  rpc ListContentClips(ListContentClipsRequest) returns (ListContentClipsResponse) {}
+  // PreviewReextract counts what re-extracting each video would discard.
+  rpc PreviewReextract(PreviewReextractRequest) returns (PreviewReextractResponse) {}
+  // ReextractVideos runs ingest again, which replaces every clip and frame.
+  // It fails with FailedPrecondition when a video has labels, unless
+  // discard_labels is set.
+  rpc ReextractVideos(ReextractVideosRequest) returns (ReextractVideosResponse) {}
+  rpc RegenerateEmbeddings(RegenerateEmbeddingsRequest) returns (RegenerateEmbeddingsResponse) {}
+  // ReassignClips gives clips to a user, or releases them.
+  rpc ReassignClips(ReassignClipsRequest) returns (ReassignClipsResponse) {}
+  // ListContentJobs returns the bulk jobs of the last day, newest first.
+  rpc ListContentJobs(ListContentJobsRequest) returns (ListContentJobsResponse) {}
+}
+
+enum TrashKind {
+  TRASH_KIND_UNSPECIFIED = 0;
+  TRASH_KIND_VIDEO = 1;
+  TRASH_KIND_CLIP = 2;
+}
+
+message TrashItem {
+  TrashKind kind = 1;
+  // The video's or the clip's.
+  int64 id = 2;
+  int64 video_id = 3;
+  string video_name = 4;
+  // The clip's index when it was trashed.
+  int32 clip_index = 5;
+  google.protobuf.Timestamp deleted_at = 6;
+  // Unset when the account was deleted.
+  Profile deleted_by = 7;
+  // Unset when automatic purging is off.
+  google.protobuf.Timestamp purge_at = 8;
+  // Frames and embeddings in storage, and a video's source file. -1 when
+  // storage could not be read.
+  int64 size_bytes = 9;
+  int32 frame_count = 10;
+  // Videos only.
+  int32 clip_count = 11;
+  int32 labeled_frame_count = 12;
+  int32 track_count = 13;
+  int32 box_count = 14;
+  string thumbnail_url = 15;
+}
+
+message ListTrashRequest {}
+
+message ListTrashResponse {
+  // Newest first.
+  repeated TrashItem items = 1;
+  // Days items stay in the trash. 0 keeps them until they are purged.
+  int32 retention_days = 2;
+}
+
+message RestoreTrashRequest {
+  repeated int64 video_ids = 1;
+  repeated int64 clip_ids = 2;
+}
+
+message RestoreTrashResponse {
+  int32 videos = 1;
+  int32 clips = 2;
+}
+
+message PurgeTrashRequest {
+  repeated int64 video_ids = 1;
+  repeated int64 clip_ids = 2;
+}
+
+message PurgeTrashResponse {
+  int32 videos = 1;
+  int32 clips = 2;
+  // Unset when nothing was purged.
+  ContentJob job = 3;
+}
+
+message EmptyTrashRequest {}
+
+message EmptyTrashResponse {
+  int32 videos = 1;
+  int32 clips = 2;
+  ContentJob job = 3;
+}
+
+message ContentVideo {
+  int64 id = 1;
+  string name = 2;
+  VideoStatus status = 3;
+  string error = 4;
+  float ingest_progress = 5;
+  // 0 means the native rate.
+  double extract_fps = 6;
+  double fps = 7;
+  int32 frame_count = 8;
+  int32 clip_count = 9;
+  // With any model.
+  int32 embedded_clip_count = 10;
+  // With the model the GPU workers run now.
+  int32 current_clip_count = 11;
+  int32 labeled_frame_count = 12;
+  int32 box_count = 13;
+  google.protobuf.Timestamp created_at = 14;
+}
+
+message ListContentVideosRequest {}
+
+message ListContentVideosResponse {
+  repeated ContentVideo videos = 1;
+  // The SAM model of the online GPU workers. Empty when none is online.
+  string current_model = 2;
+}
+
+message ContentClip {
+  int64 id = 1;
+  int64 video_id = 2;
+  string video_name = 3;
+  int32 index = 4;
+  int32 frame_count = 5;
+  int32 labeled_frame_count = 6;
+  int32 box_count = 7;
+  // Unset when nobody holds the clip.
+  Profile claimant = 8;
+  google.protobuf.Timestamp claim_active_at = 9;
+  // The claimant worked on it recently enough to keep it.
+  bool claim_active = 10;
+  // Empty when the clip has no embeddings.
+  string embed_model = 11;
+}
+
+message ListContentClipsRequest {
+  // With neither filter, every claimed clip is listed.
+  int64 video_id = 1;
+  string claimant_id = 2;
+}
+
+message ListContentClipsResponse {
+  repeated ContentClip clips = 1;
+  // More clips matched than were returned.
+  bool truncated = 2;
+  string current_model = 3;
+}
+
+message ReextractImpact {
+  int64 video_id = 1;
+  string name = 2;
+  VideoStatus status = 3;
+  double extract_fps = 4;
+  // Counts include clips in the trash, which ingest replaces too.
+  int32 labeled_frame_count = 5;
+  int32 track_count = 6;
+  int32 box_count = 7;
+  int32 gold_frame_count = 8;
+  int32 open_review_count = 9;
+  int32 claim_count = 10;
+  // Set when the video can't be re-extracted now, like while it is
+  // processing.
+  string blocked = 11;
+}
+
+message PreviewReextractRequest {
+  repeated int64 video_ids = 1;
+}
+
+message PreviewReextractResponse {
+  repeated ReextractImpact videos = 1;
+}
+
+message ReextractVideosRequest {
+  repeated int64 video_ids = 1;
+  // Frames per second to extract, 0 for the native rate. Unset keeps each
+  // video's rate.
+  optional double extract_fps = 2;
+  bool discard_labels = 3;
+}
+
+message ReextractVideosResponse {
+  ContentJob job = 1;
+}
+
+message RegenerateEmbeddingsRequest {
+  // Every clip of these videos.
+  repeated int64 video_ids = 1;
+  repeated int64 clip_ids = 2;
+  // Skips clips that already have embeddings from the current model.
+  bool only_stale = 3;
+}
+
+message RegenerateEmbeddingsResponse {
+  int32 clips = 1;
+  // Unset when no clip needed embeddings.
+  ContentJob job = 2;
+}
+
+message ReassignClipsRequest {
+  repeated int64 clip_ids = 1;
+  // Empty releases the clips.
+  string user_id = 2;
+}
+
+message ReassignClipsResponse {
+  int32 clips = 1;
+}
+
+enum ContentJobKind {
+  CONTENT_JOB_KIND_UNSPECIFIED = 0;
+  CONTENT_JOB_KIND_REEXTRACT = 1;
+  CONTENT_JOB_KIND_EMBED = 2;
+  CONTENT_JOB_KIND_PURGE = 3;
+}
+
+message ContentJob {
+  int64 id = 1;
+  ContentJobKind kind = 2;
+  string summary = 3;
+  // Unset for automatic purges and deleted accounts.
+  Profile created_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+  int32 total = 6;
+  int32 done = 7;
+  int32 failed = 8;
+  int32 running = 9;
+}
+
+message ListContentJobsRequest {}
+
+message ListContentJobsResponse {
+  repeated ContentJob jobs = 1;
+}

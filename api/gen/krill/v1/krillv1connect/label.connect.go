@@ -57,6 +57,12 @@ const (
 	// LabelServiceDeleteLabelExampleProcedure is the fully-qualified name of the LabelService's
 	// DeleteLabelExample RPC.
 	LabelServiceDeleteLabelExampleProcedure = "/krill.v1.LabelService/DeleteLabelExample"
+	// LabelServicePreviewMergeLabelTypesProcedure is the fully-qualified name of the LabelService's
+	// PreviewMergeLabelTypes RPC.
+	LabelServicePreviewMergeLabelTypesProcedure = "/krill.v1.LabelService/PreviewMergeLabelTypes"
+	// LabelServiceMergeLabelTypesProcedure is the fully-qualified name of the LabelService's
+	// MergeLabelTypes RPC.
+	LabelServiceMergeLabelTypesProcedure = "/krill.v1.LabelService/MergeLabelTypes"
 )
 
 // LabelServiceClient is a client for the krill.v1.LabelService service.
@@ -73,6 +79,12 @@ type LabelServiceClient interface {
 	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
 	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
 	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
+	// PreviewMergeLabelTypes shows what merging one type into another would
+	// change.
+	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
+	// MergeLabelTypes moves every track of the source type to the target,
+	// mapping their attribute values, and deletes the source.
+	MergeLabelTypes(context.Context, *v1.MergeLabelTypesRequest) (*v1.MergeLabelTypesResponse, error)
 }
 
 // NewLabelServiceClient constructs a client for the krill.v1.LabelService service. By default, it
@@ -134,6 +146,18 @@ func NewLabelServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
 			connect.WithClientOptions(opts...),
 		),
+		previewMergeLabelTypes: connect.NewClient[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse](
+			httpClient,
+			baseURL+LabelServicePreviewMergeLabelTypesProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("PreviewMergeLabelTypes")),
+			connect.WithClientOptions(opts...),
+		),
+		mergeLabelTypes: connect.NewClient[v1.MergeLabelTypesRequest, v1.MergeLabelTypesResponse](
+			httpClient,
+			baseURL+LabelServiceMergeLabelTypesProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("MergeLabelTypes")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -147,6 +171,8 @@ type labelServiceClient struct {
 	createLabelExampleUpload *connect.Client[v1.CreateLabelExampleUploadRequest, v1.CreateLabelExampleUploadResponse]
 	addLabelExample          *connect.Client[v1.AddLabelExampleRequest, v1.AddLabelExampleResponse]
 	deleteLabelExample       *connect.Client[v1.DeleteLabelExampleRequest, v1.DeleteLabelExampleResponse]
+	previewMergeLabelTypes   *connect.Client[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse]
+	mergeLabelTypes          *connect.Client[v1.MergeLabelTypesRequest, v1.MergeLabelTypesResponse]
 }
 
 // ListLabelTypes calls krill.v1.LabelService.ListLabelTypes.
@@ -221,6 +247,24 @@ func (c *labelServiceClient) DeleteLabelExample(ctx context.Context, req *v1.Del
 	return nil, err
 }
 
+// PreviewMergeLabelTypes calls krill.v1.LabelService.PreviewMergeLabelTypes.
+func (c *labelServiceClient) PreviewMergeLabelTypes(ctx context.Context, req *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
+	response, err := c.previewMergeLabelTypes.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// MergeLabelTypes calls krill.v1.LabelService.MergeLabelTypes.
+func (c *labelServiceClient) MergeLabelTypes(ctx context.Context, req *v1.MergeLabelTypesRequest) (*v1.MergeLabelTypesResponse, error) {
+	response, err := c.mergeLabelTypes.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // LabelServiceHandler is an implementation of the krill.v1.LabelService service.
 type LabelServiceHandler interface {
 	ListLabelTypes(context.Context, *v1.ListLabelTypesRequest) (*v1.ListLabelTypesResponse, error)
@@ -235,6 +279,12 @@ type LabelServiceHandler interface {
 	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
 	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
 	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
+	// PreviewMergeLabelTypes shows what merging one type into another would
+	// change.
+	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
+	// MergeLabelTypes moves every track of the source type to the target,
+	// mapping their attribute values, and deletes the source.
+	MergeLabelTypes(context.Context, *v1.MergeLabelTypesRequest) (*v1.MergeLabelTypesResponse, error)
 }
 
 // NewLabelServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -292,6 +342,18 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
 		connect.WithHandlerOptions(opts...),
 	)
+	labelServicePreviewMergeLabelTypesHandler := connect.NewUnaryHandlerSimple(
+		LabelServicePreviewMergeLabelTypesProcedure,
+		svc.PreviewMergeLabelTypes,
+		connect.WithSchema(labelServiceMethods.ByName("PreviewMergeLabelTypes")),
+		connect.WithHandlerOptions(opts...),
+	)
+	labelServiceMergeLabelTypesHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceMergeLabelTypesProcedure,
+		svc.MergeLabelTypes,
+		connect.WithSchema(labelServiceMethods.ByName("MergeLabelTypes")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.LabelService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case LabelServiceListLabelTypesProcedure:
@@ -310,6 +372,10 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 			labelServiceAddLabelExampleHandler.ServeHTTP(w, r)
 		case LabelServiceDeleteLabelExampleProcedure:
 			labelServiceDeleteLabelExampleHandler.ServeHTTP(w, r)
+		case LabelServicePreviewMergeLabelTypesProcedure:
+			labelServicePreviewMergeLabelTypesHandler.ServeHTTP(w, r)
+		case LabelServiceMergeLabelTypesProcedure:
+			labelServiceMergeLabelTypesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -349,4 +415,12 @@ func (UnimplementedLabelServiceHandler) AddLabelExample(context.Context, *v1.Add
 
 func (UnimplementedLabelServiceHandler) DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.DeleteLabelExample is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.PreviewMergeLabelTypes is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) MergeLabelTypes(context.Context, *v1.MergeLabelTypesRequest) (*v1.MergeLabelTypesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.MergeLabelTypes is not implemented"))
 }

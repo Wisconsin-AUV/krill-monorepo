@@ -18,6 +18,12 @@ service LabelService {
   rpc CreateLabelExampleUpload(CreateLabelExampleUploadRequest) returns (CreateLabelExampleUploadResponse) {}
   rpc AddLabelExample(AddLabelExampleRequest) returns (AddLabelExampleResponse) {}
   rpc DeleteLabelExample(DeleteLabelExampleRequest) returns (DeleteLabelExampleResponse) {}
+  // PreviewMergeLabelTypes shows what merging one type into another would
+  // change.
+  rpc PreviewMergeLabelTypes(PreviewMergeLabelTypesRequest) returns (PreviewMergeLabelTypesResponse) {}
+  // MergeLabelTypes moves every track of the source type to the target,
+  // mapping their attribute values, and deletes the source.
+  rpc MergeLabelTypes(MergeLabelTypesRequest) returns (MergeLabelTypesResponse) {}
 }
 
 message LabelAttribute {
@@ -119,3 +125,69 @@ message DeleteLabelExampleRequest {
 }
 
 message DeleteLabelExampleResponse {}
+
+// AttributeValueMapping says what a source track's attribute value becomes.
+message AttributeValueMapping {
+  string source_attribute = 1;
+  string source_option = 2;
+  // Both empty drops the value.
+  string target_attribute = 3;
+  string target_option = 4;
+  // Tracks of the source type with this value.
+  int32 track_count = 5;
+}
+
+message ExportClassChange {
+  string name = 1;
+  int32 old_id = 2;
+  // -1 when the class is gone.
+  int32 new_id = 3;
+  // For the source's classes, the target class its boxes export as. Empty
+  // when the mapping leaves a target attribute unset.
+  string becomes = 4;
+}
+
+message PreviewMergeLabelTypesRequest {
+  int64 source_id = 1;
+  int64 target_id = 2;
+  // Empty uses the default: same attribute and option names.
+  repeated AttributeValueMapping mappings = 3;
+}
+
+message PreviewMergeLabelTypesResponse {
+  // Counts include tracks in the trash, which move too.
+  int32 track_count = 1;
+  int32 box_count = 2;
+  int32 clip_count = 3;
+  int32 video_count = 4;
+  int32 trashed_track_count = 5;
+  // Gold keys and attempts are rewritten. Scores already given stay.
+  int32 gold_frame_count = 6;
+  int32 gold_attempt_count = 7;
+  int32 open_review_count = 8;
+  // Deleted with the source.
+  int32 example_count = 9;
+  // Every option of the source's attributes, and every value its tracks
+  // have.
+  repeated AttributeValueMapping mappings = 10;
+  // Classes whose export ID changes or that go away.
+  repeated ExportClassChange class_changes = 11;
+  // Target attributes no mapping fills, which merged tracks will be
+  // missing.
+  repeated string unfilled_attributes = 12;
+}
+
+message MergeLabelTypesRequest {
+  int64 source_id = 1;
+  int64 target_id = 2;
+  // Values without a mapping are dropped.
+  repeated AttributeValueMapping mappings = 3;
+}
+
+message MergeLabelTypesResponse {
+  int32 track_count = 1;
+  int32 box_count = 2;
+  int32 gold_frame_count = 3;
+  // Attribute values dropped across all tracks.
+  int32 dropped_value_count = 4;
+}

@@ -1,14 +1,17 @@
 -- name: Leaderboard :many
 WITH contributions AS (
-    SELECT created_by AS user_id, 1 AS boxes, 0 AS frames
-    FROM annotations
-    WHERE created_by IS NOT NULL
-        AND (sqlc.narg('since')::timestamptz IS NULL OR created_at >= sqlc.narg('since'))
+    SELECT a.created_by AS user_id, 1 AS boxes, 0 AS frames
+    FROM annotations a
+    JOIN tracks t ON t.id = a.track_id
+    JOIN live_clips c ON c.id = t.clip_id
+    WHERE a.created_by IS NOT NULL
+        AND (sqlc.narg('since')::timestamptz IS NULL OR a.created_at >= sqlc.narg('since'))
     UNION ALL
-    SELECT status_by, 0, 1
-    FROM frames
-    WHERE status_by IS NOT NULL
-        AND (sqlc.narg('since')::timestamptz IS NULL OR status_at >= sqlc.narg('since'))
+    SELECT f.status_by, 0, 1
+    FROM frames f
+    JOIN live_clips c ON c.id = f.clip_id
+    WHERE f.status_by IS NOT NULL
+        AND (sqlc.narg('since')::timestamptz IS NULL OR f.status_at >= sqlc.narg('since'))
 )
 SELECT
     u.id, u.name, u.username, u.role, u.created_at,
@@ -25,13 +28,16 @@ SELECT * FROM users WHERE username = $1;
 -- name: UserContributionDays :many
 SELECT day::text AS day, count(*)::bigint AS count
 FROM (
-    SELECT (created_at AT TIME ZONE sqlc.arg('time_zone')::text)::date AS day
-    FROM annotations
-    WHERE created_by = sqlc.arg('user_id')::uuid
+    SELECT (a.created_at AT TIME ZONE sqlc.arg('time_zone')::text)::date AS day
+    FROM annotations a
+    JOIN tracks t ON t.id = a.track_id
+    JOIN live_clips c ON c.id = t.clip_id
+    WHERE a.created_by = sqlc.arg('user_id')::uuid
     UNION ALL
-    SELECT (status_at AT TIME ZONE sqlc.arg('time_zone')::text)::date
-    FROM frames
-    WHERE status_by = sqlc.arg('user_id')::uuid
+    SELECT (f.status_at AT TIME ZONE sqlc.arg('time_zone')::text)::date
+    FROM frames f
+    JOIN live_clips c ON c.id = f.clip_id
+    WHERE f.status_by = sqlc.arg('user_id')::uuid
 ) c
 GROUP BY day
 ORDER BY day;
@@ -40,6 +46,7 @@ ORDER BY day;
 SELECT lt.id, lt.name, lt.color, count(*)::bigint AS boxes
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
 JOIN label_types lt ON lt.id = t.label_type_id
 WHERE a.created_by = sqlc.arg('user_id')::uuid
 GROUP BY lt.id
@@ -54,7 +61,8 @@ FROM (
     WHERE a.created_by = sqlc.arg('user_id')::uuid
     UNION ALL
     SELECT clip_id FROM frames WHERE status_by = sqlc.arg('user_id')::uuid
-) c;
+) c
+WHERE c.clip_id IN (SELECT id FROM live_clips);
 
 -- name: DriftByLabelType :many
 SELECT
@@ -63,5 +71,9 @@ SELECT
     count(*) FILTER (WHERE a.drift <> 'ok')::bigint AS flagged
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
 WHERE a.drift IS NOT NULL
 GROUP BY t.label_type_id;
+
+-- name: DatabaseSize :one
+SELECT pg_database_size(current_database())::bigint;

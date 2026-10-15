@@ -1,11 +1,11 @@
-import { AnnotationStatus, type Annotation } from '@/gen/krill/v1/annotation_pb'
+import { AnnotationSource, AnnotationStatus, type Annotation } from '@/gen/krill/v1/annotation_pb'
 import type { Frame } from '@/gen/krill/v1/clip_pb'
 import { idKey } from './useLabelStore'
 
 export interface TrackReview {
   // frame id -> ids of tracks whose proposal on that frame the server flagged as drifted
   drift: Map<string, Set<string>>
-  // Tracks whose last box is still a proposal. Exports skip them.
+  // Tracked objects whose last box is still a proposal. Exports skip them.
   unconfirmed: Set<string>
 }
 
@@ -28,7 +28,9 @@ export function reviewTracks(
   }
   const unconfirmed = new Set<string>()
   for (const [trackKey, a] of last) {
-    if (a.status === AnnotationStatus.PROPOSED) unconfirmed.add(trackKey)
+    // Pre-labels are found on each frame on their own, so they can't drift.
+    if (a.status === AnnotationStatus.PROPOSED && a.source === AnnotationSource.SAM)
+      unconfirmed.add(trackKey)
   }
   return { drift, unconfirmed }
 }

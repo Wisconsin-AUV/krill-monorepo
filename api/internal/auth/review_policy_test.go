@@ -38,7 +38,7 @@ func TestReviewAccess(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewReviewServiceHandler(reviewStub{},
-		connect.WithInterceptors(NewInterceptor(lookup, "worker-token"))))
+		connect.WithInterceptors(NewInterceptor(lookup, workerToken("worker-token")))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 

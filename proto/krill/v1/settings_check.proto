@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package krill.v1;
+
+// SettingsCheckService tries the saved Slack and email settings from the
+// admin panel.
+service SettingsCheckService {
+  // CheckSlackCredentials asks Slack whether it knows the client ID and
+  // secret, without anyone signing in.
+  rpc CheckSlackCredentials(CheckSlackCredentialsRequest) returns (CheckSlackCredentialsResponse) {}
+  // StartSlackTest returns a Slack sign-in URL that comes back to the admin
+  // panel with a result instead of signing anyone in.
+  rpc StartSlackTest(StartSlackTestRequest) returns (StartSlackTestResponse) {}
+  // GetSlackTestResult is only open to the admin who started the test.
+  rpc GetSlackTestResult(GetSlackTestResultRequest) returns (GetSlackTestResultResponse) {}
+  // ListEmailPreviews renders every email with sample data, the same way
+  // they are rendered to send.
+  rpc ListEmailPreviews(ListEmailPreviewsRequest) returns (ListEmailPreviewsResponse) {}
+  // SendEmailPreview sends one email with sample data to the caller.
+  rpc SendEmailPreview(SendEmailPreviewRequest) returns (SendEmailPreviewResponse) {}
+}
+
+enum SlackProblem {
+  // Slack accepted the settings.
+  SLACK_PROBLEM_UNSPECIFIED = 0;
+  // No client ID is saved.
+  SLACK_PROBLEM_OFF = 1;
+  SLACK_PROBLEM_CLIENT_ID = 2;
+  SLACK_PROBLEM_CLIENT_SECRET = 3;
+  // Slack refused the redirect URL, or the public URL isn't HTTPS.
+  SLACK_PROBLEM_REDIRECT_URL = 4;
+  // The workspace ID isn't shaped like one.
+  SLACK_PROBLEM_TEAM_ID = 5;
+  // The person signed in to a different workspace than the saved one.
+  SLACK_PROBLEM_WRONG_TEAM = 6;
+  SLACK_PROBLEM_CANCELLED = 7;
+  // The test was started too long ago, or by someone else.
+  SLACK_PROBLEM_EXPIRED = 8;
+  SLACK_PROBLEM_UNREACHABLE = 9;
+  // Slack answered with an error Krill doesn't expect. See detail.
+  SLACK_PROBLEM_OTHER = 10;
+}
+
+message CheckSlackCredentialsRequest {}
+
+message CheckSlackCredentialsResponse {
+  SlackProblem problem = 1;
+  // Slack's error code, when Slack gave one.
+  string detail = 2;
+  // Must be one of the Slack app's redirect URLs.
+  string redirect_url = 3;
+}
+
+message StartSlackTestRequest {}
+
+message StartSlackTestResponse {
+  // Open it in the browser. Slack sends it back to the admin panel's settings
+  // page with slack_test set to test_id.
+  string authorize_url = 1;
+  string test_id = 2;
+  string redirect_url = 3;
+}
+
+message GetSlackTestResultRequest {
+  string test_id = 1;
+}
+
+message GetSlackTestResultResponse {
+  SlackProblem problem = 1;
+  string detail = 2;
+  string redirect_url = 3;
+  // The workspace the person signed in to.
+  string team_id = 4;
+  string team_name = 5;
+  // The saved workspace ID.
+  string expected_team_id = 6;
+  // The Slack user who signed in.
+  string user_name = 7;
+}
+
+message ListEmailPreviewsRequest {}
+
+message EmailPreview {
+  // The template, like verify-email.
+  string name = 1;
+  string label = 2;
+  string subject = 3;
+  string html = 4;
+  string text = 5;
+}
+
+message ListEmailPreviewsResponse {
+  repeated EmailPreview emails = 1;
+}
+
+message SendEmailPreviewRequest {
+  string name = 1;
+}
+
+message SendEmailPreviewResponse {
+  string to = 1;
+  // The API has no Resend key and wrote the email to its log instead.
+  bool logged = 2;
+}

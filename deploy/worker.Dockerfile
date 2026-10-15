@@ -13,8 +13,11 @@ COPY worker/pyproject.toml worker/README.md ./
 COPY worker/src ./src
 COPY worker/gen ./gen
 
-# Pin the base image's torch and numpy stack so our deps install around it.
+# Pin the base image's torch and numpy stack so our deps install around it,
+# Ultralytics included. Ultralytics also asks for the GUI build of OpenCV,
+# which would fight the headless one over the cv2 module, so it is dropped.
 RUN pip list --format=freeze | grep -iE '^(torch|torchvision|numpy|pandas|scipy|numba|pillow)==' > /tmp/base.txt \
-    && uv pip install --system -c /tmp/base.txt ".[ml]"
+    && echo "opencv-python; sys_platform == 'never'" > /tmp/overrides.txt \
+    && uv pip install --system -c /tmp/base.txt --overrides /tmp/overrides.txt ".[ml]"
 
 CMD ["krill-worker"]

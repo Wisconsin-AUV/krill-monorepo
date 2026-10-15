@@ -1,22 +1,26 @@
-import { useMutation } from '@connectrpc/connect-query'
+import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { CheckIcon, LockClosedIcon } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { CODE_LENGTH, CodeInput } from '@/components/auth/CodeInput'
 import { PasswordInput } from '@/components/PasswordInput'
+import { SessionsTable } from '@/components/SessionsTable'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { FormError } from '@/components/ui/Callout'
+import { FormError, QueryError } from '@/components/ui/Callout'
 import { Description, Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Heading, Subheading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Strong, Text, TextButton } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
+import { SessionService } from '@/gen/krill/v1/session_pb'
 import type { PermissionInfo, User } from '@/gen/krill/v1/user_pb'
 import { can, refreshSession, useRoleLabel, useSession, useUser } from '@/lib/auth'
 import { flash } from '@/lib/flash'
 import { usePasswordCheck } from '@/lib/password'
+import { invalidateService } from '@/lib/queryClient'
 
 function Section({
   title,
@@ -301,6 +305,27 @@ function PasswordForm({ user }: { user: User }) {
   )
 }
 
+function Sessions() {
+  const { data, isPending, error } = useQuery(SessionService.method.listMySessions, {})
+  const revoke = useMutation(SessionService.method.revokeMySession, {
+    onSuccess: async () => {
+      await invalidateService(SessionService)
+      flash.success('Session revoked')
+    },
+    onError: (err) => flash.error('Could not revoke session', err),
+  })
+  if (isPending) return <LoadingSpinner />
+  if (error) return <QueryError title="Could not load sessions" error={error} />
+  return (
+    <SessionsTable
+      sessions={data.sessions}
+      onRevoke={(s) => revoke.mutate({ id: s.id })}
+      revoking={revoke.isPending ? revoke.variables?.id : undefined}
+      className="[--gutter:--spacing(2)]"
+    />
+  )
+}
+
 export function AccountPage() {
   const { data } = useSession()
   const user = useUser()
@@ -329,6 +354,12 @@ export function AccountPage() {
         >
           <PasswordForm user={user} />
         </Section>
+        <section className="border-t border-zinc-950/5 py-10 dark:border-white/5">
+          <Subheading>Sessions</Subheading>
+          <div className="mt-6">
+            <Sessions />
+          </div>
+        </section>
       </div>
     </PageContentBlock>
   )

@@ -20,21 +20,43 @@ type SessionLookup func(ctx context.Context, tokenHash []byte) (db.User, error)
 
 // Interceptor loads the caller's session and enforces the role policy.
 type Interceptor struct {
-	lookup        SessionLookup
-	workerToken   string
-	verifiedEmail bool
+	lookup         SessionLookup
+	workerToken    func() string
+	workerTokens   WorkerTokenLookup
+	verifiedEmail  func() bool
+	clientIPHeader func() string
 }
 
 // NewInterceptor returns an interceptor that also accepts workerToken as a
-// bearer token on worker procedures. An empty token turns them off.
-func NewInterceptor(lookup SessionLookup, workerToken string) *Interceptor {
-	return &Interceptor{lookup: lookup, workerToken: workerToken}
+// bearer token on worker procedures. An empty token accepts none, unless
+// AcceptWorkerTokens adds saved ones.
+func NewInterceptor(lookup SessionLookup, workerToken func() string) *Interceptor {
+	return &Interceptor{
+		lookup:         lookup,
+		workerToken:    workerToken,
+		verifiedEmail:  func() bool { return false },
+		clientIPHeader: func() string { return "" },
+	}
 }
 
 // RequireVerifiedEmail limits accounts with an unverified email to the
-// procedures that verify it.
-func (i *Interceptor) RequireVerifiedEmail(required bool) *Interceptor {
+// procedures that verify it while required returns true.
+func (i *Interceptor) RequireVerifiedEmail(required func() bool) *Interceptor {
 	i.verifiedEmail = required
+	return i
+}
+
+// AcceptWorkerTokens also accepts the saved worker tokens lookup finds on
+// worker procedures.
+func (i *Interceptor) AcceptWorkerTokens(lookup WorkerTokenLookup) *Interceptor {
+	i.workerTokens = lookup
+	return i
+}
+
+// TrustClientIPHeader reads ClientIP from the header that header names, when
+// it names one.
+func (i *Interceptor) TrustClientIPHeader(header func() string) *Interceptor {
+	i.clientIPHeader = header
 	return i
 }
 
@@ -42,7 +64,7 @@ var _ connect.Interceptor = (*Interceptor)(nil)
 
 func (i *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		ctx, err := i.authorize(ctx, req.Spec().Procedure, req.Header())
+		ctx, err := i.authorize(ctx, req.Spec().Procedure, req.Peer().Addr, req.Header())
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +78,7 @@ func (i *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) conn
 
 func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
-		ctx, err := i.authorize(ctx, conn.Spec().Procedure, conn.RequestHeader())
+		ctx, err := i.authorize(ctx, conn.Spec().Procedure, conn.Peer().Addr, conn.RequestHeader())
 		if err != nil {
 			return err
 		}
@@ -64,16 +86,18 @@ func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 	}
 }
 
-func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.Header) (context.Context, error) {
+func (i *Interceptor) authorize(ctx context.Context, procedure, peer string, h http.Header) (context.Context, error) {
+	ctx = withClient(ctx, clientIP(peer, h, i.clientIPHeader()), h.Get("User-Agent"))
 	need, ok := policy[procedure]
 	if !ok {
 		return ctx, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s has no access policy", procedure))
 	}
 	if need == worker {
-		if !i.isWorker(h) {
-			return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid worker token"))
+		w, err := i.worker(ctx, h)
+		if err != nil {
+			return ctx, err
 		}
-		return ctx, nil
+		return context.WithValue(ctx, workerKey{}, w), nil
 	}
 	if token := tokenFromHeader(h); token != "" {
 		hash := hashToken(token)
@@ -95,7 +119,7 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	if need == unverified {
 		return ctx, nil
 	}
-	if i.verifiedEmail && !s.User.EmailVerifiedAt.Valid {
+	if i.verifiedEmail() && !s.User.EmailVerifiedAt.Valid {
 		return ctx, connect.NewError(connect.CodePermissionDenied, errors.New("verify your email to continue"))
 	}
 	if need != signedIn && !Can(ParseRole(s.User.Role), need) {
@@ -104,7 +128,27 @@ func (i *Interceptor) authorize(ctx context.Context, procedure string, h http.He
 	return ctx, nil
 }
 
-func (i *Interceptor) isWorker(h http.Header) bool {
+var errBadWorkerToken = connect.NewError(connect.CodeUnauthenticated, errors.New("invalid worker token"))
+
+func (i *Interceptor) worker(ctx context.Context, h http.Header) (Worker, error) {
 	token, ok := strings.CutPrefix(h.Get("Authorization"), "Bearer ")
-	return ok && i.workerToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(i.workerToken)) == 1
+	if !ok || token == "" {
+		return Worker{}, errBadWorkerToken
+	}
+	if want := i.workerToken(); want != "" && subtle.ConstantTimeCompare([]byte(token), []byte(want)) == 1 {
+		return Worker{TokenName: EnvWorkerToken}, nil
+	}
+	if i.workerTokens == nil {
+		return Worker{}, errBadWorkerToken
+	}
+	// Saved tokens are found by hash, so lookup timing says nothing about
+	// the token itself.
+	t, err := i.workerTokens(ctx, hashToken(token))
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return Worker{}, errBadWorkerToken
+	case err != nil:
+		return Worker{}, connect.NewError(connect.CodeInternal, fmt.Errorf("load worker token: %w", err))
+	}
+	return Worker{TokenID: t.ID, TokenName: t.Name}, nil
 }

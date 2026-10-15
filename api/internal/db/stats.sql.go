@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const databaseSize = `-- name: DatabaseSize :one
+SELECT pg_database_size(current_database())::bigint
+`
+
+func (q *Queries) DatabaseSize(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, databaseSize)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const driftByLabelType = `-- name: DriftByLabelType :many
 SELECT
     t.label_type_id,
@@ -19,6 +30,7 @@ SELECT
     count(*) FILTER (WHERE a.drift <> 'ok')::bigint AS flagged
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
 WHERE a.drift IS NOT NULL
 GROUP BY t.label_type_id
 `
@@ -75,15 +87,18 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 
 const leaderboard = `-- name: Leaderboard :many
 WITH contributions AS (
-    SELECT created_by AS user_id, 1 AS boxes, 0 AS frames
-    FROM annotations
-    WHERE created_by IS NOT NULL
-        AND ($1::timestamptz IS NULL OR created_at >= $1)
+    SELECT a.created_by AS user_id, 1 AS boxes, 0 AS frames
+    FROM annotations a
+    JOIN tracks t ON t.id = a.track_id
+    JOIN live_clips c ON c.id = t.clip_id
+    WHERE a.created_by IS NOT NULL
+        AND ($1::timestamptz IS NULL OR a.created_at >= $1)
     UNION ALL
-    SELECT status_by, 0, 1
-    FROM frames
-    WHERE status_by IS NOT NULL
-        AND ($1::timestamptz IS NULL OR status_at >= $1)
+    SELECT f.status_by, 0, 1
+    FROM frames f
+    JOIN live_clips c ON c.id = f.clip_id
+    WHERE f.status_by IS NOT NULL
+        AND ($1::timestamptz IS NULL OR f.status_at >= $1)
 )
 SELECT
     u.id, u.name, u.username, u.role, u.created_at,
@@ -143,6 +158,7 @@ FROM (
     UNION ALL
     SELECT clip_id FROM frames WHERE status_by = $1::uuid
 ) c
+WHERE c.clip_id IN (SELECT id FROM live_clips)
 `
 
 func (q *Queries) UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error) {
@@ -155,13 +171,16 @@ func (q *Queries) UserClipCount(ctx context.Context, userID uuid.UUID) (int64, e
 const userContributionDays = `-- name: UserContributionDays :many
 SELECT day::text AS day, count(*)::bigint AS count
 FROM (
-    SELECT (created_at AT TIME ZONE $1::text)::date AS day
-    FROM annotations
-    WHERE created_by = $2::uuid
+    SELECT (a.created_at AT TIME ZONE $1::text)::date AS day
+    FROM annotations a
+    JOIN tracks t ON t.id = a.track_id
+    JOIN live_clips c ON c.id = t.clip_id
+    WHERE a.created_by = $2::uuid
     UNION ALL
-    SELECT (status_at AT TIME ZONE $1::text)::date
-    FROM frames
-    WHERE status_by = $2::uuid
+    SELECT (f.status_at AT TIME ZONE $1::text)::date
+    FROM frames f
+    JOIN live_clips c ON c.id = f.clip_id
+    WHERE f.status_by = $2::uuid
 ) c
 GROUP BY day
 ORDER BY day
@@ -201,6 +220,7 @@ const userLabelTypeCounts = `-- name: UserLabelTypeCounts :many
 SELECT lt.id, lt.name, lt.color, count(*)::bigint AS boxes
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
 JOIN label_types lt ON lt.id = t.label_type_id
 WHERE a.created_by = $1::uuid
 GROUP BY lt.id

@@ -59,7 +59,7 @@ func TestGoldAttemptAccess(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle(krillv1connect.NewGoldServiceHandler(&Service{q: db.New(noRows{})},
-		connect.WithInterceptors(auth.NewInterceptor(lookup, ""))))
+		connect.WithInterceptors(auth.NewInterceptor(lookup, func() string { return "" }))))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 

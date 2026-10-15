@@ -3,11 +3,17 @@ import { persist } from 'zustand/middleware'
 
 export type FlashType = 'success' | 'info' | 'error'
 
+export interface FlashAction {
+  label: string
+  onClick: () => void
+}
+
 export interface FlashMessage {
   id: string
   type: FlashType
   title: string
   message: string
+  action?: FlashAction
 }
 
 interface UIState {

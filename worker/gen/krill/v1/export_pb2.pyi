@@ -174,3 +174,13 @@ class DeleteExportRequest(_message.Message):
 class DeleteExportResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class GetExportDefaultsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class GetExportDefaultsResponse(_message.Message):
+    __slots__ = ("options",)
+    OPTIONS_FIELD_NUMBER: _ClassVar[int]
+    options: ExportOptions
+    def __init__(self, options: _Optional[_Union[ExportOptions, _Mapping]] = ...) -> None: ...

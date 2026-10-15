@@ -43,7 +43,7 @@ func (w *ExemplarWorker) Timeout(*river.Job[annotation.ExemplarArgs]) time.Durat
 }
 
 func (w *ExemplarWorker) Work(ctx context.Context, job *river.Job[annotation.ExemplarArgs]) error {
-	ids, err := w.search(ctx, w.dispatcher.nextID(), job.Args)
+	ids, err := w.search(ctx, w.dispatcher.nextID(), job.ID, job.Args)
 	if err != nil {
 		slog.Error("exemplar search failed", "track_id", job.Args.TrackID, "frame_id", job.Args.FrameID, "err", err)
 		return err
@@ -51,7 +51,7 @@ func (w *ExemplarWorker) Work(ctx context.Context, job *river.Job[annotation.Exe
 	return river.RecordOutput(ctx, annotation.ExemplarOutput{TrackIDs: ids})
 }
 
-func (w *ExemplarWorker) search(ctx context.Context, id int64, args annotation.ExemplarArgs) ([]int64, error) {
+func (w *ExemplarWorker) search(ctx context.Context, id, jobID int64, args annotation.ExemplarArgs) ([]int64, error) {
 	q := db.New(w.pool)
 	frame, err := q.GetFrame(ctx, args.FrameID)
 	if err != nil {
@@ -71,6 +71,7 @@ func (w *ExemplarWorker) search(ctx context.Context, id int64, args annotation.E
 		Frame: &krillv1.TaskFrame{Id: frame.ID, Url: url},
 		Box:   &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height},
 	})
+	t.jobID = jobID
 	if err := run(ctx, w.dispatcher, t, pickupTimeout); err != nil {
 		return nil, err
 	}

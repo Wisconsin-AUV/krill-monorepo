@@ -13,88 +13,189 @@ import (
 
 type Querier interface {
 	AcceptFrameProposals(ctx context.Context, arg AcceptFrameProposalsParams) error
+	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
+	AddClipFrames(ctx context.Context, id int64) (int64, error)
+	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
+	AdvancePrelabelRun(ctx context.Context, arg AdvancePrelabelRunParams) error
+	ApprovedSignupOpen(ctx context.Context) (bool, error)
+	AssignClips(ctx context.Context, arg AssignClipsParams) (int64, error)
+	CancelActivePrelabelRuns(ctx context.Context, source string) ([]int64, error)
+	CancelPrelabelRun(ctx context.Context, id int64) (int64, error)
+	CancelTrainingRun(ctx context.Context, id int64) (int64, error)
 	// Takes the clip unless someone else claimed it and is still active.
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
 	ClearPassword(ctx context.Context, id uuid.UUID) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
+	CountActiveSessions(ctx context.Context) ([]CountActiveSessionsRow, error)
+	CountActiveTrainingRuns(ctx context.Context) (int32, error)
+	CountActiveWorkerTokens(ctx context.Context) (int64, error)
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountEmailCodeAttempt(ctx context.Context, arg CountEmailCodeAttemptParams) error
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
+	CountOpenPrelabels(ctx context.Context) (CountOpenPrelabelsRow, error)
 	CountOpenReviews(ctx context.Context) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
-	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (int32, error)
+	CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error)
+	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (CountTracksForLabelTypeRow, error)
 	CountUsers(ctx context.Context) (int32, error)
+	// Held-out boxes are left out because no run trains on them.
+	CountVerifiedBoxes(ctx context.Context) (int32, error)
+	CountVerifiedBoxesSince(ctx context.Context, since pgtype.Timestamptz) (int32, error)
+	CoverageCells(ctx context.Context) ([]CoverageCellsRow, error)
+	CoverageVideos(ctx context.Context) ([]CoverageVideosRow, error)
+	CreateBackup(ctx context.Context, arg CreateBackupParams) (Backup, error)
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
+	CreateContentJob(ctx context.Context, arg CreateContentJobParams) (ContentJob, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
+	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
+	CreatePrelabelRun(ctx context.Context, arg CreatePrelabelRunParams) (PrelabelRun, error)
+	CreatePrelabelTrack(ctx context.Context, arg CreatePrelabelTrackParams) (int64, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
+	CreateStorageScan(ctx context.Context, createdBy pgtype.UUID) (int64, error)
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
+	CreateTrainingRun(ctx context.Context, arg CreateTrainingRunParams) (TrainingRun, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	CreateWorkerToken(ctx context.Context, arg CreateWorkerTokenParams) (WorkerToken, error)
+	DatabaseSize(ctx context.Context) (int64, error)
 	DeleteAnnotation(ctx context.Context, arg DeleteAnnotationParams) (int64, error)
-	DeleteClip(ctx context.Context, id int64) (int32, error)
+	DeleteBackup(ctx context.Context, id int64) (Backup, error)
+	DeleteClip(ctx context.Context, id int64) (DeleteClipRow, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
+	DeleteEmptyTracks(ctx context.Context, ids []int64) error
 	DeleteExpiredSessions(ctx context.Context) error
-	DeleteGoldFrame(ctx context.Context, frameID int64) error
+	DeleteGoldFrame(ctx context.Context, frameID int64) (int64, error)
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
+	// Keeps the last few so the page can show the previous scan while one runs.
+	DeleteOldStorageScans(ctx context.Context) error
+	DeleteOpenPrelabels(ctx context.Context, arg DeleteOpenPrelabelsParams) ([]int64, error)
 	DeleteOtherSessions(ctx context.Context, arg DeleteOtherSessionsParams) error
 	DeleteOwnFlag(ctx context.Context, arg DeleteOwnFlagParams) error
 	DeleteSession(ctx context.Context, tokenHash []byte) error
+	DeleteSessionByID(ctx context.Context, arg DeleteSessionByIDParams) (DeleteSessionByIDRow, error)
+	DeleteSetting(ctx context.Context, key string) error
 	DeleteTrack(ctx context.Context, id int64) (int64, error)
 	DeleteTrackIfEmpty(ctx context.Context, id int64) (int64, error)
 	// Clears what an earlier run proposed on frames the new run covers.
 	DeleteTrackProposalsFrom(ctx context.Context, arg DeleteTrackProposalsFromParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteUserEmailCodes(ctx context.Context, userID uuid.UUID) error
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) error
 	DeleteVideo(ctx context.Context, id int64) (int64, error)
+	DeleteVideoOpenPrelabels(ctx context.Context, videoID int64) ([]int64, error)
 	DriftByLabelType(ctx context.Context) ([]DriftByLabelTypeRow, error)
 	EmailInUse(ctx context.Context, arg EmailInUseParams) (bool, error)
+	EndUserSessions(ctx context.Context, userID uuid.UUID) (int64, error)
 	// Queues the frames the labeler marked done since their gold check before the
 	// one on @gold_frame_id, newest first.
 	EnqueueDoneSinceGoldCheck(ctx context.Context, arg EnqueueDoneSinceGoldCheckParams) (int64, error)
 	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
+	FailBackup(ctx context.Context, arg FailBackupParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
+	FailInterruptedBackups(ctx context.Context) (int64, error)
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
 	FailInterruptedIngests(ctx context.Context) (int64, error)
+	FailInterruptedPrelabelRuns(ctx context.Context) (int64, error)
+	FailInterruptedStorageScans(ctx context.Context) (int64, error)
+	FailInterruptedTrainingRuns(ctx context.Context) (int64, error)
+	FailPrelabelRun(ctx context.Context, arg FailPrelabelRunParams) error
+	FailStorageCleanup(ctx context.Context, arg FailStorageCleanupParams) error
+	FailStorageScan(ctx context.Context, arg FailStorageScanParams) error
+	FailTrainingRun(ctx context.Context, arg FailTrainingRunParams) error
+	FinishBackup(ctx context.Context, arg FinishBackupParams) error
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	FinishPrelabelRun(ctx context.Context, id int64) error
+	FinishStorageCleanup(ctx context.Context, arg FinishStorageCleanupParams) error
+	FinishStorageScan(ctx context.Context, arg FinishStorageScanParams) error
+	FinishTrainingRun(ctx context.Context, arg FinishTrainingRunParams) (int64, error)
 	FramesSinceGoldCheck(ctx context.Context, userID uuid.UUID) (int32, error)
+	GetBackup(ctx context.Context, id int64) (Backup, error)
 	GetClip(ctx context.Context, id int64) (Clip, error)
+	GetClipAuditName(ctx context.Context, id int64) (GetClipAuditNameRow, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
+	GetFrameAuditName(ctx context.Context, id int64) (GetFrameAuditNameRow, error)
 	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
 	GetGoldFrame(ctx context.Context, frameID int64) (GetGoldFrameRow, error)
+	GetInvite(ctx context.Context, id int64) (GetInviteRow, error)
+	GetInviteByToken(ctx context.Context, tokenHash []byte) (Invite, error)
 	GetLabelType(ctx context.Context, id int64) (LabelType, error)
+	GetLastBackup(ctx context.Context) (Backup, error)
+	GetLastSuccessfulBackup(ctx context.Context) (Backup, error)
+	GetLatestFinishedStorageScanID(ctx context.Context) (int64, error)
+	GetLatestStorageScanID(ctx context.Context) (int64, error)
+	GetLatestTrainingRun(ctx context.Context) (TrainingRun, error)
+	// Covers tracks in the trash too, since they move with the rest.
+	GetMergeImpact(ctx context.Context, id int64) (GetMergeImpactRow, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
-	GetSessionUser(ctx context.Context, tokenHash []byte) (User, error)
+	GetPinnedTrainingRun(ctx context.Context) (TrainingRun, error)
+	GetPrelabelRun(ctx context.Context, id int64) (PrelabelRun, error)
+	GetPrelabeler(ctx context.Context, name string) (Prelabeler, error)
+	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
+	GetStorageScan(ctx context.Context, id int64) (GetStorageScanRow, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
+	GetTrainingRun(ctx context.Context, id int64) (GetTrainingRunRow, error)
 	GetUser(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByLogin(ctx context.Context, login string) (User, error)
 	GetUserBySlackID(ctx context.Context, slackUserID pgtype.Text) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVideo(ctx context.Context, id int64) (Video, error)
+	// Also finds trashed videos, for ingest and the trash itself.
+	GetVideoInTrash(ctx context.Context, id int64) (Video, error)
 	GetVideoLabelStats(ctx context.Context, videoID int64) (GetVideoLabelStatsRow, error)
+	GetVideoStatus(ctx context.Context, id int64) (string, error)
+	GetWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
 	HasGoldAttempt(ctx context.Context, arg HasGoldAttemptParams) (bool, error)
+	InsertAuditEntry(ctx context.Context, arg InsertAuditEntryParams) error
+	InsertBoxEvents(ctx context.Context, arg InsertBoxEventsParams) error
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
-	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) error
+	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
+	InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error)
+	InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error
+	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
+	InsertStorageScanVideos(ctx context.Context, arg []InsertStorageScanVideosParams) (int64, error)
 	// Replaces the user's code for this purpose once the cooldown has passed. With
 	// keep_live, a code that has not expired and went to the same address is kept.
 	// No row means nothing was issued.
 	IssueEmailCode(ctx context.Context, arg IssueEmailCodeParams) (pgtype.Timestamptz, error)
+	// See activeGapCap in internal/insight for how this counts.
+	LabelerActiveSeconds(ctx context.Context, arg LabelerActiveSecondsParams) ([]LabelerActiveSecondsRow, error)
+	LabelerBoxesDrawn(ctx context.Context, since pgtype.Timestamptz) ([]LabelerBoxesDrawnRow, error)
+	LabelerCorrectionKinds(ctx context.Context, arg LabelerCorrectionKindsParams) ([]LabelerCorrectionKindsRow, error)
+	// Corrections count against the period the frame was marked in, not when the
+	// fix happened. A frame a correction reopened is no longer credited to its
+	// labeler, so it is added back to the frames they marked.
+	LabelerCorrections(ctx context.Context, since pgtype.Timestamptz) ([]LabelerCorrectionsRow, error)
+	LabelerFrameCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerFrameCountsRow, error)
+	LabelerProposalCounts(ctx context.Context, since pgtype.Timestamptz) ([]LabelerProposalCountsRow, error)
+	LabelerTrend(ctx context.Context, arg LabelerTrendParams) ([]LabelerTrendRow, error)
+	LastScheduledBackupAt(ctx context.Context) (pgtype.Timestamptz, error)
 	Leaderboard(ctx context.Context, since pgtype.Timestamptz) ([]LeaderboardRow, error)
 	LinkSlack(ctx context.Context, arg LinkSlackParams) (User, error)
 	ListAllLabelTypes(ctx context.Context) ([]LabelType, error)
+	ListApprovedEmails(ctx context.Context) ([]ListApprovedEmailsRow, error)
+	ListAuditActions(ctx context.Context) ([]string, error)
+	ListAuditActors(ctx context.Context) ([]User, error)
+	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
+	ListBackups(ctx context.Context) ([]ListBackupsRow, error)
+	// Every box of the track, or only the one on frame_id when it is set, with
+	// its frame's status. A frame with no box of the track comes back with the
+	// box columns null when frame_id is set.
+	ListBoxStates(ctx context.Context, arg ListBoxStatesParams) ([]ListBoxStatesRow, error)
+	ListBoxesOnFrames(ctx context.Context, frameIds []int64) ([]ListBoxesOnFramesRow, error)
 	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
@@ -103,9 +204,20 @@ type Querier interface {
 	ListClipProgress(ctx context.Context) ([]ListClipProgressRow, error)
 	ListClipTracks(ctx context.Context, clipID int64) ([]Track, error)
 	ListClips(ctx context.Context, videoID int64) ([]ListClipsRow, error)
+	// Clips for the admin panel, by video or by who holds them. With neither
+	// filter it lists every claimed clip.
+	ListContentClips(ctx context.Context, arg ListContentClipsParams) ([]ListContentClipsRow, error)
+	ListContentJobs(ctx context.Context, since pgtype.Timestamptz) ([]ListContentJobsRow, error)
+	ListContentVideos(ctx context.Context, model string) ([]ListContentVideosRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
-	// A track whose last box is still a proposal may have drifted, so none of its
-	// boxes count until someone confirms that last frame.
+	// Clips to embed, from the given videos and clips. Stale clips have no
+	// embeddings or ones from another model than @model, when it is known.
+	ListEmbedClips(ctx context.Context, arg ListEmbedClipsParams) ([]int64, error)
+	ListEnabledPrelabelers(ctx context.Context) ([]Prelabeler, error)
+	ListExpiredScheduledBackups(ctx context.Context, offset int32) ([]Backup, error)
+	// A tracked object whose last box is still a proposal may have drifted, so
+	// none of its boxes count until someone confirms that last frame. Pre-labels
+	// are found on each frame on their own, so they can't drift.
 	ListExportAnnotations(ctx context.Context, videoIds []int64) ([]ListExportAnnotationsRow, error)
 	ListExportFrames(ctx context.Context, videoIds []int64) ([]ListExportFramesRow, error)
 	ListExportVideos(ctx context.Context, videoIds []int64) ([]ListExportVideosRow, error)
@@ -113,41 +225,134 @@ type Querier interface {
 	// Matches what the dataset export treats as labels on a done frame, so
 	// tracker proposals the labeler left in place count.
 	ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]ListFrameGoldBoxesRow, error)
+	ListFrameIdxInRange(ctx context.Context, arg ListFrameIdxInRangeParams) ([]int32, error)
 	ListFramesFrom(ctx context.Context, arg ListFramesFromParams) ([]Frame, error)
 	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
 	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
+	ListInviteUses(ctx context.Context, inviteIds []int64) ([]ListInviteUsesRow, error)
+	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
+	ListJobClips(ctx context.Context, ids []int64) ([]ListJobClipsRow, error)
+	ListJobDatasets(ctx context.Context, ids []int64) ([]ListJobDatasetsRow, error)
+	ListJobFrames(ctx context.Context, ids []int64) ([]ListJobFramesRow, error)
+	ListJobStarters(ctx context.Context, ids []uuid.UUID) ([]User, error)
+	// Names for the targets of background jobs in the admin panel.
+	ListJobVideos(ctx context.Context, ids []int64) ([]ListJobVideosRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
+	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
+	ListLiveClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
+	// Held-out videos are never pre-labeled, so their test metrics stay honest.
+	ListPrelabelClips(ctx context.Context) ([]ListPrelabelClipsRow, error)
+	ListPrelabelRuns(ctx context.Context, limit int32) ([]ListPrelabelRunsRow, error)
+	ListPrelabelers(ctx context.Context) ([]ListPrelabelersRow, error)
+	// What re-extracting each video throws away. Ingest replaces every clip,
+	// including the ones in the trash.
+	ListReextractStats(ctx context.Context, ids []int64) ([]ListReextractStatsRow, error)
+	ListRejectedPrelabels(ctx context.Context, frameIds []int64) ([]ListRejectedPrelabelsRow, error)
+	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
+	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
+	ListStorageOrphans(ctx context.Context, arg ListStorageOrphansParams) ([]ListStorageOrphansRow, error)
+	ListStorageScanVideos(ctx context.Context, scanID int64) ([]ListStorageScanVideosRow, error)
+	ListStuckClips(ctx context.Context, idleBefore pgtype.Timestamptz) ([]ListStuckClipsRow, error)
 	ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error)
+	ListTrainingRuns(ctx context.Context, limit int32) ([]ListTrainingRunsRow, error)
+	// Everything trashed before @before. A clip whose video is also trashed goes
+	// with the video.
+	ListTrashIDs(ctx context.Context, before pgtype.Timestamptz) ([]ListTrashIDsRow, error)
+	// Clips of a trashed video are listed with the video instead.
+	ListTrashedClips(ctx context.Context) ([]ListTrashedClipsRow, error)
+	// Counts cover clips trashed on their own too, since they go with the video.
+	ListTrashedVideos(ctx context.Context) ([]ListTrashedVideosRow, error)
 	// Each track comes with its first verified box, or its middle box when none
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
+	ListUnlabeledClipFrames(ctx context.Context, clipID int64) ([]ListUnlabeledClipFramesRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
+	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
+	ListWorkerTokens(ctx context.Context) ([]ListWorkerTokensRow, error)
+	LockApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
+	LockClipClaim(ctx context.Context, clipID int64) (LockClipClaimRow, error)
 	LockEmailCode(ctx context.Context, arg LockEmailCodeParams) (LockEmailCodeRow, error)
+	LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error)
+	LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error)
+	LockPrelabelRun(ctx context.Context, id int64) (string, error)
+	LockTrashedVideo(ctx context.Context, id int64) (LockTrashedVideoRow, error)
+	// Locking keeps a frame from being marked done while its proposals are
+	// replaced.
+	LockUnlabeledFrames(ctx context.Context, ids []int64) ([]int64, error)
+	LockUserPair(ctx context.Context, arg LockUserPairParams) ([]User, error)
 	LockUsers(ctx context.Context) error
+	// Held under a pre-label save so a video can't move to the test split
+	// between the check and the insert.
+	LockVideoSplit(ctx context.Context, id int64) (string, error)
+	// Returns the session's active user. A session not seen for five minutes is
+	// marked seen in the same statement, so most requests don't write.
+	LookupSession(ctx context.Context, arg LookupSessionParams) (User, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) (User, error)
+	MergeGoldAttempts(ctx context.Context, arg MergeGoldAttemptsParams) (int64, error)
+	// Rewrites the copied boxes the same way as MergeTracks, so the key keeps
+	// matching what labelers will draw.
+	MergeGoldFrames(ctx context.Context, arg MergeGoldFramesParams) (int64, error)
+	MergeProposedLabelTypes(ctx context.Context, arg MergeProposedLabelTypesParams) error
+	MergeRejectedPrelabels(ctx context.Context, arg MergeRejectedPrelabelsParams) error
+	// @mapping is {"source attribute": {"source option": ["target attribute",
+	// "target option"]}}. Values without a mapping are dropped.
+	MergeTracks(ctx context.Context, arg MergeTracksParams) (int64, error)
 	// Started clips that were abandoned come first so they get finished. After
 	// that, clips come from the video with the fewest clips worked on, so labels
-	// spread across as much footage as possible.
+	// spread across as much footage as possible, and among those the clip with
+	// the least certain pre-label goes first.
 	NextClip(ctx context.Context, arg NextClipParams) (int64, error)
 	// Skips gold frames from clips the labeler worked on, since they may remember
 	// the answer. The order is shuffled per labeler but stable, so skipping a
 	// check does not hand out an easier one.
 	NextGoldFrame(ctx context.Context, userID uuid.UUID) (int64, error)
-	// The unique (video_id, idx) constraint is checked row by row, so shifting
-	// every later clip down by one in a single UPDATE can collide with a row that
-	// hasn't moved yet. Parking them at negative indexes first avoids that.
-	ParkClipsAfter(ctx context.Context, arg ParkClipsAfterParams) error
+	// Clips never overlap, so start_frame keeps a restored clip where it was.
+	NumberClips(ctx context.Context, videoID int64) error
+	// The unique index on (video_id, idx) is checked row by row, so renumbering
+	// in one UPDATE can collide with a row that hasn't moved yet. Parking them
+	// at negative indexes first avoids that.
+	ParkClips(ctx context.Context, videoID int64) error
+	PinTrainingRun(ctx context.Context, id int64) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	QueueReextract(ctx context.Context, arg QueueReextractParams) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
+	// Run before AcceptFrameProposals.
+	RecordAcceptedProposals(ctx context.Context, arg RecordAcceptedProposalsParams) error
 	RefreshClipClaim(ctx context.Context, arg RefreshClipClaimParams) error
 	ReleaseClipClaim(ctx context.Context, arg ReleaseClipClaimParams) error
+	ReleaseClipClaims(ctx context.Context, clipIds []int64) (int64, error)
+	// Only claims still idle since idle_before go, so a claimant who came back
+	// after the list loaded keeps their clip.
+	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
+	ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error)
+	RemoveApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
+	// Only the latest scan, since an older one's orphans were checked against an
+	// older state of the bucket.
+	RequestStorageCleanup(ctx context.Context, arg RequestStorageCleanupParams) (int64, error)
+	// RequeueDataset readies a failed export for its job to run again.
+	RequeueDataset(ctx context.Context, id int64) (int64, error)
+	// RequeueIngest readies a failed ingest for its job to run again.
+	RequeueIngest(ctx context.Context, id int64) (int64, error)
 	ResolveReview(ctx context.Context, arg ResolveReviewParams) (int64, error)
+	// Run after ParkClips. A live clip may hold the index the clip had, so it
+	// comes back parked below the others until NumberClips.
+	RestoreClip(ctx context.Context, id int64) error
+	RestoreVideo(ctx context.Context, id int64) (Video, error)
 	ReviewExists(ctx context.Context, id int64) (bool, error)
+	RevokeInvite(ctx context.Context, id int64) (Invite, error)
+	RevokeWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
+	ScanBackups(ctx context.Context) ([]ScanBackupsRow, error)
+	ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error)
+	ScanLabelExampleKeys(ctx context.Context) ([]string, error)
+	ScanTrainingRuns(ctx context.Context) ([]ScanTrainingRunsRow, error)
+	ScanVideoFrames(ctx context.Context, videoID int64) ([]ScanVideoFramesRow, error)
+	ScanVideos(ctx context.Context) ([]ScanVideosRow, error)
+	ServerVersion(ctx context.Context) (string, error)
 	SetClipEmbedded(ctx context.Context, arg SetClipEmbeddedParams) error
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
@@ -156,24 +361,48 @@ type Querier interface {
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
+	SetMergedIdentity(ctx context.Context, arg SetMergedIdentityParams) (User, error)
 	SetPendingEmail(ctx context.Context, arg SetPendingEmailParams) (User, error)
+	SetTrainingDataset(ctx context.Context, arg SetTrainingDatasetParams) error
+	// metrics is appended to the history when a report finishes an epoch.
+	SetTrainingProgress(ctx context.Context, arg SetTrainingProgressParams) error
 	SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (User, error)
 	SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (int64, error)
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
+	StartBackup(ctx context.Context, id int64) (int64, error)
 	StartDataset(ctx context.Context, id int64) (int64, error)
+	StartPrelabelRun(ctx context.Context, arg StartPrelabelRunParams) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
+	StartStorageCleanup(ctx context.Context, id int64) (int64, error)
+	StartStorageScan(ctx context.Context, id int64) (int64, error)
+	StartTrainingRun(ctx context.Context, id int64) (int64, error)
+	// Locks the video row before touching its clips, so two clips trashed or
+	// restored in one video renumber one after the other instead of
+	// deadlocking.
 	SubtractClipFrames(ctx context.Context, id int64) (int64, error)
 	TakeClip(ctx context.Context, arg TakeClipParams) error
 	TouchLogin(ctx context.Context, id uuid.UUID) error
-	UnparkClips(ctx context.Context, videoID int64) error
+	TrashClip(ctx context.Context, arg TrashClipParams) error
+	TrashVideo(ctx context.Context, arg TrashVideoParams) (Video, error)
+	UnpinTrainingRuns(ctx context.Context) error
 	UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error)
+	UpdatePrelabeler(ctx context.Context, arg UpdatePrelabelerParams) error
 	UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
+	UpsertPrelabelerSpec(ctx context.Context, arg UpsertPrelabelerSpecParams) error
 	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
+	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
+	UseApprovedEmail(ctx context.Context, arg UseApprovedEmailParams) error
+	// Counts a use only while the invite is live. The row stays locked until the
+	// sign-up commits, so two sign-ups can't share the last use.
+	UseInvite(ctx context.Context, tokenHash []byte) (Invite, error)
+	// UseWorkerToken returns the active token with the hash. last_used_at is
+	// only written once a minute, since workers call several times a minute.
+	UseWorkerToken(ctx context.Context, tokenHash []byte) (UseWorkerTokenRow, error)
 	UserClipCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	UserContributionDays(ctx context.Context, arg UserContributionDaysParams) ([]UserContributionDaysRow, error)
 	UserLabelTypeCounts(ctx context.Context, userID uuid.UUID) ([]UserLabelTypeCountsRow, error)

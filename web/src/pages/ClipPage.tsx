@@ -51,6 +51,7 @@ import {
 import { Permission } from '@/gen/krill/v1/user_pb'
 import { VideoService } from '@/gen/krill/v1/video_pb'
 import { useCan, useUser } from '@/lib/auth'
+import { contentClient } from '@/lib/clients'
 import { errorMessage } from '@/lib/errors'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
@@ -205,9 +206,23 @@ export function ClipPage() {
   const canDelete = useCan(Permission.MANAGE_VIDEOS)
   const [deleting, setDeleting] = useState(false)
   const deleteClip = useMutation(ClipService.method.deleteClip, {
-    onSuccess: () => {
+    onSuccess: (_, { id: trashed }) => {
       setDeleting(false)
-      flash.success('Clip deleted')
+      if (trashed !== undefined) {
+        flash.undoable('Clip moved to trash', () => {
+          contentClient
+            .restoreTrash({ clipIds: [trashed] })
+            .then(() =>
+              Promise.all([
+                invalidateService(ClipService),
+                invalidateService(VideoService),
+                invalidateService(QueueService),
+              ]),
+            )
+            .then(() => navigate(`/clips/${trashed}`))
+            .catch((err: unknown) => flash.error('Could not restore clip', err))
+        })
+      }
       const next = data?.nextClipId || data?.previousClipId
       navigate(next ? `/clips/${next}` : `/videos/${data?.video?.id}`, { replace: true })
       void invalidateService(ClipService)
@@ -619,8 +634,8 @@ export function ClipPage() {
         </NavbarItem>
         {canDelete && (
           <NavbarItem
-            aria-label="Delete clip"
-            title="Delete clip"
+            aria-label="Move clip to trash"
+            title="Move to trash"
             onClick={() => setDeleting(true)}
           >
             <TrashIcon data-slot="icon" />
@@ -651,7 +666,7 @@ export function ClipPage() {
           {canDelete && (
             <SidebarItem onClick={() => setDeleting(true)}>
               <TrashIcon data-slot="icon" />
-              <SidebarLabel>Delete clip</SidebarLabel>
+              <SidebarLabel>Move to trash</SidebarLabel>
             </SidebarItem>
           )}
         </SidebarSection>
@@ -701,13 +716,9 @@ export function ClipPage() {
           onConfirm={() => deleteClip.mutate({ id: clip.id })}
           busy={deleteClip.isPending}
           error={deleteClip.error}
-          title={`Delete clip ${clip.index + 1}?`}
-          description={
-            boxCount > 0
-              ? `This removes its frames and ${plural(boxCount, 'box', 'boxes')}. It cannot be undone.`
-              : 'This removes its frames. It cannot be undone.'
-          }
-          confirmLabel="Delete clip"
+          title={`Move clip ${clip.index + 1} to trash?`}
+          description={plural(boxCount, 'box', 'boxes')}
+          confirmLabel="Move to trash"
         />
         <ShortcutsDialog
           open={showHelp}

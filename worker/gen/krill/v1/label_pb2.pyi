@@ -167,3 +167,89 @@ class DeleteLabelExampleRequest(_message.Message):
 class DeleteLabelExampleResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class AttributeValueMapping(_message.Message):
+    __slots__ = ("source_attribute", "source_option", "target_attribute", "target_option", "track_count")
+    SOURCE_ATTRIBUTE_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_OPTION_FIELD_NUMBER: _ClassVar[int]
+    TARGET_ATTRIBUTE_FIELD_NUMBER: _ClassVar[int]
+    TARGET_OPTION_FIELD_NUMBER: _ClassVar[int]
+    TRACK_COUNT_FIELD_NUMBER: _ClassVar[int]
+    source_attribute: str
+    source_option: str
+    target_attribute: str
+    target_option: str
+    track_count: int
+    def __init__(self, source_attribute: _Optional[str] = ..., source_option: _Optional[str] = ..., target_attribute: _Optional[str] = ..., target_option: _Optional[str] = ..., track_count: _Optional[int] = ...) -> None: ...
+
+class ExportClassChange(_message.Message):
+    __slots__ = ("name", "old_id", "new_id", "becomes")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    OLD_ID_FIELD_NUMBER: _ClassVar[int]
+    NEW_ID_FIELD_NUMBER: _ClassVar[int]
+    BECOMES_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    old_id: int
+    new_id: int
+    becomes: str
+    def __init__(self, name: _Optional[str] = ..., old_id: _Optional[int] = ..., new_id: _Optional[int] = ..., becomes: _Optional[str] = ...) -> None: ...
+
+class PreviewMergeLabelTypesRequest(_message.Message):
+    __slots__ = ("source_id", "target_id", "mappings")
+    SOURCE_ID_FIELD_NUMBER: _ClassVar[int]
+    TARGET_ID_FIELD_NUMBER: _ClassVar[int]
+    MAPPINGS_FIELD_NUMBER: _ClassVar[int]
+    source_id: int
+    target_id: int
+    mappings: _containers.RepeatedCompositeFieldContainer[AttributeValueMapping]
+    def __init__(self, source_id: _Optional[int] = ..., target_id: _Optional[int] = ..., mappings: _Optional[_Iterable[_Union[AttributeValueMapping, _Mapping]]] = ...) -> None: ...
+
+class PreviewMergeLabelTypesResponse(_message.Message):
+    __slots__ = ("track_count", "box_count", "clip_count", "video_count", "trashed_track_count", "gold_frame_count", "gold_attempt_count", "open_review_count", "example_count", "mappings", "class_changes", "unfilled_attributes")
+    TRACK_COUNT_FIELD_NUMBER: _ClassVar[int]
+    BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
+    CLIP_COUNT_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRASHED_TRACK_COUNT_FIELD_NUMBER: _ClassVar[int]
+    GOLD_FRAME_COUNT_FIELD_NUMBER: _ClassVar[int]
+    GOLD_ATTEMPT_COUNT_FIELD_NUMBER: _ClassVar[int]
+    OPEN_REVIEW_COUNT_FIELD_NUMBER: _ClassVar[int]
+    EXAMPLE_COUNT_FIELD_NUMBER: _ClassVar[int]
+    MAPPINGS_FIELD_NUMBER: _ClassVar[int]
+    CLASS_CHANGES_FIELD_NUMBER: _ClassVar[int]
+    UNFILLED_ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    track_count: int
+    box_count: int
+    clip_count: int
+    video_count: int
+    trashed_track_count: int
+    gold_frame_count: int
+    gold_attempt_count: int
+    open_review_count: int
+    example_count: int
+    mappings: _containers.RepeatedCompositeFieldContainer[AttributeValueMapping]
+    class_changes: _containers.RepeatedCompositeFieldContainer[ExportClassChange]
+    unfilled_attributes: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, track_count: _Optional[int] = ..., box_count: _Optional[int] = ..., clip_count: _Optional[int] = ..., video_count: _Optional[int] = ..., trashed_track_count: _Optional[int] = ..., gold_frame_count: _Optional[int] = ..., gold_attempt_count: _Optional[int] = ..., open_review_count: _Optional[int] = ..., example_count: _Optional[int] = ..., mappings: _Optional[_Iterable[_Union[AttributeValueMapping, _Mapping]]] = ..., class_changes: _Optional[_Iterable[_Union[ExportClassChange, _Mapping]]] = ..., unfilled_attributes: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class MergeLabelTypesRequest(_message.Message):
+    __slots__ = ("source_id", "target_id", "mappings")
+    SOURCE_ID_FIELD_NUMBER: _ClassVar[int]
+    TARGET_ID_FIELD_NUMBER: _ClassVar[int]
+    MAPPINGS_FIELD_NUMBER: _ClassVar[int]
+    source_id: int
+    target_id: int
+    mappings: _containers.RepeatedCompositeFieldContainer[AttributeValueMapping]
+    def __init__(self, source_id: _Optional[int] = ..., target_id: _Optional[int] = ..., mappings: _Optional[_Iterable[_Union[AttributeValueMapping, _Mapping]]] = ...) -> None: ...
+
+class MergeLabelTypesResponse(_message.Message):
+    __slots__ = ("track_count", "box_count", "gold_frame_count", "dropped_value_count")
+    TRACK_COUNT_FIELD_NUMBER: _ClassVar[int]
+    BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
+    GOLD_FRAME_COUNT_FIELD_NUMBER: _ClassVar[int]
+    DROPPED_VALUE_COUNT_FIELD_NUMBER: _ClassVar[int]
+    track_count: int
+    box_count: int
+    gold_frame_count: int
+    dropped_value_count: int
+    def __init__(self, track_count: _Optional[int] = ..., box_count: _Optional[int] = ..., gold_frame_count: _Optional[int] = ..., dropped_value_count: _Optional[int] = ...) -> None: ...

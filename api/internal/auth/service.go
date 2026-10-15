@@ -43,7 +43,7 @@ type Service struct {
 	krillv1connect.UnimplementedAuthServiceHandler
 	pool *pgxpool.Pool
 	q    *db.Queries
-	opts Options
+	opts func() Options
 	// A per-account limit stops guessing one password; the looser per-IP
 	// limit stops one client trying a few passwords across many accounts.
 	accountLimit *failureLimiter
@@ -59,7 +59,7 @@ type Service struct {
 	signupLimit *failureLimiter
 }
 
-func NewService(pool *pgxpool.Pool, opts Options) *Service {
+func NewService(pool *pgxpool.Pool, opts func() Options) *Service {
 	return &Service{
 		pool:          pool,
 		q:             db.New(pool),
@@ -81,14 +81,14 @@ func setCookie(ctx context.Context, c *http.Cookie) {
 
 func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) (*krillv1.GetSessionResponse, error) {
 	out := &krillv1.GetSessionResponse{
-		SlackEnabled:   s.opts.SlackEnabled,
-		SignupEnabled:  s.opts.AllowSignup,
-		TeamName:       s.opts.TeamName,
+		SlackEnabled:   s.opts().SlackEnabled,
+		SignupEnabled:  s.opts().AllowSignup,
+		TeamName:       s.opts().TeamName,
 		AllPermissions: PermissionInfos(),
 		Roles:          RoleInfos(),
 
-		EmailVerificationRequired: s.opts.RequireVerifiedEmail,
-		EmailCodesEnabled:         s.opts.Mailer != nil,
+		EmailVerificationRequired: s.opts().RequireVerifiedEmail,
+		EmailCodesEnabled:         s.opts().Mailer != nil,
 	}
 	if sess, ok := SessionFrom(ctx); ok {
 		out.User = ToProto(sess.User)
@@ -99,6 +99,13 @@ func (s *Service) GetSession(ctx context.Context, _ *krillv1.GetSessionRequest) 
 			return nil, rpc.Internal(err, "count users")
 		}
 		out.SignupEnabled = n == 0
+	}
+	if !out.SignupEnabled {
+		open, err := s.q.ApprovedSignupOpen(ctx)
+		if err != nil {
+			return nil, rpc.Internal(err, "check approved emails")
+		}
+		out.ApprovedSignupOpen = open
 	}
 	return out, nil
 }
@@ -144,12 +151,12 @@ func (s *Service) Login(ctx context.Context, req *krillv1.LoginRequest) (*krillv
 	if user.Disabled {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("this account is disabled"))
 	}
-	cookie, err := s.opts.Cookies.StartSession(ctx, s.q, user.ID)
+	cookie, err := s.opts().Cookies.StartSession(ctx, s.q, user.ID)
 	if err != nil {
 		return nil, rpc.Internal(err, "start session")
 	}
 	setCookie(ctx, cookie)
-	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
+	setCookie(ctx, s.opts().Cookies.LastLogin("password"))
 	return &krillv1.LoginResponse{User: ToProto(user)}, nil
 }
 
@@ -158,7 +165,7 @@ func (s *Service) clientIP(ctx context.Context) string {
 	if !ok {
 		return ""
 	}
-	return clientIP(info.Peer().Addr, info.RequestHeader(), s.opts.ClientIPHeader)
+	return clientIP(info.Peer().Addr, info.RequestHeader(), s.opts().ClientIPHeader)
 }
 
 // clientIP reads the proxy header only when one is configured. Otherwise any
@@ -185,9 +192,6 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
-	if !InEmailDomain(p.Email, s.opts.SignupEmailDomain) {
-		return nil, rpc.Invalid("sign up with your @%s email", s.opts.SignupEmailDomain)
-	}
 	if err := ValidatePassword(req.GetPassword()); err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -202,12 +206,13 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
-	role, err := newUserRole(ctx, q, s.opts.AllowSignup)
+	rules := signupRules{allowSignup: s.opts().AllowSignup, emailDomain: s.opts().SignupEmailDomain}
+	g, err := grantSignup(ctx, q, rules, strings.TrimSpace(req.GetInviteToken()), p.Email, true)
 	if err != nil {
-		return nil, err
+		return nil, signupError(err)
 	}
 	user, err := q.CreateUser(ctx, db.CreateUserParams{
-		Name: p.Name, Username: p.Username, Email: p.Email, PasswordHash: text(hash), Role: role,
+		Name: p.Name, Username: p.Username, Email: p.Email, PasswordHash: text(hash), Role: g.role,
 	})
 	if err != nil {
 		if dup := DuplicateError(err); dup != nil {
@@ -216,13 +221,16 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 		}
 		return nil, rpc.Internal(err, "create user")
 	}
+	if err := g.record(ctx, q, user.ID); err != nil {
+		return nil, rpc.Internal(err, "redeem invite")
+	}
 	// Sent before commit so the account isn't created when the email fails.
-	if s.opts.RequireVerifiedEmail {
+	if s.opts().RequireVerifiedEmail {
 		if err := s.sendCode(ctx, q, user, user.Email, purposeVerify, true, s.origin(ctx)); err != nil {
 			return nil, err
 		}
 	}
-	cookie, err := s.opts.Cookies.StartSession(ctx, q, user.ID)
+	cookie, err := s.opts().Cookies.StartSession(ctx, q, user.ID)
 	if err != nil {
 		return nil, rpc.Internal(err, "start session")
 	}
@@ -230,28 +238,21 @@ func (s *Service) Register(ctx context.Context, req *krillv1.RegisterRequest) (*
 		return nil, rpc.Internal(err, "commit")
 	}
 	setCookie(ctx, cookie)
-	setCookie(ctx, s.opts.Cookies.LastLogin("password"))
+	setCookie(ctx, s.opts().Cookies.LastLogin("password"))
 	return &krillv1.RegisterResponse{User: ToProto(user)}, nil
 }
 
-// newUserRole makes the first account an admin so a fresh install can be set
-// up without touching the database. The table lock stops two first sign-ups
-// from both becoming admin.
-func newUserRole(ctx context.Context, q *db.Queries, allowSignup bool) (string, error) {
-	if err := q.LockUsers(ctx); err != nil {
-		return "", rpc.Internal(err, "lock users")
+func signupError(err error) error {
+	var domain errDomain
+	switch {
+	case errors.Is(err, errInviteUsed):
+		return connect.NewError(connect.CodeFailedPrecondition, err)
+	case errors.Is(err, errClosed):
+		return connect.NewError(connect.CodePermissionDenied, err)
+	case errors.As(err, &domain):
+		return rpc.Invalid("%s", err)
 	}
-	n, err := q.CountUsers(ctx)
-	if err != nil {
-		return "", rpc.Internal(err, "count users")
-	}
-	if n == 0 {
-		return "admin", nil
-	}
-	if !allowSignup {
-		return "", connect.NewError(connect.CodePermissionDenied, errors.New("sign-up is closed; ask an admin for an account"))
-	}
-	return "labeler", nil
+	return rpc.Internal(err, "check sign-up")
 }
 
 func (s *Service) Logout(ctx context.Context, _ *krillv1.LogoutRequest) (*krillv1.LogoutResponse, error) {
@@ -260,7 +261,7 @@ func (s *Service) Logout(ctx context.Context, _ *krillv1.LogoutRequest) (*krillv
 			return nil, rpc.Internal(err, "delete session")
 		}
 	}
-	setCookie(ctx, s.opts.Cookies.Clear())
+	setCookie(ctx, s.opts().Cookies.Clear())
 	return &krillv1.LogoutResponse{}, nil
 }
 
@@ -272,11 +273,11 @@ func (s *Service) UpdateProfile(ctx context.Context, req *krillv1.UpdateProfileR
 		return nil, rpc.Invalid("%s", err)
 	}
 	newEmail := p.Email
-	if newEmail != current.Email && !InEmailDomain(newEmail, s.opts.SignupEmailDomain) {
-		return nil, rpc.Invalid("use your @%s email", s.opts.SignupEmailDomain)
+	if newEmail != current.Email && !InEmailDomain(newEmail, s.opts().SignupEmailDomain) {
+		return nil, rpc.Invalid("use your @%s email", s.opts().SignupEmailDomain)
 	}
 	// A verified email stays until the new one is verified too.
-	keepEmail := s.opts.RequireVerifiedEmail && current.EmailVerifiedAt.Valid
+	keepEmail := s.opts().RequireVerifiedEmail && current.EmailVerifiedAt.Valid
 	if keepEmail {
 		p.Email = current.Email
 	}
@@ -299,7 +300,7 @@ func (s *Service) UpdateProfile(ctx context.Context, req *krillv1.UpdateProfileR
 
 	var sendTo string
 	switch {
-	case !s.opts.RequireVerifiedEmail:
+	case !s.opts().RequireVerifiedEmail:
 	case keepEmail && newEmail != current.Email:
 		taken, err := q.EmailInUse(ctx, db.EmailInUseParams{Email: newEmail, ID: current.ID})
 		if err != nil {

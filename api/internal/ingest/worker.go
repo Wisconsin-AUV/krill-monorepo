@@ -45,10 +45,10 @@ type Worker struct {
 	pool  *pgxpool.Pool
 	store *storage.Store
 	// embed queues an EmbedArgs job for each clip once frames are ready.
-	embed bool
+	embed func() bool
 }
 
-func NewWorker(pool *pgxpool.Pool, store *storage.Store, embed bool) *Worker {
+func NewWorker(pool *pgxpool.Pool, store *storage.Store, embed func() bool) *Worker {
 	return &Worker{pool: pool, store: store, embed: embed}
 }
 
@@ -80,7 +80,7 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 		slog.Info("ingest skipped, video was deleted", "video_id", id)
 		return nil
 	}
-	video, err := q.GetVideo(ctx, id)
+	video, err := q.GetVideoInTrash(ctx, id)
 	if err != nil {
 		return fmt.Errorf("load video: %w", err)
 	}
@@ -166,7 +166,7 @@ func (w *Worker) ingest(ctx context.Context, id int64) error {
 	if err := qtx.FinishIngest(ctx, db.FinishIngestParams{ID: id, FrameCount: int32(len(files))}); err != nil { //nolint:gosec // frame counts fit in int32
 		return fmt.Errorf("finish ingest: %w", err)
 	}
-	if w.embed {
+	if w.embed() {
 		jobs := make([]river.InsertManyParams, len(clipIDs))
 		for i, clipID := range clipIDs {
 			jobs[i] = river.InsertManyParams{Args: EmbedArgs{ClipID: clipID}}

@@ -37,6 +37,7 @@ services:
         VERSION: ${KRILL_VERSION:-dev}
     # Also covers MinIO not being ready yet when the API creates its bucket.
     restart: unless-stopped
+    # Empty variables leave the setting to the admin panel.
     environment:
       KRILL_DATABASE_URL: postgres://krill:${KRILL_POSTGRES_PASSWORD}@postgres:5432/krill?sslmode=disable
       KRILL_S3_ENDPOINT: http://minio:9000
@@ -44,9 +45,9 @@ services:
       KRILL_S3_ACCESS_KEY: ${KRILL_S3_ACCESS_KEY}
       KRILL_S3_SECRET_KEY: ${KRILL_S3_SECRET_KEY}
       KRILL_PUBLIC_URL: ${KRILL_PUBLIC_URL:-http://localhost:8080}
-      KRILL_ALLOW_SIGNUP: ${KRILL_ALLOW_SIGNUP:-true}
-      KRILL_SIGNUP_EMAIL_DOMAIN: ${KRILL_SIGNUP_EMAIL_DOMAIN:-wisc.edu}
-      KRILL_EMAIL_VERIFICATION: ${KRILL_EMAIL_VERIFICATION:-domain}
+      KRILL_ALLOW_SIGNUP: ${KRILL_ALLOW_SIGNUP:-}
+      KRILL_SIGNUP_EMAIL_DOMAIN: ${KRILL_SIGNUP_EMAIL_DOMAIN:-}
+      KRILL_EMAIL_VERIFICATION: ${KRILL_EMAIL_VERIFICATION:-}
       KRILL_RESEND_API_KEY: ${KRILL_RESEND_API_KEY:-}
       KRILL_EMAIL_FROM: ${KRILL_EMAIL_FROM:-}
       KRILL_TEAM_NAME: ${KRILL_TEAM_NAME:-}
@@ -54,10 +55,15 @@ services:
       KRILL_SLACK_CLIENT_SECRET: ${KRILL_SLACK_CLIENT_SECRET:-}
       KRILL_SLACK_TEAM_ID: ${KRILL_SLACK_TEAM_ID:-}
       KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
-      KRILL_EMBED_AT_INGEST: ${KRILL_EMBED_AT_INGEST:-true}
+      KRILL_EMBED_AT_INGEST: ${KRILL_EMBED_AT_INGEST:-}
       KRILL_CLIENT_IP_HEADER: ${KRILL_CLIENT_IP_HEADER:-}
-      KRILL_GOLD_REVIEW_THRESHOLD: ${KRILL_GOLD_REVIEW_THRESHOLD:-0.7}
-      KRILL_GOLD_REVIEW_MIN_ATTEMPTS: ${KRILL_GOLD_REVIEW_MIN_ATTEMPTS:-3}
+      KRILL_GOLD_REVIEW_THRESHOLD: ${KRILL_GOLD_REVIEW_THRESHOLD:-}
+      KRILL_GOLD_REVIEW_MIN_ATTEMPTS: ${KRILL_GOLD_REVIEW_MIN_ATTEMPTS:-}
+      KRILL_UPDATE_CHECK: ${KRILL_UPDATE_CHECK:-}
+      KRILL_STUCK_CLAIM_DAYS: ${KRILL_STUCK_CLAIM_DAYS:-}
+      KRILL_BACKUP_SCHEDULE: ${KRILL_BACKUP_SCHEDULE:-}
+      KRILL_BACKUP_KEEP: ${KRILL_BACKUP_KEEP:-}
+      KRILL_TRASH_RETENTION_DAYS: ${KRILL_TRASH_RETENTION_DAYS:-}
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -75,15 +81,18 @@ services:
       HSA_OVERRIDE_GFX_VERSION: "10.3.0"
       KRILL_API_URL: http://api:8080
       KRILL_WORKER_TOKEN: ${KRILL_WORKER_TOKEN:-}
-      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-facebook/sam2.1-hiera-small}
+      KRILL_SAM_MODEL: ${KRILL_SAM_MODEL:-}
       HF_TOKEN: ${HF_TOKEN:-}
     devices:
       - /dev/kfd
       - /dev/dri
-    volumes: [hfcache:/root/.cache/huggingface]
+    # Training's data loader workers pass batches through shared memory.
+    shm_size: 2gb
+    volumes: [hfcache:/root/.cache/huggingface, krillcache:/root/.cache/krill]
     depends_on: [api]
 
 volumes:
   pgdata:
   miniodata:
   hfcache:
+  krillcache:

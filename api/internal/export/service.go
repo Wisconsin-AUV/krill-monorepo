@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
+	"github.com/wauv/krill/api/internal/audit"
+	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
@@ -39,14 +42,29 @@ var statusToProto = map[string]krillv1.ExportStatus{
 
 type Service struct {
 	krillv1connect.UnimplementedExportServiceHandler
-	pool  *pgxpool.Pool
-	q     *db.Queries
-	store *storage.Store
-	jobs  *river.Client[pgx.Tx]
+	pool     *pgxpool.Pool
+	q        *db.Queries
+	store    *storage.Store
+	jobs     *river.Client[pgx.Tx]
+	defaults func() *krillv1.ExportOptions
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
-	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx], defaults func() *krillv1.ExportOptions) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs, defaults: defaults}
+}
+
+// Defaults are the options the admin panel set, for every ready video.
+func Defaults(cfg config.Config) *krillv1.ExportOptions {
+	return &krillv1.ExportOptions{
+		ValFraction:   float32(cfg.ExportValFraction),
+		Stride:        int32(cfg.ExportStride), //nolint:gosec // validated to at most MaxExportStride
+		Dedup:         cfg.ExportDedup,
+		DedupDistance: int32(cfg.ExportDedupDistance), //nolint:gosec // validated to at most MaxExportDedupDistance
+	}
+}
+
+func (s *Service) GetExportDefaults(context.Context, *krillv1.GetExportDefaultsRequest) (*krillv1.GetExportDefaultsResponse, error) {
+	return &krillv1.GetExportDefaultsResponse{Options: s.defaults()}, nil
 }
 
 func (s *Service) PreviewExport(ctx context.Context, req *krillv1.PreviewExportRequest) (*krillv1.PreviewExportResponse, error) {
@@ -129,12 +147,30 @@ func (s *Service) ListExports(ctx context.Context, _ *krillv1.ListExportsRequest
 }
 
 func (s *Service) DeleteExport(ctx context.Context, req *krillv1.DeleteExportRequest) (*krillv1.DeleteExportResponse, error) {
-	n, err := s.q.DeleteDataset(ctx, req.GetId())
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
+		return nil, rpc.Internal(err, "begin")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+	d, err := q.GetDataset(ctx, req.GetId())
+	if err != nil {
+		return nil, rpc.DBError(err, "export")
+	}
+	if _, err := q.DeleteDataset(ctx, req.GetId()); err != nil {
 		return nil, rpc.Internal(err, "delete export")
 	}
-	if n == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("export not found"))
+	err = audit.Record(ctx, q, audit.Entry{
+		Action:     audit.ExportDelete,
+		TargetType: audit.TargetExport,
+		TargetID:   strconv.FormatInt(d.ID, 10),
+		TargetName: d.Name,
+	})
+	if err != nil {
+		return nil, rpc.Internal(err, "record audit entry")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, rpc.Internal(err, "commit")
 	}
 	if err := s.store.RemovePrefix(ctx, storage.DatasetPrefix(req.GetId())); err != nil {
 		slog.Error("remove export objects", "dataset_id", req.GetId(), "err", err)

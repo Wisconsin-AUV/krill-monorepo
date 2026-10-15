@@ -2,17 +2,25 @@
 // @generated from file krill/v1/worker.proto (package krill.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Box, Point } from "./annotation_pb";
 import { file_krill_v1_annotation } from "./annotation_pb";
-import type { Message } from "@bufbuild/protobuf";
+import type { LogRecord } from "./log_pb";
+import { file_krill_v1_log } from "./log_pb";
+import type { PrelabelTask, PreviewTask, TrainTask } from "./pipeline_pb";
+import { file_krill_v1_pipeline } from "./pipeline_pb";
+import type { GpuStats, HostStats } from "./system_pb";
+import { file_krill_v1_system } from "./system_pb";
+import type { Message, UnknownEnum } from "@bufbuild/protobuf";
 
 /**
  * Describes the file krill/v1/worker.proto.
  */
 export const file_krill_v1_worker: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCKSAQoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIAEIGCgR0YXNrIjsKCVRhc2tGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSFQoNZW1iZWRkaW5nX3VybBgDIAEoCSKfAQoJVHJhY2tUYXNrEgoKAmlkGAEgASgDEiMKBmZyYW1lcxgCIAMoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIgCgVwb2ludBgDIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94SAASFwoPZW1iZWRkaW5nX21vZGVsGAUgASgJQggKBnByb21wdCI9CglFbWJlZFRhc2sSCgoCaWQYASABKAMSJAoGZnJhbWVzGAIgAygLMhQua3JpbGwudjEuRW1iZWRGcmFtZSI5CgpFbWJlZEZyYW1lEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRISCgp1cGxvYWRfdXJsGAMgASgJIloKDEV4ZW1wbGFyVGFzaxIKCgJpZBgBIAEoAxIiCgVmcmFtZRgCIAEoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoKVHJhY2tlZEJveBIQCghmcmFtZV9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giZwoSUmVwb3J0VHJhY2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSIwoFYm94ZXMYAyADKAsyFC5rcmlsbC52MS5UcmFja2VkQm94EgwKBGRvbmUYBCABKAgiFQoTUmVwb3J0VHJhY2tSZXNwb25zZSJWChZSZXBvcnRFeGVtcGxhcnNSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSHAoFYm94ZXMYAyADKAsyDS5rcmlsbC52MS5Cb3giGQoXUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiNAoSUmVwb3J0RW1iZWRSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkiFQoTUmVwb3J0RW1iZWRSZXNwb25zZSIxCg9GYWlsVGFza1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVlcnJvchgCIAEoCSISChBGYWlsVGFza1Jlc3BvbnNlMo8DCg1Xb3JrZXJTZXJ2aWNlEkMKCE5leHRUYXNrEhkua3JpbGwudjEuTmV4dFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuTmV4dFRhc2tSZXNwb25zZSIAEkwKC1JlcG9ydFRyYWNrEhwua3JpbGwudjEuUmVwb3J0VHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0VHJhY2tSZXNwb25zZSIAElgKD1JlcG9ydEV4ZW1wbGFycxIgLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1JlcXVlc3QaIS5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXNwb25zZSIAEkwKC1JlcG9ydEVtYmVkEhwua3JpbGwudjEuUmVwb3J0RW1iZWRSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0RW1iZWRSZXNwb25zZSIAEkMKCEZhaWxUYXNrEhkua3JpbGwudjEuRmFpbFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuRmFpbFRhc2tSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC1dvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation]);
+  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCKOAgoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIABIkCgV0cmFpbhgKIAEoCzITLmtyaWxsLnYxLlRyYWluVGFza0gAEioKCHByZWxhYmVsGAsgASgLMhYua3JpbGwudjEuUHJlbGFiZWxUYXNrSAASKAoHcHJldmlldxgMIAEoCzIVLmtyaWxsLnYxLlByZXZpZXdUYXNrSABCBgoEdGFzayI7CglUYXNrRnJhbWUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEhUKDWVtYmVkZGluZ191cmwYAyABKAkinwEKCVRyYWNrVGFzaxIKCgJpZBgBIAEoAxIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSIAoFcG9pbnQYAyABKAsyDy5rcmlsbC52MS5Qb2ludEgAEhwKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveEgAEhcKD2VtYmVkZGluZ19tb2RlbBgFIAEoCUIICgZwcm9tcHQiPQoJRW1iZWRUYXNrEgoKAmlkGAEgASgDEiQKBmZyYW1lcxgCIAMoCzIULmtyaWxsLnYxLkVtYmVkRnJhbWUiOQoKRW1iZWRGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSEgoKdXBsb2FkX3VybBgDIAEoCSJaCgxFeGVtcGxhclRhc2sSCgoCaWQYASABKAMSIgoFZnJhbWUYAiABKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94IjoKClRyYWNrZWRCb3gSEAoIZnJhbWVfaWQYASABKAMSGgoDYm94GAIgASgLMg0ua3JpbGwudjEuQm94ImcKElJlcG9ydFRyYWNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEiMKBWJveGVzGAMgAygLMhQua3JpbGwudjEuVHJhY2tlZEJveBIMCgRkb25lGAQgASgIIhUKE1JlcG9ydFRyYWNrUmVzcG9uc2UiVgoWUmVwb3J0RXhlbXBsYXJzUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEhwKBWJveGVzGAMgAygLMg0ua3JpbGwudjEuQm94IhkKF1JlcG9ydEV4ZW1wbGFyc1Jlc3BvbnNlIjQKElJlcG9ydEVtYmVkUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJIhUKE1JlcG9ydEVtYmVkUmVzcG9uc2UiMQoPRmFpbFRhc2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFZXJyb3IYAiABKAkiEgoQRmFpbFRhc2tSZXNwb25zZSKDBAoQSGVhcnRiZWF0UmVxdWVzdBITCgtpbnN0YW5jZV9pZBgBIAEoCRIQCghob3N0bmFtZRgCIAEoCRIPCgd2ZXJzaW9uGAMgASgJEg0KBW1vZGVsGAQgASgJEhMKC2FjY2VsZXJhdG9yGAUgASgJEi4KCnN0YXJ0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiEKBGhvc3QYByABKAsyEy5rcmlsbC52MS5Ib3N0U3RhdHMSIAoEZ3B1cxgIIAMoCzISLmtyaWxsLnYxLkdwdVN0YXRzEg8KB3Rhc2tfaWQYCSABKAMSIQoEbG9ncxgUIAMoCzITLmtyaWxsLnYxLkxvZ1JlY29yZBItCgttb2RlbF9zdGF0ZRgeIAEoDjIYLmtyaWxsLnYxLk1vZGVsTG9hZFN0YXRlEhMKC21vZGVsX2Vycm9yGB8gASgJEiQKHG1vZGVsX21lbW9yeV9hbGxvY2F0ZWRfYnl0ZXMYICABKAQSIwobbW9kZWxfbWVtb3J5X3Jlc2VydmVkX2J5dGVzGCEgASgEEhQKDHBpbm5lZF9tb2RlbBgiIAEoCRIVCg1jYWNoZWRfbW9kZWxzGCMgAygJEhIKCmNvbW1hbmRfaWQYJCABKAQSGgoSc3VwcG9ydHNfZXhlbXBsYXJzGCUgASgIImQKEUhlYXJ0YmVhdFJlc3BvbnNlEg0KBW1vZGVsGB4gASgJEigKB2NvbW1hbmQYHyABKAsyFy5rcmlsbC52MS5Xb3JrZXJDb21tYW5kEhYKDmNhbmNlbF90YXNrX2lkGCAgASgDIkMKDVdvcmtlckNvbW1hbmQSCgoCaWQYASABKAQSJgoGYWN0aW9uGAIgASgOMhYua3JpbGwudjEuV29ya2VyQWN0aW9uKqcBCg5Nb2RlbExvYWRTdGF0ZRIgChxNT0RFTF9MT0FEX1NUQVRFX1VOU1BFQ0lGSUVEEAASHQoZTU9ERUxfTE9BRF9TVEFURV9VTkxPQURFRBABEhwKGE1PREVMX0xPQURfU1RBVEVfTE9BRElORxACEhoKFk1PREVMX0xPQURfU1RBVEVfUkVBRFkQAxIaChZNT0RFTF9MT0FEX1NUQVRFX0VSUk9SEAQqYgoMV29ya2VyQWN0aW9uEh0KGVdPUktFUl9BQ1RJT05fVU5TUEVDSUZJRUQQABIZChVXT1JLRVJfQUNUSU9OX1dBUk1fVVAQARIYChRXT1JLRVJfQUNUSU9OX1VOTE9BRBACMtcDCg1Xb3JrZXJTZXJ2aWNlEkMKCE5leHRUYXNrEhkua3JpbGwudjEuTmV4dFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuTmV4dFRhc2tSZXNwb25zZSIAEkwKC1JlcG9ydFRyYWNrEhwua3JpbGwudjEuUmVwb3J0VHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0VHJhY2tSZXNwb25zZSIAElgKD1JlcG9ydEV4ZW1wbGFycxIgLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1JlcXVlc3QaIS5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXNwb25zZSIAEkwKC1JlcG9ydEVtYmVkEhwua3JpbGwudjEuUmVwb3J0RW1iZWRSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0RW1iZWRSZXNwb25zZSIAEkMKCEZhaWxUYXNrEhkua3JpbGwudjEuRmFpbFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuRmFpbFRhc2tSZXNwb25zZSIAEkYKCUhlYXJ0YmVhdBIaLmtyaWxsLnYxLkhlYXJ0YmVhdFJlcXVlc3QaGy5rcmlsbC52MS5IZWFydGJlYXRSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC1dvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_log, file_krill_v1_pipeline, file_krill_v1_system]);
 
 /**
  * @generated from message krill.v1.NextTaskRequest
@@ -52,6 +60,24 @@ export type NextTaskResponse = Message<"krill.v1.NextTaskResponse"> & {
      */
     value: EmbedTask;
     case: "embed";
+  } | {
+    /**
+     * @generated from field: krill.v1.TrainTask train = 10;
+     */
+    value: TrainTask;
+    case: "train";
+  } | {
+    /**
+     * @generated from field: krill.v1.PrelabelTask prelabel = 11;
+     */
+    value: PrelabelTask;
+    case: "prelabel";
+  } | {
+    /**
+     * @generated from field: krill.v1.PreviewTask preview = 12;
+     */
+    value: PreviewTask;
+    case: "preview";
   } | { case: undefined; value?: undefined };
 };
 
@@ -409,8 +435,265 @@ export const FailTaskResponseSchema: GenMessage<FailTaskResponse> = /*@__PURE__*
   messageDesc(file_krill_v1_worker, 15);
 
 /**
- * WorkerService is called by the GPU worker. Requests carry the shared worker
- * token instead of a user session.
+ * @generated from message krill.v1.HeartbeatRequest
+ */
+export type HeartbeatRequest = Message<"krill.v1.HeartbeatRequest"> & {
+  /**
+   * Random for each process, so a restarted worker shows as a new one.
+   *
+   * @generated from field: string instance_id = 1;
+   */
+  instanceId: string;
+
+  /**
+   * @generated from field: string hostname = 2;
+   */
+  hostname: string;
+
+  /**
+   * @generated from field: string version = 3;
+   */
+  version: string;
+
+  /**
+   * @generated from field: string model = 4;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string accelerator = 5;
+   */
+  accelerator: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp started_at = 6;
+   */
+  startedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: krill.v1.HostStats host = 7;
+   */
+  host?: HostStats | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.GpuStats gpus = 8;
+   */
+  gpus: GpuStats[];
+
+  /**
+   * The task being worked on, or 0 when idle.
+   *
+   * @generated from field: int64 task_id = 9;
+   */
+  taskId: bigint;
+
+  /**
+   * Log records not yet sent, oldest first. A worker resends them until a
+   * heartbeat succeeds, so the API skips seqs it already has.
+   *
+   * @generated from field: repeated krill.v1.LogRecord logs = 20;
+   */
+  logs: LogRecord[];
+
+  /**
+   * @generated from field: krill.v1.ModelLoadState model_state = 30;
+   */
+  modelState: ModelLoadState;
+
+  /**
+   * Why the model failed to load.
+   *
+   * @generated from field: string model_error = 31;
+   */
+  modelError: string;
+
+  /**
+   * Torch memory once the model loaded and warmed up.
+   *
+   * @generated from field: uint64 model_memory_allocated_bytes = 32;
+   */
+  modelMemoryAllocatedBytes: bigint;
+
+  /**
+   * @generated from field: uint64 model_memory_reserved_bytes = 33;
+   */
+  modelMemoryReservedBytes: bigint;
+
+  /**
+   * Set when the worker's own KRILL_SAM_MODEL picks the model, which then
+   * ignores HeartbeatResponse.model.
+   *
+   * @generated from field: string pinned_model = 34;
+   */
+  pinnedModel: string;
+
+  /**
+   * SAM models already downloaded to the worker.
+   *
+   * @generated from field: repeated string cached_models = 35;
+   */
+  cachedModels: string[];
+
+  /**
+   * The last command the worker finished, so the API stops sending it.
+   *
+   * @generated from field: uint64 command_id = 36;
+   */
+  commandId: bigint;
+
+  /**
+   * Whether the model can run exemplar tasks.
+   *
+   * @generated from field: bool supports_exemplars = 37;
+   */
+  supportsExemplars: boolean;
+};
+
+/**
+ * Describes the message krill.v1.HeartbeatRequest.
+ * Use `create(HeartbeatRequestSchema)` to create a new message.
+ */
+export const HeartbeatRequestSchema: GenMessage<HeartbeatRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 16);
+
+/**
+ * @generated from message krill.v1.HeartbeatResponse
+ */
+export type HeartbeatResponse = Message<"krill.v1.HeartbeatResponse"> & {
+  /**
+   * The SAM model to switch to between tasks. Empty leaves the worker's
+   * default.
+   *
+   * @generated from field: string model = 30;
+   */
+  model: string;
+
+  /**
+   * Sent in every response until the worker reports its id.
+   *
+   * @generated from field: krill.v1.WorkerCommand command = 31;
+   */
+  command?: WorkerCommand | undefined;
+
+  /**
+   * A task the API no longer waits on, such as a cancelled job. The worker
+   * stops it without reporting a failure.
+   *
+   * @generated from field: int64 cancel_task_id = 32;
+   */
+  cancelTaskId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.HeartbeatResponse.
+ * Use `create(HeartbeatResponseSchema)` to create a new message.
+ */
+export const HeartbeatResponseSchema: GenMessage<HeartbeatResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 17);
+
+/**
+ * @generated from message krill.v1.WorkerCommand
+ */
+export type WorkerCommand = Message<"krill.v1.WorkerCommand"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: krill.v1.WorkerAction action = 2;
+   */
+  action: WorkerAction;
+};
+
+/**
+ * Describes the message krill.v1.WorkerCommand.
+ * Use `create(WorkerCommandSchema)` to create a new message.
+ */
+export const WorkerCommandSchema: GenMessage<WorkerCommand> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 18);
+
+/**
+ * @generated from enum krill.v1.ModelLoadState
+ */
+export const ModelLoadState = {
+  /**
+   * @generated from enum value: MODEL_LOAD_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * Nothing is loaded. The next task loads the model.
+   *
+   * @generated from enum value: MODEL_LOAD_STATE_UNLOADED = 1;
+   */
+  UNLOADED: 1,
+
+  /**
+   * @generated from enum value: MODEL_LOAD_STATE_LOADING = 2;
+   */
+  LOADING: 2,
+
+  /**
+   * @generated from enum value: MODEL_LOAD_STATE_READY = 3;
+   */
+  READY: 3,
+
+  /**
+   * @generated from enum value: MODEL_LOAD_STATE_ERROR = 4;
+   */
+  ERROR: 4,
+} as const;
+
+/**
+ * @generated from enum krill.v1.ModelLoadState
+ */
+export type ModelLoadState = (typeof ModelLoadState)[keyof typeof ModelLoadState] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.ModelLoadState.
+ */
+export const ModelLoadStateSchema: GenEnum<ModelLoadState> = /*@__PURE__*/
+  enumDesc(file_krill_v1_worker, 0);
+
+/**
+ * @generated from enum krill.v1.WorkerAction
+ */
+export const WorkerAction = {
+  /**
+   * @generated from enum value: WORKER_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * Load the model and compile its kernels now instead of on the next task.
+   *
+   * @generated from enum value: WORKER_ACTION_WARM_UP = 1;
+   */
+  WARM_UP: 1,
+
+  /**
+   * Free the GPU memory. The next task loads the model again.
+   *
+   * @generated from enum value: WORKER_ACTION_UNLOAD = 2;
+   */
+  UNLOAD: 2,
+} as const;
+
+/**
+ * @generated from enum krill.v1.WorkerAction
+ */
+export type WorkerAction = (typeof WorkerAction)[keyof typeof WorkerAction] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.WorkerAction.
+ */
+export const WorkerActionSchema: GenEnum<WorkerAction> = /*@__PURE__*/
+  enumDesc(file_krill_v1_worker, 1);
+
+/**
+ * WorkerService is called by the GPU worker. Requests carry a worker token
+ * instead of a user session.
  *
  * @generated from service krill.v1.WorkerService
  */
@@ -465,6 +748,17 @@ export const WorkerService: GenService<{
     methodKind: "unary";
     input: typeof FailTaskRequestSchema;
     output: typeof FailTaskResponseSchema;
+  },
+  /**
+   * Heartbeat reports the worker's state every few seconds for the admin
+   * panel. A worker that stops sending them shows as offline.
+   *
+   * @generated from rpc krill.v1.WorkerService.Heartbeat
+   */
+  heartbeat: {
+    methodKind: "unary";
+    input: typeof HeartbeatRequestSchema;
+    output: typeof HeartbeatResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_worker, 0);

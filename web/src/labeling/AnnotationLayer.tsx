@@ -1,11 +1,27 @@
 import type Konva from 'konva'
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { Group, Label, Rect, Tag, Text, Transformer } from 'react-konva'
-import { AnnotationStatus, type Annotation, type Track } from '@/gen/krill/v1/annotation_pb'
+import {
+  AnnotationSource,
+  AnnotationStatus,
+  type Annotation,
+  type Track,
+} from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { missingAttributes, withAlpha } from '@/lib/labels'
 import type { Size } from '@/workspace/useWorkspaceStore'
 import { idKey, useLabelStore, type BoxRect } from './useLabelStore'
+
+const sourceNames: Partial<Record<AnnotationSource, string>> = {
+  [AnnotationSource.SAM]: 'SAM',
+  [AnnotationSource.YOLO]: 'YOLO',
+  [AnnotationSource.CV]: 'CV',
+}
+
+function proposalSource(a: Annotation) {
+  const name = sourceNames[a.source] ?? 'proposed'
+  return a.confidence === undefined ? name : `${name} ${Math.round(a.confidence * 100)}%`
+}
 
 const MIN_SIDE_PX = 3
 const FALLBACK_COLOR = '#a1a1aa'
@@ -122,7 +138,7 @@ export function AnnotationLayer({
           const missing = info
             ? missingAttributes(info.type, info.track.attributes).length > 0
             : false
-          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${drift ? ' (drift?)' : proposed ? ' (SAM)' : ''}${missing ? ' ⚠' : ''}`
+          const caption = `${info?.type?.name ?? 'unknown'} #${info?.number ?? '?'}${drift ? ' (drift?)' : proposed ? ` (${proposalSource(a)})` : ''}${missing ? ' ⚠' : ''}`
           return (
             <Fragment key={idKey(a.trackId)}>
               <Rect

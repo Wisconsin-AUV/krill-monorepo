@@ -32,6 +32,10 @@ var statusToProto = map[string]krillv1.VideoStatus{
 	"failed":     krillv1.VideoStatus_VIDEO_STATUS_FAILED,
 }
 
+func StatusProto(status string) krillv1.VideoStatus {
+	return statusToProto[status]
+}
+
 var splitToProto = map[string]krillv1.SplitAssignment{
 	"auto":  krillv1.SplitAssignment_SPLIT_ASSIGNMENT_AUTO,
 	"train": krillv1.SplitAssignment_SPLIT_ASSIGNMENT_TRAIN,
@@ -53,6 +57,10 @@ type Stats struct {
 	Clips         int32
 	LabeledFrames int32
 	Boxes         int32
+	// Thumbnail is the index of the frame shown for the video. Frames of
+	// clips deleted for good are gone, so it comes from a live clip, and it
+	// is -1 when there is none.
+	Thumbnail int32
 }
 
 func (s *Presenter) Video(ctx context.Context, v db.Video, st Stats) *krillv1.Video {
@@ -76,8 +84,8 @@ func (s *Presenter) Video(ctx context.Context, v db.Video, st Stats) *krillv1.Vi
 		BoxCount:          st.Boxes,
 		CreatedAt:         timestamppb.New(v.CreatedAt.Time),
 	}
-	if v.Status == "ready" && v.FrameCount > 0 {
-		out.ThumbnailUrl = s.frameURL(ctx, v.ID, v.FrameCount/2)
+	if v.Status == "ready" && st.Clips > 0 && st.Thumbnail >= 0 {
+		out.ThumbnailUrl = s.frameURL(ctx, v.ID, st.Thumbnail)
 	}
 	return out
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,6 +41,16 @@ func WithUser(ctx context.Context, u db.User) context.Context {
 	return withSession(ctx, Session{User: u})
 }
 
+// WithSession runs a call in a session, and WithClientIP from an address, for
+// tests that call services directly.
+func WithSession(ctx context.Context, s Session) context.Context {
+	return withSession(ctx, s)
+}
+
+func WithClientIP(ctx context.Context, ip string) context.Context {
+	return context.WithValue(ctx, clientIPKey{}, ip)
+}
+
 // SessionFrom returns the caller's session. It is always set for procedures
 // that require a role.
 func SessionFrom(ctx context.Context) (Session, bool) {
@@ -52,6 +63,44 @@ func SessionFrom(ctx context.Context) (Session, bool) {
 func CallerID(ctx context.Context) uuid.UUID {
 	s, _ := SessionFrom(ctx)
 	return s.User.ID
+}
+
+type clientIPKey struct{}
+
+// ClientIP is the caller's address, or empty outside an RPC.
+func ClientIP(ctx context.Context) string {
+	ip, _ := ctx.Value(clientIPKey{}).(string)
+	return ip
+}
+
+type userAgentKey struct{}
+
+func userAgent(ctx context.Context) string {
+	ua, _ := ctx.Value(userAgentKey{}).(string)
+	return ua
+}
+
+// withClient records who is calling, for the sessions they start.
+func withClient(ctx context.Context, ip, ua string) context.Context {
+	ctx = context.WithValue(ctx, clientIPKey{}, ip)
+	return context.WithValue(ctx, userAgentKey{}, ua)
+}
+
+// maxUserAgent keeps a client from storing an arbitrarily long header.
+const maxUserAgent = 512
+
+// LookupSessions finds the user for a session token hash, and marks the
+// session seen from the caller's address every few minutes.
+func LookupSessions(q *db.Queries) SessionLookup {
+	return func(ctx context.Context, tokenHash []byte) (db.User, error) {
+		return q.LookupSession(ctx, db.LookupSessionParams{TokenHash: tokenHash, Ip: ClientIP(ctx)})
+	}
+}
+
+// DescribeDevice names the browser and OS in a User-Agent, such as "Firefox
+// on macOS".
+func DescribeDevice(ua string) string {
+	return describeDevice(ua)
 }
 
 func hashToken(token string) []byte {
@@ -82,10 +131,16 @@ func (c Cookies) StartSession(ctx context.Context, q *db.Queries, userID uuid.UU
 	if err := q.DeleteExpiredSessions(ctx); err != nil {
 		return nil, fmt.Errorf("delete expired sessions: %w", err)
 	}
+	ua := userAgent(ctx)
+	if len(ua) > maxUserAgent {
+		ua = ua[:maxUserAgent]
+	}
 	if err := q.CreateSession(ctx, db.CreateSessionParams{
 		TokenHash: hashToken(token),
 		UserID:    userID,
 		ExpiresAt: timestamptz(expires),
+		Ip:        ClientIP(ctx),
+		UserAgent: strings.ToValidUTF8(ua, ""),
 	}); err != nil {
 		return nil, fmt.Errorf("create session: %w", err)
 	}

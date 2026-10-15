@@ -1,0 +1,252 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+import "krill/v1/compute.proto";
+import "krill/v1/system.proto";
+
+// AdminService backs the admin panel.
+service AdminService {
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
+  rpc ListSettings(ListSettingsRequest) returns (ListSettingsResponse) {}
+  // UpdateSettings applies every change or none. A value that can't be used
+  // fails with InvalidArgument and a SettingError detail naming the setting.
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
+  // SendTestEmail sends an email to the caller with the saved settings.
+  rpc SendTestEmail(SendTestEmailRequest) returns (SendTestEmailResponse) {}
+  rpc GetCompute(GetComputeRequest) returns (GetComputeResponse) {}
+}
+
+message GetStatusRequest {
+  // Looks the latest release up again instead of using the cached answer.
+  bool refresh = 1;
+}
+
+message GetStatusResponse {
+  VersionStatus version = 1;
+  repeated ServiceCheck checks = 2;
+  google.protobuf.Timestamp started_at = 3;
+}
+
+enum UpdateState {
+  // The check is off, this is a development build, or the lookup failed.
+  UPDATE_STATE_UNSPECIFIED = 0;
+  UPDATE_STATE_UP_TO_DATE = 1;
+  UPDATE_STATE_AVAILABLE = 2;
+  // Built from commits after the latest release.
+  UPDATE_STATE_AHEAD = 3;
+}
+
+message VersionStatus {
+  // As git describe prints it, like v0.4.0-6-g2d343e3.
+  string current = 1;
+  // Empty when unknown.
+  string latest = 2;
+  UpdateState state = 3;
+  string release_url = 4;
+  google.protobuf.Timestamp checked_at = 5;
+  // Why the latest release is unknown.
+  string error = 6;
+  // Changelog entries after the current version, newest first.
+  repeated Release releases = 7;
+  bool check_enabled = 8;
+  // The release the build is from or after. Empty when no release is
+  // tagged before it.
+  string release = 9;
+  int32 commits_ahead = 10;
+  // Short hash. Empty for builds without git information.
+  string commit = 11;
+  // Built with uncommitted changes.
+  bool dirty = 12;
+}
+
+message Release {
+  string version = 1;
+  // YYYY-MM-DD.
+  string date = 2;
+  repeated ReleaseSection sections = 3;
+}
+
+message ReleaseSection {
+  // Added, Changed, Fixed, and so on.
+  string title = 1;
+  // Markdown, with only inline code and links.
+  repeated string items = 2;
+}
+
+enum CheckStatus {
+  CHECK_STATUS_UNSPECIFIED = 0;
+  CHECK_STATUS_OK = 1;
+  CHECK_STATUS_WARNING = 2;
+  CHECK_STATUS_ERROR = 3;
+  // Not configured.
+  CHECK_STATUS_OFF = 4;
+}
+
+message ServiceCheck {
+  string name = 1;
+  CheckStatus status = 2;
+  string detail = 3;
+}
+
+message ListSettingsRequest {}
+
+message ListSettingsResponse {
+  repeated Setting settings = 1;
+}
+
+enum SettingKind {
+  SETTING_KIND_UNSPECIFIED = 0;
+  SETTING_KIND_STRING = 1;
+  // Never sent back after it is set.
+  SETTING_KIND_SECRET = 2;
+  SETTING_KIND_BOOL = 3;
+  SETTING_KIND_INT = 4;
+  SETTING_KIND_FLOAT = 5;
+  SETTING_KIND_CHOICE = 6;
+}
+
+enum SettingSource {
+  SETTING_SOURCE_UNSPECIFIED = 0;
+  SETTING_SOURCE_DEFAULT = 1;
+  // The environment wins over a saved value, so the panel can't change it.
+  SETTING_SOURCE_ENVIRONMENT = 2;
+  SETTING_SOURCE_SAVED = 3;
+}
+
+message SettingChoice {
+  string value = 1;
+  string label = 2;
+}
+
+message Setting {
+  // The environment variable.
+  string key = 1;
+  string group = 2;
+  string label = 3;
+  string description = 4;
+  SettingKind kind = 5;
+  repeated SettingChoice choices = 6;
+  string default_value = 7;
+  // Only the environment can set it.
+  bool env_only = 8;
+  SettingSource source = 9;
+  // Empty for secrets.
+  string value = 10;
+  bool is_set = 11;
+  // Set for saved values.
+  google.protobuf.Timestamp updated_at = 12;
+  string updated_by = 13;
+}
+
+message SettingChange {
+  string key = 1;
+  string value = 2;
+  // Drops the saved value so the default applies.
+  bool use_default = 3;
+}
+
+message UpdateSettingsRequest {
+  repeated SettingChange changes = 1;
+}
+
+message UpdateSettingsResponse {
+  repeated Setting settings = 1;
+}
+
+// SettingError is the error detail when UpdateSettings rejects a value.
+message SettingError {
+  string key = 1;
+  string message = 2;
+}
+
+message SendTestEmailRequest {}
+
+message SendTestEmailResponse {
+  string to = 1;
+  // The API has no Resend key and wrote the email to its log instead.
+  bool logged = 2;
+}
+
+message GetComputeRequest {}
+
+message GetComputeResponse {
+  // The API first, then workers by when they started.
+  repeated ComputeNode nodes = 1;
+  GpuQueue queue = 2;
+  int32 sample_interval_seconds = 3;
+  ObjectStorage storage = 4;
+  // The SAM model workers are told to run.
+  string sam_model = 30;
+}
+
+// ObjectStorage is how full MinIO's drives are, where frames, embeddings,
+// and exports live.
+message ObjectStorage {
+  uint64 used_bytes = 1;
+  uint64 total_bytes = 2;
+  // Why usage is unknown, such as MinIO keys without admin rights.
+  string error = 3;
+}
+
+enum NodeRole {
+  NODE_ROLE_UNSPECIFIED = 0;
+  NODE_ROLE_API = 1;
+  NODE_ROLE_WORKER = 2;
+}
+
+message ComputeNode {
+  string id = 1;
+  NodeRole role = 2;
+  string hostname = 3;
+  string version = 4;
+  bool online = 5;
+  google.protobuf.Timestamp last_seen = 6;
+  google.protobuf.Timestamp started_at = 7;
+  // The SAM model a worker loaded.
+  string model = 8;
+  // CUDA, ROCm, or CPU, with its version.
+  string accelerator = 9;
+  HostStats host = 10;
+  repeated GpuStats gpus = 11;
+  // Oldest first.
+  repeated ComputeSample history = 12;
+  // Unset when idle.
+  RunningTask task = 13;
+  // Workers only.
+  WorkerModel sam = 30;
+  // The worker token's name, or KRILL_WORKER_TOKEN for the one in the
+  // environment.
+  string token_name = 31;
+}
+
+message ComputeSample {
+  google.protobuf.Timestamp at = 1;
+  double cpu_percent = 2;
+  uint64 memory_used_bytes = 3;
+  // In the order of the node's gpus.
+  repeated GpuSample gpus = 4;
+}
+
+message GpuSample {
+  optional double utilization_percent = 1;
+  uint64 memory_used_bytes = 2;
+}
+
+message RunningTask {
+  int64 id = 1;
+  // track, exemplar, or embed.
+  string kind = 2;
+  int32 frames = 3;
+  google.protobuf.Timestamp started_at = 4;
+}
+
+// GpuQueue counts GPU jobs queued or waiting for a worker to pick up their
+// task.
+message GpuQueue {
+  // Tracking and exemplar searches someone is waiting on.
+  int32 interactive = 1;
+  // Embeddings.
+  int32 background = 2;
+}

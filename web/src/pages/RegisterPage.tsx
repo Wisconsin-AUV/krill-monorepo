@@ -1,4 +1,4 @@
-import { useMutation } from '@connectrpc/connect-query'
+import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { SlackButton } from '@/components/auth/SlackButton'
@@ -8,16 +8,30 @@ import { FormError } from '@/components/ui/Callout'
 import { Field, Label } from '@/components/ui/Fieldset'
 import { Heading } from '@/components/ui/Heading'
 import { Input } from '@/components/ui/Input'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PageContentBlock from '@/components/ui/PageContentBlock'
 import { Strong, Text, TextLink } from '@/components/ui/Text'
 import { AuthService } from '@/gen/krill/v1/auth_pb'
-import { refreshSession, useSession, withNext } from '@/lib/auth'
+import { InviteService } from '@/gen/krill/v1/invite_pb'
+import { refreshSession, useRoleLabel, useSession, withNext } from '@/lib/auth'
 import { usePasswordCheck } from '@/lib/password'
 
 export function RegisterPage() {
   const { data } = useSession()
+  const roleLabel = useRoleLabel()
   const [params] = useSearchParams()
+  const invite = params.get('invite') ?? ''
+  const checked = useQuery(
+    InviteService.method.checkInvite,
+    { token: invite },
+    { enabled: invite !== '' },
+  )
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '' })
+  const [prefilled, setPrefilled] = useState(false)
+  if (!prefilled && checked.data?.email) {
+    setPrefilled(true)
+    setForm((f) => ({ ...f, email: checked.data.email }))
+  }
   const check = usePasswordCheck(form.password, [form.name, form.username, form.email])
   const register = useMutation(AuthService.method.register, {
     onSuccess: () => refreshSession(),
@@ -34,7 +48,27 @@ export function RegisterPage() {
     </Text>
   )
 
-  if (!data?.signupEnabled) {
+  if (invite && checked.isPending) {
+    return (
+      <div className="flex justify-center py-16">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (invite && !checked.data?.valid) {
+    return (
+      <PageContentBlock title="Sign up · Krill" width="w-full max-w-sm">
+        <div className="grid grid-cols-1 gap-8">
+          <Heading className="text-center">This invite has expired</Heading>
+          <Text className="text-center">Ask an admin for a new link.</Text>
+          {signInLink}
+        </div>
+      </PageContentBlock>
+    )
+  }
+
+  if (!invite && !data?.signupEnabled && !data?.approvedSignupOpen) {
     return (
       <PageContentBlock title="Sign up · Krill" width="w-full max-w-sm">
         <div className="grid grid-cols-1 gap-8">
@@ -53,10 +87,17 @@ export function RegisterPage() {
         className="grid grid-cols-1 gap-8"
         onSubmit={(e) => {
           e.preventDefault()
-          register.mutate(form)
+          register.mutate({ ...form, inviteToken: invite })
         }}
       >
-        <Heading className="text-center">Create your account</Heading>
+        <div className="space-y-2 text-center">
+          <Heading>Create your account</Heading>
+          {checked.data?.valid && (
+            <Text>
+              Invited as <Strong>{roleLabel(checked.data.role).toLowerCase()}</Strong>
+            </Text>
+          )}
+        </div>
         <FormError error={register.error} />
         <Field>
           <Label>Name</Label>
@@ -110,7 +151,9 @@ export function RegisterPage() {
         >
           Create account
         </Button>
-        {data.slackEnabled && <SlackButton label="Continue with Slack" />}
+        {data?.slackEnabled && (
+          <SlackButton label="Continue with Slack" invite={invite || undefined} />
+        )}
         {signInLink}
       </form>
     </PageContentBlock>

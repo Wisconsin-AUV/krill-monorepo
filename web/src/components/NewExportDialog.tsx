@@ -11,7 +11,7 @@ import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fiel
 import { Input } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Select } from '@/components/ui/Select'
-import { ExportOptionsSchema, ExportService } from '@/gen/krill/v1/export_pb'
+import { ExportOptionsSchema, ExportService, type ExportOptions } from '@/gen/krill/v1/export_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
@@ -36,12 +36,23 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function NewExportForm({ onClose }: { onClose: () => void }) {
+// Adds the admin panel's default to a list of choices when it isn't one.
+function withValue<T extends { value: number }>(
+  options: T[],
+  value: number,
+  make: (v: number) => T,
+) {
+  return options.some((o) => o.value === value)
+    ? options
+    : [...options, make(value)].sort((a, b) => a.value - b.value)
+}
+
+function NewExportForm({ defaults, onClose }: { defaults: ExportOptions; onClose: () => void }) {
   const [name, setName] = useState(`krill-${today()}`)
-  const [valFraction, setValFraction] = useState(0.2)
-  const [stride, setStride] = useState(1)
-  const [dedup, setDedup] = useState(true)
-  const [dedupDistance, setDedupDistance] = useState(4)
+  const [valFraction, setValFraction] = useState(defaults.valFraction)
+  const [stride, setStride] = useState(defaults.stride || 1)
+  const [dedup, setDedup] = useState(defaults.dedup)
+  const [dedupDistance, setDedupDistance] = useState(defaults.dedupDistance || 4)
   const [videoIds, setVideoIds] = useState<bigint[] | null>(null)
 
   const { data: videoData } = useQuery(VideoService.method.listVideos, {})
@@ -93,17 +104,22 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
           <Field>
             <Label>Validation share</Label>
             <Select value={valFraction} onChange={(e) => setValFraction(Number(e.target.value))}>
-              {valOptions.map((v) => (
-                <option key={v} value={v}>
-                  {Math.round(v * 100)}%
-                </option>
-              ))}
+              {[...new Set([...valOptions, defaults.valFraction])]
+                .sort((a, b) => a - b)
+                .map((v) => (
+                  <option key={v} value={v}>
+                    {Math.round(v * 100)}%
+                  </option>
+                ))}
             </Select>
           </Field>
           <Field>
             <Label>Frame stride</Label>
             <Select value={stride} onChange={(e) => setStride(Number(e.target.value))}>
-              {strideOptions.map((o) => (
+              {withValue(strideOptions, defaults.stride || 1, (v) => ({
+                value: v,
+                label: `Every ${v}th frame`,
+              })).map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -122,7 +138,10 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
                 value={dedupDistance}
                 onChange={(e) => setDedupDistance(Number(e.target.value))}
               >
-                {dedupOptions.map((o) => (
+                {withValue(dedupOptions, defaults.dedupDistance || 4, (v) => ({
+                  value: v,
+                  label: `Within ${v} bits`,
+                })).map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -184,9 +203,17 @@ function NewExportForm({ onClose }: { onClose: () => void }) {
 }
 
 export function NewExportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data } = useQuery(ExportService.method.getExportDefaults, {}, { enabled: open })
   return (
     <Dialog open={open} onClose={onClose} size="5xl">
-      {open && <NewExportForm onClose={onClose} />}
+      {open &&
+        (data?.options ? (
+          <NewExportForm defaults={data.options} onClose={onClose} />
+        ) : (
+          <div className="flex justify-center py-16">
+            <LoadingSpinner />
+          </div>
+        ))}
     </Dialog>
   )
 }

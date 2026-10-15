@@ -21,7 +21,12 @@ import (
 	"github.com/wauv/krill/api/internal/db"
 )
 
-const stateCookie = "krill_slack_state"
+const (
+	stateCookie = "krill_slack_state"
+	// inviteCookie carries an invite token through Slack's redirect without
+	// sending it to Slack.
+	inviteCookie = "krill_slack_invite"
+)
 
 type SlackConfig struct {
 	ClientID     string
@@ -30,23 +35,27 @@ type SlackConfig struct {
 	TeamID string
 	// PublicURL is where browsers reach the app, used for the redirect URL.
 	PublicURL string
+	// ClientIPHeader is trusted for the client's address when set.
+	ClientIPHeader string
 }
 
 // Slack implements Sign in with Slack, which is OpenID Connect and works on
-// free workspaces. Unknown Slack users get a labeler account, and a Slack
-// user whose verified email matches an account is linked to it. Linking an
+// free workspaces. Unknown Slack users get an account with the role of the
+// invite they followed or their pre-approved email, or else a labeler one. A
+// Slack user whose verified email matches an account is linked to it. Linking an
 // account whose email was never verified drops its password and sessions,
 // since whoever set them may not own the email.
 type Slack struct {
-	cfg     SlackConfig
+	cfg     func() SlackConfig
 	pool    *pgxpool.Pool
 	q       *db.Queries
 	cookies Cookies
 	client  *http.Client
 	baseURL string
+	tests   *slackTests
 }
 
-func NewSlack(pool *pgxpool.Pool, cfg SlackConfig, cookies Cookies) *Slack {
+func NewSlack(pool *pgxpool.Pool, cfg func() SlackConfig, cookies Cookies) *Slack {
 	return &Slack{
 		cfg:     cfg,
 		pool:    pool,
@@ -54,14 +63,28 @@ func NewSlack(pool *pgxpool.Pool, cfg SlackConfig, cookies Cookies) *Slack {
 		cookies: cookies,
 		client:  &http.Client{Timeout: 10 * time.Second},
 		baseURL: "https://slack.com",
+		tests:   newSlackTests(),
 	}
 }
 
-func (s *Slack) redirectURL() string {
-	return s.cfg.PublicURL + "/auth/slack/callback"
+func (c SlackConfig) redirectURL() string {
+	return c.PublicURL + "/auth/slack/callback"
 }
 
+func signInError(w http.ResponseWriter, r *http.Request, msg string) {
+	http.Redirect(w, r, "/login?error="+url.QueryEscape(msg), http.StatusFound)
+}
+
+// errSlackOff is shown when an admin turned Slack off after the sign-in page
+// loaded.
+const errSlackOff = "Sign in with Slack is turned off."
+
 func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
+	cfg := s.cfg()
+	if cfg.ClientID == "" {
+		signInError(w, r, errSlackOff)
+		return
+	}
 	raw := make([]byte, 16)
 	if _, err := rand.Read(raw); err != nil {
 		http.Error(w, "could not start sign-in", http.StatusInternalServerError)
@@ -69,24 +92,43 @@ func (s *Slack) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	state := base64.RawURLEncoding.EncodeToString(raw)
 	http.SetCookie(w, s.stateCookie(state, 600))
+	if invite := r.URL.Query().Get("invite"); invite != "" && len(invite) <= 128 {
+		http.SetCookie(w, s.cookie(inviteCookie, invite, 600))
+	}
+	http.Redirect(w, r, s.authorizeURL(cfg, state), http.StatusFound)
+}
+
+func (s *Slack) authorizeURL(cfg SlackConfig, state string) string {
 	q := url.Values{
 		"response_type": {"code"},
 		"scope":         {"openid profile email"},
-		"client_id":     {s.cfg.ClientID},
+		"client_id":     {cfg.ClientID},
 		"state":         {state},
-		"team":          {s.cfg.TeamID},
-		"redirect_uri":  {s.redirectURL()},
+		"team":          {cfg.TeamID},
+		"redirect_uri":  {cfg.redirectURL()},
 	}
-	http.Redirect(w, r, s.baseURL+"/openid/connect/authorize?"+q.Encode(), http.StatusFound)
+	return s.baseURL + "/openid/connect/authorize?" + q.Encode()
 }
 
 // Callback finishes sign-in and redirects to the app, or to the login page
 // with an error message.
 func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
-	fail := func(msg string) {
-		http.Redirect(w, r, "/login?error="+url.QueryEscape(msg), http.StatusFound)
+	if id, ok := s.tests.take(r.URL.Query().Get("state")); ok {
+		s.finishTest(w, r, id)
+		return
 	}
+	fail := func(msg string) { signInError(w, r, msg) }
 	http.SetCookie(w, s.stateCookie("", -1))
+	var invite string
+	if c, err := r.Cookie(inviteCookie); err == nil {
+		invite = c.Value
+		http.SetCookie(w, s.cookie(inviteCookie, "", -1))
+	}
+	cfg := s.cfg()
+	if cfg.ClientID == "" {
+		fail(errSlackOff)
+		return
+	}
 
 	query := r.URL.Query()
 	if query.Get("error") != "" {
@@ -100,17 +142,18 @@ func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.identity(r.Context(), query.Get("code"))
+	id, err := s.identity(r.Context(), cfg, query.Get("code"))
 	if err != nil {
 		slog.Error("slack sign-in", "err", err)
 		fail("Could not reach Slack. Try again.")
 		return
 	}
-	if id.TeamID != s.cfg.TeamID {
+	if id.TeamID != cfg.TeamID {
 		fail("That Slack workspace can't sign in here.")
 		return
 	}
-	cookie, err := s.signIn(r.Context(), id)
+	ctx := withClient(r.Context(), clientIP(r.RemoteAddr, r.Header, cfg.ClientIPHeader), r.UserAgent())
+	cookie, err := s.signIn(ctx, id, invite)
 	if err != nil {
 		var msg userError
 		if errors.As(err, &msg) {
@@ -127,9 +170,13 @@ func (s *Slack) Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Slack) stateCookie(value string, maxAge int) *http.Cookie {
+	return s.cookie(stateCookie, value, maxAge)
+}
+
+func (s *Slack) cookie(name, value string, maxAge int) *http.Cookie {
 	//nolint:gosec // Secure is off only when the app is served over plain HTTP
 	return &http.Cookie{
-		Name:     stateCookie,
+		Name:     name,
 		Value:    value,
 		Path:     "/auth/slack",
 		MaxAge:   maxAge,
@@ -149,6 +196,7 @@ type slackIdentity struct {
 	Error         string `json:"error"`
 	Sub           string `json:"sub"`
 	TeamID        string `json:"https://slack.com/team_id"`
+	TeamName      string `json:"https://slack.com/team_name"`
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
@@ -156,12 +204,12 @@ type slackIdentity struct {
 
 // identity trades the authorization code for the user's Slack profile. The
 // profile comes straight from Slack over TLS, so the ID token is not needed.
-func (s *Slack) identity(ctx context.Context, code string) (slackIdentity, error) {
+func (s *Slack) identity(ctx context.Context, cfg SlackConfig, code string) (slackIdentity, error) {
 	form := url.Values{
 		"code":          {code},
-		"client_id":     {s.cfg.ClientID},
-		"client_secret": {s.cfg.ClientSecret},
-		"redirect_uri":  {s.redirectURL()},
+		"client_id":     {cfg.ClientID},
+		"client_secret": {cfg.ClientSecret},
+		"redirect_uri":  {cfg.redirectURL()},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.baseURL+"/api/openid.connect.token",
 		strings.NewReader(form.Encode()))
@@ -178,7 +226,7 @@ func (s *Slack) identity(ctx context.Context, code string) (slackIdentity, error
 		return slackIdentity{}, fmt.Errorf("exchange code: %w", err)
 	}
 	if !token.OK {
-		return slackIdentity{}, fmt.Errorf("exchange code: %s", token.Error)
+		return slackIdentity{}, fmt.Errorf("exchange code: %w", slackError(token.Error))
 	}
 
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, s.baseURL+"/api/openid.connect.userInfo", nil)
@@ -208,7 +256,7 @@ func (s *Slack) do(req *http.Request, out any) error {
 	return json.NewDecoder(res.Body).Decode(out)
 }
 
-func (s *Slack) signIn(ctx context.Context, id slackIdentity) (*http.Cookie, error) {
+func (s *Slack) signIn(ctx context.Context, id slackIdentity, invite string) (*http.Cookie, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("begin: %w", err)
@@ -216,7 +264,7 @@ func (s *Slack) signIn(ctx context.Context, id slackIdentity) (*http.Cookie, err
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
 
-	user, err := s.findOrCreate(ctx, q, id)
+	user, err := s.findOrCreate(ctx, q, id, invite)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +281,7 @@ func (s *Slack) signIn(ctx context.Context, id slackIdentity) (*http.Cookie, err
 	return cookie, nil
 }
 
-func (s *Slack) findOrCreate(ctx context.Context, q *db.Queries, id slackIdentity) (db.User, error) {
+func (s *Slack) findOrCreate(ctx context.Context, q *db.Queries, id slackIdentity, invite string) (db.User, error) {
 	user, err := q.GetUserBySlackID(ctx, text(id.Sub))
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return user, err
@@ -275,18 +323,28 @@ func (s *Slack) findOrCreate(ctx context.Context, q *db.Queries, id slackIdentit
 	if err != nil {
 		return db.User{}, userError("Your Slack profile has no usable email.")
 	}
-	role, err := newUserRole(ctx, q, true)
+	// Anyone in the workspace may sign up, so the rules only decide the role.
+	g, err := grantSignup(ctx, q, signupRules{allowSignup: true}, invite, p.Email, id.EmailVerified)
+	if errors.Is(err, errInviteUsed) {
+		return db.User{}, userError("This invite link has expired or been used up.")
+	}
 	if err != nil {
 		return db.User{}, err
 	}
 	user, err = q.CreateUser(ctx, db.CreateUserParams{
-		Name: p.Name, Username: p.Username, Email: p.Email, Role: role, SlackUserID: text(id.Sub),
+		Name: p.Name, Username: p.Username, Email: p.Email, Role: g.role, SlackUserID: text(id.Sub),
 	})
 	if DuplicateError(err) != nil {
 		return db.User{}, userError("An account with your Slack email already exists. Sign in with your password instead.")
 	}
-	if err != nil || !id.EmailVerified {
-		return user, err
+	if err != nil {
+		return db.User{}, err
+	}
+	if err := g.record(ctx, q, user.ID); err != nil {
+		return db.User{}, err
+	}
+	if !id.EmailVerified {
+		return user, nil
 	}
 	return q.MarkEmailVerified(ctx, user.ID)
 }

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pytest
 
-from krill_worker.main import decode_frame
+from krill_worker.frames import decode_frame
 from krill_worker.track import drop_cut_off, mask_box
 
 

@@ -72,8 +72,11 @@ type GetSessionResponse struct {
 	EmailVerificationRequired bool `protobuf:"varint,7,opt,name=email_verification_required,json=emailVerificationRequired,proto3" json:"email_verification_required,omitempty"`
 	// The API can email sign-in and password reset codes.
 	EmailCodesEnabled bool `protobuf:"varint,8,opt,name=email_codes_enabled,json=emailCodesEnabled,proto3" json:"email_codes_enabled,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// Some pre-approved emails haven't signed up yet, so the sign-up form is
+	// shown even while sign-up is closed.
+	ApprovedSignupOpen bool `protobuf:"varint,27,opt,name=approved_signup_open,json=approvedSignupOpen,proto3" json:"approved_signup_open,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetSessionResponse) Reset() {
@@ -158,6 +161,13 @@ func (x *GetSessionResponse) GetEmailVerificationRequired() bool {
 func (x *GetSessionResponse) GetEmailCodesEnabled() bool {
 	if x != nil {
 		return x.EmailCodesEnabled
+	}
+	return false
+}
+
+func (x *GetSessionResponse) GetApprovedSignupOpen() bool {
+	if x != nil {
+		return x.ApprovedSignupOpen
 	}
 	return false
 }
@@ -259,11 +269,14 @@ func (x *LoginResponse) GetUser() *User {
 }
 
 type RegisterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email    string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Password string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	// From an invite link. It lets the account sign up while sign-up is closed
+	// or outside the sign-up domain, with the invite's role.
+	InviteToken   string `protobuf:"bytes,27,opt,name=invite_token,json=inviteToken,proto3" json:"invite_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -322,6 +335,13 @@ func (x *RegisterRequest) GetEmail() string {
 func (x *RegisterRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetInviteToken() string {
+	if x != nil {
+		return x.InviteToken
 	}
 	return ""
 }
@@ -1260,7 +1280,7 @@ var File_krill_v1_auth_proto protoreflect.FileDescriptor
 const file_krill_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x13krill/v1/auth.proto\x12\bkrill.v1\x1a\x13krill/v1/user.proto\"\x13\n" +
-	"\x11GetSessionRequest\"\xfe\x02\n" +
+	"\x11GetSessionRequest\"\xb0\x03\n" +
 	"\x12GetSessionResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\x12#\n" +
 	"\rslack_enabled\x18\x02 \x01(\bR\fslackEnabled\x12%\n" +
@@ -1269,17 +1289,19 @@ const file_krill_v1_auth_proto_rawDesc = "" +
 	"\x0fall_permissions\x18\x05 \x03(\v2\x18.krill.v1.PermissionInfoR\x0eallPermissions\x12(\n" +
 	"\x05roles\x18\x06 \x03(\v2\x12.krill.v1.RoleInfoR\x05roles\x12>\n" +
 	"\x1bemail_verification_required\x18\a \x01(\bR\x19emailVerificationRequired\x12.\n" +
-	"\x13email_codes_enabled\x18\b \x01(\bR\x11emailCodesEnabled\"@\n" +
+	"\x13email_codes_enabled\x18\b \x01(\bR\x11emailCodesEnabled\x120\n" +
+	"\x14approved_signup_open\x18\x1b \x01(\bR\x12approvedSignupOpen\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"3\n" +
 	"\rLoginResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"s\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"\x96\x01\n" +
 	"\x0fRegisterRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\"6\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12!\n" +
+	"\finvite_token\x18\x1b \x01(\tR\vinviteToken\"6\n" +
 	"\x10RegisterResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.krill.v1.UserR\x04user\"\x0f\n" +
 	"\rLogoutRequest\"\x10\n" +
