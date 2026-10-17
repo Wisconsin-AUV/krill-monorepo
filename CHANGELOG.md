@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Model trials: run any finished training run over a whole clip, held-out test videos included, and see its boxes in the clip view without pinning it or writing proposals. A slider thresholds the boxes live, compare mode colors them against the verified labels the way gold checks do, the timeline marks frames where they disagree, and the run page lists each trial's precision and recall per class.
+
 ## [0.5.0] - 2026-10-15
 
 ### Added
