@@ -57,6 +57,15 @@ class ParamKind(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     PARAM_KIND_FLOAT: _ClassVar[ParamKind]
     PARAM_KIND_BOOL: _ClassVar[ParamKind]
     PARAM_KIND_HSV_RANGE: _ClassVar[ParamKind]
+
+class ModelTrialStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    MODEL_TRIAL_STATUS_UNSPECIFIED: _ClassVar[ModelTrialStatus]
+    MODEL_TRIAL_STATUS_QUEUED: _ClassVar[ModelTrialStatus]
+    MODEL_TRIAL_STATUS_RUNNING: _ClassVar[ModelTrialStatus]
+    MODEL_TRIAL_STATUS_SUCCEEDED: _ClassVar[ModelTrialStatus]
+    MODEL_TRIAL_STATUS_FAILED: _ClassVar[ModelTrialStatus]
+    MODEL_TRIAL_STATUS_CANCELLED: _ClassVar[ModelTrialStatus]
 MODEL_SIZE_UNSPECIFIED: ModelSize
 MODEL_SIZE_NANO: ModelSize
 MODEL_SIZE_SMALL: ModelSize
@@ -85,6 +94,12 @@ PARAM_KIND_INT: ParamKind
 PARAM_KIND_FLOAT: ParamKind
 PARAM_KIND_BOOL: ParamKind
 PARAM_KIND_HSV_RANGE: ParamKind
+MODEL_TRIAL_STATUS_UNSPECIFIED: ModelTrialStatus
+MODEL_TRIAL_STATUS_QUEUED: ModelTrialStatus
+MODEL_TRIAL_STATUS_RUNNING: ModelTrialStatus
+MODEL_TRIAL_STATUS_SUCCEEDED: ModelTrialStatus
+MODEL_TRIAL_STATUS_FAILED: ModelTrialStatus
+MODEL_TRIAL_STATUS_CANCELLED: ModelTrialStatus
 
 class TrainConfig(_message.Message):
     __slots__ = ("size", "epochs", "image_size", "batch", "base_run_id", "dataset")
@@ -494,6 +509,147 @@ class PreviewPrelabelerResponse(_message.Message):
     frame_url: str
     took_ms: int
     def __init__(self, boxes: _Optional[_Iterable[_Union[PreviewBox, _Mapping]]] = ..., mask_url: _Optional[str] = ..., frame_url: _Optional[str] = ..., took_ms: _Optional[int] = ...) -> None: ...
+
+class ModelTrialBox(_message.Message):
+    __slots__ = ("frame_id", "label_type_id", "attributes", "box", "confidence", "track")
+    class AttributesEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    BOX_FIELD_NUMBER: _ClassVar[int]
+    CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
+    TRACK_FIELD_NUMBER: _ClassVar[int]
+    frame_id: int
+    label_type_id: int
+    attributes: _containers.ScalarMap[str, str]
+    box: _annotation_pb2.Box
+    confidence: float
+    track: int
+    def __init__(self, frame_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., confidence: _Optional[float] = ..., track: _Optional[int] = ...) -> None: ...
+
+class ModelTrialClass(_message.Message):
+    __slots__ = ("label_type_id", "name", "matched", "correct", "missed", "extra", "precision", "recall")
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    MATCHED_FIELD_NUMBER: _ClassVar[int]
+    CORRECT_FIELD_NUMBER: _ClassVar[int]
+    MISSED_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_FIELD_NUMBER: _ClassVar[int]
+    PRECISION_FIELD_NUMBER: _ClassVar[int]
+    RECALL_FIELD_NUMBER: _ClassVar[int]
+    label_type_id: int
+    name: str
+    matched: int
+    correct: int
+    missed: int
+    extra: int
+    precision: float
+    recall: float
+    def __init__(self, label_type_id: _Optional[int] = ..., name: _Optional[str] = ..., matched: _Optional[int] = ..., correct: _Optional[int] = ..., missed: _Optional[int] = ..., extra: _Optional[int] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ...) -> None: ...
+
+class ModelTrialSummary(_message.Message):
+    __slots__ = ("min_confidence", "labeled_frames", "all", "classes")
+    MIN_CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
+    LABELED_FRAMES_FIELD_NUMBER: _ClassVar[int]
+    ALL_FIELD_NUMBER: _ClassVar[int]
+    CLASSES_FIELD_NUMBER: _ClassVar[int]
+    min_confidence: float
+    labeled_frames: int
+    all: ModelTrialClass
+    classes: _containers.RepeatedCompositeFieldContainer[ModelTrialClass]
+    def __init__(self, min_confidence: _Optional[float] = ..., labeled_frames: _Optional[int] = ..., all: _Optional[_Union[ModelTrialClass, _Mapping]] = ..., classes: _Optional[_Iterable[_Union[ModelTrialClass, _Mapping]]] = ...) -> None: ...
+
+class ModelTrial(_message.Message):
+    __slots__ = ("id", "training_run_id", "clip_id", "video_id", "video_name", "clip_index", "status", "frames_total", "frames_done", "confidence_floor", "error", "created_by", "created_at", "finished_at", "summary")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    TRAINING_RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_NAME_FIELD_NUMBER: _ClassVar[int]
+    CLIP_INDEX_FIELD_NUMBER: _ClassVar[int]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    FRAMES_TOTAL_FIELD_NUMBER: _ClassVar[int]
+    FRAMES_DONE_FIELD_NUMBER: _ClassVar[int]
+    CONFIDENCE_FLOOR_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    CREATED_BY_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    FINISHED_AT_FIELD_NUMBER: _ClassVar[int]
+    SUMMARY_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    training_run_id: int
+    clip_id: int
+    video_id: int
+    video_name: str
+    clip_index: int
+    status: ModelTrialStatus
+    frames_total: int
+    frames_done: int
+    confidence_floor: float
+    error: str
+    created_by: str
+    created_at: _timestamp_pb2.Timestamp
+    finished_at: _timestamp_pb2.Timestamp
+    summary: ModelTrialSummary
+    def __init__(self, id: _Optional[int] = ..., training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ..., video_id: _Optional[int] = ..., video_name: _Optional[str] = ..., clip_index: _Optional[int] = ..., status: _Optional[_Union[ModelTrialStatus, str]] = ..., frames_total: _Optional[int] = ..., frames_done: _Optional[int] = ..., confidence_floor: _Optional[float] = ..., error: _Optional[str] = ..., created_by: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., summary: _Optional[_Union[ModelTrialSummary, _Mapping]] = ...) -> None: ...
+
+class StartModelTrialRequest(_message.Message):
+    __slots__ = ("training_run_id", "clip_id")
+    TRAINING_RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    training_run_id: int
+    clip_id: int
+    def __init__(self, training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ...) -> None: ...
+
+class StartModelTrialResponse(_message.Message):
+    __slots__ = ("trial",)
+    TRIAL_FIELD_NUMBER: _ClassVar[int]
+    trial: ModelTrial
+    def __init__(self, trial: _Optional[_Union[ModelTrial, _Mapping]] = ...) -> None: ...
+
+class GetModelTrialRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class GetModelTrialResponse(_message.Message):
+    __slots__ = ("trial", "boxes")
+    TRIAL_FIELD_NUMBER: _ClassVar[int]
+    BOXES_FIELD_NUMBER: _ClassVar[int]
+    trial: ModelTrial
+    boxes: _containers.RepeatedCompositeFieldContainer[ModelTrialBox]
+    def __init__(self, trial: _Optional[_Union[ModelTrial, _Mapping]] = ..., boxes: _Optional[_Iterable[_Union[ModelTrialBox, _Mapping]]] = ...) -> None: ...
+
+class ListModelTrialsRequest(_message.Message):
+    __slots__ = ("training_run_id", "clip_id")
+    TRAINING_RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    training_run_id: int
+    clip_id: int
+    def __init__(self, training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ...) -> None: ...
+
+class ListModelTrialsResponse(_message.Message):
+    __slots__ = ("trials",)
+    TRIALS_FIELD_NUMBER: _ClassVar[int]
+    trials: _containers.RepeatedCompositeFieldContainer[ModelTrial]
+    def __init__(self, trials: _Optional[_Iterable[_Union[ModelTrial, _Mapping]]] = ...) -> None: ...
+
+class CancelModelTrialRequest(_message.Message):
+    __slots__ = ("id",)
+    ID_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class CancelModelTrialResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
 
 class PrelabelFrame(_message.Message):
     __slots__ = ("id", "url")

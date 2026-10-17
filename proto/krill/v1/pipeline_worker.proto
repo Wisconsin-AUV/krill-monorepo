@@ -80,6 +80,9 @@ message ReportPrelabelsRequest {
   int64 task_id = 1;
   repeated PrelabelBox boxes = 2;
   bool done = 3;
+  // Frames finished so far, from the start of the task. Frames with no boxes
+  // are only known to be done from this.
+  int32 frames_done = 4;
 }
 
 message ReportPrelabelsResponse {}
