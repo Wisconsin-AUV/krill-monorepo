@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from krill.v1 import pipeline_pb2, pipeline_worker_pb2, worker_pb2
 
+from krill_worker import pipeline
 from krill_worker.api import Api, ApiError
 from krill_worker.pipeline import YoloModels, run_prelabel, run_preview
 from krill_worker.prelabelers.params import to_value
@@ -86,7 +87,10 @@ def slalom_config(**params: float) -> pipeline_pb2.PluginConfig:
     )
 
 
-def test_prelabel_reports_cv_boxes_by_plugin(tmp_path: Path) -> None:
+def test_prelabel_reports_cv_boxes_by_plugin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pipeline, "REPORT_EVERY", 0)
     red, white = (25, 20, 200), (235, 235, 235)
     frames = [
         pipeline_pb2.PrelabelFrame(id=1, url=pool_frame(tmp_path, "a.png", [(100, red)])),
@@ -103,6 +107,8 @@ def test_prelabel_reports_cv_boxes_by_plugin(tmp_path: Path) -> None:
     run_prelabel(cast(Api, api), task, YoloModels())
 
     assert api.prelabels[-1].done
+    # The last frame has no boxes and still counts as done.
+    assert [r.frames_done for r in api.prelabels] == [1, 2, 3, 3]
     boxes = [b for r in api.prelabels for b in r.boxes]
     got = sorted((b.frame_id, b.label, b.plugin) for b in boxes)
     assert got == [(1, "red", "slalom"), (2, "red", "slalom"), (2, "white", "slalom")]
