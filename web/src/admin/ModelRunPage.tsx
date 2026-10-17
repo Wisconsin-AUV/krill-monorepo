@@ -39,6 +39,7 @@ import { formatBytes, formatNumber } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 import { EpochChart } from './EpochChart'
 import { RunStatus } from './ModelsPage'
+import { RunTrials } from './RunTrials'
 import { elapsed, percent, runName, sizeNames, trainingActive } from './pipeline'
 
 const POLL = 5000
@@ -298,6 +299,7 @@ export function ModelRunPage() {
             </section>
           )}
           <Metrics run={run} pinned={data.pinned} />
+          {run.status === TrainingStatus.SUCCEEDED && <RunTrials runId={run.id} />}
           <Details run={run} now={dataUpdatedAt} />
           {run.log && (
             <section className="mt-12">
