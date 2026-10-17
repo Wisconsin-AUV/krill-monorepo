@@ -149,7 +149,7 @@ func (s *WorkerService) FinishTrain(ctx context.Context, req *krillv1.FinishTrai
 	return &krillv1.FinishTrainResponse{}, nil
 }
 
-func (s *WorkerService) ReportPrelabels(_ context.Context, req *krillv1.ReportPrelabelsRequest) (*krillv1.ReportPrelabelsResponse, error) {
+func (s *WorkerService) ReportPrelabels(ctx context.Context, req *krillv1.ReportPrelabelsRequest) (*krillv1.ReportPrelabelsResponse, error) {
 	t, ok := s.p.Dispatcher.Lookup(req.GetTaskId())
 	if !ok {
 		return nil, errUnknownTask
@@ -167,7 +167,9 @@ func (s *WorkerService) ReportPrelabels(_ context.Context, req *krillv1.ReportPr
 			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
 		}
 	}
-	col.add(req.GetBoxes())
+	if err := col.add(ctx, req.GetBoxes(), req.GetFramesDone()); err != nil {
+		return nil, rpc.Internal(err, "save boxes")
+	}
 	if req.GetDone() {
 		t.Finish(nil)
 	} else {

@@ -127,7 +127,9 @@ func targetKey(plugin, label string) string {
 	return plugin + "/" + label
 }
 
-func (p *Pipeline) yoloLabeler(ctx context.Context, runID int64) (*labeler, error) {
+// yoloLabeler proposes with run runID's model, whose worker drops boxes
+// below minConf.
+func (p *Pipeline) yoloLabeler(ctx context.Context, runID int64, minConf float32) (*labeler, error) {
 	row, err := p.q.GetTrainingRun(ctx, runID)
 	if err != nil {
 		return nil, fmt.Errorf("load model: %w", err)
@@ -136,9 +138,9 @@ func (p *Pipeline) yoloLabeler(ctx context.Context, runID int64) (*labeler, erro
 	if run.Status != "succeeded" {
 		return nil, errNotPinnable
 	}
-	var classes []classTarget
-	if err := json.Unmarshal(run.Classes, &classes); err != nil {
-		return nil, fmt.Errorf("decode classes: %w", err)
+	classes, err := runClasses(run)
+	if err != nil {
+		return nil, err
 	}
 	cfg := &krillv1.TrainConfig{}
 	if err := unmarshal(run.Config, cfg); err != nil {
@@ -152,7 +154,6 @@ func (p *Pipeline) yoloLabeler(ctx context.Context, runID int64) (*labeler, erro
 		}
 		l.targets[c.Name] = target{index: i, labelTypeID: c.LabelTypeID, attributes: attrs}
 	}
-	minConf := float32(p.Config().PrelabelConfidence)
 	l.task = func(ctx context.Context, msg *krillv1.PrelabelTask) error {
 		url, err := p.Store.PresignGetInternal(ctx, storage.TrainingWeightsKey(runID), prelabelURLExpiry)
 		if err != nil {
@@ -221,7 +222,7 @@ func (p *Pipeline) prelabel(ctx context.Context, id int64) error {
 		if !run.TrainingRunID.Valid {
 			return errors.New("the model was deleted")
 		}
-		l, err = p.yoloLabeler(ctx, run.TrainingRunID.Int64)
+		l, err = p.yoloLabeler(ctx, run.TrainingRunID.Int64, float32(p.Config().PrelabelConfidence))
 	} else {
 		l, err = p.cvLabeler(ctx)
 	}
@@ -264,12 +265,28 @@ type collector struct {
 	mu     sync.Mutex
 	frames map[int64]bool
 	boxes  []*krillv1.PrelabelBox
+	// save, when set, stores each report as it arrives instead of keeping
+	// its boxes. framesDone counts from the start of the task.
+	save func(ctx context.Context, boxes []*krillv1.PrelabelBox, framesDone int32) error
 }
 
-func (c *collector) add(boxes []*krillv1.PrelabelBox) {
+func (c *collector) add(ctx context.Context, boxes []*krillv1.PrelabelBox, framesDone int32) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.save != nil {
+		return c.save(ctx, boxes, framesDone)
+	}
 	c.boxes = append(c.boxes, boxes...)
+	return nil
+}
+
+// runClasses decodes the classes a run trained on, in YOLO class order.
+func runClasses(run db.TrainingRun) ([]classTarget, error) {
+	var classes []classTarget
+	if err := json.Unmarshal(run.Classes, &classes); err != nil {
+		return nil, fmt.Errorf("decode classes: %w", err)
+	}
+	return classes, nil
 }
 
 func (p *Pipeline) prelabelClip(ctx context.Context, runID int64, l *labeler, c db.ListPrelabelClipsRow) (frames, proposals int, err error) {
