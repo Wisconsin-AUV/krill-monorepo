@@ -238,6 +238,20 @@ export function ClipPage() {
   const trialBoxes = useTrialStore((s) => s.boxes)
   const threshold = useTrialStore((s) => s.threshold)
   const trialVisible = useTrialStore((s) => s.visible)
+  const compareParam = params.get('mode') === 'compare'
+  const trialLoaded = trialId !== undefined && trial?.id === trialId
+  useEffect(() => {
+    if (!compareParam || !trialLoaded) return
+    useTrialStore.getState().setMode('compare')
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('mode')
+        return next
+      },
+      { replace: true },
+    )
+  }, [compareParam, trialLoaded, setParams])
   const corrected = useUIStore((s) => s.displayCorrection)
   const toggleCorrected = useUIStore((s) => s.toggleDisplayCorrection)
 
