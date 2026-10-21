@@ -73,3 +73,6 @@ DELETE FROM clip_claims WHERE clip_id = ANY(@clip_ids::bigint[]);
 -- name: DeleteClip :one
 DELETE FROM clips WHERE id = $1 AND deleted_at IS NOT NULL
 RETURNING video_id, start_frame, frame_count;
+
+-- name: ListVideoClipIDs :many
+SELECT id FROM clips WHERE video_id = $1 AND deleted_at IS NULL ORDER BY idx;

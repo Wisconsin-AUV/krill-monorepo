@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -23,6 +24,7 @@ import (
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/tracker"
+	"github.com/wauv/krill/api/internal/video"
 )
 
 const (
@@ -343,6 +345,76 @@ func (t tally) class(labelTypeID int64, name string) *krillv1.ModelTrialClass {
 	}
 }
 
+func (t tally) wrong() int { return t.matched - t.correct }
+
+func (t tally) errors() int { return t.missed + t.extra + t.wrong() }
+
+type tallies map[int64]*tally
+
+func (m tallies) get(id int64) *tally {
+	if m[id] == nil {
+		m[id] = &tally{}
+	}
+	return m[id]
+}
+
+// score adds one frame's model boxes, scored against its verified ones, to
+// the counts of each box's label type.
+func (m tallies) score(ref, ans []gold.Box) {
+	res := gold.ScoreSetAttributes(ref, ans)
+	matchedRef := make([]bool, len(ref))
+	matchedAns := make([]bool, len(ans))
+	for _, mt := range res.Matches {
+		matchedRef[mt.Reference], matchedAns[mt.Answer] = true, true
+		tl := m.get(ref[mt.Reference].LabelTypeID)
+		tl.matched++
+		if mt.Correct {
+			tl.correct++
+		}
+	}
+	for i, b := range ref {
+		if !matchedRef[i] {
+			m.get(b.LabelTypeID).missed++
+		}
+	}
+	for i, b := range ans {
+		if !matchedAns[i] {
+			m.get(b.LabelTypeID).extra++
+		}
+	}
+}
+
+// frameBoxes groups verified and model boxes by frame, keeping only
+// labelType's when it is set.
+func frameBoxes(refRows []db.ListDoneVerifiedBoxesRow, ansRows []db.ListDoneTrialBoxesRow, classes []classTarget, labelType int64) (refs, answers map[int64][]gold.Box, err error) {
+	refs, answers = map[int64][]gold.Box{}, map[int64][]gold.Box{}
+	for _, b := range refRows {
+		if labelType != 0 && b.LabelTypeID != labelType {
+			continue
+		}
+		var attrs map[string]string
+		if err := json.Unmarshal(b.Attributes, &attrs); err != nil {
+			return nil, nil, fmt.Errorf("decode attributes: %w", err)
+		}
+		refs[b.FrameID] = append(refs[b.FrameID], gold.Box{
+			LabelTypeID: b.LabelTypeID, Attributes: attrs, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
+		})
+	}
+	for _, b := range ansRows {
+		if int(b.Class) >= len(classes) || b.Class < 0 {
+			continue
+		}
+		c := classes[b.Class]
+		if labelType != 0 && c.LabelTypeID != labelType {
+			continue
+		}
+		answers[b.FrameID] = append(answers[b.FrameID], gold.Box{
+			LabelTypeID: c.LabelTypeID, Attributes: c.Attributes, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
+		})
+	}
+	return refs, answers, nil
+}
+
 // summary scores the trial's boxes at the live pre-label threshold against
 // the verified boxes on the clip's done frames, or returns nil when none is
 // done.
@@ -363,78 +435,48 @@ func (r *trialReader) summary(ctx context.Context, t db.ModelTrial, classes []cl
 	if err != nil {
 		return nil, fmt.Errorf("list trial boxes: %w", err)
 	}
-	refs := map[int64][]gold.Box{}
-	for _, b := range refRows {
-		var attrs map[string]string
-		if err := json.Unmarshal(b.Attributes, &attrs); err != nil {
-			return nil, fmt.Errorf("decode attributes: %w", err)
-		}
-		refs[b.FrameID] = append(refs[b.FrameID], gold.Box{
-			LabelTypeID: b.LabelTypeID, Attributes: attrs, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
-		})
-	}
-	answers := map[int64][]gold.Box{}
-	for _, b := range ansRows {
-		if int(b.Class) >= len(classes) || b.Class < 0 {
-			continue
-		}
-		c := classes[b.Class]
-		answers[b.FrameID] = append(answers[b.FrameID], gold.Box{
-			LabelTypeID: c.LabelTypeID, Attributes: c.Attributes, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
-		})
-	}
-
-	byType := map[int64]*tally{}
-	get := func(id int64) *tally {
-		if byType[id] == nil {
-			byType[id] = &tally{}
-		}
-		return byType[id]
-	}
-	for _, f := range done {
-		ref, ans := refs[f], answers[f]
-		res := gold.ScoreSetAttributes(ref, ans)
-		matchedRef := make([]bool, len(ref))
-		matchedAns := make([]bool, len(ans))
-		for _, m := range res.Matches {
-			matchedRef[m.Reference], matchedAns[m.Answer] = true, true
-			tl := get(ref[m.Reference].LabelTypeID)
-			tl.matched++
-			if m.Correct {
-				tl.correct++
-			}
-		}
-		for i, b := range ref {
-			if !matchedRef[i] {
-				get(b.LabelTypeID).missed++
-			}
-		}
-		for i, b := range ans {
-			if !matchedAns[i] {
-				get(b.LabelTypeID).extra++
-			}
-		}
-	}
-
-	if err := r.loadNames(ctx); err != nil {
+	refs, answers, err := frameBoxes(refRows, ansRows, classes, 0)
+	if err != nil {
 		return nil, err
+	}
+	byType := tallies{}
+	for _, f := range done {
+		byType.score(refs[f], answers[f])
 	}
 	out := &krillv1.ModelTrialSummary{MinConfidence: minConf, LabeledFrames: int32(len(done))} //nolint:gosec // frame counts fit in int32
 	var all tally
+	if out.Classes, all, err = r.classList(ctx, byType, nil); err != nil {
+		return nil, err
+	}
+	out.All = all.class(0, "")
+	return out, nil
+}
+
+// classList converts the types in byType that keep accepts, or all of them
+// when keep is nil, in label type order, and sums every type into all.
+func (r *trialReader) classList(ctx context.Context, byType tallies, keep func(tally) bool) (out []*krillv1.ModelTrialClass, all tally, err error) {
+	if err := r.loadNames(ctx); err != nil {
+		return nil, tally{}, err
+	}
+	add := func(id int64, name string) {
+		tl := *byType[id]
+		all.add(tl)
+		if keep == nil || keep(tl) {
+			out = append(out, tl.class(id, name))
+		}
+	}
 	for _, id := range r.order {
-		if tl := byType[id]; tl != nil {
-			all.add(*tl)
-			out.Classes = append(out.Classes, tl.class(id, r.names[id]))
-			delete(byType, id)
+		if byType[id] != nil {
+			add(id, r.names[id])
 		}
 	}
 	// Types deleted since keep their counts under no name.
 	for _, id := range slices.Sorted(maps.Keys(byType)) {
-		all.add(*byType[id])
-		out.Classes = append(out.Classes, byType[id].class(id, ""))
+		if _, ok := r.names[id]; !ok {
+			add(id, "")
+		}
 	}
-	out.All = all.class(0, "")
-	return out, nil
+	return out, all, nil
 }
 
 func (r *trialReader) loadNames(ctx context.Context) error {
@@ -454,16 +496,32 @@ func (r *trialReader) loadNames(ctx context.Context) error {
 }
 
 func (s *Service) StartModelTrial(ctx context.Context, req *krillv1.StartModelTrialRequest) (*krillv1.StartModelTrialResponse, error) {
+	runID, clipID, videoID := req.GetTrainingRunId(), req.GetClipId(), req.GetVideoId()
+	if (clipID == 0) == (videoID == 0) {
+		return nil, rpc.Invalid("give a clip or a video")
+	}
 	q := s.p.q
-	run, err := q.GetTrainingRun(ctx, req.GetTrainingRunId())
+	run, err := q.GetTrainingRun(ctx, runID)
 	if err != nil {
 		return nil, rpc.DBError(err, "run")
 	}
 	if run.TrainingRun.Status != "succeeded" {
 		return nil, failed("only a finished run's model can be tried")
 	}
-	if _, err := q.GetClip(ctx, req.GetClipId()); err != nil {
-		return nil, rpc.DBError(err, "clip")
+	var clips []int64
+	var v db.Video
+	if clipID != 0 {
+		if _, err := q.GetClip(ctx, clipID); err != nil {
+			return nil, rpc.DBError(err, "clip")
+		}
+		clips = []int64{clipID}
+	} else {
+		if v, err = q.GetVideo(ctx, videoID); err != nil {
+			return nil, rpc.DBError(err, "video")
+		}
+		if clips, err = q.ListVideoClipIDs(ctx, videoID); err != nil {
+			return nil, rpc.Internal(err, "list clips")
+		}
 	}
 
 	tx, err := s.p.Pool.Begin(ctx)
@@ -472,45 +530,72 @@ func (s *Service) StartModelTrial(ctx context.Context, req *krillv1.StartModelTr
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q = q.WithTx(tx)
-	key := db.QueueModelTrialParams{TrainingRunID: req.GetTrainingRunId(), ClipID: req.GetClipId(), CreatedBy: caller(ctx)}
-	id, err := q.QueueModelTrial(ctx, key)
-	queued := err == nil
-	if errors.Is(err, pgx.ErrNoRows) {
-		id, err = q.GetModelTrialID(ctx, db.GetModelTrialIDParams{TrainingRunID: key.TrainingRunID, ClipID: key.ClipID})
-	}
-	if err != nil {
-		return nil, rpc.Internal(err, "queue trial")
-	}
-	if queued {
-		if err := q.DeleteModelTrialBoxes(ctx, id); err != nil {
-			return nil, rpc.Internal(err, "clear old boxes")
-		}
-		if _, err := s.p.jobs.InsertTx(ctx, tx, ModelTrialArgs{TrialID: id}, nil); err != nil {
+	// Queued in clip order, so the worker runs them in that order.
+	ids := make([]int64, len(clips))
+	queued := 0
+	for i, c := range clips {
+		var ok bool
+		if ids[i], ok, err = s.queueTrial(ctx, tx, q, runID, c); err != nil {
 			return nil, rpc.Internal(err, "queue trial")
 		}
-		err = audit.Record(ctx, q, audit.Entry{
+		if ok {
+			queued++
+		}
+	}
+	if queued > 0 {
+		entry := audit.Entry{
 			Action:     audit.ModelTrialStart,
 			TargetType: audit.TargetModelTrial,
-			TargetID:   strconv.FormatInt(id, 10),
-			TargetName: trialName(id),
-			Details:    map[string]any{"model": runName(key.TrainingRunID), "clip_id": key.ClipID},
-		})
-		if err != nil {
+			TargetID:   strconv.FormatInt(ids[0], 10),
+			TargetName: trialName(ids[0]),
+			Details:    map[string]any{"model": runName(runID), "clip_id": clipID},
+		}
+		if videoID != 0 {
+			entry.TargetType, entry.TargetID, entry.TargetName = audit.TargetVideo, strconv.FormatInt(videoID, 10), v.Name
+			entry.Details = map[string]any{"model": runName(runID), "video_id": videoID, "clips": queued}
+		}
+		if err := audit.Record(ctx, q, entry); err != nil {
 			return nil, rpc.Internal(err, "record audit entry")
 		}
 	}
-	row, err := q.GetModelTrial(ctx, id)
-	if err != nil {
-		return nil, rpc.Internal(err, "load trial")
-	}
-	out, err := s.p.trialReader(q).trial(ctx, row)
-	if err != nil {
-		return nil, rpc.Internal(err, "load trial")
+	r := s.p.trialReader(q)
+	out := &krillv1.StartModelTrialResponse{Trials: make([]*krillv1.ModelTrial, len(ids))}
+	for i, id := range ids {
+		row, err := q.GetModelTrial(ctx, id)
+		if err != nil {
+			return nil, rpc.Internal(err, "load trial")
+		}
+		if out.Trials[i], err = r.trial(ctx, row); err != nil {
+			return nil, rpc.Internal(err, "load trial")
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
-	return &krillv1.StartModelTrialResponse{Trial: out}, nil
+	if clipID != 0 {
+		out.Trial = out.Trials[0]
+	}
+	return out, nil
+}
+
+// queueTrial queues the run's trial on clipID and its job, unless a trial
+// there is queued, running, or done, and returns the trial's id either way.
+func (s *Service) queueTrial(ctx context.Context, tx pgx.Tx, q *db.Queries, runID, clipID int64) (id int64, queued bool, err error) {
+	id, err = q.QueueModelTrial(ctx, db.QueueModelTrialParams{TrainingRunID: runID, ClipID: clipID, CreatedBy: caller(ctx)})
+	if errors.Is(err, pgx.ErrNoRows) {
+		id, err = q.GetModelTrialID(ctx, db.GetModelTrialIDParams{TrainingRunID: runID, ClipID: clipID})
+		return id, false, err
+	}
+	if err != nil {
+		return 0, false, err
+	}
+	if err := q.DeleteModelTrialBoxes(ctx, id); err != nil {
+		return 0, false, fmt.Errorf("clear old boxes: %w", err)
+	}
+	if _, err := s.p.jobs.InsertTx(ctx, tx, ModelTrialArgs{TrialID: id}, nil); err != nil {
+		return 0, false, fmt.Errorf("insert job: %w", err)
+	}
+	return id, true, nil
 }
 
 func (s *Service) GetModelTrial(ctx context.Context, req *krillv1.GetModelTrialRequest) (*krillv1.GetModelTrialResponse, error) {
@@ -603,4 +688,105 @@ func (s *Service) CancelModelTrial(ctx context.Context, req *krillv1.CancelModel
 	}
 	s.p.stop("trial", req.GetId())
 	return &krillv1.CancelModelTrialResponse{}, nil
+}
+
+func (s *Service) ListModelTrialErrors(ctx context.Context, req *krillv1.ListModelTrialErrorsRequest) (*krillv1.ListModelTrialErrorsResponse, error) {
+	return s.listTrialErrors(ctx, req, video.NewPresenter(s.p.Store).FrameURL)
+}
+
+func (s *Service) listTrialErrors(ctx context.Context, req *krillv1.ListModelTrialErrorsRequest, sign func(context.Context, int64, int32) (string, error)) (*krillv1.ListModelTrialErrorsResponse, error) {
+	limit := int(req.GetLimit())
+	if limit <= 0 {
+		limit = 50
+	}
+	limit = min(limit, 200)
+	q := s.p.q
+	run, err := q.GetTrainingRun(ctx, req.GetTrainingRunId())
+	if err != nil {
+		return nil, rpc.DBError(err, "run")
+	}
+	classes, err := runClasses(run.TrainingRun)
+	if err != nil {
+		return nil, rpc.Internal(err, "load run")
+	}
+	runID := run.TrainingRun.ID
+	videoID := pgtype.Int8{Int64: req.GetVideoId(), Valid: req.GetVideoId() != 0}
+	minConf := float32(s.p.Config().PrelabelConfidence)
+	frames, err := q.ListRunTrialFrames(ctx, db.ListRunTrialFramesParams{TrainingRunID: runID, VideoID: videoID})
+	if err != nil {
+		return nil, rpc.Internal(err, "list frames")
+	}
+	refRows, err := q.ListRunTrialVerifiedBoxes(ctx, db.ListRunTrialVerifiedBoxesParams{TrainingRunID: runID, VideoID: videoID})
+	if err != nil {
+		return nil, rpc.Internal(err, "list verified boxes")
+	}
+	ansRows, err := q.ListRunTrialBoxes(ctx, db.ListRunTrialBoxesParams{TrainingRunID: runID, VideoID: videoID, MinConfidence: minConf})
+	if err != nil {
+		return nil, rpc.Internal(err, "list trial boxes")
+	}
+	refs := make([]db.ListDoneVerifiedBoxesRow, len(refRows))
+	for i, b := range refRows {
+		refs[i] = db.ListDoneVerifiedBoxesRow(b)
+	}
+	answers := make([]db.ListDoneTrialBoxesRow, len(ansRows))
+	for i, b := range ansRows {
+		answers[i] = db.ListDoneTrialBoxesRow(b)
+	}
+	refBoxes, ansBoxes, err := frameBoxes(refs, answers, classes, req.GetLabelTypeId())
+	if err != nil {
+		return nil, rpc.Internal(err, "list trial errors")
+	}
+
+	type scored struct {
+		row    db.ListRunTrialFramesRow
+		byType tallies
+		errors int
+	}
+	var bad []scored
+	for _, f := range frames {
+		byType := tallies{}
+		byType.score(refBoxes[f.FrameID], ansBoxes[f.FrameID])
+		var all tally
+		for _, tl := range byType {
+			all.add(*tl)
+		}
+		if n := all.errors(); n > 0 {
+			bad = append(bad, scored{row: f, byType: byType, errors: n})
+		}
+	}
+	// Stable, so ties keep the video, clip, and frame order frames came in.
+	slices.SortStableFunc(bad, func(a, b scored) int { return cmp.Compare(b.errors, a.errors) })
+
+	out := &krillv1.ListModelTrialErrorsResponse{
+		TotalFrames: int32(len(frames)), //nolint:gosec // frame counts fit in int32
+		ErrorFrames: int32(len(bad)),    //nolint:gosec // frame counts fit in int32
+	}
+	r := s.p.trialReader(q)
+	hasError := func(t tally) bool { return t.errors() > 0 }
+	for _, f := range bad[:min(limit, len(bad))] {
+		types, all, err := r.classList(ctx, f.byType, hasError)
+		if err != nil {
+			return nil, rpc.Internal(err, "list trial errors")
+		}
+		url, err := sign(ctx, f.row.VideoID, f.row.FrameIdx)
+		if err != nil {
+			return nil, rpc.Internal(err, "sign frame url")
+		}
+		out.Frames = append(out.Frames, &krillv1.ModelTrialFrame{
+			TrialId:      f.row.TrialID,
+			ClipId:       f.row.ClipID,
+			VideoId:      f.row.VideoID,
+			VideoName:    f.row.VideoName,
+			ClipIndex:    f.row.ClipIdx,
+			FrameId:      f.row.FrameID,
+			FrameIndex:   f.row.FrameIdx,
+			ThumbnailUrl: url,
+			Matched:      int32(all.matched), //nolint:gosec // box counts fit in int32
+			Wrong:        int32(all.wrong()), //nolint:gosec // box counts fit in int32
+			Missed:       int32(all.missed),  //nolint:gosec // box counts fit in int32
+			Extra:        int32(all.extra),   //nolint:gosec // box counts fit in int32
+			Classes:      types,
+		})
+	}
+	return out, nil
 }

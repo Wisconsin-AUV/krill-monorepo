@@ -436,6 +436,185 @@ func (q *Queries) ListModelTrials(ctx context.Context, arg ListModelTrialsParams
 	return items, nil
 }
 
+const listRunTrialBoxes = `-- name: ListRunTrialBoxes :many
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN model_trial_boxes b ON b.trial_id = t.id
+JOIN frames f ON f.id = b.frame_id
+WHERE t.training_run_id = $1 AND t.status = 'succeeded'
+    AND ($2::bigint IS NULL OR c.video_id = $2)
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled' AND b.confidence >= $3
+`
+
+type ListRunTrialBoxesParams struct {
+	TrainingRunID int64       `json:"training_run_id"`
+	VideoID       pgtype.Int8 `json:"video_id"`
+	MinConfidence float32     `json:"min_confidence"`
+}
+
+type ListRunTrialBoxesRow struct {
+	FrameID int64   `json:"frame_id"`
+	Class   int32   `json:"class"`
+	X       float64 `json:"x"`
+	Y       float64 `json:"y"`
+	Width   float64 `json:"width"`
+	Height  float64 `json:"height"`
+}
+
+// The trial boxes on the frames ListRunTrialFrames returns, at or above the
+// threshold.
+func (q *Queries) ListRunTrialBoxes(ctx context.Context, arg ListRunTrialBoxesParams) ([]ListRunTrialBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listRunTrialBoxes, arg.TrainingRunID, arg.VideoID, arg.MinConfidence)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRunTrialBoxesRow
+	for rows.Next() {
+		var i ListRunTrialBoxesRow
+		if err := rows.Scan(
+			&i.FrameID,
+			&i.Class,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRunTrialFrames = `-- name: ListRunTrialFrames :many
+SELECT
+    t.id AS trial_id,
+    t.clip_id,
+    c.video_id,
+    v.name AS video_name,
+    c.idx AS clip_idx,
+    f.id AS frame_id,
+    f.idx AS frame_idx
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.clip_id = t.clip_id
+WHERE t.training_run_id = $1 AND t.status = 'succeeded'
+    AND ($2::bigint IS NULL OR c.video_id = $2)
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled'
+ORDER BY v.name, v.id, c.idx, f.idx
+`
+
+type ListRunTrialFramesParams struct {
+	TrainingRunID int64       `json:"training_run_id"`
+	VideoID       pgtype.Int8 `json:"video_id"`
+}
+
+type ListRunTrialFramesRow struct {
+	TrialID   int64  `json:"trial_id"`
+	ClipID    int64  `json:"clip_id"`
+	VideoID   int64  `json:"video_id"`
+	VideoName string `json:"video_name"`
+	ClipIdx   int32  `json:"clip_idx"`
+	FrameID   int64  `json:"frame_id"`
+	FrameIdx  int32  `json:"frame_idx"`
+}
+
+// The done frames a run's finished trials cover, outside the trash.
+func (q *Queries) ListRunTrialFrames(ctx context.Context, arg ListRunTrialFramesParams) ([]ListRunTrialFramesRow, error) {
+	rows, err := q.db.Query(ctx, listRunTrialFrames, arg.TrainingRunID, arg.VideoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRunTrialFramesRow
+	for rows.Next() {
+		var i ListRunTrialFramesRow
+		if err := rows.Scan(
+			&i.TrialID,
+			&i.ClipID,
+			&i.VideoID,
+			&i.VideoName,
+			&i.ClipIdx,
+			&i.FrameID,
+			&i.FrameIdx,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRunTrialVerifiedBoxes = `-- name: ListRunTrialVerifiedBoxes :many
+SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.clip_id = t.clip_id
+JOIN annotations a ON a.frame_id = f.id
+JOIN tracks tr ON tr.id = a.track_id
+WHERE t.training_run_id = $1 AND t.status = 'succeeded'
+    AND ($2::bigint IS NULL OR c.video_id = $2)
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled' AND a.status = 'verified'
+`
+
+type ListRunTrialVerifiedBoxesParams struct {
+	TrainingRunID int64       `json:"training_run_id"`
+	VideoID       pgtype.Int8 `json:"video_id"`
+}
+
+type ListRunTrialVerifiedBoxesRow struct {
+	FrameID     int64   `json:"frame_id"`
+	LabelTypeID int64   `json:"label_type_id"`
+	Attributes  []byte  `json:"attributes"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	Width       float64 `json:"width"`
+	Height      float64 `json:"height"`
+}
+
+// The verified boxes on the frames ListRunTrialFrames returns.
+func (q *Queries) ListRunTrialVerifiedBoxes(ctx context.Context, arg ListRunTrialVerifiedBoxesParams) ([]ListRunTrialVerifiedBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listRunTrialVerifiedBoxes, arg.TrainingRunID, arg.VideoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRunTrialVerifiedBoxesRow
+	for rows.Next() {
+		var i ListRunTrialVerifiedBoxesRow
+		if err := rows.Scan(
+			&i.FrameID,
+			&i.LabelTypeID,
+			&i.Attributes,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const queueModelTrial = `-- name: QueueModelTrial :one
 INSERT INTO model_trials (training_run_id, clip_id, created_by)
 VALUES ($1, $2, $3::uuid)

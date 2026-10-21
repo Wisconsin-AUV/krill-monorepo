@@ -600,18 +600,22 @@ class ModelTrial(_message.Message):
     def __init__(self, id: _Optional[int] = ..., training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ..., video_id: _Optional[int] = ..., video_name: _Optional[str] = ..., clip_index: _Optional[int] = ..., status: _Optional[_Union[ModelTrialStatus, str]] = ..., frames_total: _Optional[int] = ..., frames_done: _Optional[int] = ..., confidence_floor: _Optional[float] = ..., error: _Optional[str] = ..., created_by: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., summary: _Optional[_Union[ModelTrialSummary, _Mapping]] = ...) -> None: ...
 
 class StartModelTrialRequest(_message.Message):
-    __slots__ = ("training_run_id", "clip_id")
+    __slots__ = ("training_run_id", "clip_id", "video_id")
     TRAINING_RUN_ID_FIELD_NUMBER: _ClassVar[int]
     CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
     training_run_id: int
     clip_id: int
-    def __init__(self, training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ...) -> None: ...
+    video_id: int
+    def __init__(self, training_run_id: _Optional[int] = ..., clip_id: _Optional[int] = ..., video_id: _Optional[int] = ...) -> None: ...
 
 class StartModelTrialResponse(_message.Message):
-    __slots__ = ("trial",)
+    __slots__ = ("trial", "trials")
     TRIAL_FIELD_NUMBER: _ClassVar[int]
+    TRIALS_FIELD_NUMBER: _ClassVar[int]
     trial: ModelTrial
-    def __init__(self, trial: _Optional[_Union[ModelTrial, _Mapping]] = ...) -> None: ...
+    trials: _containers.RepeatedCompositeFieldContainer[ModelTrial]
+    def __init__(self, trial: _Optional[_Union[ModelTrial, _Mapping]] = ..., trials: _Optional[_Iterable[_Union[ModelTrial, _Mapping]]] = ...) -> None: ...
 
 class GetModelTrialRequest(_message.Message):
     __slots__ = ("id",)
@@ -650,6 +654,58 @@ class CancelModelTrialRequest(_message.Message):
 class CancelModelTrialResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class ModelTrialFrame(_message.Message):
+    __slots__ = ("trial_id", "clip_id", "video_id", "video_name", "clip_index", "frame_id", "frame_index", "thumbnail_url", "matched", "wrong", "missed", "extra", "classes")
+    TRIAL_ID_FIELD_NUMBER: _ClassVar[int]
+    CLIP_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_NAME_FIELD_NUMBER: _ClassVar[int]
+    CLIP_INDEX_FIELD_NUMBER: _ClassVar[int]
+    FRAME_ID_FIELD_NUMBER: _ClassVar[int]
+    FRAME_INDEX_FIELD_NUMBER: _ClassVar[int]
+    THUMBNAIL_URL_FIELD_NUMBER: _ClassVar[int]
+    MATCHED_FIELD_NUMBER: _ClassVar[int]
+    WRONG_FIELD_NUMBER: _ClassVar[int]
+    MISSED_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_FIELD_NUMBER: _ClassVar[int]
+    CLASSES_FIELD_NUMBER: _ClassVar[int]
+    trial_id: int
+    clip_id: int
+    video_id: int
+    video_name: str
+    clip_index: int
+    frame_id: int
+    frame_index: int
+    thumbnail_url: str
+    matched: int
+    wrong: int
+    missed: int
+    extra: int
+    classes: _containers.RepeatedCompositeFieldContainer[ModelTrialClass]
+    def __init__(self, trial_id: _Optional[int] = ..., clip_id: _Optional[int] = ..., video_id: _Optional[int] = ..., video_name: _Optional[str] = ..., clip_index: _Optional[int] = ..., frame_id: _Optional[int] = ..., frame_index: _Optional[int] = ..., thumbnail_url: _Optional[str] = ..., matched: _Optional[int] = ..., wrong: _Optional[int] = ..., missed: _Optional[int] = ..., extra: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ModelTrialClass, _Mapping]]] = ...) -> None: ...
+
+class ListModelTrialErrorsRequest(_message.Message):
+    __slots__ = ("training_run_id", "video_id", "label_type_id", "limit")
+    TRAINING_RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    VIDEO_ID_FIELD_NUMBER: _ClassVar[int]
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_FIELD_NUMBER: _ClassVar[int]
+    training_run_id: int
+    video_id: int
+    label_type_id: int
+    limit: int
+    def __init__(self, training_run_id: _Optional[int] = ..., video_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., limit: _Optional[int] = ...) -> None: ...
+
+class ListModelTrialErrorsResponse(_message.Message):
+    __slots__ = ("frames", "total_frames", "error_frames")
+    FRAMES_FIELD_NUMBER: _ClassVar[int]
+    TOTAL_FRAMES_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FRAMES_FIELD_NUMBER: _ClassVar[int]
+    frames: _containers.RepeatedCompositeFieldContainer[ModelTrialFrame]
+    total_frames: int
+    error_frames: int
+    def __init__(self, frames: _Optional[_Iterable[_Union[ModelTrialFrame, _Mapping]]] = ..., total_frames: _Optional[int] = ..., error_frames: _Optional[int] = ...) -> None: ...
 
 class PrelabelFrame(_message.Message):
     __slots__ = ("id", "url")

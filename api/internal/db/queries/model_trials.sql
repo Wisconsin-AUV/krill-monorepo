@@ -120,3 +120,51 @@ FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN frames f ON f.id = a.frame_id
 WHERE f.clip_id = $1 AND f.status <> 'unlabeled' AND a.status = 'verified';
+
+-- name: ListRunTrialFrames :many
+-- The done frames a run's finished trials cover, outside the trash.
+SELECT
+    t.id AS trial_id,
+    t.clip_id,
+    c.video_id,
+    v.name AS video_name,
+    c.idx AS clip_idx,
+    f.id AS frame_id,
+    f.idx AS frame_idx
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.clip_id = t.clip_id
+WHERE t.training_run_id = @training_run_id AND t.status = 'succeeded'
+    AND (sqlc.narg('video_id')::bigint IS NULL OR c.video_id = sqlc.narg('video_id'))
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled'
+ORDER BY v.name, v.id, c.idx, f.idx;
+
+-- name: ListRunTrialVerifiedBoxes :many
+-- The verified boxes on the frames ListRunTrialFrames returns.
+SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.clip_id = t.clip_id
+JOIN annotations a ON a.frame_id = f.id
+JOIN tracks tr ON tr.id = a.track_id
+WHERE t.training_run_id = @training_run_id AND t.status = 'succeeded'
+    AND (sqlc.narg('video_id')::bigint IS NULL OR c.video_id = sqlc.narg('video_id'))
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled' AND a.status = 'verified';
+
+-- name: ListRunTrialBoxes :many
+-- The trial boxes on the frames ListRunTrialFrames returns, at or above the
+-- threshold.
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+FROM model_trials t
+JOIN clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN model_trial_boxes b ON b.trial_id = t.id
+JOIN frames f ON f.id = b.frame_id
+WHERE t.training_run_id = @training_run_id AND t.status = 'succeeded'
+    AND (sqlc.narg('video_id')::bigint IS NULL OR c.video_id = sqlc.narg('video_id'))
+    AND c.deleted_at IS NULL AND v.deleted_at IS NULL
+    AND f.status <> 'unlabeled' AND b.confidence >= @min_confidence;
