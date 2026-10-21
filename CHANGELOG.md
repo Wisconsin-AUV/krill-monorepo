@@ -11,6 +11,13 @@ All notable changes to this project are documented here. The format follows
 - Model trials: run any finished training run over a whole clip, held-out test videos included, and see its boxes in the clip view without pinning it or writing proposals. A slider thresholds the boxes live, compare mode colors them against the verified labels the way gold checks do, the timeline marks frames where they disagree, and the run page lists each trial's precision and recall per class.
 - A trial can cover a whole video, one clip at a time, and the run page rolls the clips up into precision and recall per video.
 - The run page lists the labeled frames a run's trials got most wrong, with how many boxes each missed, invented, or got loose or mislabeled, filtered by video or label type, and opens each frame in the clip view with the comparison on.
+- Reviewers can start and cancel trials from the clip view, and labelers can open the trials already run on a clip.
+- In a trial, B jumps to the next frame where the model disagrees with the labels, and Shift+B hides or shows its boxes.
+
+### Changed
+
+- The GPU worker keeps the pinned model loaded while it runs a trial with another one, so pre-labeling doesn't reload it afterwards. It holds up to two YOLO models in GPU memory.
+- Trials have their own queue, so one doesn't wait behind an hours-long pre-labeling pass.
 
 ## [0.5.0] - 2026-10-15
 
