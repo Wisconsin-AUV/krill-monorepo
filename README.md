@@ -38,7 +38,7 @@ To rotate a worker token, create a new one under Worker tokens, set it as the wo
 
 Deleted videos and clips wait in the panel's Trash until they are restored or purged. `KRILL_TRASH_RETENTION_DAYS` (30 by default) purges them after that many days, and 0 keeps them until someone empties the trash.
 
-Under Pipeline, the Models page trains YOLO on verified labels and pins the model that pre-labels, and the Pre-labelers page tunes the classic CV plugins. The first run downloads COCO weights from GitHub, so the worker needs internet access then. A run's page can also try the model on one clip: the trial keeps its boxes apart from the labels, so it is safe on held-out test videos, and the clip view overlays them with a confidence slider and a comparison against the verified boxes.
+Under Pipeline, the Models page trains YOLO on verified labels and pins the model that pre-labels, and the Pre-labelers page tunes the classic CV plugins. The first run downloads COCO weights from GitHub, so the worker needs internet access then. A run's page can also try the model on a clip or a whole video: the trial keeps its boxes apart from the labels, so it is safe on held-out test videos, and the clip view overlays them with a confidence slider and a comparison against the verified boxes. The run page rolls trials up per video and lists the labeled frames the model got most wrong.
 
 ## Accounts
 
