@@ -269,6 +269,13 @@ type Querier interface {
 	// including the ones in the trash.
 	ListReextractStats(ctx context.Context, ids []int64) ([]ListReextractStatsRow, error)
 	ListRejectedPrelabels(ctx context.Context, frameIds []int64) ([]ListRejectedPrelabelsRow, error)
+	// The trial boxes on the frames ListRunTrialFrames returns, at or above the
+	// threshold.
+	ListRunTrialBoxes(ctx context.Context, arg ListRunTrialBoxesParams) ([]ListRunTrialBoxesRow, error)
+	// The done frames a run's finished trials cover, outside the trash.
+	ListRunTrialFrames(ctx context.Context, arg ListRunTrialFramesParams) ([]ListRunTrialFramesRow, error)
+	// The verified boxes on the frames ListRunTrialFrames returns.
+	ListRunTrialVerifiedBoxes(ctx context.Context, arg ListRunTrialVerifiedBoxesParams) ([]ListRunTrialVerifiedBoxesRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]ListSessionsRow, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListStorageOrphans(ctx context.Context, arg ListStorageOrphansParams) ([]ListStorageOrphansRow, error)
@@ -289,6 +296,7 @@ type Querier interface {
 	ListUnlabeledClipFrames(ctx context.Context, clipID int64) ([]ListUnlabeledClipFramesRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
+	ListVideoClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	ListWorkerTokens(ctx context.Context) ([]ListWorkerTokensRow, error)
 	LockApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
