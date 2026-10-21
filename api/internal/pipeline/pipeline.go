@@ -22,6 +22,9 @@ const (
 	TrainQueue = "training"
 	// PrelabelQueue runs one pre-labeling pass at a time.
 	PrelabelQueue = "prelabel"
+	// TrialQueue keeps a model trial from waiting behind a pre-labeling pass
+	// that can take hours.
+	TrialQueue = "trials"
 )
 
 type Deps struct {
@@ -43,7 +46,8 @@ type Pipeline struct {
 	cancels sync.Map
 	// trains maps a train task id to what FinishTrain needs.
 	trains sync.Map
-	// prelabels maps a prelabel task id to its *collector.
+	// prelabels maps a prelabel task id, from pre-labeling or a trial, to its
+	// *collector.
 	prelabels sync.Map
 	// previews maps a preview task id to a chan *previewResult.
 	previews sync.Map
@@ -59,11 +63,12 @@ func (p *Pipeline) SetJobs(jobs *river.Client[pgx.Tx]) {
 	p.jobs = jobs
 }
 
-// AddWorkers registers the River workers for training, pre-labeling, and the
-// retrain schedule.
+// AddWorkers registers the River workers for training, pre-labeling, model
+// trials, and the retrain schedule.
 func (p *Pipeline) AddWorkers(workers *river.Workers) {
 	river.AddWorker(workers, &TrainWorker{p: p})
 	river.AddWorker(workers, &PrelabelWorker{p: p})
+	river.AddWorker(workers, &ModelTrialWorker{p: p})
 	river.AddWorker(workers, &ScheduleWorker{p: p})
 }
 
@@ -72,6 +77,7 @@ func Queues() map[string]river.QueueConfig {
 	return map[string]river.QueueConfig{
 		TrainQueue:    {MaxWorkers: 1},
 		PrelabelQueue: {MaxWorkers: 1},
+		TrialQueue:    {MaxWorkers: 1},
 	}
 }
 

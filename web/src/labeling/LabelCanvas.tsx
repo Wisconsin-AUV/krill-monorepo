@@ -1,5 +1,5 @@
 import type Konva from 'konva'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { Annotation } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { useUIStore } from '@/store/useUIStore'
@@ -30,11 +30,13 @@ export function LabelCanvas({
   types,
   drift,
   canTrack = true,
+  overlay,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
   drift: TrackReview['drift']
   canTrack?: boolean
+  overlay?: ReactNode
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -160,6 +162,7 @@ export function LabelCanvas({
             pointer={drawType ? pointer : null}
           />
         )}
+        {overlay}
       </FrameCanvas>
       {runsHere.map((r, i) => (
         <TrackingShimmer

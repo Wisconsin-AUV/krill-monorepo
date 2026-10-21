@@ -31,3 +31,11 @@ export const frameShortcuts: ShortcutGroup = {
 }
 
 export const goldShortcut = { keys: ['G'], label: 'Make frame gold or remove it' }
+
+export const trialShortcuts: ShortcutGroup = {
+  title: 'Model trials',
+  items: [
+    { keys: ['B'], label: 'Next frame where the model disagrees' },
+    { keys: ['Shift', 'B'], label: 'Hide or show model boxes' },
+  ],
+}

@@ -66,6 +66,18 @@ const (
 	// PipelineServicePreviewPrelabelerProcedure is the fully-qualified name of the PipelineService's
 	// PreviewPrelabeler RPC.
 	PipelineServicePreviewPrelabelerProcedure = "/krill.v1.PipelineService/PreviewPrelabeler"
+	// PipelineServiceStartModelTrialProcedure is the fully-qualified name of the PipelineService's
+	// StartModelTrial RPC.
+	PipelineServiceStartModelTrialProcedure = "/krill.v1.PipelineService/StartModelTrial"
+	// PipelineServiceGetModelTrialProcedure is the fully-qualified name of the PipelineService's
+	// GetModelTrial RPC.
+	PipelineServiceGetModelTrialProcedure = "/krill.v1.PipelineService/GetModelTrial"
+	// PipelineServiceListModelTrialsProcedure is the fully-qualified name of the PipelineService's
+	// ListModelTrials RPC.
+	PipelineServiceListModelTrialsProcedure = "/krill.v1.PipelineService/ListModelTrials"
+	// PipelineServiceCancelModelTrialProcedure is the fully-qualified name of the PipelineService's
+	// CancelModelTrial RPC.
+	PipelineServiceCancelModelTrialProcedure = "/krill.v1.PipelineService/CancelModelTrial"
 )
 
 // PipelineServiceClient is a client for the krill.v1.PipelineService service.
@@ -91,6 +103,16 @@ type PipelineServiceClient interface {
 	UpdatePrelabeler(context.Context, *v1.UpdatePrelabelerRequest) (*v1.UpdatePrelabelerResponse, error)
 	// PreviewPrelabeler runs a plugin with unsaved params on one frame.
 	PreviewPrelabeler(context.Context, *v1.PreviewPrelabelerRequest) (*v1.PreviewPrelabelerResponse, error)
+	// StartModelTrial runs a finished run's model over every frame of a clip,
+	// labeled or not, and keeps its boxes apart from the clip's labels so they
+	// can be compared. A run has one trial per clip: starting it again returns
+	// the existing one, or requeues it if it failed or was cancelled.
+	StartModelTrial(context.Context, *v1.StartModelTrialRequest) (*v1.StartModelTrialResponse, error)
+	// GetModelTrial returns the boxes found so far, in frame order.
+	GetModelTrial(context.Context, *v1.GetModelTrialRequest) (*v1.GetModelTrialResponse, error)
+	// ListModelTrials lists the trials of one run, or on one clip.
+	ListModelTrials(context.Context, *v1.ListModelTrialsRequest) (*v1.ListModelTrialsResponse, error)
+	CancelModelTrial(context.Context, *v1.CancelModelTrialRequest) (*v1.CancelModelTrialResponse, error)
 }
 
 // NewPipelineServiceClient constructs a client for the krill.v1.PipelineService service. By
@@ -170,6 +192,30 @@ func NewPipelineServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(pipelineServiceMethods.ByName("PreviewPrelabeler")),
 			connect.WithClientOptions(opts...),
 		),
+		startModelTrial: connect.NewClient[v1.StartModelTrialRequest, v1.StartModelTrialResponse](
+			httpClient,
+			baseURL+PipelineServiceStartModelTrialProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("StartModelTrial")),
+			connect.WithClientOptions(opts...),
+		),
+		getModelTrial: connect.NewClient[v1.GetModelTrialRequest, v1.GetModelTrialResponse](
+			httpClient,
+			baseURL+PipelineServiceGetModelTrialProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("GetModelTrial")),
+			connect.WithClientOptions(opts...),
+		),
+		listModelTrials: connect.NewClient[v1.ListModelTrialsRequest, v1.ListModelTrialsResponse](
+			httpClient,
+			baseURL+PipelineServiceListModelTrialsProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("ListModelTrials")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelModelTrial: connect.NewClient[v1.CancelModelTrialRequest, v1.CancelModelTrialResponse](
+			httpClient,
+			baseURL+PipelineServiceCancelModelTrialProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("CancelModelTrial")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -186,6 +232,10 @@ type pipelineServiceClient struct {
 	listPrelabelers   *connect.Client[v1.ListPrelabelersRequest, v1.ListPrelabelersResponse]
 	updatePrelabeler  *connect.Client[v1.UpdatePrelabelerRequest, v1.UpdatePrelabelerResponse]
 	previewPrelabeler *connect.Client[v1.PreviewPrelabelerRequest, v1.PreviewPrelabelerResponse]
+	startModelTrial   *connect.Client[v1.StartModelTrialRequest, v1.StartModelTrialResponse]
+	getModelTrial     *connect.Client[v1.GetModelTrialRequest, v1.GetModelTrialResponse]
+	listModelTrials   *connect.Client[v1.ListModelTrialsRequest, v1.ListModelTrialsResponse]
+	cancelModelTrial  *connect.Client[v1.CancelModelTrialRequest, v1.CancelModelTrialResponse]
 }
 
 // ListTrainingRuns calls krill.v1.PipelineService.ListTrainingRuns.
@@ -287,6 +337,42 @@ func (c *pipelineServiceClient) PreviewPrelabeler(ctx context.Context, req *v1.P
 	return nil, err
 }
 
+// StartModelTrial calls krill.v1.PipelineService.StartModelTrial.
+func (c *pipelineServiceClient) StartModelTrial(ctx context.Context, req *v1.StartModelTrialRequest) (*v1.StartModelTrialResponse, error) {
+	response, err := c.startModelTrial.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetModelTrial calls krill.v1.PipelineService.GetModelTrial.
+func (c *pipelineServiceClient) GetModelTrial(ctx context.Context, req *v1.GetModelTrialRequest) (*v1.GetModelTrialResponse, error) {
+	response, err := c.getModelTrial.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListModelTrials calls krill.v1.PipelineService.ListModelTrials.
+func (c *pipelineServiceClient) ListModelTrials(ctx context.Context, req *v1.ListModelTrialsRequest) (*v1.ListModelTrialsResponse, error) {
+	response, err := c.listModelTrials.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// CancelModelTrial calls krill.v1.PipelineService.CancelModelTrial.
+func (c *pipelineServiceClient) CancelModelTrial(ctx context.Context, req *v1.CancelModelTrialRequest) (*v1.CancelModelTrialResponse, error) {
+	response, err := c.cancelModelTrial.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PipelineServiceHandler is an implementation of the krill.v1.PipelineService service.
 type PipelineServiceHandler interface {
 	ListTrainingRuns(context.Context, *v1.ListTrainingRunsRequest) (*v1.ListTrainingRunsResponse, error)
@@ -310,6 +396,16 @@ type PipelineServiceHandler interface {
 	UpdatePrelabeler(context.Context, *v1.UpdatePrelabelerRequest) (*v1.UpdatePrelabelerResponse, error)
 	// PreviewPrelabeler runs a plugin with unsaved params on one frame.
 	PreviewPrelabeler(context.Context, *v1.PreviewPrelabelerRequest) (*v1.PreviewPrelabelerResponse, error)
+	// StartModelTrial runs a finished run's model over every frame of a clip,
+	// labeled or not, and keeps its boxes apart from the clip's labels so they
+	// can be compared. A run has one trial per clip: starting it again returns
+	// the existing one, or requeues it if it failed or was cancelled.
+	StartModelTrial(context.Context, *v1.StartModelTrialRequest) (*v1.StartModelTrialResponse, error)
+	// GetModelTrial returns the boxes found so far, in frame order.
+	GetModelTrial(context.Context, *v1.GetModelTrialRequest) (*v1.GetModelTrialResponse, error)
+	// ListModelTrials lists the trials of one run, or on one clip.
+	ListModelTrials(context.Context, *v1.ListModelTrialsRequest) (*v1.ListModelTrialsResponse, error)
+	CancelModelTrial(context.Context, *v1.CancelModelTrialRequest) (*v1.CancelModelTrialResponse, error)
 }
 
 // NewPipelineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -385,6 +481,30 @@ func NewPipelineServiceHandler(svc PipelineServiceHandler, opts ...connect.Handl
 		connect.WithSchema(pipelineServiceMethods.ByName("PreviewPrelabeler")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pipelineServiceStartModelTrialHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceStartModelTrialProcedure,
+		svc.StartModelTrial,
+		connect.WithSchema(pipelineServiceMethods.ByName("StartModelTrial")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pipelineServiceGetModelTrialHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceGetModelTrialProcedure,
+		svc.GetModelTrial,
+		connect.WithSchema(pipelineServiceMethods.ByName("GetModelTrial")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pipelineServiceListModelTrialsHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceListModelTrialsProcedure,
+		svc.ListModelTrials,
+		connect.WithSchema(pipelineServiceMethods.ByName("ListModelTrials")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pipelineServiceCancelModelTrialHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceCancelModelTrialProcedure,
+		svc.CancelModelTrial,
+		connect.WithSchema(pipelineServiceMethods.ByName("CancelModelTrial")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.PipelineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PipelineServiceListTrainingRunsProcedure:
@@ -409,6 +529,14 @@ func NewPipelineServiceHandler(svc PipelineServiceHandler, opts ...connect.Handl
 			pipelineServiceUpdatePrelabelerHandler.ServeHTTP(w, r)
 		case PipelineServicePreviewPrelabelerProcedure:
 			pipelineServicePreviewPrelabelerHandler.ServeHTTP(w, r)
+		case PipelineServiceStartModelTrialProcedure:
+			pipelineServiceStartModelTrialHandler.ServeHTTP(w, r)
+		case PipelineServiceGetModelTrialProcedure:
+			pipelineServiceGetModelTrialHandler.ServeHTTP(w, r)
+		case PipelineServiceListModelTrialsProcedure:
+			pipelineServiceListModelTrialsHandler.ServeHTTP(w, r)
+		case PipelineServiceCancelModelTrialProcedure:
+			pipelineServiceCancelModelTrialHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -460,4 +588,20 @@ func (UnimplementedPipelineServiceHandler) UpdatePrelabeler(context.Context, *v1
 
 func (UnimplementedPipelineServiceHandler) PreviewPrelabeler(context.Context, *v1.PreviewPrelabelerRequest) (*v1.PreviewPrelabelerResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.PreviewPrelabeler is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) StartModelTrial(context.Context, *v1.StartModelTrialRequest) (*v1.StartModelTrialResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.StartModelTrial is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) GetModelTrial(context.Context, *v1.GetModelTrialRequest) (*v1.GetModelTrialResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.GetModelTrial is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) ListModelTrials(context.Context, *v1.ListModelTrialsRequest) (*v1.ListModelTrialsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.ListModelTrials is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) CancelModelTrial(context.Context, *v1.CancelModelTrialRequest) (*v1.CancelModelTrialResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.CancelModelTrial is not implemented"))
 }

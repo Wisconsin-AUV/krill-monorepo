@@ -44,22 +44,27 @@ def download(url: str, path: Path) -> Path:
 
 
 class YoloModels:
-    """Keeps the pinned model loaded between clips, and only that one."""
+    """Keeps the two most recently used models loaded, so trying a candidate
+    model doesn't evict the pinned one between pre-label clips."""
+
+    KEEP = 2
 
     def __init__(self) -> None:
-        self.version = ""
-        self.labeler: YoloPreLabeler | None = None
+        self.loaded: dict[str, YoloPreLabeler] = {}
 
     def get(self, m: pipeline_pb2.YoloModel) -> YoloPreLabeler:
-        if self.labeler is None or self.version != m.version:
+        labeler = self.loaded.pop(m.version, None)
+        if labeler is None:
             path = cache_dir() / f"run-{m.version}.pt"
             if not path.exists():
                 download(m.weights_url, path)
-            self.labeler = YoloPreLabeler(path, m.min_confidence, m.image_size or 640)
-            self.version = m.version
+            labeler = YoloPreLabeler(path, m.min_confidence, m.image_size or 640)
             log.info("loaded pre-label model from run %s", m.version)
-        self.labeler.min_confidence = m.min_confidence
-        return self.labeler
+        self.loaded[m.version] = labeler
+        while len(self.loaded) > self.KEEP:
+            del self.loaded[next(iter(self.loaded))]
+        labeler.min_confidence = m.min_confidence
+        return labeler
 
 
 def batched(items: Iterable[T], n: int) -> Iterator[list[T]]:
@@ -89,14 +94,17 @@ def run_prelabel(api: Api, task: pipeline_pb2.PrelabelTask, models: YoloModels) 
     start = last_report = time.monotonic()
     batch: list[pipeline_worker_pb2.PrelabelBox] = []
     found = 0
+    frames_done = 0
 
     def report(boxes: list[pipeline_worker_pb2.PrelabelBox], done: bool = False) -> None:
         api.report_prelabels(
-            pipeline_worker_pb2.ReportPrelabelsRequest(task_id=task.id, boxes=boxes, done=done)
+            pipeline_worker_pb2.ReportPrelabelsRequest(
+                task_id=task.id, boxes=boxes, done=done, frames_done=frames_done
+            )
         )
 
     def add(frame_id: int, proposals: list[Proposal], source: str = "") -> None:
-        nonlocal found, batch, last_report
+        nonlocal found
         for p in proposals:
             batch.append(
                 pipeline_worker_pb2.PrelabelBox(
@@ -108,6 +116,10 @@ def run_prelabel(api: Api, task: pipeline_pb2.PrelabelTask, models: YoloModels) 
                 )
             )
             found += 1
+
+    def finish_frame() -> None:
+        nonlocal frames_done, batch, last_report
+        frames_done += 1
         if time.monotonic() - last_report >= REPORT_EVERY:
             report(batch)
             batch = []
@@ -120,11 +132,13 @@ def run_prelabel(api: Api, task: pipeline_pb2.PrelabelTask, models: YoloModels) 
             ids = [fid for fid, _ in chunk]
             for fid, props in zip(ids, yolo.batch([f for _, f in chunk]), strict=True):
                 add(fid, props)
+                finish_frame()
     else:
         plugins = [(c.name, plugin(c)) for c in task.cv.plugins]
         for fid, frame in frames:
             for name, p in plugins:
                 add(fid, p(frame), name)
+            finish_frame()
     report(batch, done=True)
     log.info(
         "pre-labeled task %d: %d boxes on %d frames in %.1fs",

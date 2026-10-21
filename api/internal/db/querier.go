@@ -16,10 +16,12 @@ type Querier interface {
 	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
 	AddClipFrames(ctx context.Context, id int64) (int64, error)
 	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
+	AdvanceModelTrial(ctx context.Context, arg AdvanceModelTrialParams) (int64, error)
 	AdvancePrelabelRun(ctx context.Context, arg AdvancePrelabelRunParams) error
 	ApprovedSignupOpen(ctx context.Context) (bool, error)
 	AssignClips(ctx context.Context, arg AssignClipsParams) (int64, error)
 	CancelActivePrelabelRuns(ctx context.Context, source string) ([]int64, error)
+	CancelModelTrial(ctx context.Context, id int64) (int64, error)
 	CancelPrelabelRun(ctx context.Context, id int64) (int64, error)
 	CancelTrainingRun(ctx context.Context, id int64) (int64, error)
 	// Takes the clip unless someone else claimed it and is still active.
@@ -72,6 +74,7 @@ type Querier interface {
 	DeleteGoldFrame(ctx context.Context, frameID int64) (int64, error)
 	DeleteLabelExample(ctx context.Context, id int64) (LabelExample, error)
 	DeleteLabelType(ctx context.Context, id int64) (int64, error)
+	DeleteModelTrialBoxes(ctx context.Context, trialID int64) error
 	// Keeps the last few so the page can show the previous scan while one runs.
 	DeleteOldStorageScans(ctx context.Context) error
 	DeleteOpenPrelabels(ctx context.Context, arg DeleteOpenPrelabelsParams) ([]int64, error)
@@ -102,9 +105,11 @@ type Querier interface {
 	FailInterruptedBackups(ctx context.Context) (int64, error)
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
 	FailInterruptedIngests(ctx context.Context) (int64, error)
+	FailInterruptedModelTrials(ctx context.Context) (int64, error)
 	FailInterruptedPrelabelRuns(ctx context.Context) (int64, error)
 	FailInterruptedStorageScans(ctx context.Context) (int64, error)
 	FailInterruptedTrainingRuns(ctx context.Context) (int64, error)
+	FailModelTrial(ctx context.Context, arg FailModelTrialParams) error
 	FailPrelabelRun(ctx context.Context, arg FailPrelabelRunParams) error
 	FailStorageCleanup(ctx context.Context, arg FailStorageCleanupParams) error
 	FailStorageScan(ctx context.Context, arg FailStorageScanParams) error
@@ -112,6 +117,7 @@ type Querier interface {
 	FinishBackup(ctx context.Context, arg FinishBackupParams) error
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	FinishModelTrial(ctx context.Context, id int64) (int64, error)
 	FinishPrelabelRun(ctx context.Context, id int64) error
 	FinishStorageCleanup(ctx context.Context, arg FinishStorageCleanupParams) error
 	FinishStorageScan(ctx context.Context, arg FinishStorageScanParams) error
@@ -136,6 +142,8 @@ type Querier interface {
 	GetLatestTrainingRun(ctx context.Context) (TrainingRun, error)
 	// Covers tracks in the trash too, since they move with the rest.
 	GetMergeImpact(ctx context.Context, id int64) (GetMergeImpactRow, error)
+	GetModelTrial(ctx context.Context, id int64) (GetModelTrialRow, error)
+	GetModelTrialID(ctx context.Context, arg GetModelTrialIDParams) (int64, error)
 	GetNeighbourClips(ctx context.Context, id int64) (GetNeighbourClipsRow, error)
 	GetOpenReview(ctx context.Context, frameID int64) (GetOpenReviewRow, error)
 	GetPinnedTrainingRun(ctx context.Context) (TrainingRun, error)
@@ -163,6 +171,8 @@ type Querier interface {
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
+	// Boxes a worker reports after the trial stopped are dropped.
+	InsertModelTrialBoxes(ctx context.Context, arg InsertModelTrialBoxesParams) (int64, error)
 	InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error)
 	InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error
 	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
@@ -210,6 +220,11 @@ type Querier interface {
 	ListContentJobs(ctx context.Context, since pgtype.Timestamptz) ([]ListContentJobsRow, error)
 	ListContentVideos(ctx context.Context, model string) ([]ListContentVideosRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
+	ListDoneClipFrames(ctx context.Context, clipID int64) ([]int64, error)
+	// The boxes a summary scores: those at or above the threshold on frames
+	// someone marked done.
+	ListDoneTrialBoxes(ctx context.Context, arg ListDoneTrialBoxesParams) ([]ListDoneTrialBoxesRow, error)
+	ListDoneVerifiedBoxes(ctx context.Context, clipID int64) ([]ListDoneVerifiedBoxesRow, error)
 	// Clips to embed, from the given videos and clips. Stale clips have no
 	// embeddings or ones from another model than @model, when it is known.
 	ListEmbedClips(ctx context.Context, arg ListEmbedClipsParams) ([]int64, error)
@@ -242,6 +257,8 @@ type Querier interface {
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
 	ListLiveClipIDs(ctx context.Context, videoID int64) ([]int64, error)
+	ListModelTrialBoxes(ctx context.Context, trialID int64) ([]ListModelTrialBoxesRow, error)
+	ListModelTrials(ctx context.Context, arg ListModelTrialsParams) ([]ListModelTrialsRow, error)
 	ListOpenClips(ctx context.Context, userID uuid.UUID) ([]ListOpenClipsRow, error)
 	ListOpenReviews(ctx context.Context, reason pgtype.Text) ([]ListOpenReviewsRow, error)
 	// Held-out videos are never pre-labeled, so their test metrics stay honest.
@@ -319,6 +336,8 @@ type Querier interface {
 	ParkClips(ctx context.Context, videoID int64) error
 	PinTrainingRun(ctx context.Context, id int64) (int64, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
+	// Returns no row when the trial exists and is not failed or cancelled.
+	QueueModelTrial(ctx context.Context, arg QueueModelTrialParams) (int64, error)
 	QueueReextract(ctx context.Context, arg QueueReextractParams) (Video, error)
 	RecentGoldScore(ctx context.Context, arg RecentGoldScoreParams) (RecentGoldScoreRow, error)
 	// Run before AcceptFrameProposals.
@@ -346,6 +365,7 @@ type Querier interface {
 	ReviewExists(ctx context.Context, id int64) (bool, error)
 	RevokeInvite(ctx context.Context, id int64) (Invite, error)
 	RevokeWorkerToken(ctx context.Context, id int64) (WorkerToken, error)
+	RunModelTrial(ctx context.Context, arg RunModelTrialParams) (int64, error)
 	ScanBackups(ctx context.Context) ([]ScanBackupsRow, error)
 	ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error)
 	ScanLabelExampleKeys(ctx context.Context) ([]string, error)
@@ -362,6 +382,7 @@ type Querier interface {
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
 	SetMergedIdentity(ctx context.Context, arg SetMergedIdentityParams) (User, error)
+	SetModelTrialTracks(ctx context.Context, arg SetModelTrialTracksParams) error
 	SetPendingEmail(ctx context.Context, arg SetPendingEmailParams) (User, error)
 	SetTrainingDataset(ctx context.Context, arg SetTrainingDatasetParams) error
 	// metrics is appended to the history when a report finishes an epoch.
