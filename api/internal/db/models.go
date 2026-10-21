@@ -201,6 +201,34 @@ type LiveClip struct {
 	VideoID int64 `json:"video_id"`
 }
 
+type ModelTrial struct {
+	ID              int64              `json:"id"`
+	TrainingRunID   int64              `json:"training_run_id"`
+	ClipID          int64              `json:"clip_id"`
+	Status          string             `json:"status"`
+	FramesTotal     int32              `json:"frames_total"`
+	FramesDone      int32              `json:"frames_done"`
+	ConfidenceFloor float32            `json:"confidence_floor"`
+	Error           string             `json:"error"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	StartedAt       pgtype.Timestamptz `json:"started_at"`
+	FinishedAt      pgtype.Timestamptz `json:"finished_at"`
+}
+
+type ModelTrialBox struct {
+	ID         int64   `json:"id"`
+	TrialID    int64   `json:"trial_id"`
+	FrameID    int64   `json:"frame_id"`
+	Class      int32   `json:"class"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Width      float64 `json:"width"`
+	Height     float64 `json:"height"`
+	Confidence float32 `json:"confidence"`
+	Track      int32   `json:"track"`
+}
+
 type PrelabelRun struct {
 	ID            int64              `json:"id"`
 	Source        string             `json:"source"`

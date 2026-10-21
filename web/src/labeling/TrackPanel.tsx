@@ -8,7 +8,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/16/solid'
 import { clsx } from 'clsx'
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
@@ -130,11 +130,13 @@ export function TrackPanel({
   types,
   unconfirmed,
   canTrack = true,
+  top,
 }: {
   tracks: Map<string, TrackInfo>
   types: LabelType[]
   unconfirmed: Set<string>
   canTrack?: boolean
+  top?: ReactNode
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -162,6 +164,7 @@ export function TrackPanel({
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-l border-zinc-950/10 bg-white dark:border-white/10 dark:bg-zinc-900">
+      {top}
       <div className="flex items-baseline justify-between px-3 pt-3 pb-2">
         <h2 className="text-xs/6 font-medium text-zinc-500 dark:text-zinc-400">Tracks in clip</h2>
         <span className="text-xs text-zinc-500 tabular-nums">{list.length}</span>

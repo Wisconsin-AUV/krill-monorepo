@@ -69,6 +69,8 @@ const (
 	PrelabelStart       = "prelabel.start"
 	PrelabelCancel      = "prelabel.cancel"
 	PrelabelerSave      = "prelabeler.update"
+	ModelTrialStart     = "model_trial.start"
+	ModelTrialCancel    = "model_trial.cancel"
 )
 
 const (
@@ -91,6 +93,7 @@ const (
 	TargetModel         = "training_run"
 	TargetPrelabel      = "prelabel_run"
 	TargetPlugin        = "prelabeler"
+	TargetModelTrial    = "model_trial"
 )
 
 type Entry struct {

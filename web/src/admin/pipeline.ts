@@ -2,8 +2,10 @@ import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt'
 import type { BadgeColor } from '@/components/ui/Badge'
 import {
   ModelSize,
+  ModelTrialStatus,
   PrelabelStatus,
   TrainingStatus,
+  type ModelTrial,
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
 import { formatDuration } from '@/lib/format'
@@ -64,4 +66,17 @@ export function elapsed(
   if (!start) return null
   const to = end ? timestampDate(end).getTime() : now
   return formatDuration(to - timestampDate(start).getTime())
+}
+
+export const trialStatus: Record<ModelTrialStatus, { label: string; color: BadgeColor }> = {
+  [ModelTrialStatus.UNSPECIFIED]: { label: 'Unknown', color: 'zinc' },
+  [ModelTrialStatus.QUEUED]: { label: 'Queued', color: 'zinc' },
+  [ModelTrialStatus.RUNNING]: { label: 'Running', color: 'sky' },
+  [ModelTrialStatus.SUCCEEDED]: { label: 'Done', color: 'green' },
+  [ModelTrialStatus.FAILED]: { label: 'Failed', color: 'red' },
+  [ModelTrialStatus.CANCELLED]: { label: 'Cancelled', color: 'zinc' },
+}
+
+export function trialActive(t: ModelTrial) {
+  return t.status === ModelTrialStatus.QUEUED || t.status === ModelTrialStatus.RUNNING
 }

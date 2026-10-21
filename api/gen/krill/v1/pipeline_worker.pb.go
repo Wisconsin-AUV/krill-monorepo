@@ -520,10 +520,13 @@ func (x *PrelabelBox) GetPlugin() string {
 }
 
 type ReportPrelabelsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskId        int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	Boxes         []*PrelabelBox         `protobuf:"bytes,2,rep,name=boxes,proto3" json:"boxes,omitempty"`
-	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	TaskId int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	Boxes  []*PrelabelBox         `protobuf:"bytes,2,rep,name=boxes,proto3" json:"boxes,omitempty"`
+	Done   bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	// Frames finished so far, from the start of the task. Frames with no boxes
+	// are only known to be done from this.
+	FramesDone    int32 `protobuf:"varint,4,opt,name=frames_done,json=framesDone,proto3" json:"frames_done,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -577,6 +580,13 @@ func (x *ReportPrelabelsRequest) GetDone() bool {
 		return x.Done
 	}
 	return false
+}
+
+func (x *ReportPrelabelsRequest) GetFramesDone() int32 {
+	if x != nil {
+		return x.FramesDone
+	}
+	return 0
 }
 
 type ReportPrelabelsResponse struct {
@@ -749,11 +759,13 @@ const file_krill_v1_pipeline_worker_proto_rawDesc = "" +
 	"\n" +
 	"confidence\x18\x04 \x01(\x02R\n" +
 	"confidence\x12\x16\n" +
-	"\x06plugin\x18\x05 \x01(\tR\x06plugin\"r\n" +
+	"\x06plugin\x18\x05 \x01(\tR\x06plugin\"\x93\x01\n" +
 	"\x16ReportPrelabelsRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12+\n" +
 	"\x05boxes\x18\x02 \x03(\v2\x15.krill.v1.PrelabelBoxR\x05boxes\x12\x12\n" +
-	"\x04done\x18\x03 \x01(\bR\x04done\"\x19\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\x12\x1f\n" +
+	"\vframes_done\x18\x04 \x01(\x05R\n" +
+	"framesDone\"\x19\n" +
 	"\x17ReportPrelabelsResponse\"t\n" +
 	"\x14ReportPreviewRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12*\n" +

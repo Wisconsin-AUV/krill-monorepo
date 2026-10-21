@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { keepPreviousData } from '@tanstack/react-query'
 import {
+  BeakerIcon,
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -62,12 +63,28 @@ import { reasons, resolutions } from '@/lib/reviews'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
+import { TrialLayer } from '@/labeling/TrialLayer'
+import { TrialPanel } from '@/labeling/TrialPanel'
 import { TypePanel } from '@/labeling/TypePanel'
 import { frameState } from '@/labeling/frameStatus'
 import { reviewTracks } from '@/labeling/review'
-import { frameShortcuts, goldShortcut, labelingShortcuts } from '@/labeling/shortcuts'
+import {
+  frameShortcuts,
+  goldShortcut,
+  labelingShortcuts,
+  trialShortcuts,
+} from '@/labeling/shortcuts'
+import {
+  isDone,
+  nextDisagreement,
+  reviewTrial,
+  verifiedBoxes,
+  type Verdict,
+} from '@/labeling/trialMatch'
 import { idKey, useLabelStore } from '@/labeling/useLabelStore'
 import { useTrackingPoll } from '@/labeling/useTrackingPoll'
+import { useTrialPoll } from '@/labeling/useTrialPoll'
+import { useTrialStore } from '@/labeling/useTrialStore'
 import { ShortcutsDialog } from '@/workspace/ShortcutsDialog'
 import { Timeline } from '@/workspace/Timeline'
 import { navigationShortcuts, viewShortcuts } from '@/workspace/shortcuts'
@@ -76,8 +93,15 @@ import { usePlayback } from '@/workspace/usePlayback'
 import { usePrefetchNeighbours } from '@/workspace/usePrefetchNeighbours'
 import { fitView, useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 
-function parseId(raw: string | undefined): bigint | undefined {
+function parseId(raw: string | null | undefined): bigint | undefined {
   return raw && /^\d+$/.test(raw) ? BigInt(raw) : undefined
+}
+
+const verdictBars: Record<Verdict, string> = {
+  correct: 'bg-emerald-500',
+  off: 'bg-amber-400',
+  wrong: 'bg-rose-500',
+  unchecked: 'bg-zinc-400/40 dark:bg-zinc-500/40',
 }
 
 function useClipState(data: GetClipResponse | undefined, switching: boolean) {
@@ -100,7 +124,18 @@ function useClipState(data: GetClipResponse | undefined, switching: boolean) {
   const current = frames[index]?.index
   useEffect(() => {
     if (switching || current === undefined || params.get('frame') === String(current)) return
-    const t = setTimeout(() => setParams({ frame: String(current) }, { replace: true }), 250)
+    const t = setTimeout(
+      () =>
+        setParams(
+          (prev) => {
+            const next = new URLSearchParams(prev)
+            next.set('frame', String(current))
+            return next
+          },
+          { replace: true },
+        ),
+      250,
+    )
     return () => clearTimeout(t)
   }, [current, params, setParams, switching])
 
@@ -156,6 +191,9 @@ export function ClipPage() {
   const me = useUser()
   const claimNext = useClaimNextClip()
   const [showHelp, setShowHelp] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const trialId = parseId(params.get('trial'))
+  const [showTrials, setShowTrials] = useState(trialId !== undefined)
 
   // Labels live in the store while a clip is open, so the query must not
   // refetch underneath it. gcTime 0 drops a clip once it is left, so coming
@@ -176,6 +214,7 @@ export function ClipPage() {
   const { data: typeData } = useQuery(LabelService.method.listLabelTypes, {})
   useClipState(data, switching)
   useTrackingPoll(switching ? undefined : data?.clip?.id)
+  useTrialPoll(trialId, switching ? undefined : data?.clip?.id)
   usePlayback(data?.video?.fps ?? 0)
 
   const types = useMemo(() => typeData?.labelTypes ?? [], [typeData])
@@ -195,6 +234,24 @@ export function ClipPage() {
   const selectedTrackId = useLabelStore((s) => s.selectedTrackId)
   const hideBoxes = useLabelStore((s) => s.hideBoxes)
   const labels = useLabelStore.getState
+  const trial = useTrialStore((s) => s.trial)
+  const trialBoxes = useTrialStore((s) => s.boxes)
+  const threshold = useTrialStore((s) => s.threshold)
+  const trialVisible = useTrialStore((s) => s.visible)
+  const compareParam = params.get('mode') === 'compare'
+  const trialLoaded = trialId !== undefined && trial?.id === trialId
+  useEffect(() => {
+    if (!compareParam || !trialLoaded) return
+    useTrialStore.getState().setMode('compare')
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('mode')
+        return next
+      },
+      { replace: true },
+    )
+  }, [compareParam, trialLoaded, setParams])
   const corrected = useUIStore((s) => s.displayCorrection)
   const toggleCorrected = useUIStore((s) => s.toggleDisplayCorrection)
 
@@ -286,6 +343,22 @@ export function ClipPage() {
         return !!(k in reviewEdits ? reviewEdits[k] : f.review)
       }),
     [frames, reviewEdits],
+  )
+
+  const processed = trial?.framesDone
+  const trialReview = useMemo(
+    () =>
+      processed === undefined
+        ? undefined
+        : reviewTrial(frames, processed, trialBoxes, threshold, (frameId) => {
+            const k = idKey(frameId)
+            return isDone(frameStatus[k]) ? verifiedBoxes(boxes[k], trackMap) : undefined
+          }),
+    [processed, frames, trialBoxes, threshold, frameStatus, boxes, trackMap],
+  )
+  const trialBars = useMemo(
+    () => trialReview?.verdicts.map((v) => (v ? verdictBars[v] : undefined)),
+    [trialReview],
   )
 
   const typeCounts = useMemo(() => {
@@ -392,6 +465,25 @@ export function ClipPage() {
     flash.info('No drifted boxes in this clip')
   }
 
+  function selectTrial(selected: bigint | undefined) {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (selected === undefined) next.delete('trial')
+        else next.set('trial', String(selected))
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  function nextModelDisagreement() {
+    if (!trialReview) return
+    const i = nextDisagreement(trialReview.verdicts, index)
+    if (i >= 0) seek(i)
+    else flash.info('No disagreements')
+  }
+
   function cycleSelection(delta: number) {
     if (frameBoxes.length === 0) return
     const ids = frameBoxes.map((b) => b.trackId).sort((a, b) => (a < b ? -1 : 1))
@@ -460,6 +552,8 @@ export function ClipPage() {
           },
           h: () => labels().toggleHidden(),
           d: nextDrift,
+          b: nextModelDisagreement,
+          B: () => trial && useTrialStore.getState().toggleVisible(),
           g: toggleGold,
           m: toggleFlag,
           ' ': (e) => mark(FrameStatus.LABELED, true, e),
@@ -619,6 +713,14 @@ export function ClipPage() {
           {hideBoxes ? <EyeSlashIcon data-slot="icon" /> : <EyeIcon data-slot="icon" />}
         </NavbarItem>
         <NavbarItem
+          aria-label="Model trials"
+          aria-pressed={showTrials}
+          title="Model trials"
+          onClick={() => setShowTrials(!showTrials)}
+        >
+          <BeakerIcon data-slot="icon" className={showTrials ? 'fill-sky-400!' : undefined} />
+        </NavbarItem>
+        <NavbarItem
           aria-label="Underwater correction"
           aria-pressed={corrected}
           title="Underwater correction (V)"
@@ -680,14 +782,34 @@ export function ClipPage() {
         <div className="flex min-h-0 flex-1">
           <TypePanel types={types} counts={typeCounts} />
           <main className="relative min-w-0 flex-1 bg-zinc-950 bg-[radial-gradient(var(--color-zinc-800)_1px,transparent_1px)] [background-size:16px_16px]">
-            <LabelCanvas tracks={tracks} types={types} drift={review.drift} />
+            <LabelCanvas
+              tracks={tracks}
+              types={types}
+              drift={review.drift}
+              overlay={<TrialLayer types={types} />}
+            />
             {switching && (
               <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/40">
                 <LoadingSpinner />
               </div>
             )}
           </main>
-          <TrackPanel tracks={tracks} types={types} unconfirmed={review.unconfirmed} />
+          <TrackPanel
+            tracks={tracks}
+            types={types}
+            unconfirmed={review.unconfirmed}
+            top={
+              showTrials && (
+                <TrialPanel
+                  clipId={clip.id}
+                  types={types}
+                  review={trialReview}
+                  selectedId={trialId}
+                  onSelect={selectTrial}
+                />
+              )
+            }
+          />
         </div>
 
         <Timeline
@@ -695,6 +817,7 @@ export function ClipPage() {
           trackClasses={selectedBars}
           flagged={driftFlags}
           marked={reviewMarks}
+          trialClasses={trialVisible ? trialBars : undefined}
         />
         {/* Reviewer edits never take the claim, so they only get the badge. */}
         <ConfirmAlert
@@ -730,6 +853,7 @@ export function ClipPage() {
               : frameShortcuts,
             navigationShortcuts,
             viewShortcuts,
+            trialShortcuts,
           ]}
         />
       </div>

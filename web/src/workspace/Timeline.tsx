@@ -17,11 +17,13 @@ export function Timeline({
   trackClasses,
   flagged,
   marked,
+  trialClasses,
 }: {
   frameClasses?: (string | undefined)[]
   trackClasses?: (string | undefined)[]
   flagged?: boolean[]
   marked?: boolean[]
+  trialClasses?: (string | undefined)[]
 }) {
   const frames = useWorkspaceStore((s) => s.frames)
   const index = useWorkspaceStore((s) => s.index)
@@ -60,7 +62,10 @@ export function Timeline({
 
       <div
         ref={track}
-        className="group relative h-10 flex-1 cursor-pointer touch-none"
+        className={clsx(
+          'group relative flex-1 cursor-pointer touch-none',
+          trialClasses ? 'h-12' : 'h-10',
+        )}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
           setPlaying(false)
@@ -91,6 +96,7 @@ export function Timeline({
         )}
         {flagged && <FlagRow frames={frames} flagged={flagged} />}
         {marked && <MarkRow frames={frames} marked={marked} />}
+        {trialClasses && <TrialRow frames={frames} classes={trialClasses} />}
         {trackClasses && <TrackRow frames={frames} classes={trackClasses} />}
 
         {hover !== null && hover !== index && (
@@ -188,6 +194,22 @@ const TrackRow = memo(function TrackRow({
 }) {
   return (
     <div className="absolute inset-x-0 bottom-1 flex h-1 overflow-hidden rounded-full">
+      {frames.map((f, i) => (
+        <div key={String(f.id)} className={clsx('h-full flex-1', classes[i])} />
+      ))}
+    </div>
+  )
+})
+
+const TrialRow = memo(function TrialRow({
+  frames,
+  classes,
+}: {
+  frames: Frame[]
+  classes: (string | undefined)[]
+}) {
+  return (
+    <div className="absolute inset-x-0 top-7.5 flex h-1.5 overflow-hidden rounded-full">
       {frames.map((f, i) => (
         <div key={String(f.id)} className={clsx('h-full flex-1', classes[i])} />
       ))}

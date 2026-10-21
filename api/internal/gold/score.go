@@ -54,6 +54,24 @@ func iou(a, b Box) float64 {
 
 // Score pairs boxes greedily, highest IoU first.
 func Score(reference, answer []Box) Result {
+	return score(reference, answer, maps.Equal[map[string]string])
+}
+
+// ScoreSetAttributes is Score for answers that always carry every attribute,
+// like a model's: a match only has to agree on the attributes the reference
+// sets.
+func ScoreSetAttributes(reference, answer []Box) Result {
+	return score(reference, answer, func(ref, ans map[string]string) bool {
+		for k, v := range ref {
+			if v != "" && ans[k] != v {
+				return false
+			}
+		}
+		return true
+	})
+}
+
+func score(reference, answer []Box, sameAttributes func(ref, ans map[string]string) bool) Result {
 	var pairs []Match
 	for i, r := range reference {
 		for j, a := range answer {
@@ -75,7 +93,7 @@ func Score(reference, answer []Box) Result {
 			continue
 		}
 		usedRef[p.Reference], usedAns[p.Answer] = true, true
-		p.Correct = p.IoU >= correctIoU && maps.Equal(reference[p.Reference].Attributes, answer[p.Answer].Attributes)
+		p.Correct = p.IoU >= correctIoU && sameAttributes(reference[p.Reference].Attributes, answer[p.Answer].Attributes)
 		if p.Correct {
 			out.Correct++
 		}

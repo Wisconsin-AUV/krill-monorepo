@@ -31,6 +31,20 @@ service PipelineService {
   rpc UpdatePrelabeler(UpdatePrelabelerRequest) returns (UpdatePrelabelerResponse) {}
   // PreviewPrelabeler runs a plugin with unsaved params on one frame.
   rpc PreviewPrelabeler(PreviewPrelabelerRequest) returns (PreviewPrelabelerResponse) {}
+  // StartModelTrial runs a finished run's model over every frame of a clip,
+  // labeled or not, and keeps its boxes apart from the clip's labels so they
+  // can be compared. A run has one trial per clip: starting it again returns
+  // the existing one, or requeues it if it failed or was cancelled. Given a
+  // video, it does the same for every clip of the video.
+  rpc StartModelTrial(StartModelTrialRequest) returns (StartModelTrialResponse) {}
+  // GetModelTrial returns the boxes found so far, in frame order.
+  rpc GetModelTrial(GetModelTrialRequest) returns (GetModelTrialResponse) {}
+  // ListModelTrials lists the trials of one run, or on one clip.
+  rpc ListModelTrials(ListModelTrialsRequest) returns (ListModelTrialsResponse) {}
+  rpc CancelModelTrial(CancelModelTrialRequest) returns (CancelModelTrialResponse) {}
+  // ListModelTrialErrors lists the labeled frames a run's finished trials got
+  // most wrong, scored the way trial summaries are.
+  rpc ListModelTrialErrors(ListModelTrialErrorsRequest) returns (ListModelTrialErrorsResponse) {}
 }
 
 enum ModelSize {
@@ -354,6 +368,159 @@ message PreviewPrelabelerResponse {
   string mask_url = 2;
   string frame_url = 3;
   int32 took_ms = 4;
+}
+
+enum ModelTrialStatus {
+  MODEL_TRIAL_STATUS_UNSPECIFIED = 0;
+  MODEL_TRIAL_STATUS_QUEUED = 1;
+  MODEL_TRIAL_STATUS_RUNNING = 2;
+  MODEL_TRIAL_STATUS_SUCCEEDED = 3;
+  MODEL_TRIAL_STATUS_FAILED = 4;
+  MODEL_TRIAL_STATUS_CANCELLED = 5;
+}
+
+// ModelTrialBox is one box a trial's model found, mapped to the label its
+// class stands for.
+message ModelTrialBox {
+  int64 frame_id = 1;
+  int64 label_type_id = 2;
+  map<string, string> attributes = 3;
+  Box box = 4;
+  float confidence = 5;
+  // Boxes linked into one object across frames share a number, from 1.
+  int32 track = 6;
+}
+
+// ModelTrialClass scores one label type. Matched boxes overlap a verified box
+// of the type, and correct ones are also tight and agree on every attribute
+// the verified track has set, like gold checks.
+message ModelTrialClass {
+  int64 label_type_id = 1;
+  string name = 2;
+  int32 matched = 3;
+  int32 correct = 4;
+  // Verified boxes with no model box over them.
+  int32 missed = 5;
+  // Model boxes over nothing verified.
+  int32 extra = 6;
+  // matched over matched plus extra.
+  double precision = 7;
+  // matched over matched plus missed.
+  double recall = 8;
+}
+
+// ModelTrialSummary scores a trial against the clip's verified boxes on
+// frames marked done, counting only model boxes at or above min_confidence.
+message ModelTrialSummary {
+  float min_confidence = 1;
+  int32 labeled_frames = 2;
+  ModelTrialClass all = 3;
+  repeated ModelTrialClass classes = 4;
+}
+
+message ModelTrial {
+  int64 id = 1;
+  int64 training_run_id = 2;
+  int64 clip_id = 3;
+  int64 video_id = 4;
+  string video_name = 5;
+  // Index within the video.
+  int32 clip_index = 6;
+  ModelTrialStatus status = 7;
+  int32 frames_total = 8;
+  // Frames whose boxes are final, from the start of the clip.
+  int32 frames_done = 9;
+  // The worker dropped boxes below it.
+  float confidence_floor = 10;
+  string error = 11;
+  string created_by = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp finished_at = 14;
+  // At the pre-label confidence setting. Unset until the trial finishes, or
+  // when no frame of the clip is marked done.
+  ModelTrialSummary summary = 15;
+}
+
+message StartModelTrialRequest {
+  int64 training_run_id = 1;
+  // One of the two.
+  int64 clip_id = 2;
+  int64 video_id = 3;
+}
+
+message StartModelTrialResponse {
+  // Set when a clip was given.
+  ModelTrial trial = 1;
+  // Every trial the request covers, in clip order.
+  repeated ModelTrial trials = 2;
+}
+
+message GetModelTrialRequest {
+  int64 id = 1;
+}
+
+message GetModelTrialResponse {
+  ModelTrial trial = 1;
+  repeated ModelTrialBox boxes = 2;
+}
+
+message ListModelTrialsRequest {
+  // One of the two.
+  int64 training_run_id = 1;
+  int64 clip_id = 2;
+}
+
+message ListModelTrialsResponse {
+  // Newest first.
+  repeated ModelTrial trials = 1;
+}
+
+message CancelModelTrialRequest {
+  int64 id = 1;
+}
+
+message CancelModelTrialResponse {}
+
+// ModelTrialFrame scores one labeled frame of a trial against its verified
+// boxes. Each count is at the summary's confidence threshold.
+message ModelTrialFrame {
+  int64 trial_id = 1;
+  int64 clip_id = 2;
+  int64 video_id = 3;
+  string video_name = 4;
+  // Index within the video.
+  int32 clip_index = 5;
+  int64 frame_id = 6;
+  // Index within the video.
+  int32 frame_index = 7;
+  // Presigned MinIO URL.
+  string thumbnail_url = 8;
+  int32 matched = 9;
+  // Matched boxes that are loose or disagree on an attribute.
+  int32 wrong = 10;
+  int32 missed = 11;
+  int32 extra = 12;
+  // Only the label types with a missed, extra, or wrong box on the frame.
+  repeated ModelTrialClass classes = 13;
+}
+
+message ListModelTrialErrorsRequest {
+  int64 training_run_id = 1;
+  // Limits to one video when set.
+  int64 video_id = 2;
+  // Limits to one label type when set, and scores only its boxes.
+  int64 label_type_id = 3;
+  // At most 200. 50 when unset.
+  int32 limit = 4;
+}
+
+message ListModelTrialErrorsResponse {
+  // Most missed, extra, and wrong boxes first, then by video, clip, and frame.
+  repeated ModelTrialFrame frames = 1;
+  // Labeled frames the run's finished trials cover, before the limit.
+  int32 total_frames = 2;
+  // Of those, how many have at least one missed, extra, or wrong box.
+  int32 error_frames = 3;
 }
 
 // PrelabelFrame is a frame for a GPU worker to pre-label.

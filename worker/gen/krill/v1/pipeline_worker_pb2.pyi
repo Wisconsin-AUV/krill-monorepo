@@ -88,14 +88,16 @@ class PrelabelBox(_message.Message):
     def __init__(self, frame_id: _Optional[int] = ..., label: _Optional[str] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., confidence: _Optional[float] = ..., plugin: _Optional[str] = ...) -> None: ...
 
 class ReportPrelabelsRequest(_message.Message):
-    __slots__ = ("task_id", "boxes", "done")
+    __slots__ = ("task_id", "boxes", "done", "frames_done")
     TASK_ID_FIELD_NUMBER: _ClassVar[int]
     BOXES_FIELD_NUMBER: _ClassVar[int]
     DONE_FIELD_NUMBER: _ClassVar[int]
+    FRAMES_DONE_FIELD_NUMBER: _ClassVar[int]
     task_id: int
     boxes: _containers.RepeatedCompositeFieldContainer[PrelabelBox]
     done: bool
-    def __init__(self, task_id: _Optional[int] = ..., boxes: _Optional[_Iterable[_Union[PrelabelBox, _Mapping]]] = ..., done: _Optional[bool] = ...) -> None: ...
+    frames_done: int
+    def __init__(self, task_id: _Optional[int] = ..., boxes: _Optional[_Iterable[_Union[PrelabelBox, _Mapping]]] = ..., done: _Optional[bool] = ..., frames_done: _Optional[int] = ...) -> None: ...
 
 class ReportPrelabelsResponse(_message.Message):
     __slots__ = ()

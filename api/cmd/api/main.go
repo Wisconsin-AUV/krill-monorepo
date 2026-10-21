@@ -171,6 +171,11 @@ func run(logHub *logs.Hub) error {
 	} else if n > 0 {
 		slog.Warn("marked interrupted pre-label runs as failed", "count", n)
 	}
+	if n, err := db.New(pool).FailInterruptedModelTrials(ctx); err != nil {
+		return fmt.Errorf("fail interrupted model trials: %w", err)
+	} else if n > 0 {
+		slog.Warn("marked interrupted model trials as failed", "count", n)
+	}
 
 	store, err := storage.New(ctx, storage.Config{
 		Endpoint:       cfg.S3Endpoint,

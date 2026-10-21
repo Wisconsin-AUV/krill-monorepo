@@ -16,7 +16,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/pipeline.proto.
  */
 export const file_krill_v1_pipeline: GenFile = /*@__PURE__*/
-  fileDesc("ChdrcmlsbC92MS9waXBlbGluZS5wcm90bxIIa3JpbGwudjEiogEKC1RyYWluQ29uZmlnEiEKBHNpemUYASABKA4yEy5rcmlsbC52MS5Nb2RlbFNpemUSDgoGZXBvY2hzGAIgASgFEhIKCmltYWdlX3NpemUYAyABKAUSDQoFYmF0Y2gYBCABKAUSEwoLYmFzZV9ydW5faWQYBSABKAMSKAoHZGF0YXNldBgGIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMihQEKDEVwb2NoTWV0cmljcxINCgVlcG9jaBgBIAEoBRIQCghib3hfbG9zcxgCIAEoARIQCghjbHNfbG9zcxgDIAEoARIRCglwcmVjaXNpb24YBCABKAESDgoGcmVjYWxsGAUgASgBEg0KBW1hcDUwGAYgASgBEhAKCG1hcDUwXzk1GAcgASgBIoMBCgxDbGFzc01ldHJpY3MSDAoEbmFtZRgBIAEoCRIOCgZpbWFnZXMYAiABKAUSEQoJaW5zdGFuY2VzGAMgASgFEhEKCXByZWNpc2lvbhgEIAEoARIOCgZyZWNhbGwYBSABKAESDQoFbWFwNTAYBiABKAESEAoIbWFwNTBfOTUYByABKAEiWwoLRXZhbE1ldHJpY3MSIwoDYWxsGAEgASgLMhYua3JpbGwudjEuQ2xhc3NNZXRyaWNzEicKB2NsYXNzZXMYAiADKAsyFi5rcmlsbC52MS5DbGFzc01ldHJpY3Mi2AUKC1RyYWluaW5nUnVuEgoKAmlkGAEgASgDEigKBnN0YXR1cxgCIAEoDjIYLmtyaWxsLnYxLlRyYWluaW5nU3RhdHVzEioKB3RyaWdnZXIYAyABKA4yGS5rcmlsbC52MS5UcmFpbmluZ1RyaWdnZXISEgoKY3JlYXRlZF9ieRgEIAEoCRIlCgZjb25maWcYBSABKAsyFS5rcmlsbC52MS5UcmFpbkNvbmZpZxImCgdkYXRhc2V0GAYgASgLMhUua3JpbGwudjEuRXhwb3J0U3RhdHMSDQoFZXBvY2gYByABKAUSJwoHaGlzdG9yeRgIIAMoCzIWLmtyaWxsLnYxLkVwb2NoTWV0cmljcxIiCgN2YWwYCSABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIjCgR0ZXN0GAogASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSFwoPYmFzZWxpbmVfcnVuX2lkGAsgASgDEisKDGJhc2VsaW5lX3ZhbBgMIAEoCzIVLmtyaWxsLnYxLkV2YWxNZXRyaWNzEiwKDWJhc2VsaW5lX3Rlc3QYDSABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIOCgZwaW5uZWQYDiABKAgSDQoFZXJyb3IYDyABKAkSCwoDbG9nGBAgASgJEi4KCmNyZWF0ZWRfYXQYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0YXJ0ZWRfYXQYEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgt3ZWlnaHRzX3VybBgUIAEoCRIVCg13ZWlnaHRzX2J5dGVzGBUgASgDEg4KBmRldmljZRgWIAEoCRIWCg52ZXJpZmllZF9ib3hlcxgXIAEoBSKgAQoPUmV0cmFpblNjaGVkdWxlEgwKBGhvdXIYASABKAUSEQoJdGltZV96b25lGAIgASgJEhYKDm1pbl9uZXdfbGFiZWxzGAMgASgFEhIKCm5ld19sYWJlbHMYBCABKAUSEAoIYXV0b19waW4YBSABKAgSLgoKbmV4dF9jaGVjaxgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGQoXTGlzdFRyYWluaW5nUnVuc1JlcXVlc3QirAEKGExpc3RUcmFpbmluZ1J1bnNSZXNwb25zZRIjCgRydW5zGAEgAygLMhUua3JpbGwudjEuVHJhaW5pbmdSdW4SFQoNcGlubmVkX3J1bl9pZBgCIAEoAxInCghkZWZhdWx0cxgDIAEoCzIVLmtyaWxsLnYxLlRyYWluQ29uZmlnEisKCHNjaGVkdWxlGAQgASgLMhkua3JpbGwudjEuUmV0cmFpblNjaGVkdWxlIiMKFUdldFRyYWluaW5nUnVuUmVxdWVzdBIKCgJpZBgBIAEoAyJjChZHZXRUcmFpbmluZ1J1blJlc3BvbnNlEiIKA3J1bhgBIAEoCzIVLmtyaWxsLnYxLlRyYWluaW5nUnVuEiUKBnBpbm5lZBgCIAEoCzIVLmtyaWxsLnYxLlRyYWluaW5nUnVuIj0KFFN0YXJ0VHJhaW5pbmdSZXF1ZXN0EiUKBmNvbmZpZxgBIAEoCzIVLmtyaWxsLnYxLlRyYWluQ29uZmlnIjsKFVN0YXJ0VHJhaW5pbmdSZXNwb25zZRIiCgNydW4YASABKAsyFS5rcmlsbC52MS5UcmFpbmluZ1J1biIjChVDYW5jZWxUcmFpbmluZ1JlcXVlc3QSCgoCaWQYASABKAMiGAoWQ2FuY2VsVHJhaW5pbmdSZXNwb25zZSIdCg9QaW5Nb2RlbFJlcXVlc3QSCgoCaWQYASABKAMiOwoQUGluTW9kZWxSZXNwb25zZRInCghwcmVsYWJlbBgBIAEoCzIVLmtyaWxsLnYxLlByZWxhYmVsUnVuItYCCgtQcmVsYWJlbFJ1bhIKCgJpZBgBIAEoAxIoCgZzb3VyY2UYAiABKA4yGC5rcmlsbC52MS5QcmVsYWJlbFNvdXJjZRIXCg90cmFpbmluZ19ydW5faWQYAyABKAMSKAoGc3RhdHVzGAQgASgOMhgua3JpbGwudjEuUHJlbGFiZWxTdGF0dXMSEwoLY2xpcHNfdG90YWwYBSABKAUSEgoKY2xpcHNfZG9uZRgGIAEoBRIOCgZmcmFtZXMYByABKAUSEQoJcHJvcG9zYWxzGAggASgFEg0KBWVycm9yGAkgASgJEhIKCmNyZWF0ZWRfYnkYCiABKAkSLgoKY3JlYXRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhkKF0xpc3RQcmVsYWJlbFJ1bnNSZXF1ZXN0IncKGExpc3RQcmVsYWJlbFJ1bnNSZXNwb25zZRIjCgRydW5zGAEgAygLMhUua3JpbGwudjEuUHJlbGFiZWxSdW4SGwoTb3Blbl95b2xvX3Byb3Bvc2FscxgCIAEoBRIZChFvcGVuX2N2X3Byb3Bvc2FscxgDIAEoBSJAChRTdGFydFByZWxhYmVsUmVxdWVzdBIoCgZzb3VyY2UYASABKA4yGC5rcmlsbC52MS5QcmVsYWJlbFNvdXJjZSI7ChVTdGFydFByZWxhYmVsUmVzcG9uc2USIgoDcnVuGAEgASgLMhUua3JpbGwudjEuUHJlbGFiZWxSdW4iIwoVQ2FuY2VsUHJlbGFiZWxSZXF1ZXN0EgoKAmlkGAEgASgDIhgKFkNhbmNlbFByZWxhYmVsUmVzcG9uc2UiZAoISHN2UmFuZ2USDQoFaF9taW4YASABKAUSDQoFc19taW4YAiABKAUSDQoFdl9taW4YAyABKAUSDQoFaF9tYXgYBCABKAUSDQoFc19tYXgYBSABKAUSDQoFdl9tYXgYBiABKAUiaAoKUGFyYW1WYWx1ZRIMCgRuYW1lGAEgASgJEhAKBm51bWJlchgCIAEoAUgAEg4KBGZsYWcYAyABKAhIABIhCgNoc3YYBCABKAsyEi5rcmlsbC52MS5Ic3ZSYW5nZUgAQgcKBXZhbHVlIqABCglQYXJhbVNwZWMSDAoEbmFtZRgBIAEoCRINCgVsYWJlbBgCIAEoCRIhCgRraW5kGAMgASgOMhMua3JpbGwudjEuUGFyYW1LaW5kEgsKA21pbhgEIAEoARILCgNtYXgYBSABKAESDAoEc3RlcBgGIAEoARIrCg1kZWZhdWx0X3ZhbHVlGAcgASgLMhQua3JpbGwudjEuUGFyYW1WYWx1ZSJ1Cg5QcmVsYWJlbGVyU3BlYxIMCgRuYW1lGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB291dHB1dHMYAyADKAkSIwoGcGFyYW1zGAQgAygLMhMua3JpbGwudjEuUGFyYW1TcGVjEhAKCG9yaWVudGVkGAUgASgIIqoBChBQcmVsYWJlbGVyT3V0cHV0EgwKBG5hbWUYASABKAkSFQoNbGFiZWxfdHlwZV9pZBgCIAEoAxI+CgphdHRyaWJ1dGVzGAMgAygLMioua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dC5BdHRyaWJ1dGVzRW50cnkaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi3AEKClByZWxhYmVsZXISJgoEc3BlYxgBIAEoCzIYLmtyaWxsLnYxLlByZWxhYmVsZXJTcGVjEg8KB2VuYWJsZWQYAiABKAgSJAoGcGFyYW1zGAMgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIrCgdvdXRwdXRzGAQgAygLMhoua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dBIuCgp1cGRhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBISCgp1cGRhdGVkX2J5GAYgASgJIhgKFkxpc3RQcmVsYWJlbGVyc1JlcXVlc3QiRAoXTGlzdFByZWxhYmVsZXJzUmVzcG9uc2USKQoLcHJlbGFiZWxlcnMYASADKAsyFC5rcmlsbC52MS5QcmVsYWJlbGVyIosBChdVcGRhdGVQcmVsYWJlbGVyUmVxdWVzdBIMCgRuYW1lGAEgASgJEg8KB2VuYWJsZWQYAiABKAgSJAoGcGFyYW1zGAMgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIrCgdvdXRwdXRzGAQgAygLMhoua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dCJEChhVcGRhdGVQcmVsYWJlbGVyUmVzcG9uc2USKAoKcHJlbGFiZWxlchgBIAEoCzIULmtyaWxsLnYxLlByZWxhYmVsZXIiYAoYUHJldmlld1ByZWxhYmVsZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSJAoGcGFyYW1zGAIgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIQCghmcmFtZV9pZBgDIAEoAyJuCgpQcmV2aWV3Qm94Eg4KBm91dHB1dBgBIAEoCRIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3gSEgoKY29uZmlkZW5jZRgDIAEoAhIgCgdjb3JuZXJzGAQgAygLMg8ua3JpbGwudjEuUG9pbnQidgoZUHJldmlld1ByZWxhYmVsZXJSZXNwb25zZRIjCgVib3hlcxgBIAMoCzIULmtyaWxsLnYxLlByZXZpZXdCb3gSEAoIbWFza191cmwYAiABKAkSEQoJZnJhbWVfdXJsGAMgASgJEg8KB3Rvb2tfbXMYBCABKAUiKAoNUHJlbGFiZWxGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkiiQIKCVRyYWluVGFzaxIKCgJpZBgBIAEoAxIOCgZydW5faWQYAiABKAMSEwoLZGF0YXNldF91cmwYAyABKAkSDwoHY2xhc3NlcxgEIAMoCRIhCgRzaXplGAUgASgOMhMua3JpbGwudjEuTW9kZWxTaXplEg4KBmVwb2NocxgGIAEoBRISCgppbWFnZV9zaXplGAcgASgFEg0KBWJhdGNoGAggASgFEhgKEGJhc2Vfd2VpZ2h0c191cmwYCSABKAkSHAoUYmFzZWxpbmVfd2VpZ2h0c191cmwYCiABKAkSGgoSd2VpZ2h0c191cGxvYWRfdXJsGAsgASgJEhAKCGhhc190ZXN0GAwgASgIIkIKDFBsdWdpbkNvbmZpZxIMCgRuYW1lGAEgASgJEiQKBnBhcmFtcxgCIAMoCzIULmtyaWxsLnYxLlBhcmFtVmFsdWUiXQoJWW9sb01vZGVsEg8KB3ZlcnNpb24YASABKAkSEwoLd2VpZ2h0c191cmwYAiABKAkSFgoObWluX2NvbmZpZGVuY2UYAyABKAISEgoKaW1hZ2Vfc2l6ZRgEIAEoBSI0CglDdlBsdWdpbnMSJwoHcGx1Z2lucxgBIAMoCzIWLmtyaWxsLnYxLlBsdWdpbkNvbmZpZyKUAQoMUHJlbGFiZWxUYXNrEgoKAmlkGAEgASgDEicKBmZyYW1lcxgCIAMoCzIXLmtyaWxsLnYxLlByZWxhYmVsRnJhbWUSIwoEeW9sbxgDIAEoCzITLmtyaWxsLnYxLllvbG9Nb2RlbEgAEiEKAmN2GAQgASgLMhMua3JpbGwudjEuQ3ZQbHVnaW5zSABCBwoFbW9kZWwiggEKC1ByZXZpZXdUYXNrEgoKAmlkGAEgASgDEiYKBWZyYW1lGAIgASgLMhcua3JpbGwudjEuUHJlbGFiZWxGcmFtZRImCgZwbHVnaW4YAyABKAsyFi5rcmlsbC52MS5QbHVnaW5Db25maWcSFwoPbWFza191cGxvYWRfdXJsGAQgASgJKlIKCU1vZGVsU2l6ZRIaChZNT0RFTF9TSVpFX1VOU1BFQ0lGSUVEEAASEwoPTU9ERUxfU0laRV9OQU5PEAESFAoQTU9ERUxfU0laRV9TTUFMTBACKoQCCg5UcmFpbmluZ1N0YXR1cxIfChtUUkFJTklOR19TVEFUVVNfVU5TUEVDSUZJRUQQABIaChZUUkFJTklOR19TVEFUVVNfUVVFVUVEEAESHQoZVFJBSU5JTkdfU1RBVFVTX1BSRVBBUklORxACEhwKGFRSQUlOSU5HX1NUQVRVU19UUkFJTklORxADEh4KGlRSQUlOSU5HX1NUQVRVU19FVkFMVUFUSU5HEAQSHQoZVFJBSU5JTkdfU1RBVFVTX1NVQ0NFRURFRBAFEhoKFlRSQUlOSU5HX1NUQVRVU19GQUlMRUQQBhIdChlUUkFJTklOR19TVEFUVVNfQ0FOQ0VMTEVEEAcqbwoPVHJhaW5pbmdUcmlnZ2VyEiAKHFRSQUlOSU5HX1RSSUdHRVJfVU5TUEVDSUZJRUQQABIbChdUUkFJTklOR19UUklHR0VSX01BTlVBTBABEh0KGVRSQUlOSU5HX1RSSUdHRVJfU0NIRURVTEUQAipjCg5QcmVsYWJlbFNvdXJjZRIfChtQUkVMQUJFTF9TT1VSQ0VfVU5TUEVDSUZJRUQQABIYChRQUkVMQUJFTF9TT1VSQ0VfWU9MTxABEhYKElBSRUxBQkVMX1NPVVJDRV9DVhACKsQBCg5QcmVsYWJlbFN0YXR1cxIfChtQUkVMQUJFTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIaChZQUkVMQUJFTF9TVEFUVVNfUVVFVUVEEAESGwoXUFJFTEFCRUxfU1RBVFVTX1JVTk5JTkcQAhIdChlQUkVMQUJFTF9TVEFUVVNfU1VDQ0VFREVEEAMSGgoWUFJFTEFCRUxfU1RBVFVTX0ZBSUxFRBAEEh0KGVBSRUxBQkVMX1NUQVRVU19DQU5DRUxMRUQQBSqAAQoJUGFyYW1LaW5kEhoKFlBBUkFNX0tJTkRfVU5TUEVDSUZJRUQQABISCg5QQVJBTV9LSU5EX0lOVBABEhQKEFBBUkFNX0tJTkRfRkxPQVQQAhITCg9QQVJBTV9LSU5EX0JPT0wQAxIYChRQQVJBTV9LSU5EX0hTVl9SQU5HRRAEMtQHCg9QaXBlbGluZVNlcnZpY2USWwoQTGlzdFRyYWluaW5nUnVucxIhLmtyaWxsLnYxLkxpc3RUcmFpbmluZ1J1bnNSZXF1ZXN0GiIua3JpbGwudjEuTGlzdFRyYWluaW5nUnVuc1Jlc3BvbnNlIgASVQoOR2V0VHJhaW5pbmdSdW4SHy5rcmlsbC52MS5HZXRUcmFpbmluZ1J1blJlcXVlc3QaIC5rcmlsbC52MS5HZXRUcmFpbmluZ1J1blJlc3BvbnNlIgASUgoNU3RhcnRUcmFpbmluZxIeLmtyaWxsLnYxLlN0YXJ0VHJhaW5pbmdSZXF1ZXN0Gh8ua3JpbGwudjEuU3RhcnRUcmFpbmluZ1Jlc3BvbnNlIgASVQoOQ2FuY2VsVHJhaW5pbmcSHy5rcmlsbC52MS5DYW5jZWxUcmFpbmluZ1JlcXVlc3QaIC5rcmlsbC52MS5DYW5jZWxUcmFpbmluZ1Jlc3BvbnNlIgASQwoIUGluTW9kZWwSGS5rcmlsbC52MS5QaW5Nb2RlbFJlcXVlc3QaGi5rcmlsbC52MS5QaW5Nb2RlbFJlc3BvbnNlIgASWwoQTGlzdFByZWxhYmVsUnVucxIhLmtyaWxsLnYxLkxpc3RQcmVsYWJlbFJ1bnNSZXF1ZXN0GiIua3JpbGwudjEuTGlzdFByZWxhYmVsUnVuc1Jlc3BvbnNlIgASUgoNU3RhcnRQcmVsYWJlbBIeLmtyaWxsLnYxLlN0YXJ0UHJlbGFiZWxSZXF1ZXN0Gh8ua3JpbGwudjEuU3RhcnRQcmVsYWJlbFJlc3BvbnNlIgASVQoOQ2FuY2VsUHJlbGFiZWwSHy5rcmlsbC52MS5DYW5jZWxQcmVsYWJlbFJlcXVlc3QaIC5rcmlsbC52MS5DYW5jZWxQcmVsYWJlbFJlc3BvbnNlIgASWAoPTGlzdFByZWxhYmVsZXJzEiAua3JpbGwudjEuTGlzdFByZWxhYmVsZXJzUmVxdWVzdBohLmtyaWxsLnYxLkxpc3RQcmVsYWJlbGVyc1Jlc3BvbnNlIgASWwoQVXBkYXRlUHJlbGFiZWxlchIhLmtyaWxsLnYxLlVwZGF0ZVByZWxhYmVsZXJSZXF1ZXN0GiIua3JpbGwudjEuVXBkYXRlUHJlbGFiZWxlclJlc3BvbnNlIgASXgoRUHJldmlld1ByZWxhYmVsZXISIi5rcmlsbC52MS5QcmV2aWV3UHJlbGFiZWxlclJlcXVlc3QaIy5rcmlsbC52MS5QcmV2aWV3UHJlbGFiZWxlclJlc3BvbnNlIgBCjgEKDGNvbS5rcmlsbC52MUINUGlwZWxpbmVQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_export]);
+  fileDesc("ChdrcmlsbC92MS9waXBlbGluZS5wcm90bxIIa3JpbGwudjEiogEKC1RyYWluQ29uZmlnEiEKBHNpemUYASABKA4yEy5rcmlsbC52MS5Nb2RlbFNpemUSDgoGZXBvY2hzGAIgASgFEhIKCmltYWdlX3NpemUYAyABKAUSDQoFYmF0Y2gYBCABKAUSEwoLYmFzZV9ydW5faWQYBSABKAMSKAoHZGF0YXNldBgGIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMihQEKDEVwb2NoTWV0cmljcxINCgVlcG9jaBgBIAEoBRIQCghib3hfbG9zcxgCIAEoARIQCghjbHNfbG9zcxgDIAEoARIRCglwcmVjaXNpb24YBCABKAESDgoGcmVjYWxsGAUgASgBEg0KBW1hcDUwGAYgASgBEhAKCG1hcDUwXzk1GAcgASgBIoMBCgxDbGFzc01ldHJpY3MSDAoEbmFtZRgBIAEoCRIOCgZpbWFnZXMYAiABKAUSEQoJaW5zdGFuY2VzGAMgASgFEhEKCXByZWNpc2lvbhgEIAEoARIOCgZyZWNhbGwYBSABKAESDQoFbWFwNTAYBiABKAESEAoIbWFwNTBfOTUYByABKAEiWwoLRXZhbE1ldHJpY3MSIwoDYWxsGAEgASgLMhYua3JpbGwudjEuQ2xhc3NNZXRyaWNzEicKB2NsYXNzZXMYAiADKAsyFi5rcmlsbC52MS5DbGFzc01ldHJpY3Mi2AUKC1RyYWluaW5nUnVuEgoKAmlkGAEgASgDEigKBnN0YXR1cxgCIAEoDjIYLmtyaWxsLnYxLlRyYWluaW5nU3RhdHVzEioKB3RyaWdnZXIYAyABKA4yGS5rcmlsbC52MS5UcmFpbmluZ1RyaWdnZXISEgoKY3JlYXRlZF9ieRgEIAEoCRIlCgZjb25maWcYBSABKAsyFS5rcmlsbC52MS5UcmFpbkNvbmZpZxImCgdkYXRhc2V0GAYgASgLMhUua3JpbGwudjEuRXhwb3J0U3RhdHMSDQoFZXBvY2gYByABKAUSJwoHaGlzdG9yeRgIIAMoCzIWLmtyaWxsLnYxLkVwb2NoTWV0cmljcxIiCgN2YWwYCSABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIjCgR0ZXN0GAogASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSFwoPYmFzZWxpbmVfcnVuX2lkGAsgASgDEisKDGJhc2VsaW5lX3ZhbBgMIAEoCzIVLmtyaWxsLnYxLkV2YWxNZXRyaWNzEiwKDWJhc2VsaW5lX3Rlc3QYDSABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIOCgZwaW5uZWQYDiABKAgSDQoFZXJyb3IYDyABKAkSCwoDbG9nGBAgASgJEi4KCmNyZWF0ZWRfYXQYESABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0YXJ0ZWRfYXQYEiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgt3ZWlnaHRzX3VybBgUIAEoCRIVCg13ZWlnaHRzX2J5dGVzGBUgASgDEg4KBmRldmljZRgWIAEoCRIWCg52ZXJpZmllZF9ib3hlcxgXIAEoBSKgAQoPUmV0cmFpblNjaGVkdWxlEgwKBGhvdXIYASABKAUSEQoJdGltZV96b25lGAIgASgJEhYKDm1pbl9uZXdfbGFiZWxzGAMgASgFEhIKCm5ld19sYWJlbHMYBCABKAUSEAoIYXV0b19waW4YBSABKAgSLgoKbmV4dF9jaGVjaxgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGQoXTGlzdFRyYWluaW5nUnVuc1JlcXVlc3QirAEKGExpc3RUcmFpbmluZ1J1bnNSZXNwb25zZRIjCgRydW5zGAEgAygLMhUua3JpbGwudjEuVHJhaW5pbmdSdW4SFQoNcGlubmVkX3J1bl9pZBgCIAEoAxInCghkZWZhdWx0cxgDIAEoCzIVLmtyaWxsLnYxLlRyYWluQ29uZmlnEisKCHNjaGVkdWxlGAQgASgLMhkua3JpbGwudjEuUmV0cmFpblNjaGVkdWxlIiMKFUdldFRyYWluaW5nUnVuUmVxdWVzdBIKCgJpZBgBIAEoAyJjChZHZXRUcmFpbmluZ1J1blJlc3BvbnNlEiIKA3J1bhgBIAEoCzIVLmtyaWxsLnYxLlRyYWluaW5nUnVuEiUKBnBpbm5lZBgCIAEoCzIVLmtyaWxsLnYxLlRyYWluaW5nUnVuIj0KFFN0YXJ0VHJhaW5pbmdSZXF1ZXN0EiUKBmNvbmZpZxgBIAEoCzIVLmtyaWxsLnYxLlRyYWluQ29uZmlnIjsKFVN0YXJ0VHJhaW5pbmdSZXNwb25zZRIiCgNydW4YASABKAsyFS5rcmlsbC52MS5UcmFpbmluZ1J1biIjChVDYW5jZWxUcmFpbmluZ1JlcXVlc3QSCgoCaWQYASABKAMiGAoWQ2FuY2VsVHJhaW5pbmdSZXNwb25zZSIdCg9QaW5Nb2RlbFJlcXVlc3QSCgoCaWQYASABKAMiOwoQUGluTW9kZWxSZXNwb25zZRInCghwcmVsYWJlbBgBIAEoCzIVLmtyaWxsLnYxLlByZWxhYmVsUnVuItYCCgtQcmVsYWJlbFJ1bhIKCgJpZBgBIAEoAxIoCgZzb3VyY2UYAiABKA4yGC5rcmlsbC52MS5QcmVsYWJlbFNvdXJjZRIXCg90cmFpbmluZ19ydW5faWQYAyABKAMSKAoGc3RhdHVzGAQgASgOMhgua3JpbGwudjEuUHJlbGFiZWxTdGF0dXMSEwoLY2xpcHNfdG90YWwYBSABKAUSEgoKY2xpcHNfZG9uZRgGIAEoBRIOCgZmcmFtZXMYByABKAUSEQoJcHJvcG9zYWxzGAggASgFEg0KBWVycm9yGAkgASgJEhIKCmNyZWF0ZWRfYnkYCiABKAkSLgoKY3JlYXRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhkKF0xpc3RQcmVsYWJlbFJ1bnNSZXF1ZXN0IncKGExpc3RQcmVsYWJlbFJ1bnNSZXNwb25zZRIjCgRydW5zGAEgAygLMhUua3JpbGwudjEuUHJlbGFiZWxSdW4SGwoTb3Blbl95b2xvX3Byb3Bvc2FscxgCIAEoBRIZChFvcGVuX2N2X3Byb3Bvc2FscxgDIAEoBSJAChRTdGFydFByZWxhYmVsUmVxdWVzdBIoCgZzb3VyY2UYASABKA4yGC5rcmlsbC52MS5QcmVsYWJlbFNvdXJjZSI7ChVTdGFydFByZWxhYmVsUmVzcG9uc2USIgoDcnVuGAEgASgLMhUua3JpbGwudjEuUHJlbGFiZWxSdW4iIwoVQ2FuY2VsUHJlbGFiZWxSZXF1ZXN0EgoKAmlkGAEgASgDIhgKFkNhbmNlbFByZWxhYmVsUmVzcG9uc2UiZAoISHN2UmFuZ2USDQoFaF9taW4YASABKAUSDQoFc19taW4YAiABKAUSDQoFdl9taW4YAyABKAUSDQoFaF9tYXgYBCABKAUSDQoFc19tYXgYBSABKAUSDQoFdl9tYXgYBiABKAUiaAoKUGFyYW1WYWx1ZRIMCgRuYW1lGAEgASgJEhAKBm51bWJlchgCIAEoAUgAEg4KBGZsYWcYAyABKAhIABIhCgNoc3YYBCABKAsyEi5rcmlsbC52MS5Ic3ZSYW5nZUgAQgcKBXZhbHVlIqABCglQYXJhbVNwZWMSDAoEbmFtZRgBIAEoCRINCgVsYWJlbBgCIAEoCRIhCgRraW5kGAMgASgOMhMua3JpbGwudjEuUGFyYW1LaW5kEgsKA21pbhgEIAEoARILCgNtYXgYBSABKAESDAoEc3RlcBgGIAEoARIrCg1kZWZhdWx0X3ZhbHVlGAcgASgLMhQua3JpbGwudjEuUGFyYW1WYWx1ZSJ1Cg5QcmVsYWJlbGVyU3BlYxIMCgRuYW1lGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB291dHB1dHMYAyADKAkSIwoGcGFyYW1zGAQgAygLMhMua3JpbGwudjEuUGFyYW1TcGVjEhAKCG9yaWVudGVkGAUgASgIIqoBChBQcmVsYWJlbGVyT3V0cHV0EgwKBG5hbWUYASABKAkSFQoNbGFiZWxfdHlwZV9pZBgCIAEoAxI+CgphdHRyaWJ1dGVzGAMgAygLMioua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dC5BdHRyaWJ1dGVzRW50cnkaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi3AEKClByZWxhYmVsZXISJgoEc3BlYxgBIAEoCzIYLmtyaWxsLnYxLlByZWxhYmVsZXJTcGVjEg8KB2VuYWJsZWQYAiABKAgSJAoGcGFyYW1zGAMgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIrCgdvdXRwdXRzGAQgAygLMhoua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dBIuCgp1cGRhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBISCgp1cGRhdGVkX2J5GAYgASgJIhgKFkxpc3RQcmVsYWJlbGVyc1JlcXVlc3QiRAoXTGlzdFByZWxhYmVsZXJzUmVzcG9uc2USKQoLcHJlbGFiZWxlcnMYASADKAsyFC5rcmlsbC52MS5QcmVsYWJlbGVyIosBChdVcGRhdGVQcmVsYWJlbGVyUmVxdWVzdBIMCgRuYW1lGAEgASgJEg8KB2VuYWJsZWQYAiABKAgSJAoGcGFyYW1zGAMgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIrCgdvdXRwdXRzGAQgAygLMhoua3JpbGwudjEuUHJlbGFiZWxlck91dHB1dCJEChhVcGRhdGVQcmVsYWJlbGVyUmVzcG9uc2USKAoKcHJlbGFiZWxlchgBIAEoCzIULmtyaWxsLnYxLlByZWxhYmVsZXIiYAoYUHJldmlld1ByZWxhYmVsZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSJAoGcGFyYW1zGAIgAygLMhQua3JpbGwudjEuUGFyYW1WYWx1ZRIQCghmcmFtZV9pZBgDIAEoAyJuCgpQcmV2aWV3Qm94Eg4KBm91dHB1dBgBIAEoCRIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3gSEgoKY29uZmlkZW5jZRgDIAEoAhIgCgdjb3JuZXJzGAQgAygLMg8ua3JpbGwudjEuUG9pbnQidgoZUHJldmlld1ByZWxhYmVsZXJSZXNwb25zZRIjCgVib3hlcxgBIAMoCzIULmtyaWxsLnYxLlByZXZpZXdCb3gSEAoIbWFza191cmwYAiABKAkSEQoJZnJhbWVfdXJsGAMgASgJEg8KB3Rvb2tfbXMYBCABKAUi5wEKDU1vZGVsVHJpYWxCb3gSEAoIZnJhbWVfaWQYASABKAMSFQoNbGFiZWxfdHlwZV9pZBgCIAEoAxI7CgphdHRyaWJ1dGVzGAMgAygLMicua3JpbGwudjEuTW9kZWxUcmlhbEJveC5BdHRyaWJ1dGVzRW50cnkSGgoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94EhIKCmNvbmZpZGVuY2UYBSABKAISDQoFdHJhY2sYBiABKAUaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEimgEKD01vZGVsVHJpYWxDbGFzcxIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgwKBG5hbWUYAiABKAkSDwoHbWF0Y2hlZBgDIAEoBRIPCgdjb3JyZWN0GAQgASgFEg4KBm1pc3NlZBgFIAEoBRINCgVleHRyYRgGIAEoBRIRCglwcmVjaXNpb24YByABKAESDgoGcmVjYWxsGAggASgBIpcBChFNb2RlbFRyaWFsU3VtbWFyeRIWCg5taW5fY29uZmlkZW5jZRgBIAEoAhIWCg5sYWJlbGVkX2ZyYW1lcxgCIAEoBRImCgNhbGwYAyABKAsyGS5rcmlsbC52MS5Nb2RlbFRyaWFsQ2xhc3MSKgoHY2xhc3NlcxgEIAMoCzIZLmtyaWxsLnYxLk1vZGVsVHJpYWxDbGFzcyKfAwoKTW9kZWxUcmlhbBIKCgJpZBgBIAEoAxIXCg90cmFpbmluZ19ydW5faWQYAiABKAMSDwoHY2xpcF9pZBgDIAEoAxIQCgh2aWRlb19pZBgEIAEoAxISCgp2aWRlb19uYW1lGAUgASgJEhIKCmNsaXBfaW5kZXgYBiABKAUSKgoGc3RhdHVzGAcgASgOMhoua3JpbGwudjEuTW9kZWxUcmlhbFN0YXR1cxIUCgxmcmFtZXNfdG90YWwYCCABKAUSEwoLZnJhbWVzX2RvbmUYCSABKAUSGAoQY29uZmlkZW5jZV9mbG9vchgKIAEoAhINCgVlcnJvchgLIAEoCRISCgpjcmVhdGVkX2J5GAwgASgJEi4KCmNyZWF0ZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgdzdW1tYXJ5GA8gASgLMhsua3JpbGwudjEuTW9kZWxUcmlhbFN1bW1hcnkiVAoWU3RhcnRNb2RlbFRyaWFsUmVxdWVzdBIXCg90cmFpbmluZ19ydW5faWQYASABKAMSDwoHY2xpcF9pZBgCIAEoAxIQCgh2aWRlb19pZBgDIAEoAyJkChdTdGFydE1vZGVsVHJpYWxSZXNwb25zZRIjCgV0cmlhbBgBIAEoCzIULmtyaWxsLnYxLk1vZGVsVHJpYWwSJAoGdHJpYWxzGAIgAygLMhQua3JpbGwudjEuTW9kZWxUcmlhbCIiChRHZXRNb2RlbFRyaWFsUmVxdWVzdBIKCgJpZBgBIAEoAyJkChVHZXRNb2RlbFRyaWFsUmVzcG9uc2USIwoFdHJpYWwYASABKAsyFC5rcmlsbC52MS5Nb2RlbFRyaWFsEiYKBWJveGVzGAIgAygLMhcua3JpbGwudjEuTW9kZWxUcmlhbEJveCJCChZMaXN0TW9kZWxUcmlhbHNSZXF1ZXN0EhcKD3RyYWluaW5nX3J1bl9pZBgBIAEoAxIPCgdjbGlwX2lkGAIgASgDIj8KF0xpc3RNb2RlbFRyaWFsc1Jlc3BvbnNlEiQKBnRyaWFscxgBIAMoCzIULmtyaWxsLnYxLk1vZGVsVHJpYWwiJQoXQ2FuY2VsTW9kZWxUcmlhbFJlcXVlc3QSCgoCaWQYASABKAMiGgoYQ2FuY2VsTW9kZWxUcmlhbFJlc3BvbnNlIpcCCg9Nb2RlbFRyaWFsRnJhbWUSEAoIdHJpYWxfaWQYASABKAMSDwoHY2xpcF9pZBgCIAEoAxIQCgh2aWRlb19pZBgDIAEoAxISCgp2aWRlb19uYW1lGAQgASgJEhIKCmNsaXBfaW5kZXgYBSABKAUSEAoIZnJhbWVfaWQYBiABKAMSEwoLZnJhbWVfaW5kZXgYByABKAUSFQoNdGh1bWJuYWlsX3VybBgIIAEoCRIPCgdtYXRjaGVkGAkgASgFEg0KBXdyb25nGAogASgFEg4KBm1pc3NlZBgLIAEoBRINCgVleHRyYRgMIAEoBRIqCgdjbGFzc2VzGA0gAygLMhkua3JpbGwudjEuTW9kZWxUcmlhbENsYXNzIm4KG0xpc3RNb2RlbFRyaWFsRXJyb3JzUmVxdWVzdBIXCg90cmFpbmluZ19ydW5faWQYASABKAMSEAoIdmlkZW9faWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxINCgVsaW1pdBgEIAEoBSJ1ChxMaXN0TW9kZWxUcmlhbEVycm9yc1Jlc3BvbnNlEikKBmZyYW1lcxgBIAMoCzIZLmtyaWxsLnYxLk1vZGVsVHJpYWxGcmFtZRIUCgx0b3RhbF9mcmFtZXMYAiABKAUSFAoMZXJyb3JfZnJhbWVzGAMgASgFIigKDVByZWxhYmVsRnJhbWUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJIokCCglUcmFpblRhc2sSCgoCaWQYASABKAMSDgoGcnVuX2lkGAIgASgDEhMKC2RhdGFzZXRfdXJsGAMgASgJEg8KB2NsYXNzZXMYBCADKAkSIQoEc2l6ZRgFIAEoDjITLmtyaWxsLnYxLk1vZGVsU2l6ZRIOCgZlcG9jaHMYBiABKAUSEgoKaW1hZ2Vfc2l6ZRgHIAEoBRINCgViYXRjaBgIIAEoBRIYChBiYXNlX3dlaWdodHNfdXJsGAkgASgJEhwKFGJhc2VsaW5lX3dlaWdodHNfdXJsGAogASgJEhoKEndlaWdodHNfdXBsb2FkX3VybBgLIAEoCRIQCghoYXNfdGVzdBgMIAEoCCJCCgxQbHVnaW5Db25maWcSDAoEbmFtZRgBIAEoCRIkCgZwYXJhbXMYAiADKAsyFC5rcmlsbC52MS5QYXJhbVZhbHVlIl0KCVlvbG9Nb2RlbBIPCgd2ZXJzaW9uGAEgASgJEhMKC3dlaWdodHNfdXJsGAIgASgJEhYKDm1pbl9jb25maWRlbmNlGAMgASgCEhIKCmltYWdlX3NpemUYBCABKAUiNAoJQ3ZQbHVnaW5zEicKB3BsdWdpbnMYASADKAsyFi5rcmlsbC52MS5QbHVnaW5Db25maWcilAEKDFByZWxhYmVsVGFzaxIKCgJpZBgBIAEoAxInCgZmcmFtZXMYAiADKAsyFy5rcmlsbC52MS5QcmVsYWJlbEZyYW1lEiMKBHlvbG8YAyABKAsyEy5rcmlsbC52MS5Zb2xvTW9kZWxIABIhCgJjdhgEIAEoCzITLmtyaWxsLnYxLkN2UGx1Z2luc0gAQgcKBW1vZGVsIoIBCgtQcmV2aWV3VGFzaxIKCgJpZBgBIAEoAxImCgVmcmFtZRgCIAEoCzIXLmtyaWxsLnYxLlByZWxhYmVsRnJhbWUSJgoGcGx1Z2luGAMgASgLMhYua3JpbGwudjEuUGx1Z2luQ29uZmlnEhcKD21hc2tfdXBsb2FkX3VybBgEIAEoCSpSCglNb2RlbFNpemUSGgoWTU9ERUxfU0laRV9VTlNQRUNJRklFRBAAEhMKD01PREVMX1NJWkVfTkFOTxABEhQKEE1PREVMX1NJWkVfU01BTEwQAiqEAgoOVHJhaW5pbmdTdGF0dXMSHwobVFJBSU5JTkdfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWVFJBSU5JTkdfU1RBVFVTX1FVRVVFRBABEh0KGVRSQUlOSU5HX1NUQVRVU19QUkVQQVJJTkcQAhIcChhUUkFJTklOR19TVEFUVVNfVFJBSU5JTkcQAxIeChpUUkFJTklOR19TVEFUVVNfRVZBTFVBVElORxAEEh0KGVRSQUlOSU5HX1NUQVRVU19TVUNDRUVERUQQBRIaChZUUkFJTklOR19TVEFUVVNfRkFJTEVEEAYSHQoZVFJBSU5JTkdfU1RBVFVTX0NBTkNFTExFRBAHKm8KD1RyYWluaW5nVHJpZ2dlchIgChxUUkFJTklOR19UUklHR0VSX1VOU1BFQ0lGSUVEEAASGwoXVFJBSU5JTkdfVFJJR0dFUl9NQU5VQUwQARIdChlUUkFJTklOR19UUklHR0VSX1NDSEVEVUxFEAIqYwoOUHJlbGFiZWxTb3VyY2USHwobUFJFTEFCRUxfU09VUkNFX1VOU1BFQ0lGSUVEEAASGAoUUFJFTEFCRUxfU09VUkNFX1lPTE8QARIWChJQUkVMQUJFTF9TT1VSQ0VfQ1YQAirEAQoOUHJlbGFiZWxTdGF0dXMSHwobUFJFTEFCRUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWUFJFTEFCRUxfU1RBVFVTX1FVRVVFRBABEhsKF1BSRUxBQkVMX1NUQVRVU19SVU5OSU5HEAISHQoZUFJFTEFCRUxfU1RBVFVTX1NVQ0NFRURFRBADEhoKFlBSRUxBQkVMX1NUQVRVU19GQUlMRUQQBBIdChlQUkVMQUJFTF9TVEFUVVNfQ0FOQ0VMTEVEEAUqgAEKCVBhcmFtS2luZBIaChZQQVJBTV9LSU5EX1VOU1BFQ0lGSUVEEAASEgoOUEFSQU1fS0lORF9JTlQQARIUChBQQVJBTV9LSU5EX0ZMT0FUEAISEwoPUEFSQU1fS0lORF9CT09MEAMSGAoUUEFSQU1fS0lORF9IU1ZfUkFOR0UQBCrYAQoQTW9kZWxUcmlhbFN0YXR1cxIiCh5NT0RFTF9UUklBTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIdChlNT0RFTF9UUklBTF9TVEFUVVNfUVVFVUVEEAESHgoaTU9ERUxfVFJJQUxfU1RBVFVTX1JVTk5JTkcQAhIgChxNT0RFTF9UUklBTF9TVEFUVVNfU1VDQ0VFREVEEAMSHQoZTU9ERUxfVFJJQUxfU1RBVFVTX0ZBSUxFRBAEEiAKHE1PREVMX1RSSUFMX1NUQVRVU19DQU5DRUxMRUQQBTKiCwoPUGlwZWxpbmVTZXJ2aWNlElsKEExpc3RUcmFpbmluZ1J1bnMSIS5rcmlsbC52MS5MaXN0VHJhaW5pbmdSdW5zUmVxdWVzdBoiLmtyaWxsLnYxLkxpc3RUcmFpbmluZ1J1bnNSZXNwb25zZSIAElUKDkdldFRyYWluaW5nUnVuEh8ua3JpbGwudjEuR2V0VHJhaW5pbmdSdW5SZXF1ZXN0GiAua3JpbGwudjEuR2V0VHJhaW5pbmdSdW5SZXNwb25zZSIAElIKDVN0YXJ0VHJhaW5pbmcSHi5rcmlsbC52MS5TdGFydFRyYWluaW5nUmVxdWVzdBofLmtyaWxsLnYxLlN0YXJ0VHJhaW5pbmdSZXNwb25zZSIAElUKDkNhbmNlbFRyYWluaW5nEh8ua3JpbGwudjEuQ2FuY2VsVHJhaW5pbmdSZXF1ZXN0GiAua3JpbGwudjEuQ2FuY2VsVHJhaW5pbmdSZXNwb25zZSIAEkMKCFBpbk1vZGVsEhkua3JpbGwudjEuUGluTW9kZWxSZXF1ZXN0Ghoua3JpbGwudjEuUGluTW9kZWxSZXNwb25zZSIAElsKEExpc3RQcmVsYWJlbFJ1bnMSIS5rcmlsbC52MS5MaXN0UHJlbGFiZWxSdW5zUmVxdWVzdBoiLmtyaWxsLnYxLkxpc3RQcmVsYWJlbFJ1bnNSZXNwb25zZSIAElIKDVN0YXJ0UHJlbGFiZWwSHi5rcmlsbC52MS5TdGFydFByZWxhYmVsUmVxdWVzdBofLmtyaWxsLnYxLlN0YXJ0UHJlbGFiZWxSZXNwb25zZSIAElUKDkNhbmNlbFByZWxhYmVsEh8ua3JpbGwudjEuQ2FuY2VsUHJlbGFiZWxSZXF1ZXN0GiAua3JpbGwudjEuQ2FuY2VsUHJlbGFiZWxSZXNwb25zZSIAElgKD0xpc3RQcmVsYWJlbGVycxIgLmtyaWxsLnYxLkxpc3RQcmVsYWJlbGVyc1JlcXVlc3QaIS5rcmlsbC52MS5MaXN0UHJlbGFiZWxlcnNSZXNwb25zZSIAElsKEFVwZGF0ZVByZWxhYmVsZXISIS5rcmlsbC52MS5VcGRhdGVQcmVsYWJlbGVyUmVxdWVzdBoiLmtyaWxsLnYxLlVwZGF0ZVByZWxhYmVsZXJSZXNwb25zZSIAEl4KEVByZXZpZXdQcmVsYWJlbGVyEiIua3JpbGwudjEuUHJldmlld1ByZWxhYmVsZXJSZXF1ZXN0GiMua3JpbGwudjEuUHJldmlld1ByZWxhYmVsZXJSZXNwb25zZSIAElgKD1N0YXJ0TW9kZWxUcmlhbBIgLmtyaWxsLnYxLlN0YXJ0TW9kZWxUcmlhbFJlcXVlc3QaIS5rcmlsbC52MS5TdGFydE1vZGVsVHJpYWxSZXNwb25zZSIAElIKDUdldE1vZGVsVHJpYWwSHi5rcmlsbC52MS5HZXRNb2RlbFRyaWFsUmVxdWVzdBofLmtyaWxsLnYxLkdldE1vZGVsVHJpYWxSZXNwb25zZSIAElgKD0xpc3RNb2RlbFRyaWFscxIgLmtyaWxsLnYxLkxpc3RNb2RlbFRyaWFsc1JlcXVlc3QaIS5rcmlsbC52MS5MaXN0TW9kZWxUcmlhbHNSZXNwb25zZSIAElsKEENhbmNlbE1vZGVsVHJpYWwSIS5rcmlsbC52MS5DYW5jZWxNb2RlbFRyaWFsUmVxdWVzdBoiLmtyaWxsLnYxLkNhbmNlbE1vZGVsVHJpYWxSZXNwb25zZSIAEmcKFExpc3RNb2RlbFRyaWFsRXJyb3JzEiUua3JpbGwudjEuTGlzdE1vZGVsVHJpYWxFcnJvcnNSZXF1ZXN0GiYua3JpbGwudjEuTGlzdE1vZGVsVHJpYWxFcnJvcnNSZXNwb25zZSIAQo4BCgxjb20ua3JpbGwudjFCDVBpcGVsaW5lUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_export]);
 
 /**
  * @generated from message krill.v1.TrainConfig
@@ -1183,6 +1183,576 @@ export const PreviewPrelabelerResponseSchema: GenMessage<PreviewPrelabelerRespon
   messageDesc(file_krill_v1_pipeline, 35);
 
 /**
+ * ModelTrialBox is one box a trial's model found, mapped to the label its
+ * class stands for.
+ *
+ * @generated from message krill.v1.ModelTrialBox
+ */
+export type ModelTrialBox = Message<"krill.v1.ModelTrialBox"> & {
+  /**
+   * @generated from field: int64 frame_id = 1;
+   */
+  frameId: bigint;
+
+  /**
+   * @generated from field: int64 label_type_id = 2;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * @generated from field: map<string, string> attributes = 3;
+   */
+  attributes: { [key: string]: string };
+
+  /**
+   * @generated from field: krill.v1.Box box = 4;
+   */
+  box?: Box | undefined;
+
+  /**
+   * @generated from field: float confidence = 5;
+   */
+  confidence: number;
+
+  /**
+   * Boxes linked into one object across frames share a number, from 1.
+   *
+   * @generated from field: int32 track = 6;
+   */
+  track: number;
+};
+
+/**
+ * Describes the message krill.v1.ModelTrialBox.
+ * Use `create(ModelTrialBoxSchema)` to create a new message.
+ */
+export const ModelTrialBoxSchema: GenMessage<ModelTrialBox> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 36);
+
+/**
+ * ModelTrialClass scores one label type. Matched boxes overlap a verified box
+ * of the type, and correct ones are also tight and agree on every attribute
+ * the verified track has set, like gold checks.
+ *
+ * @generated from message krill.v1.ModelTrialClass
+ */
+export type ModelTrialClass = Message<"krill.v1.ModelTrialClass"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 matched = 3;
+   */
+  matched: number;
+
+  /**
+   * @generated from field: int32 correct = 4;
+   */
+  correct: number;
+
+  /**
+   * Verified boxes with no model box over them.
+   *
+   * @generated from field: int32 missed = 5;
+   */
+  missed: number;
+
+  /**
+   * Model boxes over nothing verified.
+   *
+   * @generated from field: int32 extra = 6;
+   */
+  extra: number;
+
+  /**
+   * matched over matched plus extra.
+   *
+   * @generated from field: double precision = 7;
+   */
+  precision: number;
+
+  /**
+   * matched over matched plus missed.
+   *
+   * @generated from field: double recall = 8;
+   */
+  recall: number;
+};
+
+/**
+ * Describes the message krill.v1.ModelTrialClass.
+ * Use `create(ModelTrialClassSchema)` to create a new message.
+ */
+export const ModelTrialClassSchema: GenMessage<ModelTrialClass> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 37);
+
+/**
+ * ModelTrialSummary scores a trial against the clip's verified boxes on
+ * frames marked done, counting only model boxes at or above min_confidence.
+ *
+ * @generated from message krill.v1.ModelTrialSummary
+ */
+export type ModelTrialSummary = Message<"krill.v1.ModelTrialSummary"> & {
+  /**
+   * @generated from field: float min_confidence = 1;
+   */
+  minConfidence: number;
+
+  /**
+   * @generated from field: int32 labeled_frames = 2;
+   */
+  labeledFrames: number;
+
+  /**
+   * @generated from field: krill.v1.ModelTrialClass all = 3;
+   */
+  all?: ModelTrialClass | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.ModelTrialClass classes = 4;
+   */
+  classes: ModelTrialClass[];
+};
+
+/**
+ * Describes the message krill.v1.ModelTrialSummary.
+ * Use `create(ModelTrialSummarySchema)` to create a new message.
+ */
+export const ModelTrialSummarySchema: GenMessage<ModelTrialSummary> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 38);
+
+/**
+ * @generated from message krill.v1.ModelTrial
+ */
+export type ModelTrial = Message<"krill.v1.ModelTrial"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: int64 training_run_id = 2;
+   */
+  trainingRunId: bigint;
+
+  /**
+   * @generated from field: int64 clip_id = 3;
+   */
+  clipId: bigint;
+
+  /**
+   * @generated from field: int64 video_id = 4;
+   */
+  videoId: bigint;
+
+  /**
+   * @generated from field: string video_name = 5;
+   */
+  videoName: string;
+
+  /**
+   * Index within the video.
+   *
+   * @generated from field: int32 clip_index = 6;
+   */
+  clipIndex: number;
+
+  /**
+   * @generated from field: krill.v1.ModelTrialStatus status = 7;
+   */
+  status: ModelTrialStatus;
+
+  /**
+   * @generated from field: int32 frames_total = 8;
+   */
+  framesTotal: number;
+
+  /**
+   * Frames whose boxes are final, from the start of the clip.
+   *
+   * @generated from field: int32 frames_done = 9;
+   */
+  framesDone: number;
+
+  /**
+   * The worker dropped boxes below it.
+   *
+   * @generated from field: float confidence_floor = 10;
+   */
+  confidenceFloor: number;
+
+  /**
+   * @generated from field: string error = 11;
+   */
+  error: string;
+
+  /**
+   * @generated from field: string created_by = 12;
+   */
+  createdBy: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 13;
+   */
+  createdAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 14;
+   */
+  finishedAt?: Timestamp | undefined;
+
+  /**
+   * At the pre-label confidence setting. Unset until the trial finishes, or
+   * when no frame of the clip is marked done.
+   *
+   * @generated from field: krill.v1.ModelTrialSummary summary = 15;
+   */
+  summary?: ModelTrialSummary | undefined;
+};
+
+/**
+ * Describes the message krill.v1.ModelTrial.
+ * Use `create(ModelTrialSchema)` to create a new message.
+ */
+export const ModelTrialSchema: GenMessage<ModelTrial> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 39);
+
+/**
+ * @generated from message krill.v1.StartModelTrialRequest
+ */
+export type StartModelTrialRequest = Message<"krill.v1.StartModelTrialRequest"> & {
+  /**
+   * @generated from field: int64 training_run_id = 1;
+   */
+  trainingRunId: bigint;
+
+  /**
+   * One of the two.
+   *
+   * @generated from field: int64 clip_id = 2;
+   */
+  clipId: bigint;
+
+  /**
+   * @generated from field: int64 video_id = 3;
+   */
+  videoId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.StartModelTrialRequest.
+ * Use `create(StartModelTrialRequestSchema)` to create a new message.
+ */
+export const StartModelTrialRequestSchema: GenMessage<StartModelTrialRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 40);
+
+/**
+ * @generated from message krill.v1.StartModelTrialResponse
+ */
+export type StartModelTrialResponse = Message<"krill.v1.StartModelTrialResponse"> & {
+  /**
+   * Set when a clip was given.
+   *
+   * @generated from field: krill.v1.ModelTrial trial = 1;
+   */
+  trial?: ModelTrial | undefined;
+
+  /**
+   * Every trial the request covers, in clip order.
+   *
+   * @generated from field: repeated krill.v1.ModelTrial trials = 2;
+   */
+  trials: ModelTrial[];
+};
+
+/**
+ * Describes the message krill.v1.StartModelTrialResponse.
+ * Use `create(StartModelTrialResponseSchema)` to create a new message.
+ */
+export const StartModelTrialResponseSchema: GenMessage<StartModelTrialResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 41);
+
+/**
+ * @generated from message krill.v1.GetModelTrialRequest
+ */
+export type GetModelTrialRequest = Message<"krill.v1.GetModelTrialRequest"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+};
+
+/**
+ * Describes the message krill.v1.GetModelTrialRequest.
+ * Use `create(GetModelTrialRequestSchema)` to create a new message.
+ */
+export const GetModelTrialRequestSchema: GenMessage<GetModelTrialRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 42);
+
+/**
+ * @generated from message krill.v1.GetModelTrialResponse
+ */
+export type GetModelTrialResponse = Message<"krill.v1.GetModelTrialResponse"> & {
+  /**
+   * @generated from field: krill.v1.ModelTrial trial = 1;
+   */
+  trial?: ModelTrial | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.ModelTrialBox boxes = 2;
+   */
+  boxes: ModelTrialBox[];
+};
+
+/**
+ * Describes the message krill.v1.GetModelTrialResponse.
+ * Use `create(GetModelTrialResponseSchema)` to create a new message.
+ */
+export const GetModelTrialResponseSchema: GenMessage<GetModelTrialResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 43);
+
+/**
+ * @generated from message krill.v1.ListModelTrialsRequest
+ */
+export type ListModelTrialsRequest = Message<"krill.v1.ListModelTrialsRequest"> & {
+  /**
+   * One of the two.
+   *
+   * @generated from field: int64 training_run_id = 1;
+   */
+  trainingRunId: bigint;
+
+  /**
+   * @generated from field: int64 clip_id = 2;
+   */
+  clipId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.ListModelTrialsRequest.
+ * Use `create(ListModelTrialsRequestSchema)` to create a new message.
+ */
+export const ListModelTrialsRequestSchema: GenMessage<ListModelTrialsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 44);
+
+/**
+ * @generated from message krill.v1.ListModelTrialsResponse
+ */
+export type ListModelTrialsResponse = Message<"krill.v1.ListModelTrialsResponse"> & {
+  /**
+   * Newest first.
+   *
+   * @generated from field: repeated krill.v1.ModelTrial trials = 1;
+   */
+  trials: ModelTrial[];
+};
+
+/**
+ * Describes the message krill.v1.ListModelTrialsResponse.
+ * Use `create(ListModelTrialsResponseSchema)` to create a new message.
+ */
+export const ListModelTrialsResponseSchema: GenMessage<ListModelTrialsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 45);
+
+/**
+ * @generated from message krill.v1.CancelModelTrialRequest
+ */
+export type CancelModelTrialRequest = Message<"krill.v1.CancelModelTrialRequest"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+};
+
+/**
+ * Describes the message krill.v1.CancelModelTrialRequest.
+ * Use `create(CancelModelTrialRequestSchema)` to create a new message.
+ */
+export const CancelModelTrialRequestSchema: GenMessage<CancelModelTrialRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 46);
+
+/**
+ * @generated from message krill.v1.CancelModelTrialResponse
+ */
+export type CancelModelTrialResponse = Message<"krill.v1.CancelModelTrialResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.CancelModelTrialResponse.
+ * Use `create(CancelModelTrialResponseSchema)` to create a new message.
+ */
+export const CancelModelTrialResponseSchema: GenMessage<CancelModelTrialResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 47);
+
+/**
+ * ModelTrialFrame scores one labeled frame of a trial against its verified
+ * boxes. Each count is at the summary's confidence threshold.
+ *
+ * @generated from message krill.v1.ModelTrialFrame
+ */
+export type ModelTrialFrame = Message<"krill.v1.ModelTrialFrame"> & {
+  /**
+   * @generated from field: int64 trial_id = 1;
+   */
+  trialId: bigint;
+
+  /**
+   * @generated from field: int64 clip_id = 2;
+   */
+  clipId: bigint;
+
+  /**
+   * @generated from field: int64 video_id = 3;
+   */
+  videoId: bigint;
+
+  /**
+   * @generated from field: string video_name = 4;
+   */
+  videoName: string;
+
+  /**
+   * Index within the video.
+   *
+   * @generated from field: int32 clip_index = 5;
+   */
+  clipIndex: number;
+
+  /**
+   * @generated from field: int64 frame_id = 6;
+   */
+  frameId: bigint;
+
+  /**
+   * Index within the video.
+   *
+   * @generated from field: int32 frame_index = 7;
+   */
+  frameIndex: number;
+
+  /**
+   * Presigned MinIO URL.
+   *
+   * @generated from field: string thumbnail_url = 8;
+   */
+  thumbnailUrl: string;
+
+  /**
+   * @generated from field: int32 matched = 9;
+   */
+  matched: number;
+
+  /**
+   * Matched boxes that are loose or disagree on an attribute.
+   *
+   * @generated from field: int32 wrong = 10;
+   */
+  wrong: number;
+
+  /**
+   * @generated from field: int32 missed = 11;
+   */
+  missed: number;
+
+  /**
+   * @generated from field: int32 extra = 12;
+   */
+  extra: number;
+
+  /**
+   * Only the label types with a missed, extra, or wrong box on the frame.
+   *
+   * @generated from field: repeated krill.v1.ModelTrialClass classes = 13;
+   */
+  classes: ModelTrialClass[];
+};
+
+/**
+ * Describes the message krill.v1.ModelTrialFrame.
+ * Use `create(ModelTrialFrameSchema)` to create a new message.
+ */
+export const ModelTrialFrameSchema: GenMessage<ModelTrialFrame> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 48);
+
+/**
+ * @generated from message krill.v1.ListModelTrialErrorsRequest
+ */
+export type ListModelTrialErrorsRequest = Message<"krill.v1.ListModelTrialErrorsRequest"> & {
+  /**
+   * @generated from field: int64 training_run_id = 1;
+   */
+  trainingRunId: bigint;
+
+  /**
+   * Limits to one video when set.
+   *
+   * @generated from field: int64 video_id = 2;
+   */
+  videoId: bigint;
+
+  /**
+   * Limits to one label type when set, and scores only its boxes.
+   *
+   * @generated from field: int64 label_type_id = 3;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * At most 200. 50 when unset.
+   *
+   * @generated from field: int32 limit = 4;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message krill.v1.ListModelTrialErrorsRequest.
+ * Use `create(ListModelTrialErrorsRequestSchema)` to create a new message.
+ */
+export const ListModelTrialErrorsRequestSchema: GenMessage<ListModelTrialErrorsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 49);
+
+/**
+ * @generated from message krill.v1.ListModelTrialErrorsResponse
+ */
+export type ListModelTrialErrorsResponse = Message<"krill.v1.ListModelTrialErrorsResponse"> & {
+  /**
+   * Most missed, extra, and wrong boxes first, then by video, clip, and frame.
+   *
+   * @generated from field: repeated krill.v1.ModelTrialFrame frames = 1;
+   */
+  frames: ModelTrialFrame[];
+
+  /**
+   * Labeled frames the run's finished trials cover, before the limit.
+   *
+   * @generated from field: int32 total_frames = 2;
+   */
+  totalFrames: number;
+
+  /**
+   * Of those, how many have at least one missed, extra, or wrong box.
+   *
+   * @generated from field: int32 error_frames = 3;
+   */
+  errorFrames: number;
+};
+
+/**
+ * Describes the message krill.v1.ListModelTrialErrorsResponse.
+ * Use `create(ListModelTrialErrorsResponseSchema)` to create a new message.
+ */
+export const ListModelTrialErrorsResponseSchema: GenMessage<ListModelTrialErrorsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline, 50);
+
+/**
  * PrelabelFrame is a frame for a GPU worker to pre-label.
  *
  * @generated from message krill.v1.PrelabelFrame
@@ -1206,7 +1776,7 @@ export type PrelabelFrame = Message<"krill.v1.PrelabelFrame"> & {
  * Use `create(PrelabelFrameSchema)` to create a new message.
  */
 export const PrelabelFrameSchema: GenMessage<PrelabelFrame> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 36);
+  messageDesc(file_krill_v1_pipeline, 51);
 
 /**
  * TrainTask trains YOLO on a dataset exported in the Ultralytics layout.
@@ -1291,7 +1861,7 @@ export type TrainTask = Message<"krill.v1.TrainTask"> & {
  * Use `create(TrainTaskSchema)` to create a new message.
  */
 export const TrainTaskSchema: GenMessage<TrainTask> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 37);
+  messageDesc(file_krill_v1_pipeline, 52);
 
 /**
  * PluginConfig is a CV plugin with the params to run it with.
@@ -1315,7 +1885,7 @@ export type PluginConfig = Message<"krill.v1.PluginConfig"> & {
  * Use `create(PluginConfigSchema)` to create a new message.
  */
 export const PluginConfigSchema: GenMessage<PluginConfig> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 38);
+  messageDesc(file_krill_v1_pipeline, 53);
 
 /**
  * @generated from message krill.v1.YoloModel
@@ -1349,7 +1919,7 @@ export type YoloModel = Message<"krill.v1.YoloModel"> & {
  * Use `create(YoloModelSchema)` to create a new message.
  */
 export const YoloModelSchema: GenMessage<YoloModel> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 39);
+  messageDesc(file_krill_v1_pipeline, 54);
 
 /**
  * @generated from message krill.v1.CvPlugins
@@ -1366,7 +1936,7 @@ export type CvPlugins = Message<"krill.v1.CvPlugins"> & {
  * Use `create(CvPluginsSchema)` to create a new message.
  */
 export const CvPluginsSchema: GenMessage<CvPlugins> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 40);
+  messageDesc(file_krill_v1_pipeline, 55);
 
 /**
  * PrelabelTask proposes boxes on frames of one clip.
@@ -1407,7 +1977,7 @@ export type PrelabelTask = Message<"krill.v1.PrelabelTask"> & {
  * Use `create(PrelabelTaskSchema)` to create a new message.
  */
 export const PrelabelTaskSchema: GenMessage<PrelabelTask> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 41);
+  messageDesc(file_krill_v1_pipeline, 56);
 
 /**
  * PreviewTask runs one CV plugin on one frame and uploads its mask.
@@ -1443,7 +2013,7 @@ export type PreviewTask = Message<"krill.v1.PreviewTask"> & {
  * Use `create(PreviewTaskSchema)` to create a new message.
  */
 export const PreviewTaskSchema: GenMessage<PreviewTask> = /*@__PURE__*/
-  messageDesc(file_krill_v1_pipeline, 42);
+  messageDesc(file_krill_v1_pipeline, 57);
 
 /**
  * @generated from enum krill.v1.ModelSize
@@ -1690,6 +2260,52 @@ export const ParamKindSchema: GenEnum<ParamKind> = /*@__PURE__*/
   enumDesc(file_krill_v1_pipeline, 5);
 
 /**
+ * @generated from enum krill.v1.ModelTrialStatus
+ */
+export const ModelTrialStatus = {
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_QUEUED = 1;
+   */
+  QUEUED: 1,
+
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_RUNNING = 2;
+   */
+  RUNNING: 2,
+
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_SUCCEEDED = 3;
+   */
+  SUCCEEDED: 3,
+
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_FAILED = 4;
+   */
+  FAILED: 4,
+
+  /**
+   * @generated from enum value: MODEL_TRIAL_STATUS_CANCELLED = 5;
+   */
+  CANCELLED: 5,
+} as const;
+
+/**
+ * @generated from enum krill.v1.ModelTrialStatus
+ */
+export type ModelTrialStatus = (typeof ModelTrialStatus)[keyof typeof ModelTrialStatus] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.ModelTrialStatus.
+ */
+export const ModelTrialStatusSchema: GenEnum<ModelTrialStatus> = /*@__PURE__*/
+  enumDesc(file_krill_v1_pipeline, 6);
+
+/**
  * PipelineService trains YOLO on verified labels, picks the model that
  * pre-labels unlabeled frames, and configures the classic CV pre-labelers.
  * Held-out test videos are never trained on or pre-labeled.
@@ -1800,6 +2416,59 @@ export const PipelineService: GenService<{
     methodKind: "unary";
     input: typeof PreviewPrelabelerRequestSchema;
     output: typeof PreviewPrelabelerResponseSchema;
+  },
+  /**
+   * StartModelTrial runs a finished run's model over every frame of a clip,
+   * labeled or not, and keeps its boxes apart from the clip's labels so they
+   * can be compared. A run has one trial per clip: starting it again returns
+   * the existing one, or requeues it if it failed or was cancelled. Given a
+   * video, it does the same for every clip of the video.
+   *
+   * @generated from rpc krill.v1.PipelineService.StartModelTrial
+   */
+  startModelTrial: {
+    methodKind: "unary";
+    input: typeof StartModelTrialRequestSchema;
+    output: typeof StartModelTrialResponseSchema;
+  },
+  /**
+   * GetModelTrial returns the boxes found so far, in frame order.
+   *
+   * @generated from rpc krill.v1.PipelineService.GetModelTrial
+   */
+  getModelTrial: {
+    methodKind: "unary";
+    input: typeof GetModelTrialRequestSchema;
+    output: typeof GetModelTrialResponseSchema;
+  },
+  /**
+   * ListModelTrials lists the trials of one run, or on one clip.
+   *
+   * @generated from rpc krill.v1.PipelineService.ListModelTrials
+   */
+  listModelTrials: {
+    methodKind: "unary";
+    input: typeof ListModelTrialsRequestSchema;
+    output: typeof ListModelTrialsResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.PipelineService.CancelModelTrial
+   */
+  cancelModelTrial: {
+    methodKind: "unary";
+    input: typeof CancelModelTrialRequestSchema;
+    output: typeof CancelModelTrialResponseSchema;
+  },
+  /**
+   * ListModelTrialErrors lists the labeled frames a run's finished trials got
+   * most wrong, scored the way trial summaries are.
+   *
+   * @generated from rpc krill.v1.PipelineService.ListModelTrialErrors
+   */
+  listModelTrialErrors: {
+    methodKind: "unary";
+    input: typeof ListModelTrialErrorsRequestSchema;
+    output: typeof ListModelTrialErrorsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_pipeline, 0);

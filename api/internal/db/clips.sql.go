@@ -141,6 +141,30 @@ func (q *Queries) ListClipFrames(ctx context.Context, clipID int64) ([]Frame, er
 	return items, nil
 }
 
+const listVideoClipIDs = `-- name: ListVideoClipIDs :many
+SELECT id FROM clips WHERE video_id = $1 AND deleted_at IS NULL ORDER BY idx
+`
+
+func (q *Queries) ListVideoClipIDs(ctx context.Context, videoID int64) ([]int64, error) {
+	rows, err := q.db.Query(ctx, listVideoClipIDs, videoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const numberClips = `-- name: NumberClips :exec
 UPDATE clips c SET idx = n.idx
 FROM (
