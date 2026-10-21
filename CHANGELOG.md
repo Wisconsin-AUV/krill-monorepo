@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-21
+
 ### Added
 
 - Model trials: run any finished training run over a whole clip, held-out test videos included, and see its boxes in the clip view without pinning it or writing proposals. A slider thresholds the boxes live, compare mode colors them against the verified labels the way gold checks do, the timeline marks frames where they disagree, and the run page lists each trial's precision and recall per class.
@@ -161,7 +163,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.2.0...v0.3.0
