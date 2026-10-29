@@ -135,6 +135,7 @@ export function LabelCanvas({
       ? `Drag to continue ${drawType.name} #${selectedInfo?.number ?? ''}`
       : `Drag to draw a new ${drawType.name}`
   const trackHint = canTrack && newType ? ` · Shift+click to track a new ${newType.name}` : ''
+  const insideHint = drawType ? ' · Hold ⌘/Ctrl to draw inside a box' : ''
   const runsHere = frame
     ? trackRuns.filter(
         (r) => r.frameId === frame.id && (r.trackId === undefined || tracking[idKey(r.trackId)]),
@@ -188,6 +189,7 @@ export function LabelCanvas({
         )}
         {hint}
         {trackHint}
+        {insideHint}
       </div>
     </>
   )
