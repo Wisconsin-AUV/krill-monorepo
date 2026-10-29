@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-28
+
 ### Fixed
 
 - Holding Cmd/Ctrl lets you draw a new box inside an existing one instead of dragging it.
@@ -167,7 +169,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.3.0...v0.4.0
