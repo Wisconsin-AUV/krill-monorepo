@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Holding Cmd/Ctrl lets you draw a new box inside an existing one instead of dragging it.
+
 ## [0.6.0] - 2026-10-21
 
 ### Added
