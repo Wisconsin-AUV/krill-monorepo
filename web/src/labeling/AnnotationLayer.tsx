@@ -1,5 +1,5 @@
 import type Konva from 'konva'
-import { Fragment, useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Group, Label, Rect, Tag, Text, Transformer } from 'react-konva'
 import {
   AnnotationSource,
@@ -47,6 +47,25 @@ function toNormalized(node: Konva.Node, size: Size): BoxRect {
   }
 }
 
+// Holding Cmd/Ctrl lets clicks pass through boxes to the stage, so a new box
+// can be drawn inside an existing one without grabbing it.
+function useModHeld() {
+  const [held, setHeld] = useState(false)
+  useEffect(() => {
+    const update = (e: KeyboardEvent) => setHeld(e.metaKey || e.ctrlKey)
+    const release = () => setHeld(false)
+    window.addEventListener('keydown', update)
+    window.addEventListener('keyup', update)
+    window.addEventListener('blur', release)
+    return () => {
+      window.removeEventListener('keydown', update)
+      window.removeEventListener('keyup', update)
+      window.removeEventListener('blur', release)
+    }
+  }, [])
+  return held
+}
+
 export interface TrackInfo {
   number: number
   track: Track
@@ -81,6 +100,7 @@ export function AnnotationLayer({
   const moveBox = useLabelStore((s) => s.moveBox)
   const transformer = useRef<Konva.Transformer>(null)
   const selectedRect = useRef<Konva.Rect>(null)
+  const drawThrough = useModHeld()
 
   const boxes = useMemo(() => Object.values(byTrack ?? {}), [byTrack])
   const selectedBox = boxes.find((b) => b.trackId === selectedTrackId)
@@ -92,6 +112,11 @@ export function AnnotationLayer({
     tr.nodes(selectedRect.current && !hidden ? [selectedRect.current] : [])
     tr.getLayer()?.batchDraw()
   })
+
+  useEffect(() => {
+    const c = transformer.current?.getStage()?.container()
+    if (drawThrough && c) c.style.cursor = ''
+  }, [drawThrough])
 
   const commit = (a: Annotation, node: Konva.Node) => {
     const box = toNormalized(node, imageSize)
@@ -149,6 +174,7 @@ export function AnnotationLayer({
                 dash={proposed ? [6, 4] : undefined}
                 fill={withAlpha(color, selected ? 0.18 : 0.06)}
                 strokeScaleEnabled={false}
+                listening={!drawThrough}
                 draggable
                 onMouseDown={(e) => {
                   if (e.evt.button !== 0 || e.evt.altKey) return
