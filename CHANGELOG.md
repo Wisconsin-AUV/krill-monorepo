@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The sign-in page marks the method you last used, whether that was your password or an emailed code, even when Slack sign-in is off.
+
 ## [0.6.1] - 2026-10-28
 
 ### Fixed
