@@ -6,9 +6,9 @@ import "krill/v1/annotation.proto";
 import "krill/v1/pipeline.proto";
 import "krill/v1/worker.proto";
 
-// PipelineWorkerService is called by the GPU worker for training,
-// pre-labeling, and pre-labeler previews. Requests carry the worker token.
-// Failures go through WorkerService.FailTask.
+// PipelineWorkerService is called by the GPU worker for training, reading
+// uploaded models, pre-labeling, and pre-labeler previews. Requests carry the
+// worker token. Failures go through WorkerService.FailTask.
 service PipelineWorkerService {
   // RegisterPrelabelers tells the API which CV plugins the worker has.
   rpc RegisterPrelabelers(RegisterPrelabelersRequest) returns (RegisterPrelabelersResponse) {}
@@ -23,6 +23,7 @@ service PipelineWorkerService {
   // set on the last one.
   rpc ReportPrelabels(ReportPrelabelsRequest) returns (ReportPrelabelsResponse) {}
   rpc ReportPreview(ReportPreviewRequest) returns (ReportPreviewResponse) {}
+  rpc FinishInspect(FinishInspectRequest) returns (FinishInspectResponse) {}
 }
 
 message RegisterPrelabelersRequest {
@@ -94,3 +95,13 @@ message ReportPreviewRequest {
 }
 
 message ReportPreviewResponse {}
+
+message FinishInspectRequest {
+  int64 task_id = 1;
+  // Class names in class id order.
+  repeated string classes = 2;
+  // The image size the model trained at, or 0 when the weights don't say.
+  int32 image_size = 3;
+}
+
+message FinishInspectResponse {}

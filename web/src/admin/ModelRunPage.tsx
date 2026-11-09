@@ -40,7 +40,7 @@ import { invalidateService } from '@/lib/queryClient'
 import { EpochChart } from './EpochChart'
 import { RunStatus } from './ModelsPage'
 import { RunTrials } from './RunTrials'
-import { elapsed, percent, runName, sizeNames, trainingActive } from './pipeline'
+import { elapsed, modelName, percent, runName, trainingActive, uploaded } from './pipeline'
 
 const POLL = 5000
 const fullDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -161,13 +161,26 @@ function Metrics({ run, pinned }: { run: TrainingRun; pinned: TrainingRun | unde
   )
 }
 
-function Details({ run, now }: { run: TrainingRun; now: number }) {
+function uploadDetails(run: TrainingRun): [string, React.ReactNode][] {
+  const ignored = run.classes.filter((c) => c.labelTypeId === 0n).map((c) => c.name)
+  return [
+    ['Uploaded by', run.createdBy || '—'],
+    ['File', run.filename || '—'],
+    ['Image size', run.config && `${run.config.imageSize}px`],
+    ['Classes', `${run.classes.length - ignored.length} of ${run.classes.length} match Krill`],
+    ...(ignored.length > 0 ? [['Ignored classes', ignored.join(', ')] as [string, string]] : []),
+    ['Uploaded', run.createdAt && fullDate.format(timestampDate(run.createdAt))],
+    ['Weights', run.weightsBytes > 0n ? formatBytes(Number(run.weightsBytes)) : '—'],
+  ]
+}
+
+function trainDetails(run: TrainingRun, now: number): [string, React.ReactNode][] {
   const c = run.config
   const d = run.dataset
   const o = c?.dataset
-  const items: [string, React.ReactNode][] = [
+  return [
     ['Started by', run.trigger === TrainingTrigger.SCHEDULE ? 'Schedule' : run.createdBy || '—'],
-    ['Model', sizeNames[c?.size ?? 0]],
+    ['Model', modelName(run)],
     [
       'Start from',
       c?.baseRunId ? (
@@ -208,6 +221,10 @@ function Details({ run, now }: { run: TrainingRun; now: number }) {
     ['Took', elapsed(run.startedAt, run.finishedAt, now) ?? '—'],
     ['Weights', run.weightsBytes > 0n ? formatBytes(Number(run.weightsBytes)) : '—'],
   ]
+}
+
+function Details({ run, now }: { run: TrainingRun; now: number }) {
+  const items = uploaded(run) ? uploadDetails(run) : trainDetails(run, now)
   return (
     <DescriptionList className="mt-8">
       {items.map(([term, details]) => (

@@ -113,3 +113,8 @@ class Api:
         self._call(
             "ReportPreview", req, pipeline_worker_pb2.ReportPreviewResponse, service=PIPELINE
         )
+
+    def finish_inspect(self, req: pipeline_worker_pb2.FinishInspectRequest) -> None:
+        self._call(
+            "FinishInspect", req, pipeline_worker_pb2.FinishInspectResponse, service=PIPELINE
+        )

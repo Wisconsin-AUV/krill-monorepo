@@ -51,6 +51,8 @@ type Pipeline struct {
 	prelabels sync.Map
 	// previews maps a preview task id to a chan *previewResult.
 	previews sync.Map
+	// inspects maps an inspect task id to a chan *krillv1.FinishInspectRequest.
+	inspects sync.Map
 }
 
 func New(d Deps) *Pipeline {

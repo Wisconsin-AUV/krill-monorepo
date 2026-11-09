@@ -366,6 +366,7 @@ type TrainingRun struct {
 	CreatedAt           pgtype.Timestamptz `json:"created_at"`
 	StartedAt           pgtype.Timestamptz `json:"started_at"`
 	FinishedAt          pgtype.Timestamptz `json:"finished_at"`
+	Filename            string             `json:"filename"`
 }
 
 type User struct {

@@ -19,8 +19,20 @@ LIMIT $1;
 -- name: GetPinnedTrainingRun :one
 SELECT * FROM training_runs WHERE pinned;
 
+-- name: CreateUploadedTrainingRun :one
+INSERT INTO training_runs (
+    status, trigger, created_by, config, classes, filename, weights_bytes, started_at, finished_at
+)
+VALUES (
+    'succeeded', 'upload', sqlc.narg('created_by')::uuid, @config, @classes, @filename, @weights_bytes,
+    now(), now()
+)
+RETURNING *;
+
 -- name: GetLatestTrainingRun :one
-SELECT * FROM training_runs ORDER BY id DESC LIMIT 1;
+-- Uploads are left out, since they don't train on the labels the schedule
+-- counts.
+SELECT * FROM training_runs WHERE trigger <> 'upload' ORDER BY id DESC LIMIT 1;
 
 -- name: CountActiveTrainingRuns :one
 SELECT count(*)::int FROM training_runs

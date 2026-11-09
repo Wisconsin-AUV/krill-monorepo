@@ -190,6 +190,17 @@ func (s *Store) PresignPutInternal(ctx context.Context, key string, expiry time.
 	return u.String(), nil
 }
 
+func (s *Store) Copy(ctx context.Context, src, dst string) error {
+	_, err := s.client.CopyObject(ctx,
+		minio.CopyDestOptions{Bucket: s.bucket, Object: dst},
+		minio.CopySrcOptions{Bucket: s.bucket, Object: src},
+	)
+	if err != nil {
+		return fmt.Errorf("copy %s to %s: %w", src, dst, err)
+	}
+	return nil
+}
+
 // Put uploads r. Pass size -1 when the length is unknown; the object is then
 // sent as a multipart upload.
 func (s *Store) Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error {

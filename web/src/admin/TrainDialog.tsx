@@ -117,6 +117,7 @@ function TrainForm({
                 {finished.map((r) => (
                   <option key={String(r.id)} value={String(r.id)}>
                     {runName(r.id)}
+                    {r.filename ? ` · ${r.filename}` : ''}
                     {r.pinned ? ' (pinned)' : ''}
                   </option>
                 ))}

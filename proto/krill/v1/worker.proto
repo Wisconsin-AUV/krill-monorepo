@@ -38,6 +38,7 @@ message NextTaskResponse {
     TrainTask train = 10;
     PrelabelTask prelabel = 11;
     PreviewTask preview = 12;
+    InspectTask inspect = 13;
   }
 }
 

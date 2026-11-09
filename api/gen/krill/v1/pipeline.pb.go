@@ -143,6 +143,8 @@ const (
 	TrainingTrigger_TRAINING_TRIGGER_UNSPECIFIED TrainingTrigger = 0
 	TrainingTrigger_TRAINING_TRIGGER_MANUAL      TrainingTrigger = 1
 	TrainingTrigger_TRAINING_TRIGGER_SCHEDULE    TrainingTrigger = 2
+	// Weights trained outside Krill. They have no dataset, history, or scores.
+	TrainingTrigger_TRAINING_TRIGGER_UPLOAD TrainingTrigger = 3
 )
 
 // Enum value maps for TrainingTrigger.
@@ -151,11 +153,13 @@ var (
 		0: "TRAINING_TRIGGER_UNSPECIFIED",
 		1: "TRAINING_TRIGGER_MANUAL",
 		2: "TRAINING_TRIGGER_SCHEDULE",
+		3: "TRAINING_TRIGGER_UPLOAD",
 	}
 	TrainingTrigger_value = map[string]int32{
 		"TRAINING_TRIGGER_UNSPECIFIED": 0,
 		"TRAINING_TRIGGER_MANUAL":      1,
 		"TRAINING_TRIGGER_SCHEDULE":    2,
+		"TRAINING_TRIGGER_UPLOAD":      3,
 	}
 )
 
@@ -767,6 +771,11 @@ type TrainingRun struct {
 	Device string `protobuf:"bytes,22,opt,name=device,proto3" json:"device,omitempty"`
 	// Verified boxes outside held-out videos when the run was queued.
 	VerifiedBoxes int32 `protobuf:"varint,23,opt,name=verified_boxes,json=verifiedBoxes,proto3" json:"verified_boxes,omitempty"`
+	// The uploaded file's name, for uploaded runs.
+	Filename string `protobuf:"bytes,24,opt,name=filename,proto3" json:"filename,omitempty"`
+	// The model's class names in class order, for uploaded runs. Only
+	// GetTrainingRun sets it.
+	Classes       []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -962,6 +971,75 @@ func (x *TrainingRun) GetVerifiedBoxes() int32 {
 	return 0
 }
 
+func (x *TrainingRun) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *TrainingRun) GetClasses() []*ModelClass {
+	if x != nil {
+		return x.Classes
+	}
+	return nil
+}
+
+// ModelClass is one class of an uploaded model.
+type ModelClass struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// 0 when no label type exports a class of this name, so its boxes are
+	// dropped.
+	LabelTypeId   int64 `protobuf:"varint,2,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ModelClass) Reset() {
+	*x = ModelClass{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ModelClass) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ModelClass) ProtoMessage() {}
+
+func (x *ModelClass) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ModelClass.ProtoReflect.Descriptor instead.
+func (*ModelClass) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ModelClass) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ModelClass) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
 type RetrainSchedule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Hour of the day in the API's time zone, or -1 when off.
@@ -979,7 +1057,7 @@ type RetrainSchedule struct {
 
 func (x *RetrainSchedule) Reset() {
 	*x = RetrainSchedule{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[5]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -991,7 +1069,7 @@ func (x *RetrainSchedule) String() string {
 func (*RetrainSchedule) ProtoMessage() {}
 
 func (x *RetrainSchedule) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[5]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1004,7 +1082,7 @@ func (x *RetrainSchedule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetrainSchedule.ProtoReflect.Descriptor instead.
 func (*RetrainSchedule) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RetrainSchedule) GetHour() int32 {
@@ -1057,7 +1135,7 @@ type ListTrainingRunsRequest struct {
 
 func (x *ListTrainingRunsRequest) Reset() {
 	*x = ListTrainingRunsRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[6]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1069,7 +1147,7 @@ func (x *ListTrainingRunsRequest) String() string {
 func (*ListTrainingRunsRequest) ProtoMessage() {}
 
 func (x *ListTrainingRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[6]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1082,7 +1160,7 @@ func (x *ListTrainingRunsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTrainingRunsRequest.ProtoReflect.Descriptor instead.
 func (*ListTrainingRunsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{7}
 }
 
 type ListTrainingRunsResponse struct {
@@ -1099,7 +1177,7 @@ type ListTrainingRunsResponse struct {
 
 func (x *ListTrainingRunsResponse) Reset() {
 	*x = ListTrainingRunsResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[7]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1189,7 @@ func (x *ListTrainingRunsResponse) String() string {
 func (*ListTrainingRunsResponse) ProtoMessage() {}
 
 func (x *ListTrainingRunsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[7]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +1202,7 @@ func (x *ListTrainingRunsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTrainingRunsResponse.ProtoReflect.Descriptor instead.
 func (*ListTrainingRunsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListTrainingRunsResponse) GetRuns() []*TrainingRun {
@@ -1164,7 +1242,7 @@ type GetTrainingRunRequest struct {
 
 func (x *GetTrainingRunRequest) Reset() {
 	*x = GetTrainingRunRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[8]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1176,7 +1254,7 @@ func (x *GetTrainingRunRequest) String() string {
 func (*GetTrainingRunRequest) ProtoMessage() {}
 
 func (x *GetTrainingRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[8]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1189,7 +1267,7 @@ func (x *GetTrainingRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTrainingRunRequest.ProtoReflect.Descriptor instead.
 func (*GetTrainingRunRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetTrainingRunRequest) GetId() int64 {
@@ -1211,7 +1289,7 @@ type GetTrainingRunResponse struct {
 
 func (x *GetTrainingRunResponse) Reset() {
 	*x = GetTrainingRunResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[9]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1223,7 +1301,7 @@ func (x *GetTrainingRunResponse) String() string {
 func (*GetTrainingRunResponse) ProtoMessage() {}
 
 func (x *GetTrainingRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[9]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1236,7 +1314,7 @@ func (x *GetTrainingRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTrainingRunResponse.ProtoReflect.Descriptor instead.
 func (*GetTrainingRunResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{9}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetTrainingRunResponse) GetRun() *TrainingRun {
@@ -1262,7 +1340,7 @@ type StartTrainingRequest struct {
 
 func (x *StartTrainingRequest) Reset() {
 	*x = StartTrainingRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[10]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1352,7 @@ func (x *StartTrainingRequest) String() string {
 func (*StartTrainingRequest) ProtoMessage() {}
 
 func (x *StartTrainingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[10]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1365,7 @@ func (x *StartTrainingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTrainingRequest.ProtoReflect.Descriptor instead.
 func (*StartTrainingRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{10}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *StartTrainingRequest) GetConfig() *TrainConfig {
@@ -1306,7 +1384,7 @@ type StartTrainingResponse struct {
 
 func (x *StartTrainingResponse) Reset() {
 	*x = StartTrainingResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[11]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1318,7 +1396,7 @@ func (x *StartTrainingResponse) String() string {
 func (*StartTrainingResponse) ProtoMessage() {}
 
 func (x *StartTrainingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[11]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1331,7 +1409,7 @@ func (x *StartTrainingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTrainingResponse.ProtoReflect.Descriptor instead.
 func (*StartTrainingResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{11}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *StartTrainingResponse) GetRun() *TrainingRun {
@@ -1350,7 +1428,7 @@ type CancelTrainingRequest struct {
 
 func (x *CancelTrainingRequest) Reset() {
 	*x = CancelTrainingRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[12]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +1440,7 @@ func (x *CancelTrainingRequest) String() string {
 func (*CancelTrainingRequest) ProtoMessage() {}
 
 func (x *CancelTrainingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[12]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +1453,7 @@ func (x *CancelTrainingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTrainingRequest.ProtoReflect.Descriptor instead.
 func (*CancelTrainingRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{12}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CancelTrainingRequest) GetId() int64 {
@@ -1393,7 +1471,7 @@ type CancelTrainingResponse struct {
 
 func (x *CancelTrainingResponse) Reset() {
 	*x = CancelTrainingResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[13]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1405,7 +1483,7 @@ func (x *CancelTrainingResponse) String() string {
 func (*CancelTrainingResponse) ProtoMessage() {}
 
 func (x *CancelTrainingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[13]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,7 +1496,7 @@ func (x *CancelTrainingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTrainingResponse.ProtoReflect.Descriptor instead.
 func (*CancelTrainingResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{13}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{14}
 }
 
 type PinModelRequest struct {
@@ -1430,7 +1508,7 @@ type PinModelRequest struct {
 
 func (x *PinModelRequest) Reset() {
 	*x = PinModelRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[14]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1442,7 +1520,7 @@ func (x *PinModelRequest) String() string {
 func (*PinModelRequest) ProtoMessage() {}
 
 func (x *PinModelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[14]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1455,7 +1533,7 @@ func (x *PinModelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PinModelRequest.ProtoReflect.Descriptor instead.
 func (*PinModelRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{14}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PinModelRequest) GetId() int64 {
@@ -1474,7 +1552,7 @@ type PinModelResponse struct {
 
 func (x *PinModelResponse) Reset() {
 	*x = PinModelResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[15]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1486,7 +1564,7 @@ func (x *PinModelResponse) String() string {
 func (*PinModelResponse) ProtoMessage() {}
 
 func (x *PinModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[15]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1499,7 +1577,7 @@ func (x *PinModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PinModelResponse.ProtoReflect.Descriptor instead.
 func (*PinModelResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{15}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *PinModelResponse) GetPrelabel() *PrelabelRun {
@@ -1532,7 +1610,7 @@ type PrelabelRun struct {
 
 func (x *PrelabelRun) Reset() {
 	*x = PrelabelRun{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[16]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1544,7 +1622,7 @@ func (x *PrelabelRun) String() string {
 func (*PrelabelRun) ProtoMessage() {}
 
 func (x *PrelabelRun) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[16]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1557,7 +1635,7 @@ func (x *PrelabelRun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrelabelRun.ProtoReflect.Descriptor instead.
 func (*PrelabelRun) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{16}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PrelabelRun) GetId() int64 {
@@ -1652,7 +1730,7 @@ type ListPrelabelRunsRequest struct {
 
 func (x *ListPrelabelRunsRequest) Reset() {
 	*x = ListPrelabelRunsRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[17]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1664,7 +1742,7 @@ func (x *ListPrelabelRunsRequest) String() string {
 func (*ListPrelabelRunsRequest) ProtoMessage() {}
 
 func (x *ListPrelabelRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[17]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1677,7 +1755,7 @@ func (x *ListPrelabelRunsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPrelabelRunsRequest.ProtoReflect.Descriptor instead.
 func (*ListPrelabelRunsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{17}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{18}
 }
 
 type ListPrelabelRunsResponse struct {
@@ -1693,7 +1771,7 @@ type ListPrelabelRunsResponse struct {
 
 func (x *ListPrelabelRunsResponse) Reset() {
 	*x = ListPrelabelRunsResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[18]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1705,7 +1783,7 @@ func (x *ListPrelabelRunsResponse) String() string {
 func (*ListPrelabelRunsResponse) ProtoMessage() {}
 
 func (x *ListPrelabelRunsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[18]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1718,7 +1796,7 @@ func (x *ListPrelabelRunsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPrelabelRunsResponse.ProtoReflect.Descriptor instead.
 func (*ListPrelabelRunsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{18}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListPrelabelRunsResponse) GetRuns() []*PrelabelRun {
@@ -1751,7 +1829,7 @@ type StartPrelabelRequest struct {
 
 func (x *StartPrelabelRequest) Reset() {
 	*x = StartPrelabelRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[19]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1763,7 +1841,7 @@ func (x *StartPrelabelRequest) String() string {
 func (*StartPrelabelRequest) ProtoMessage() {}
 
 func (x *StartPrelabelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[19]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1776,7 +1854,7 @@ func (x *StartPrelabelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartPrelabelRequest.ProtoReflect.Descriptor instead.
 func (*StartPrelabelRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{19}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *StartPrelabelRequest) GetSource() PrelabelSource {
@@ -1795,7 +1873,7 @@ type StartPrelabelResponse struct {
 
 func (x *StartPrelabelResponse) Reset() {
 	*x = StartPrelabelResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[20]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1807,7 +1885,7 @@ func (x *StartPrelabelResponse) String() string {
 func (*StartPrelabelResponse) ProtoMessage() {}
 
 func (x *StartPrelabelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[20]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1820,7 +1898,7 @@ func (x *StartPrelabelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartPrelabelResponse.ProtoReflect.Descriptor instead.
 func (*StartPrelabelResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{20}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *StartPrelabelResponse) GetRun() *PrelabelRun {
@@ -1839,7 +1917,7 @@ type CancelPrelabelRequest struct {
 
 func (x *CancelPrelabelRequest) Reset() {
 	*x = CancelPrelabelRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[21]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1851,7 +1929,7 @@ func (x *CancelPrelabelRequest) String() string {
 func (*CancelPrelabelRequest) ProtoMessage() {}
 
 func (x *CancelPrelabelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[21]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1864,7 +1942,7 @@ func (x *CancelPrelabelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPrelabelRequest.ProtoReflect.Descriptor instead.
 func (*CancelPrelabelRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{21}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CancelPrelabelRequest) GetId() int64 {
@@ -1882,7 +1960,7 @@ type CancelPrelabelResponse struct {
 
 func (x *CancelPrelabelResponse) Reset() {
 	*x = CancelPrelabelResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[22]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1894,7 +1972,7 @@ func (x *CancelPrelabelResponse) String() string {
 func (*CancelPrelabelResponse) ProtoMessage() {}
 
 func (x *CancelPrelabelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[22]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1907,7 +1985,7 @@ func (x *CancelPrelabelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPrelabelResponse.ProtoReflect.Descriptor instead.
 func (*CancelPrelabelResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{22}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{23}
 }
 
 // HsvRange is in OpenCV's units: hue from 0 to 179, saturation and value
@@ -1926,7 +2004,7 @@ type HsvRange struct {
 
 func (x *HsvRange) Reset() {
 	*x = HsvRange{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[23]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1938,7 +2016,7 @@ func (x *HsvRange) String() string {
 func (*HsvRange) ProtoMessage() {}
 
 func (x *HsvRange) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[23]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1951,7 +2029,7 @@ func (x *HsvRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HsvRange.ProtoReflect.Descriptor instead.
 func (*HsvRange) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{23}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *HsvRange) GetHMin() int32 {
@@ -2011,7 +2089,7 @@ type ParamValue struct {
 
 func (x *ParamValue) Reset() {
 	*x = ParamValue{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[24]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2023,7 +2101,7 @@ func (x *ParamValue) String() string {
 func (*ParamValue) ProtoMessage() {}
 
 func (x *ParamValue) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[24]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2036,7 +2114,7 @@ func (x *ParamValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParamValue.ProtoReflect.Descriptor instead.
 func (*ParamValue) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{24}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ParamValue) GetName() string {
@@ -2118,7 +2196,7 @@ type ParamSpec struct {
 
 func (x *ParamSpec) Reset() {
 	*x = ParamSpec{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[25]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2130,7 +2208,7 @@ func (x *ParamSpec) String() string {
 func (*ParamSpec) ProtoMessage() {}
 
 func (x *ParamSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[25]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2143,7 +2221,7 @@ func (x *ParamSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParamSpec.ProtoReflect.Descriptor instead.
 func (*ParamSpec) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{25}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ParamSpec) GetName() string {
@@ -2211,7 +2289,7 @@ type PrelabelerSpec struct {
 
 func (x *PrelabelerSpec) Reset() {
 	*x = PrelabelerSpec{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[26]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2223,7 +2301,7 @@ func (x *PrelabelerSpec) String() string {
 func (*PrelabelerSpec) ProtoMessage() {}
 
 func (x *PrelabelerSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[26]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2236,7 +2314,7 @@ func (x *PrelabelerSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrelabelerSpec.ProtoReflect.Descriptor instead.
 func (*PrelabelerSpec) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{26}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PrelabelerSpec) GetName() string {
@@ -2287,7 +2365,7 @@ type PrelabelerOutput struct {
 
 func (x *PrelabelerOutput) Reset() {
 	*x = PrelabelerOutput{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[27]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2299,7 +2377,7 @@ func (x *PrelabelerOutput) String() string {
 func (*PrelabelerOutput) ProtoMessage() {}
 
 func (x *PrelabelerOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[27]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2312,7 +2390,7 @@ func (x *PrelabelerOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrelabelerOutput.ProtoReflect.Descriptor instead.
 func (*PrelabelerOutput) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{27}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *PrelabelerOutput) GetName() string {
@@ -2352,7 +2430,7 @@ type Prelabeler struct {
 
 func (x *Prelabeler) Reset() {
 	*x = Prelabeler{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[28]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2364,7 +2442,7 @@ func (x *Prelabeler) String() string {
 func (*Prelabeler) ProtoMessage() {}
 
 func (x *Prelabeler) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[28]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2377,7 +2455,7 @@ func (x *Prelabeler) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Prelabeler.ProtoReflect.Descriptor instead.
 func (*Prelabeler) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{28}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Prelabeler) GetSpec() *PrelabelerSpec {
@@ -2430,7 +2508,7 @@ type ListPrelabelersRequest struct {
 
 func (x *ListPrelabelersRequest) Reset() {
 	*x = ListPrelabelersRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[29]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2442,7 +2520,7 @@ func (x *ListPrelabelersRequest) String() string {
 func (*ListPrelabelersRequest) ProtoMessage() {}
 
 func (x *ListPrelabelersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[29]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2455,7 +2533,7 @@ func (x *ListPrelabelersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPrelabelersRequest.ProtoReflect.Descriptor instead.
 func (*ListPrelabelersRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{29}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{30}
 }
 
 type ListPrelabelersResponse struct {
@@ -2467,7 +2545,7 @@ type ListPrelabelersResponse struct {
 
 func (x *ListPrelabelersResponse) Reset() {
 	*x = ListPrelabelersResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[30]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2479,7 +2557,7 @@ func (x *ListPrelabelersResponse) String() string {
 func (*ListPrelabelersResponse) ProtoMessage() {}
 
 func (x *ListPrelabelersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[30]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2492,7 +2570,7 @@ func (x *ListPrelabelersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPrelabelersResponse.ProtoReflect.Descriptor instead.
 func (*ListPrelabelersResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{30}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListPrelabelersResponse) GetPrelabelers() []*Prelabeler {
@@ -2514,7 +2592,7 @@ type UpdatePrelabelerRequest struct {
 
 func (x *UpdatePrelabelerRequest) Reset() {
 	*x = UpdatePrelabelerRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[31]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2526,7 +2604,7 @@ func (x *UpdatePrelabelerRequest) String() string {
 func (*UpdatePrelabelerRequest) ProtoMessage() {}
 
 func (x *UpdatePrelabelerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[31]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2539,7 +2617,7 @@ func (x *UpdatePrelabelerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePrelabelerRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePrelabelerRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{31}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpdatePrelabelerRequest) GetName() string {
@@ -2579,7 +2657,7 @@ type UpdatePrelabelerResponse struct {
 
 func (x *UpdatePrelabelerResponse) Reset() {
 	*x = UpdatePrelabelerResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[32]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2591,7 +2669,7 @@ func (x *UpdatePrelabelerResponse) String() string {
 func (*UpdatePrelabelerResponse) ProtoMessage() {}
 
 func (x *UpdatePrelabelerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[32]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2604,7 +2682,7 @@ func (x *UpdatePrelabelerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePrelabelerResponse.ProtoReflect.Descriptor instead.
 func (*UpdatePrelabelerResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{32}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *UpdatePrelabelerResponse) GetPrelabeler() *Prelabeler {
@@ -2625,7 +2703,7 @@ type PreviewPrelabelerRequest struct {
 
 func (x *PreviewPrelabelerRequest) Reset() {
 	*x = PreviewPrelabelerRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[33]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2637,7 +2715,7 @@ func (x *PreviewPrelabelerRequest) String() string {
 func (*PreviewPrelabelerRequest) ProtoMessage() {}
 
 func (x *PreviewPrelabelerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[33]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2650,7 +2728,7 @@ func (x *PreviewPrelabelerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewPrelabelerRequest.ProtoReflect.Descriptor instead.
 func (*PreviewPrelabelerRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{33}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *PreviewPrelabelerRequest) GetName() string {
@@ -2688,7 +2766,7 @@ type PreviewBox struct {
 
 func (x *PreviewBox) Reset() {
 	*x = PreviewBox{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[34]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2700,7 +2778,7 @@ func (x *PreviewBox) String() string {
 func (*PreviewBox) ProtoMessage() {}
 
 func (x *PreviewBox) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[34]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2713,7 +2791,7 @@ func (x *PreviewBox) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewBox.ProtoReflect.Descriptor instead.
 func (*PreviewBox) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{34}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *PreviewBox) GetOutput() string {
@@ -2757,7 +2835,7 @@ type PreviewPrelabelerResponse struct {
 
 func (x *PreviewPrelabelerResponse) Reset() {
 	*x = PreviewPrelabelerResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[35]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2769,7 +2847,7 @@ func (x *PreviewPrelabelerResponse) String() string {
 func (*PreviewPrelabelerResponse) ProtoMessage() {}
 
 func (x *PreviewPrelabelerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[35]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2782,7 +2860,7 @@ func (x *PreviewPrelabelerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewPrelabelerResponse.ProtoReflect.Descriptor instead.
 func (*PreviewPrelabelerResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{35}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *PreviewPrelabelerResponse) GetBoxes() []*PreviewBox {
@@ -2830,7 +2908,7 @@ type ModelTrialBox struct {
 
 func (x *ModelTrialBox) Reset() {
 	*x = ModelTrialBox{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[36]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2842,7 +2920,7 @@ func (x *ModelTrialBox) String() string {
 func (*ModelTrialBox) ProtoMessage() {}
 
 func (x *ModelTrialBox) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[36]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2855,7 +2933,7 @@ func (x *ModelTrialBox) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelTrialBox.ProtoReflect.Descriptor instead.
 func (*ModelTrialBox) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{36}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ModelTrialBox) GetFrameId() int64 {
@@ -2923,7 +3001,7 @@ type ModelTrialClass struct {
 
 func (x *ModelTrialClass) Reset() {
 	*x = ModelTrialClass{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[37]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2935,7 +3013,7 @@ func (x *ModelTrialClass) String() string {
 func (*ModelTrialClass) ProtoMessage() {}
 
 func (x *ModelTrialClass) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[37]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2948,7 +3026,7 @@ func (x *ModelTrialClass) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelTrialClass.ProtoReflect.Descriptor instead.
 func (*ModelTrialClass) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{37}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ModelTrialClass) GetLabelTypeId() int64 {
@@ -3021,7 +3099,7 @@ type ModelTrialSummary struct {
 
 func (x *ModelTrialSummary) Reset() {
 	*x = ModelTrialSummary{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[38]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3033,7 +3111,7 @@ func (x *ModelTrialSummary) String() string {
 func (*ModelTrialSummary) ProtoMessage() {}
 
 func (x *ModelTrialSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[38]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3046,7 +3124,7 @@ func (x *ModelTrialSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelTrialSummary.ProtoReflect.Descriptor instead.
 func (*ModelTrialSummary) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{38}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ModelTrialSummary) GetMinConfidence() float32 {
@@ -3105,7 +3183,7 @@ type ModelTrial struct {
 
 func (x *ModelTrial) Reset() {
 	*x = ModelTrial{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[39]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3117,7 +3195,7 @@ func (x *ModelTrial) String() string {
 func (*ModelTrial) ProtoMessage() {}
 
 func (x *ModelTrial) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[39]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3130,7 +3208,7 @@ func (x *ModelTrial) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelTrial.ProtoReflect.Descriptor instead.
 func (*ModelTrial) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{39}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ModelTrial) GetId() int64 {
@@ -3250,7 +3328,7 @@ type StartModelTrialRequest struct {
 
 func (x *StartModelTrialRequest) Reset() {
 	*x = StartModelTrialRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[40]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3262,7 +3340,7 @@ func (x *StartModelTrialRequest) String() string {
 func (*StartModelTrialRequest) ProtoMessage() {}
 
 func (x *StartModelTrialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[40]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3275,7 +3353,7 @@ func (x *StartModelTrialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartModelTrialRequest.ProtoReflect.Descriptor instead.
 func (*StartModelTrialRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{40}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *StartModelTrialRequest) GetTrainingRunId() int64 {
@@ -3311,7 +3389,7 @@ type StartModelTrialResponse struct {
 
 func (x *StartModelTrialResponse) Reset() {
 	*x = StartModelTrialResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[41]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3323,7 +3401,7 @@ func (x *StartModelTrialResponse) String() string {
 func (*StartModelTrialResponse) ProtoMessage() {}
 
 func (x *StartModelTrialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[41]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3336,7 +3414,7 @@ func (x *StartModelTrialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartModelTrialResponse.ProtoReflect.Descriptor instead.
 func (*StartModelTrialResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{41}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *StartModelTrialResponse) GetTrial() *ModelTrial {
@@ -3362,7 +3440,7 @@ type GetModelTrialRequest struct {
 
 func (x *GetModelTrialRequest) Reset() {
 	*x = GetModelTrialRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[42]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3374,7 +3452,7 @@ func (x *GetModelTrialRequest) String() string {
 func (*GetModelTrialRequest) ProtoMessage() {}
 
 func (x *GetModelTrialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[42]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3387,7 +3465,7 @@ func (x *GetModelTrialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelTrialRequest.ProtoReflect.Descriptor instead.
 func (*GetModelTrialRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{42}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetModelTrialRequest) GetId() int64 {
@@ -3407,7 +3485,7 @@ type GetModelTrialResponse struct {
 
 func (x *GetModelTrialResponse) Reset() {
 	*x = GetModelTrialResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[43]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3419,7 +3497,7 @@ func (x *GetModelTrialResponse) String() string {
 func (*GetModelTrialResponse) ProtoMessage() {}
 
 func (x *GetModelTrialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[43]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3432,7 +3510,7 @@ func (x *GetModelTrialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelTrialResponse.ProtoReflect.Descriptor instead.
 func (*GetModelTrialResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{43}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetModelTrialResponse) GetTrial() *ModelTrial {
@@ -3460,7 +3538,7 @@ type ListModelTrialsRequest struct {
 
 func (x *ListModelTrialsRequest) Reset() {
 	*x = ListModelTrialsRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[44]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3472,7 +3550,7 @@ func (x *ListModelTrialsRequest) String() string {
 func (*ListModelTrialsRequest) ProtoMessage() {}
 
 func (x *ListModelTrialsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[44]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3485,7 +3563,7 @@ func (x *ListModelTrialsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelTrialsRequest.ProtoReflect.Descriptor instead.
 func (*ListModelTrialsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{44}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ListModelTrialsRequest) GetTrainingRunId() int64 {
@@ -3512,7 +3590,7 @@ type ListModelTrialsResponse struct {
 
 func (x *ListModelTrialsResponse) Reset() {
 	*x = ListModelTrialsResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[45]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3524,7 +3602,7 @@ func (x *ListModelTrialsResponse) String() string {
 func (*ListModelTrialsResponse) ProtoMessage() {}
 
 func (x *ListModelTrialsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[45]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3537,7 +3615,7 @@ func (x *ListModelTrialsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelTrialsResponse.ProtoReflect.Descriptor instead.
 func (*ListModelTrialsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{45}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ListModelTrialsResponse) GetTrials() []*ModelTrial {
@@ -3556,7 +3634,7 @@ type CancelModelTrialRequest struct {
 
 func (x *CancelModelTrialRequest) Reset() {
 	*x = CancelModelTrialRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[46]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3568,7 +3646,7 @@ func (x *CancelModelTrialRequest) String() string {
 func (*CancelModelTrialRequest) ProtoMessage() {}
 
 func (x *CancelModelTrialRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[46]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3581,7 +3659,7 @@ func (x *CancelModelTrialRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelModelTrialRequest.ProtoReflect.Descriptor instead.
 func (*CancelModelTrialRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{46}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *CancelModelTrialRequest) GetId() int64 {
@@ -3599,7 +3677,7 @@ type CancelModelTrialResponse struct {
 
 func (x *CancelModelTrialResponse) Reset() {
 	*x = CancelModelTrialResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[47]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3611,7 +3689,7 @@ func (x *CancelModelTrialResponse) String() string {
 func (*CancelModelTrialResponse) ProtoMessage() {}
 
 func (x *CancelModelTrialResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[47]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3624,7 +3702,7 @@ func (x *CancelModelTrialResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelModelTrialResponse.ProtoReflect.Descriptor instead.
 func (*CancelModelTrialResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{47}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{48}
 }
 
 // ModelTrialFrame scores one labeled frame of a trial against its verified
@@ -3655,7 +3733,7 @@ type ModelTrialFrame struct {
 
 func (x *ModelTrialFrame) Reset() {
 	*x = ModelTrialFrame{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[48]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3667,7 +3745,7 @@ func (x *ModelTrialFrame) String() string {
 func (*ModelTrialFrame) ProtoMessage() {}
 
 func (x *ModelTrialFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[48]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3680,7 +3758,7 @@ func (x *ModelTrialFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelTrialFrame.ProtoReflect.Descriptor instead.
 func (*ModelTrialFrame) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{48}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *ModelTrialFrame) GetTrialId() int64 {
@@ -3789,7 +3867,7 @@ type ListModelTrialErrorsRequest struct {
 
 func (x *ListModelTrialErrorsRequest) Reset() {
 	*x = ListModelTrialErrorsRequest{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[49]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3801,7 +3879,7 @@ func (x *ListModelTrialErrorsRequest) String() string {
 func (*ListModelTrialErrorsRequest) ProtoMessage() {}
 
 func (x *ListModelTrialErrorsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[49]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3814,7 +3892,7 @@ func (x *ListModelTrialErrorsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelTrialErrorsRequest.ProtoReflect.Descriptor instead.
 func (*ListModelTrialErrorsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{49}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ListModelTrialErrorsRequest) GetTrainingRunId() int64 {
@@ -3859,7 +3937,7 @@ type ListModelTrialErrorsResponse struct {
 
 func (x *ListModelTrialErrorsResponse) Reset() {
 	*x = ListModelTrialErrorsResponse{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[50]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3871,7 +3949,7 @@ func (x *ListModelTrialErrorsResponse) String() string {
 func (*ListModelTrialErrorsResponse) ProtoMessage() {}
 
 func (x *ListModelTrialErrorsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[50]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3884,7 +3962,7 @@ func (x *ListModelTrialErrorsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelTrialErrorsResponse.ProtoReflect.Descriptor instead.
 func (*ListModelTrialErrorsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{50}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ListModelTrialErrorsResponse) GetFrames() []*ModelTrialFrame {
@@ -3908,6 +3986,191 @@ func (x *ListModelTrialErrorsResponse) GetErrorFrames() int32 {
 	return 0
 }
 
+type CreateModelUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateModelUploadRequest) Reset() {
+	*x = CreateModelUploadRequest{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateModelUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateModelUploadRequest) ProtoMessage() {}
+
+func (x *CreateModelUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateModelUploadRequest.ProtoReflect.Descriptor instead.
+func (*CreateModelUploadRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{52}
+}
+
+type CreateModelUploadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	UploadUrl     string                 `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateModelUploadResponse) Reset() {
+	*x = CreateModelUploadResponse{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateModelUploadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateModelUploadResponse) ProtoMessage() {}
+
+func (x *CreateModelUploadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateModelUploadResponse.ProtoReflect.Descriptor instead.
+func (*CreateModelUploadResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *CreateModelUploadResponse) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *CreateModelUploadResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+type AddModelRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// The uploaded file's name, shown on the run.
+	Filename      string `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddModelRequest) Reset() {
+	*x = AddModelRequest{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddModelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddModelRequest) ProtoMessage() {}
+
+func (x *AddModelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddModelRequest.ProtoReflect.Descriptor instead.
+func (*AddModelRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *AddModelRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *AddModelRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+type AddModelResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Run           *TrainingRun           `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddModelResponse) Reset() {
+	*x = AddModelResponse{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddModelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddModelResponse) ProtoMessage() {}
+
+func (x *AddModelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddModelResponse.ProtoReflect.Descriptor instead.
+func (*AddModelResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *AddModelResponse) GetRun() *TrainingRun {
+	if x != nil {
+		return x.Run
+	}
+	return nil
+}
+
 // PrelabelFrame is a frame for a GPU worker to pre-label.
 type PrelabelFrame struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -3920,7 +4183,7 @@ type PrelabelFrame struct {
 
 func (x *PrelabelFrame) Reset() {
 	*x = PrelabelFrame{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[51]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3932,7 +4195,7 @@ func (x *PrelabelFrame) String() string {
 func (*PrelabelFrame) ProtoMessage() {}
 
 func (x *PrelabelFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[51]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3945,7 +4208,7 @@ func (x *PrelabelFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrelabelFrame.ProtoReflect.Descriptor instead.
 func (*PrelabelFrame) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{51}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *PrelabelFrame) GetId() int64 {
@@ -3989,7 +4252,7 @@ type TrainTask struct {
 
 func (x *TrainTask) Reset() {
 	*x = TrainTask{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[52]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4001,7 +4264,7 @@ func (x *TrainTask) String() string {
 func (*TrainTask) ProtoMessage() {}
 
 func (x *TrainTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[52]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4014,7 +4277,7 @@ func (x *TrainTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainTask.ProtoReflect.Descriptor instead.
 func (*TrainTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{52}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *TrainTask) GetId() int64 {
@@ -4101,6 +4364,59 @@ func (x *TrainTask) GetHasTest() bool {
 	return false
 }
 
+// InspectTask loads uploaded weights and reports their classes.
+type InspectTask struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	WeightsUrl    string                 `protobuf:"bytes,2,opt,name=weights_url,json=weightsUrl,proto3" json:"weights_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InspectTask) Reset() {
+	*x = InspectTask{}
+	mi := &file_krill_v1_pipeline_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InspectTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InspectTask) ProtoMessage() {}
+
+func (x *InspectTask) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InspectTask.ProtoReflect.Descriptor instead.
+func (*InspectTask) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *InspectTask) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *InspectTask) GetWeightsUrl() string {
+	if x != nil {
+		return x.WeightsUrl
+	}
+	return ""
+}
+
 // PluginConfig is a CV plugin with the params to run it with.
 type PluginConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -4112,7 +4428,7 @@ type PluginConfig struct {
 
 func (x *PluginConfig) Reset() {
 	*x = PluginConfig{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[53]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4124,7 +4440,7 @@ func (x *PluginConfig) String() string {
 func (*PluginConfig) ProtoMessage() {}
 
 func (x *PluginConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[53]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4137,7 +4453,7 @@ func (x *PluginConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginConfig.ProtoReflect.Descriptor instead.
 func (*PluginConfig) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{53}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *PluginConfig) GetName() string {
@@ -4167,7 +4483,7 @@ type YoloModel struct {
 
 func (x *YoloModel) Reset() {
 	*x = YoloModel{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[54]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4179,7 +4495,7 @@ func (x *YoloModel) String() string {
 func (*YoloModel) ProtoMessage() {}
 
 func (x *YoloModel) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[54]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4192,7 +4508,7 @@ func (x *YoloModel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use YoloModel.ProtoReflect.Descriptor instead.
 func (*YoloModel) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{54}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *YoloModel) GetVersion() string {
@@ -4232,7 +4548,7 @@ type CvPlugins struct {
 
 func (x *CvPlugins) Reset() {
 	*x = CvPlugins{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[55]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4244,7 +4560,7 @@ func (x *CvPlugins) String() string {
 func (*CvPlugins) ProtoMessage() {}
 
 func (x *CvPlugins) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[55]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4257,7 +4573,7 @@ func (x *CvPlugins) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CvPlugins.ProtoReflect.Descriptor instead.
 func (*CvPlugins) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{55}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CvPlugins) GetPlugins() []*PluginConfig {
@@ -4283,7 +4599,7 @@ type PrelabelTask struct {
 
 func (x *PrelabelTask) Reset() {
 	*x = PrelabelTask{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[56]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4295,7 +4611,7 @@ func (x *PrelabelTask) String() string {
 func (*PrelabelTask) ProtoMessage() {}
 
 func (x *PrelabelTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[56]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4308,7 +4624,7 @@ func (x *PrelabelTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrelabelTask.ProtoReflect.Descriptor instead.
 func (*PrelabelTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{56}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *PrelabelTask) GetId() int64 {
@@ -4380,7 +4696,7 @@ type PreviewTask struct {
 
 func (x *PreviewTask) Reset() {
 	*x = PreviewTask{}
-	mi := &file_krill_v1_pipeline_proto_msgTypes[57]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4392,7 +4708,7 @@ func (x *PreviewTask) String() string {
 func (*PreviewTask) ProtoMessage() {}
 
 func (x *PreviewTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_pipeline_proto_msgTypes[57]
+	mi := &file_krill_v1_pipeline_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4405,7 +4721,7 @@ func (x *PreviewTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewTask.ProtoReflect.Descriptor instead.
 func (*PreviewTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{57}
+	return file_krill_v1_pipeline_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *PreviewTask) GetId() int64 {
@@ -4467,7 +4783,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\bmap50_95\x18\a \x01(\x01R\amap5095\"i\n" +
 	"\vEvalMetrics\x12(\n" +
 	"\x03all\x18\x01 \x01(\v2\x16.krill.v1.ClassMetricsR\x03all\x120\n" +
-	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\xb5\a\n" +
+	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x81\b\n" +
 	"\vTrainingRun\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x120\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.krill.v1.TrainingStatusR\x06status\x123\n" +
@@ -4497,7 +4813,13 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"weightsUrl\x12#\n" +
 	"\rweights_bytes\x18\x15 \x01(\x03R\fweightsBytes\x12\x16\n" +
 	"\x06device\x18\x16 \x01(\tR\x06device\x12%\n" +
-	"\x0everified_boxes\x18\x17 \x01(\x05R\rverifiedBoxes\"\xdd\x01\n" +
+	"\x0everified_boxes\x18\x17 \x01(\x05R\rverifiedBoxes\x12\x1a\n" +
+	"\bfilename\x18\x18 \x01(\tR\bfilename\x12.\n" +
+	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\"D\n" +
+	"\n" +
+	"ModelClass\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
+	"\rlabel_type_id\x18\x02 \x01(\x03R\vlabelTypeId\"\xdd\x01\n" +
 	"\x0fRetrainSchedule\x12\x12\n" +
 	"\x04hour\x18\x01 \x01(\x05R\x04hour\x12\x1b\n" +
 	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\x12$\n" +
@@ -4734,7 +5056,17 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x1cListModelTrialErrorsResponse\x121\n" +
 	"\x06frames\x18\x01 \x03(\v2\x19.krill.v1.ModelTrialFrameR\x06frames\x12!\n" +
 	"\ftotal_frames\x18\x02 \x01(\x05R\vtotalFrames\x12!\n" +
-	"\ferror_frames\x18\x03 \x01(\x05R\verrorFrames\"1\n" +
+	"\ferror_frames\x18\x03 \x01(\x05R\verrorFrames\"\x1a\n" +
+	"\x18CreateModelUploadRequest\"L\n" +
+	"\x19CreateModelUploadResponse\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x02 \x01(\tR\tuploadUrl\"?\n" +
+	"\x0fAddModelRequest\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\";\n" +
+	"\x10AddModelResponse\x12'\n" +
+	"\x03run\x18\x01 \x01(\v2\x15.krill.v1.TrainingRunR\x03run\"1\n" +
 	"\rPrelabelFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\"\x88\x03\n" +
@@ -4753,7 +5085,11 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x14baseline_weights_url\x18\n" +
 	" \x01(\tR\x12baselineWeightsUrl\x12,\n" +
 	"\x12weights_upload_url\x18\v \x01(\tR\x10weightsUploadUrl\x12\x19\n" +
-	"\bhas_test\x18\f \x01(\bR\ahasTest\"P\n" +
+	"\bhas_test\x18\f \x01(\bR\ahasTest\">\n" +
+	"\vInspectTask\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\vweights_url\x18\x02 \x01(\tR\n" +
+	"weightsUrl\"P\n" +
 	"\fPluginConfig\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
 	"\x06params\x18\x02 \x03(\v2\x14.krill.v1.ParamValueR\x06params\"\x8c\x01\n" +
@@ -4789,11 +5125,12 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x1aTRAINING_STATUS_EVALUATING\x10\x04\x12\x1d\n" +
 	"\x19TRAINING_STATUS_SUCCEEDED\x10\x05\x12\x1a\n" +
 	"\x16TRAINING_STATUS_FAILED\x10\x06\x12\x1d\n" +
-	"\x19TRAINING_STATUS_CANCELLED\x10\a*o\n" +
+	"\x19TRAINING_STATUS_CANCELLED\x10\a*\x8c\x01\n" +
 	"\x0fTrainingTrigger\x12 \n" +
 	"\x1cTRAINING_TRIGGER_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17TRAINING_TRIGGER_MANUAL\x10\x01\x12\x1d\n" +
-	"\x19TRAINING_TRIGGER_SCHEDULE\x10\x02*c\n" +
+	"\x19TRAINING_TRIGGER_SCHEDULE\x10\x02\x12\x1b\n" +
+	"\x17TRAINING_TRIGGER_UPLOAD\x10\x03*c\n" +
 	"\x0ePrelabelSource\x12\x1f\n" +
 	"\x1bPRELABEL_SOURCE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PRELABEL_SOURCE_YOLO\x10\x01\x12\x16\n" +
@@ -4817,7 +5154,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x1aMODEL_TRIAL_STATUS_RUNNING\x10\x02\x12 \n" +
 	"\x1cMODEL_TRIAL_STATUS_SUCCEEDED\x10\x03\x12\x1d\n" +
 	"\x19MODEL_TRIAL_STATUS_FAILED\x10\x04\x12 \n" +
-	"\x1cMODEL_TRIAL_STATUS_CANCELLED\x10\x052\xa2\v\n" +
+	"\x1cMODEL_TRIAL_STATUS_CANCELLED\x10\x052\xc7\f\n" +
 	"\x0fPipelineService\x12[\n" +
 	"\x10ListTrainingRuns\x12!.krill.v1.ListTrainingRunsRequest\x1a\".krill.v1.ListTrainingRunsResponse\"\x00\x12U\n" +
 	"\x0eGetTrainingRun\x12\x1f.krill.v1.GetTrainingRunRequest\x1a .krill.v1.GetTrainingRunResponse\"\x00\x12R\n" +
@@ -4834,7 +5171,9 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\rGetModelTrial\x12\x1e.krill.v1.GetModelTrialRequest\x1a\x1f.krill.v1.GetModelTrialResponse\"\x00\x12X\n" +
 	"\x0fListModelTrials\x12 .krill.v1.ListModelTrialsRequest\x1a!.krill.v1.ListModelTrialsResponse\"\x00\x12[\n" +
 	"\x10CancelModelTrial\x12!.krill.v1.CancelModelTrialRequest\x1a\".krill.v1.CancelModelTrialResponse\"\x00\x12g\n" +
-	"\x14ListModelTrialErrors\x12%.krill.v1.ListModelTrialErrorsRequest\x1a&.krill.v1.ListModelTrialErrorsResponse\"\x00B\x8e\x01\n" +
+	"\x14ListModelTrialErrors\x12%.krill.v1.ListModelTrialErrorsRequest\x1a&.krill.v1.ListModelTrialErrorsResponse\"\x00\x12^\n" +
+	"\x11CreateModelUpload\x12\".krill.v1.CreateModelUploadRequest\x1a#.krill.v1.CreateModelUploadResponse\"\x00\x12C\n" +
+	"\bAddModel\x12\x19.krill.v1.AddModelRequest\x1a\x1a.krill.v1.AddModelResponse\"\x00B\x8e\x01\n" +
 	"\fcom.krill.v1B\rPipelineProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -4850,7 +5189,7 @@ func file_krill_v1_pipeline_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_pipeline_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_krill_v1_pipeline_proto_msgTypes = make([]protoimpl.MessageInfo, 60)
+var file_krill_v1_pipeline_proto_msgTypes = make([]protoimpl.MessageInfo, 66)
 var file_krill_v1_pipeline_proto_goTypes = []any{
 	(ModelSize)(0),                       // 0: krill.v1.ModelSize
 	(TrainingStatus)(0),                  // 1: krill.v1.TrainingStatus
@@ -4864,177 +5203,189 @@ var file_krill_v1_pipeline_proto_goTypes = []any{
 	(*ClassMetrics)(nil),                 // 9: krill.v1.ClassMetrics
 	(*EvalMetrics)(nil),                  // 10: krill.v1.EvalMetrics
 	(*TrainingRun)(nil),                  // 11: krill.v1.TrainingRun
-	(*RetrainSchedule)(nil),              // 12: krill.v1.RetrainSchedule
-	(*ListTrainingRunsRequest)(nil),      // 13: krill.v1.ListTrainingRunsRequest
-	(*ListTrainingRunsResponse)(nil),     // 14: krill.v1.ListTrainingRunsResponse
-	(*GetTrainingRunRequest)(nil),        // 15: krill.v1.GetTrainingRunRequest
-	(*GetTrainingRunResponse)(nil),       // 16: krill.v1.GetTrainingRunResponse
-	(*StartTrainingRequest)(nil),         // 17: krill.v1.StartTrainingRequest
-	(*StartTrainingResponse)(nil),        // 18: krill.v1.StartTrainingResponse
-	(*CancelTrainingRequest)(nil),        // 19: krill.v1.CancelTrainingRequest
-	(*CancelTrainingResponse)(nil),       // 20: krill.v1.CancelTrainingResponse
-	(*PinModelRequest)(nil),              // 21: krill.v1.PinModelRequest
-	(*PinModelResponse)(nil),             // 22: krill.v1.PinModelResponse
-	(*PrelabelRun)(nil),                  // 23: krill.v1.PrelabelRun
-	(*ListPrelabelRunsRequest)(nil),      // 24: krill.v1.ListPrelabelRunsRequest
-	(*ListPrelabelRunsResponse)(nil),     // 25: krill.v1.ListPrelabelRunsResponse
-	(*StartPrelabelRequest)(nil),         // 26: krill.v1.StartPrelabelRequest
-	(*StartPrelabelResponse)(nil),        // 27: krill.v1.StartPrelabelResponse
-	(*CancelPrelabelRequest)(nil),        // 28: krill.v1.CancelPrelabelRequest
-	(*CancelPrelabelResponse)(nil),       // 29: krill.v1.CancelPrelabelResponse
-	(*HsvRange)(nil),                     // 30: krill.v1.HsvRange
-	(*ParamValue)(nil),                   // 31: krill.v1.ParamValue
-	(*ParamSpec)(nil),                    // 32: krill.v1.ParamSpec
-	(*PrelabelerSpec)(nil),               // 33: krill.v1.PrelabelerSpec
-	(*PrelabelerOutput)(nil),             // 34: krill.v1.PrelabelerOutput
-	(*Prelabeler)(nil),                   // 35: krill.v1.Prelabeler
-	(*ListPrelabelersRequest)(nil),       // 36: krill.v1.ListPrelabelersRequest
-	(*ListPrelabelersResponse)(nil),      // 37: krill.v1.ListPrelabelersResponse
-	(*UpdatePrelabelerRequest)(nil),      // 38: krill.v1.UpdatePrelabelerRequest
-	(*UpdatePrelabelerResponse)(nil),     // 39: krill.v1.UpdatePrelabelerResponse
-	(*PreviewPrelabelerRequest)(nil),     // 40: krill.v1.PreviewPrelabelerRequest
-	(*PreviewBox)(nil),                   // 41: krill.v1.PreviewBox
-	(*PreviewPrelabelerResponse)(nil),    // 42: krill.v1.PreviewPrelabelerResponse
-	(*ModelTrialBox)(nil),                // 43: krill.v1.ModelTrialBox
-	(*ModelTrialClass)(nil),              // 44: krill.v1.ModelTrialClass
-	(*ModelTrialSummary)(nil),            // 45: krill.v1.ModelTrialSummary
-	(*ModelTrial)(nil),                   // 46: krill.v1.ModelTrial
-	(*StartModelTrialRequest)(nil),       // 47: krill.v1.StartModelTrialRequest
-	(*StartModelTrialResponse)(nil),      // 48: krill.v1.StartModelTrialResponse
-	(*GetModelTrialRequest)(nil),         // 49: krill.v1.GetModelTrialRequest
-	(*GetModelTrialResponse)(nil),        // 50: krill.v1.GetModelTrialResponse
-	(*ListModelTrialsRequest)(nil),       // 51: krill.v1.ListModelTrialsRequest
-	(*ListModelTrialsResponse)(nil),      // 52: krill.v1.ListModelTrialsResponse
-	(*CancelModelTrialRequest)(nil),      // 53: krill.v1.CancelModelTrialRequest
-	(*CancelModelTrialResponse)(nil),     // 54: krill.v1.CancelModelTrialResponse
-	(*ModelTrialFrame)(nil),              // 55: krill.v1.ModelTrialFrame
-	(*ListModelTrialErrorsRequest)(nil),  // 56: krill.v1.ListModelTrialErrorsRequest
-	(*ListModelTrialErrorsResponse)(nil), // 57: krill.v1.ListModelTrialErrorsResponse
-	(*PrelabelFrame)(nil),                // 58: krill.v1.PrelabelFrame
-	(*TrainTask)(nil),                    // 59: krill.v1.TrainTask
-	(*PluginConfig)(nil),                 // 60: krill.v1.PluginConfig
-	(*YoloModel)(nil),                    // 61: krill.v1.YoloModel
-	(*CvPlugins)(nil),                    // 62: krill.v1.CvPlugins
-	(*PrelabelTask)(nil),                 // 63: krill.v1.PrelabelTask
-	(*PreviewTask)(nil),                  // 64: krill.v1.PreviewTask
-	nil,                                  // 65: krill.v1.PrelabelerOutput.AttributesEntry
-	nil,                                  // 66: krill.v1.ModelTrialBox.AttributesEntry
-	(*ExportOptions)(nil),                // 67: krill.v1.ExportOptions
-	(*ExportStats)(nil),                  // 68: krill.v1.ExportStats
-	(*timestamppb.Timestamp)(nil),        // 69: google.protobuf.Timestamp
-	(*Box)(nil),                          // 70: krill.v1.Box
-	(*Point)(nil),                        // 71: krill.v1.Point
+	(*ModelClass)(nil),                   // 12: krill.v1.ModelClass
+	(*RetrainSchedule)(nil),              // 13: krill.v1.RetrainSchedule
+	(*ListTrainingRunsRequest)(nil),      // 14: krill.v1.ListTrainingRunsRequest
+	(*ListTrainingRunsResponse)(nil),     // 15: krill.v1.ListTrainingRunsResponse
+	(*GetTrainingRunRequest)(nil),        // 16: krill.v1.GetTrainingRunRequest
+	(*GetTrainingRunResponse)(nil),       // 17: krill.v1.GetTrainingRunResponse
+	(*StartTrainingRequest)(nil),         // 18: krill.v1.StartTrainingRequest
+	(*StartTrainingResponse)(nil),        // 19: krill.v1.StartTrainingResponse
+	(*CancelTrainingRequest)(nil),        // 20: krill.v1.CancelTrainingRequest
+	(*CancelTrainingResponse)(nil),       // 21: krill.v1.CancelTrainingResponse
+	(*PinModelRequest)(nil),              // 22: krill.v1.PinModelRequest
+	(*PinModelResponse)(nil),             // 23: krill.v1.PinModelResponse
+	(*PrelabelRun)(nil),                  // 24: krill.v1.PrelabelRun
+	(*ListPrelabelRunsRequest)(nil),      // 25: krill.v1.ListPrelabelRunsRequest
+	(*ListPrelabelRunsResponse)(nil),     // 26: krill.v1.ListPrelabelRunsResponse
+	(*StartPrelabelRequest)(nil),         // 27: krill.v1.StartPrelabelRequest
+	(*StartPrelabelResponse)(nil),        // 28: krill.v1.StartPrelabelResponse
+	(*CancelPrelabelRequest)(nil),        // 29: krill.v1.CancelPrelabelRequest
+	(*CancelPrelabelResponse)(nil),       // 30: krill.v1.CancelPrelabelResponse
+	(*HsvRange)(nil),                     // 31: krill.v1.HsvRange
+	(*ParamValue)(nil),                   // 32: krill.v1.ParamValue
+	(*ParamSpec)(nil),                    // 33: krill.v1.ParamSpec
+	(*PrelabelerSpec)(nil),               // 34: krill.v1.PrelabelerSpec
+	(*PrelabelerOutput)(nil),             // 35: krill.v1.PrelabelerOutput
+	(*Prelabeler)(nil),                   // 36: krill.v1.Prelabeler
+	(*ListPrelabelersRequest)(nil),       // 37: krill.v1.ListPrelabelersRequest
+	(*ListPrelabelersResponse)(nil),      // 38: krill.v1.ListPrelabelersResponse
+	(*UpdatePrelabelerRequest)(nil),      // 39: krill.v1.UpdatePrelabelerRequest
+	(*UpdatePrelabelerResponse)(nil),     // 40: krill.v1.UpdatePrelabelerResponse
+	(*PreviewPrelabelerRequest)(nil),     // 41: krill.v1.PreviewPrelabelerRequest
+	(*PreviewBox)(nil),                   // 42: krill.v1.PreviewBox
+	(*PreviewPrelabelerResponse)(nil),    // 43: krill.v1.PreviewPrelabelerResponse
+	(*ModelTrialBox)(nil),                // 44: krill.v1.ModelTrialBox
+	(*ModelTrialClass)(nil),              // 45: krill.v1.ModelTrialClass
+	(*ModelTrialSummary)(nil),            // 46: krill.v1.ModelTrialSummary
+	(*ModelTrial)(nil),                   // 47: krill.v1.ModelTrial
+	(*StartModelTrialRequest)(nil),       // 48: krill.v1.StartModelTrialRequest
+	(*StartModelTrialResponse)(nil),      // 49: krill.v1.StartModelTrialResponse
+	(*GetModelTrialRequest)(nil),         // 50: krill.v1.GetModelTrialRequest
+	(*GetModelTrialResponse)(nil),        // 51: krill.v1.GetModelTrialResponse
+	(*ListModelTrialsRequest)(nil),       // 52: krill.v1.ListModelTrialsRequest
+	(*ListModelTrialsResponse)(nil),      // 53: krill.v1.ListModelTrialsResponse
+	(*CancelModelTrialRequest)(nil),      // 54: krill.v1.CancelModelTrialRequest
+	(*CancelModelTrialResponse)(nil),     // 55: krill.v1.CancelModelTrialResponse
+	(*ModelTrialFrame)(nil),              // 56: krill.v1.ModelTrialFrame
+	(*ListModelTrialErrorsRequest)(nil),  // 57: krill.v1.ListModelTrialErrorsRequest
+	(*ListModelTrialErrorsResponse)(nil), // 58: krill.v1.ListModelTrialErrorsResponse
+	(*CreateModelUploadRequest)(nil),     // 59: krill.v1.CreateModelUploadRequest
+	(*CreateModelUploadResponse)(nil),    // 60: krill.v1.CreateModelUploadResponse
+	(*AddModelRequest)(nil),              // 61: krill.v1.AddModelRequest
+	(*AddModelResponse)(nil),             // 62: krill.v1.AddModelResponse
+	(*PrelabelFrame)(nil),                // 63: krill.v1.PrelabelFrame
+	(*TrainTask)(nil),                    // 64: krill.v1.TrainTask
+	(*InspectTask)(nil),                  // 65: krill.v1.InspectTask
+	(*PluginConfig)(nil),                 // 66: krill.v1.PluginConfig
+	(*YoloModel)(nil),                    // 67: krill.v1.YoloModel
+	(*CvPlugins)(nil),                    // 68: krill.v1.CvPlugins
+	(*PrelabelTask)(nil),                 // 69: krill.v1.PrelabelTask
+	(*PreviewTask)(nil),                  // 70: krill.v1.PreviewTask
+	nil,                                  // 71: krill.v1.PrelabelerOutput.AttributesEntry
+	nil,                                  // 72: krill.v1.ModelTrialBox.AttributesEntry
+	(*ExportOptions)(nil),                // 73: krill.v1.ExportOptions
+	(*ExportStats)(nil),                  // 74: krill.v1.ExportStats
+	(*timestamppb.Timestamp)(nil),        // 75: google.protobuf.Timestamp
+	(*Box)(nil),                          // 76: krill.v1.Box
+	(*Point)(nil),                        // 77: krill.v1.Point
 }
 var file_krill_v1_pipeline_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.TrainConfig.size:type_name -> krill.v1.ModelSize
-	67, // 1: krill.v1.TrainConfig.dataset:type_name -> krill.v1.ExportOptions
+	73, // 1: krill.v1.TrainConfig.dataset:type_name -> krill.v1.ExportOptions
 	9,  // 2: krill.v1.EvalMetrics.all:type_name -> krill.v1.ClassMetrics
 	9,  // 3: krill.v1.EvalMetrics.classes:type_name -> krill.v1.ClassMetrics
 	1,  // 4: krill.v1.TrainingRun.status:type_name -> krill.v1.TrainingStatus
 	2,  // 5: krill.v1.TrainingRun.trigger:type_name -> krill.v1.TrainingTrigger
 	7,  // 6: krill.v1.TrainingRun.config:type_name -> krill.v1.TrainConfig
-	68, // 7: krill.v1.TrainingRun.dataset:type_name -> krill.v1.ExportStats
+	74, // 7: krill.v1.TrainingRun.dataset:type_name -> krill.v1.ExportStats
 	8,  // 8: krill.v1.TrainingRun.history:type_name -> krill.v1.EpochMetrics
 	10, // 9: krill.v1.TrainingRun.val:type_name -> krill.v1.EvalMetrics
 	10, // 10: krill.v1.TrainingRun.test:type_name -> krill.v1.EvalMetrics
 	10, // 11: krill.v1.TrainingRun.baseline_val:type_name -> krill.v1.EvalMetrics
 	10, // 12: krill.v1.TrainingRun.baseline_test:type_name -> krill.v1.EvalMetrics
-	69, // 13: krill.v1.TrainingRun.created_at:type_name -> google.protobuf.Timestamp
-	69, // 14: krill.v1.TrainingRun.started_at:type_name -> google.protobuf.Timestamp
-	69, // 15: krill.v1.TrainingRun.finished_at:type_name -> google.protobuf.Timestamp
-	69, // 16: krill.v1.RetrainSchedule.next_check:type_name -> google.protobuf.Timestamp
-	11, // 17: krill.v1.ListTrainingRunsResponse.runs:type_name -> krill.v1.TrainingRun
-	7,  // 18: krill.v1.ListTrainingRunsResponse.defaults:type_name -> krill.v1.TrainConfig
-	12, // 19: krill.v1.ListTrainingRunsResponse.schedule:type_name -> krill.v1.RetrainSchedule
-	11, // 20: krill.v1.GetTrainingRunResponse.run:type_name -> krill.v1.TrainingRun
-	11, // 21: krill.v1.GetTrainingRunResponse.pinned:type_name -> krill.v1.TrainingRun
-	7,  // 22: krill.v1.StartTrainingRequest.config:type_name -> krill.v1.TrainConfig
-	11, // 23: krill.v1.StartTrainingResponse.run:type_name -> krill.v1.TrainingRun
-	23, // 24: krill.v1.PinModelResponse.prelabel:type_name -> krill.v1.PrelabelRun
-	3,  // 25: krill.v1.PrelabelRun.source:type_name -> krill.v1.PrelabelSource
-	4,  // 26: krill.v1.PrelabelRun.status:type_name -> krill.v1.PrelabelStatus
-	69, // 27: krill.v1.PrelabelRun.created_at:type_name -> google.protobuf.Timestamp
-	69, // 28: krill.v1.PrelabelRun.finished_at:type_name -> google.protobuf.Timestamp
-	23, // 29: krill.v1.ListPrelabelRunsResponse.runs:type_name -> krill.v1.PrelabelRun
-	3,  // 30: krill.v1.StartPrelabelRequest.source:type_name -> krill.v1.PrelabelSource
-	23, // 31: krill.v1.StartPrelabelResponse.run:type_name -> krill.v1.PrelabelRun
-	30, // 32: krill.v1.ParamValue.hsv:type_name -> krill.v1.HsvRange
-	5,  // 33: krill.v1.ParamSpec.kind:type_name -> krill.v1.ParamKind
-	31, // 34: krill.v1.ParamSpec.default_value:type_name -> krill.v1.ParamValue
-	32, // 35: krill.v1.PrelabelerSpec.params:type_name -> krill.v1.ParamSpec
-	65, // 36: krill.v1.PrelabelerOutput.attributes:type_name -> krill.v1.PrelabelerOutput.AttributesEntry
-	33, // 37: krill.v1.Prelabeler.spec:type_name -> krill.v1.PrelabelerSpec
-	31, // 38: krill.v1.Prelabeler.params:type_name -> krill.v1.ParamValue
-	34, // 39: krill.v1.Prelabeler.outputs:type_name -> krill.v1.PrelabelerOutput
-	69, // 40: krill.v1.Prelabeler.updated_at:type_name -> google.protobuf.Timestamp
-	35, // 41: krill.v1.ListPrelabelersResponse.prelabelers:type_name -> krill.v1.Prelabeler
-	31, // 42: krill.v1.UpdatePrelabelerRequest.params:type_name -> krill.v1.ParamValue
-	34, // 43: krill.v1.UpdatePrelabelerRequest.outputs:type_name -> krill.v1.PrelabelerOutput
-	35, // 44: krill.v1.UpdatePrelabelerResponse.prelabeler:type_name -> krill.v1.Prelabeler
-	31, // 45: krill.v1.PreviewPrelabelerRequest.params:type_name -> krill.v1.ParamValue
-	70, // 46: krill.v1.PreviewBox.box:type_name -> krill.v1.Box
-	71, // 47: krill.v1.PreviewBox.corners:type_name -> krill.v1.Point
-	41, // 48: krill.v1.PreviewPrelabelerResponse.boxes:type_name -> krill.v1.PreviewBox
-	66, // 49: krill.v1.ModelTrialBox.attributes:type_name -> krill.v1.ModelTrialBox.AttributesEntry
-	70, // 50: krill.v1.ModelTrialBox.box:type_name -> krill.v1.Box
-	44, // 51: krill.v1.ModelTrialSummary.all:type_name -> krill.v1.ModelTrialClass
-	44, // 52: krill.v1.ModelTrialSummary.classes:type_name -> krill.v1.ModelTrialClass
-	6,  // 53: krill.v1.ModelTrial.status:type_name -> krill.v1.ModelTrialStatus
-	69, // 54: krill.v1.ModelTrial.created_at:type_name -> google.protobuf.Timestamp
-	69, // 55: krill.v1.ModelTrial.finished_at:type_name -> google.protobuf.Timestamp
-	45, // 56: krill.v1.ModelTrial.summary:type_name -> krill.v1.ModelTrialSummary
-	46, // 57: krill.v1.StartModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
-	46, // 58: krill.v1.StartModelTrialResponse.trials:type_name -> krill.v1.ModelTrial
-	46, // 59: krill.v1.GetModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
-	43, // 60: krill.v1.GetModelTrialResponse.boxes:type_name -> krill.v1.ModelTrialBox
-	46, // 61: krill.v1.ListModelTrialsResponse.trials:type_name -> krill.v1.ModelTrial
-	44, // 62: krill.v1.ModelTrialFrame.classes:type_name -> krill.v1.ModelTrialClass
-	55, // 63: krill.v1.ListModelTrialErrorsResponse.frames:type_name -> krill.v1.ModelTrialFrame
-	0,  // 64: krill.v1.TrainTask.size:type_name -> krill.v1.ModelSize
-	31, // 65: krill.v1.PluginConfig.params:type_name -> krill.v1.ParamValue
-	60, // 66: krill.v1.CvPlugins.plugins:type_name -> krill.v1.PluginConfig
-	58, // 67: krill.v1.PrelabelTask.frames:type_name -> krill.v1.PrelabelFrame
-	61, // 68: krill.v1.PrelabelTask.yolo:type_name -> krill.v1.YoloModel
-	62, // 69: krill.v1.PrelabelTask.cv:type_name -> krill.v1.CvPlugins
-	58, // 70: krill.v1.PreviewTask.frame:type_name -> krill.v1.PrelabelFrame
-	60, // 71: krill.v1.PreviewTask.plugin:type_name -> krill.v1.PluginConfig
-	13, // 72: krill.v1.PipelineService.ListTrainingRuns:input_type -> krill.v1.ListTrainingRunsRequest
-	15, // 73: krill.v1.PipelineService.GetTrainingRun:input_type -> krill.v1.GetTrainingRunRequest
-	17, // 74: krill.v1.PipelineService.StartTraining:input_type -> krill.v1.StartTrainingRequest
-	19, // 75: krill.v1.PipelineService.CancelTraining:input_type -> krill.v1.CancelTrainingRequest
-	21, // 76: krill.v1.PipelineService.PinModel:input_type -> krill.v1.PinModelRequest
-	24, // 77: krill.v1.PipelineService.ListPrelabelRuns:input_type -> krill.v1.ListPrelabelRunsRequest
-	26, // 78: krill.v1.PipelineService.StartPrelabel:input_type -> krill.v1.StartPrelabelRequest
-	28, // 79: krill.v1.PipelineService.CancelPrelabel:input_type -> krill.v1.CancelPrelabelRequest
-	36, // 80: krill.v1.PipelineService.ListPrelabelers:input_type -> krill.v1.ListPrelabelersRequest
-	38, // 81: krill.v1.PipelineService.UpdatePrelabeler:input_type -> krill.v1.UpdatePrelabelerRequest
-	40, // 82: krill.v1.PipelineService.PreviewPrelabeler:input_type -> krill.v1.PreviewPrelabelerRequest
-	47, // 83: krill.v1.PipelineService.StartModelTrial:input_type -> krill.v1.StartModelTrialRequest
-	49, // 84: krill.v1.PipelineService.GetModelTrial:input_type -> krill.v1.GetModelTrialRequest
-	51, // 85: krill.v1.PipelineService.ListModelTrials:input_type -> krill.v1.ListModelTrialsRequest
-	53, // 86: krill.v1.PipelineService.CancelModelTrial:input_type -> krill.v1.CancelModelTrialRequest
-	56, // 87: krill.v1.PipelineService.ListModelTrialErrors:input_type -> krill.v1.ListModelTrialErrorsRequest
-	14, // 88: krill.v1.PipelineService.ListTrainingRuns:output_type -> krill.v1.ListTrainingRunsResponse
-	16, // 89: krill.v1.PipelineService.GetTrainingRun:output_type -> krill.v1.GetTrainingRunResponse
-	18, // 90: krill.v1.PipelineService.StartTraining:output_type -> krill.v1.StartTrainingResponse
-	20, // 91: krill.v1.PipelineService.CancelTraining:output_type -> krill.v1.CancelTrainingResponse
-	22, // 92: krill.v1.PipelineService.PinModel:output_type -> krill.v1.PinModelResponse
-	25, // 93: krill.v1.PipelineService.ListPrelabelRuns:output_type -> krill.v1.ListPrelabelRunsResponse
-	27, // 94: krill.v1.PipelineService.StartPrelabel:output_type -> krill.v1.StartPrelabelResponse
-	29, // 95: krill.v1.PipelineService.CancelPrelabel:output_type -> krill.v1.CancelPrelabelResponse
-	37, // 96: krill.v1.PipelineService.ListPrelabelers:output_type -> krill.v1.ListPrelabelersResponse
-	39, // 97: krill.v1.PipelineService.UpdatePrelabeler:output_type -> krill.v1.UpdatePrelabelerResponse
-	42, // 98: krill.v1.PipelineService.PreviewPrelabeler:output_type -> krill.v1.PreviewPrelabelerResponse
-	48, // 99: krill.v1.PipelineService.StartModelTrial:output_type -> krill.v1.StartModelTrialResponse
-	50, // 100: krill.v1.PipelineService.GetModelTrial:output_type -> krill.v1.GetModelTrialResponse
-	52, // 101: krill.v1.PipelineService.ListModelTrials:output_type -> krill.v1.ListModelTrialsResponse
-	54, // 102: krill.v1.PipelineService.CancelModelTrial:output_type -> krill.v1.CancelModelTrialResponse
-	57, // 103: krill.v1.PipelineService.ListModelTrialErrors:output_type -> krill.v1.ListModelTrialErrorsResponse
-	88, // [88:104] is the sub-list for method output_type
-	72, // [72:88] is the sub-list for method input_type
-	72, // [72:72] is the sub-list for extension type_name
-	72, // [72:72] is the sub-list for extension extendee
-	0,  // [0:72] is the sub-list for field type_name
+	75, // 13: krill.v1.TrainingRun.created_at:type_name -> google.protobuf.Timestamp
+	75, // 14: krill.v1.TrainingRun.started_at:type_name -> google.protobuf.Timestamp
+	75, // 15: krill.v1.TrainingRun.finished_at:type_name -> google.protobuf.Timestamp
+	12, // 16: krill.v1.TrainingRun.classes:type_name -> krill.v1.ModelClass
+	75, // 17: krill.v1.RetrainSchedule.next_check:type_name -> google.protobuf.Timestamp
+	11, // 18: krill.v1.ListTrainingRunsResponse.runs:type_name -> krill.v1.TrainingRun
+	7,  // 19: krill.v1.ListTrainingRunsResponse.defaults:type_name -> krill.v1.TrainConfig
+	13, // 20: krill.v1.ListTrainingRunsResponse.schedule:type_name -> krill.v1.RetrainSchedule
+	11, // 21: krill.v1.GetTrainingRunResponse.run:type_name -> krill.v1.TrainingRun
+	11, // 22: krill.v1.GetTrainingRunResponse.pinned:type_name -> krill.v1.TrainingRun
+	7,  // 23: krill.v1.StartTrainingRequest.config:type_name -> krill.v1.TrainConfig
+	11, // 24: krill.v1.StartTrainingResponse.run:type_name -> krill.v1.TrainingRun
+	24, // 25: krill.v1.PinModelResponse.prelabel:type_name -> krill.v1.PrelabelRun
+	3,  // 26: krill.v1.PrelabelRun.source:type_name -> krill.v1.PrelabelSource
+	4,  // 27: krill.v1.PrelabelRun.status:type_name -> krill.v1.PrelabelStatus
+	75, // 28: krill.v1.PrelabelRun.created_at:type_name -> google.protobuf.Timestamp
+	75, // 29: krill.v1.PrelabelRun.finished_at:type_name -> google.protobuf.Timestamp
+	24, // 30: krill.v1.ListPrelabelRunsResponse.runs:type_name -> krill.v1.PrelabelRun
+	3,  // 31: krill.v1.StartPrelabelRequest.source:type_name -> krill.v1.PrelabelSource
+	24, // 32: krill.v1.StartPrelabelResponse.run:type_name -> krill.v1.PrelabelRun
+	31, // 33: krill.v1.ParamValue.hsv:type_name -> krill.v1.HsvRange
+	5,  // 34: krill.v1.ParamSpec.kind:type_name -> krill.v1.ParamKind
+	32, // 35: krill.v1.ParamSpec.default_value:type_name -> krill.v1.ParamValue
+	33, // 36: krill.v1.PrelabelerSpec.params:type_name -> krill.v1.ParamSpec
+	71, // 37: krill.v1.PrelabelerOutput.attributes:type_name -> krill.v1.PrelabelerOutput.AttributesEntry
+	34, // 38: krill.v1.Prelabeler.spec:type_name -> krill.v1.PrelabelerSpec
+	32, // 39: krill.v1.Prelabeler.params:type_name -> krill.v1.ParamValue
+	35, // 40: krill.v1.Prelabeler.outputs:type_name -> krill.v1.PrelabelerOutput
+	75, // 41: krill.v1.Prelabeler.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 42: krill.v1.ListPrelabelersResponse.prelabelers:type_name -> krill.v1.Prelabeler
+	32, // 43: krill.v1.UpdatePrelabelerRequest.params:type_name -> krill.v1.ParamValue
+	35, // 44: krill.v1.UpdatePrelabelerRequest.outputs:type_name -> krill.v1.PrelabelerOutput
+	36, // 45: krill.v1.UpdatePrelabelerResponse.prelabeler:type_name -> krill.v1.Prelabeler
+	32, // 46: krill.v1.PreviewPrelabelerRequest.params:type_name -> krill.v1.ParamValue
+	76, // 47: krill.v1.PreviewBox.box:type_name -> krill.v1.Box
+	77, // 48: krill.v1.PreviewBox.corners:type_name -> krill.v1.Point
+	42, // 49: krill.v1.PreviewPrelabelerResponse.boxes:type_name -> krill.v1.PreviewBox
+	72, // 50: krill.v1.ModelTrialBox.attributes:type_name -> krill.v1.ModelTrialBox.AttributesEntry
+	76, // 51: krill.v1.ModelTrialBox.box:type_name -> krill.v1.Box
+	45, // 52: krill.v1.ModelTrialSummary.all:type_name -> krill.v1.ModelTrialClass
+	45, // 53: krill.v1.ModelTrialSummary.classes:type_name -> krill.v1.ModelTrialClass
+	6,  // 54: krill.v1.ModelTrial.status:type_name -> krill.v1.ModelTrialStatus
+	75, // 55: krill.v1.ModelTrial.created_at:type_name -> google.protobuf.Timestamp
+	75, // 56: krill.v1.ModelTrial.finished_at:type_name -> google.protobuf.Timestamp
+	46, // 57: krill.v1.ModelTrial.summary:type_name -> krill.v1.ModelTrialSummary
+	47, // 58: krill.v1.StartModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
+	47, // 59: krill.v1.StartModelTrialResponse.trials:type_name -> krill.v1.ModelTrial
+	47, // 60: krill.v1.GetModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
+	44, // 61: krill.v1.GetModelTrialResponse.boxes:type_name -> krill.v1.ModelTrialBox
+	47, // 62: krill.v1.ListModelTrialsResponse.trials:type_name -> krill.v1.ModelTrial
+	45, // 63: krill.v1.ModelTrialFrame.classes:type_name -> krill.v1.ModelTrialClass
+	56, // 64: krill.v1.ListModelTrialErrorsResponse.frames:type_name -> krill.v1.ModelTrialFrame
+	11, // 65: krill.v1.AddModelResponse.run:type_name -> krill.v1.TrainingRun
+	0,  // 66: krill.v1.TrainTask.size:type_name -> krill.v1.ModelSize
+	32, // 67: krill.v1.PluginConfig.params:type_name -> krill.v1.ParamValue
+	66, // 68: krill.v1.CvPlugins.plugins:type_name -> krill.v1.PluginConfig
+	63, // 69: krill.v1.PrelabelTask.frames:type_name -> krill.v1.PrelabelFrame
+	67, // 70: krill.v1.PrelabelTask.yolo:type_name -> krill.v1.YoloModel
+	68, // 71: krill.v1.PrelabelTask.cv:type_name -> krill.v1.CvPlugins
+	63, // 72: krill.v1.PreviewTask.frame:type_name -> krill.v1.PrelabelFrame
+	66, // 73: krill.v1.PreviewTask.plugin:type_name -> krill.v1.PluginConfig
+	14, // 74: krill.v1.PipelineService.ListTrainingRuns:input_type -> krill.v1.ListTrainingRunsRequest
+	16, // 75: krill.v1.PipelineService.GetTrainingRun:input_type -> krill.v1.GetTrainingRunRequest
+	18, // 76: krill.v1.PipelineService.StartTraining:input_type -> krill.v1.StartTrainingRequest
+	20, // 77: krill.v1.PipelineService.CancelTraining:input_type -> krill.v1.CancelTrainingRequest
+	22, // 78: krill.v1.PipelineService.PinModel:input_type -> krill.v1.PinModelRequest
+	25, // 79: krill.v1.PipelineService.ListPrelabelRuns:input_type -> krill.v1.ListPrelabelRunsRequest
+	27, // 80: krill.v1.PipelineService.StartPrelabel:input_type -> krill.v1.StartPrelabelRequest
+	29, // 81: krill.v1.PipelineService.CancelPrelabel:input_type -> krill.v1.CancelPrelabelRequest
+	37, // 82: krill.v1.PipelineService.ListPrelabelers:input_type -> krill.v1.ListPrelabelersRequest
+	39, // 83: krill.v1.PipelineService.UpdatePrelabeler:input_type -> krill.v1.UpdatePrelabelerRequest
+	41, // 84: krill.v1.PipelineService.PreviewPrelabeler:input_type -> krill.v1.PreviewPrelabelerRequest
+	48, // 85: krill.v1.PipelineService.StartModelTrial:input_type -> krill.v1.StartModelTrialRequest
+	50, // 86: krill.v1.PipelineService.GetModelTrial:input_type -> krill.v1.GetModelTrialRequest
+	52, // 87: krill.v1.PipelineService.ListModelTrials:input_type -> krill.v1.ListModelTrialsRequest
+	54, // 88: krill.v1.PipelineService.CancelModelTrial:input_type -> krill.v1.CancelModelTrialRequest
+	57, // 89: krill.v1.PipelineService.ListModelTrialErrors:input_type -> krill.v1.ListModelTrialErrorsRequest
+	59, // 90: krill.v1.PipelineService.CreateModelUpload:input_type -> krill.v1.CreateModelUploadRequest
+	61, // 91: krill.v1.PipelineService.AddModel:input_type -> krill.v1.AddModelRequest
+	15, // 92: krill.v1.PipelineService.ListTrainingRuns:output_type -> krill.v1.ListTrainingRunsResponse
+	17, // 93: krill.v1.PipelineService.GetTrainingRun:output_type -> krill.v1.GetTrainingRunResponse
+	19, // 94: krill.v1.PipelineService.StartTraining:output_type -> krill.v1.StartTrainingResponse
+	21, // 95: krill.v1.PipelineService.CancelTraining:output_type -> krill.v1.CancelTrainingResponse
+	23, // 96: krill.v1.PipelineService.PinModel:output_type -> krill.v1.PinModelResponse
+	26, // 97: krill.v1.PipelineService.ListPrelabelRuns:output_type -> krill.v1.ListPrelabelRunsResponse
+	28, // 98: krill.v1.PipelineService.StartPrelabel:output_type -> krill.v1.StartPrelabelResponse
+	30, // 99: krill.v1.PipelineService.CancelPrelabel:output_type -> krill.v1.CancelPrelabelResponse
+	38, // 100: krill.v1.PipelineService.ListPrelabelers:output_type -> krill.v1.ListPrelabelersResponse
+	40, // 101: krill.v1.PipelineService.UpdatePrelabeler:output_type -> krill.v1.UpdatePrelabelerResponse
+	43, // 102: krill.v1.PipelineService.PreviewPrelabeler:output_type -> krill.v1.PreviewPrelabelerResponse
+	49, // 103: krill.v1.PipelineService.StartModelTrial:output_type -> krill.v1.StartModelTrialResponse
+	51, // 104: krill.v1.PipelineService.GetModelTrial:output_type -> krill.v1.GetModelTrialResponse
+	53, // 105: krill.v1.PipelineService.ListModelTrials:output_type -> krill.v1.ListModelTrialsResponse
+	55, // 106: krill.v1.PipelineService.CancelModelTrial:output_type -> krill.v1.CancelModelTrialResponse
+	58, // 107: krill.v1.PipelineService.ListModelTrialErrors:output_type -> krill.v1.ListModelTrialErrorsResponse
+	60, // 108: krill.v1.PipelineService.CreateModelUpload:output_type -> krill.v1.CreateModelUploadResponse
+	62, // 109: krill.v1.PipelineService.AddModel:output_type -> krill.v1.AddModelResponse
+	92, // [92:110] is the sub-list for method output_type
+	74, // [74:92] is the sub-list for method input_type
+	74, // [74:74] is the sub-list for extension type_name
+	74, // [74:74] is the sub-list for extension extendee
+	0,  // [0:74] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_pipeline_proto_init() }
@@ -5044,12 +5395,12 @@ func file_krill_v1_pipeline_proto_init() {
 	}
 	file_krill_v1_annotation_proto_init()
 	file_krill_v1_export_proto_init()
-	file_krill_v1_pipeline_proto_msgTypes[24].OneofWrappers = []any{
+	file_krill_v1_pipeline_proto_msgTypes[25].OneofWrappers = []any{
 		(*ParamValue_Number)(nil),
 		(*ParamValue_Flag)(nil),
 		(*ParamValue_Hsv)(nil),
 	}
-	file_krill_v1_pipeline_proto_msgTypes[56].OneofWrappers = []any{
+	file_krill_v1_pipeline_proto_msgTypes[62].OneofWrappers = []any{
 		(*PrelabelTask_Yolo)(nil),
 		(*PrelabelTask_Cv)(nil),
 	}
@@ -5059,7 +5410,7 @@ func file_krill_v1_pipeline_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_pipeline_proto_rawDesc), len(file_krill_v1_pipeline_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   60,
+			NumMessages:   66,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -175,6 +175,7 @@ type NextTaskResponse struct {
 	//	*NextTaskResponse_Train
 	//	*NextTaskResponse_Prelabel
 	//	*NextTaskResponse_Preview
+	//	*NextTaskResponse_Inspect
 	Task          isNextTaskResponse_Task `protobuf_oneof:"task"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -271,6 +272,15 @@ func (x *NextTaskResponse) GetPreview() *PreviewTask {
 	return nil
 }
 
+func (x *NextTaskResponse) GetInspect() *InspectTask {
+	if x != nil {
+		if x, ok := x.Task.(*NextTaskResponse_Inspect); ok {
+			return x.Inspect
+		}
+	}
+	return nil
+}
+
 type isNextTaskResponse_Task interface {
 	isNextTaskResponse_Task()
 }
@@ -299,6 +309,10 @@ type NextTaskResponse_Preview struct {
 	Preview *PreviewTask `protobuf:"bytes,12,opt,name=preview,proto3,oneof"`
 }
 
+type NextTaskResponse_Inspect struct {
+	Inspect *InspectTask `protobuf:"bytes,13,opt,name=inspect,proto3,oneof"`
+}
+
 func (*NextTaskResponse_Track) isNextTaskResponse_Task() {}
 
 func (*NextTaskResponse_Exemplar) isNextTaskResponse_Task() {}
@@ -310,6 +324,8 @@ func (*NextTaskResponse_Train) isNextTaskResponse_Task() {}
 func (*NextTaskResponse_Prelabel) isNextTaskResponse_Task() {}
 
 func (*NextTaskResponse_Preview) isNextTaskResponse_Task() {}
+
+func (*NextTaskResponse_Inspect) isNextTaskResponse_Task() {}
 
 type TaskFrame struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1402,7 +1418,7 @@ var File_krill_v1_worker_proto protoreflect.FileDescriptor
 const file_krill_v1_worker_proto_rawDesc = "" +
 	"\n" +
 	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x12krill/v1/log.proto\x1a\x17krill/v1/pipeline.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
-	"\x0fNextTaskRequest\"\xc0\x02\n" +
+	"\x0fNextTaskRequest\"\xf3\x02\n" +
 	"\x10NextTaskResponse\x12+\n" +
 	"\x05track\x18\x01 \x01(\v2\x13.krill.v1.TrackTaskH\x00R\x05track\x124\n" +
 	"\bexemplar\x18\x02 \x01(\v2\x16.krill.v1.ExemplarTaskH\x00R\bexemplar\x12+\n" +
@@ -1410,7 +1426,8 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x05train\x18\n" +
 	" \x01(\v2\x13.krill.v1.TrainTaskH\x00R\x05train\x124\n" +
 	"\bprelabel\x18\v \x01(\v2\x16.krill.v1.PrelabelTaskH\x00R\bprelabel\x121\n" +
-	"\apreview\x18\f \x01(\v2\x15.krill.v1.PreviewTaskH\x00R\apreviewB\x06\n" +
+	"\apreview\x18\f \x01(\v2\x15.krill.v1.PreviewTaskH\x00R\apreview\x121\n" +
+	"\ainspect\x18\r \x01(\v2\x15.krill.v1.InspectTaskH\x00R\ainspectB\x06\n" +
 	"\x04task\"R\n" +
 	"\tTaskFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
@@ -1548,12 +1565,13 @@ var file_krill_v1_worker_proto_goTypes = []any{
 	(*TrainTask)(nil),               // 21: krill.v1.TrainTask
 	(*PrelabelTask)(nil),            // 22: krill.v1.PrelabelTask
 	(*PreviewTask)(nil),             // 23: krill.v1.PreviewTask
-	(*Point)(nil),                   // 24: krill.v1.Point
-	(*Box)(nil),                     // 25: krill.v1.Box
-	(*timestamppb.Timestamp)(nil),   // 26: google.protobuf.Timestamp
-	(*HostStats)(nil),               // 27: krill.v1.HostStats
-	(*GpuStats)(nil),                // 28: krill.v1.GpuStats
-	(*LogRecord)(nil),               // 29: krill.v1.LogRecord
+	(*InspectTask)(nil),             // 24: krill.v1.InspectTask
+	(*Point)(nil),                   // 25: krill.v1.Point
+	(*Box)(nil),                     // 26: krill.v1.Box
+	(*timestamppb.Timestamp)(nil),   // 27: google.protobuf.Timestamp
+	(*HostStats)(nil),               // 28: krill.v1.HostStats
+	(*GpuStats)(nil),                // 29: krill.v1.GpuStats
+	(*LogRecord)(nil),               // 30: krill.v1.LogRecord
 }
 var file_krill_v1_worker_proto_depIdxs = []int32{
 	5,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
@@ -1562,39 +1580,40 @@ var file_krill_v1_worker_proto_depIdxs = []int32{
 	21, // 3: krill.v1.NextTaskResponse.train:type_name -> krill.v1.TrainTask
 	22, // 4: krill.v1.NextTaskResponse.prelabel:type_name -> krill.v1.PrelabelTask
 	23, // 5: krill.v1.NextTaskResponse.preview:type_name -> krill.v1.PreviewTask
-	4,  // 6: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
-	24, // 7: krill.v1.TrackTask.point:type_name -> krill.v1.Point
-	25, // 8: krill.v1.TrackTask.box:type_name -> krill.v1.Box
-	7,  // 9: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
-	4,  // 10: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
-	25, // 11: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
-	25, // 12: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
-	9,  // 13: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
-	25, // 14: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
-	26, // 15: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
-	27, // 16: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
-	28, // 17: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
-	29, // 18: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
-	0,  // 19: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
-	20, // 20: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
-	1,  // 21: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
-	2,  // 22: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
-	10, // 23: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
-	12, // 24: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
-	14, // 25: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
-	16, // 26: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
-	18, // 27: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
-	3,  // 28: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
-	11, // 29: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
-	13, // 30: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
-	15, // 31: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
-	17, // 32: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
-	19, // 33: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
-	28, // [28:34] is the sub-list for method output_type
-	22, // [22:28] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	24, // 6: krill.v1.NextTaskResponse.inspect:type_name -> krill.v1.InspectTask
+	4,  // 7: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
+	25, // 8: krill.v1.TrackTask.point:type_name -> krill.v1.Point
+	26, // 9: krill.v1.TrackTask.box:type_name -> krill.v1.Box
+	7,  // 10: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
+	4,  // 11: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
+	26, // 12: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
+	26, // 13: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
+	9,  // 14: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
+	26, // 15: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
+	27, // 16: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
+	28, // 17: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
+	29, // 18: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
+	30, // 19: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
+	0,  // 20: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
+	20, // 21: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
+	1,  // 22: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
+	2,  // 23: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
+	10, // 24: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
+	12, // 25: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
+	14, // 26: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
+	16, // 27: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
+	18, // 28: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
+	3,  // 29: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
+	11, // 30: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
+	13, // 31: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
+	15, // 32: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
+	17, // 33: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
+	19, // 34: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
+	29, // [29:35] is the sub-list for method output_type
+	23, // [23:29] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_worker_proto_init() }
@@ -1613,6 +1632,7 @@ func file_krill_v1_worker_proto_init() {
 		(*NextTaskResponse_Train)(nil),
 		(*NextTaskResponse_Prelabel)(nil),
 		(*NextTaskResponse_Preview)(nil),
+		(*NextTaskResponse_Inspect)(nil),
 	}
 	file_krill_v1_worker_proto_msgTypes[3].OneofWrappers = []any{
 		(*TrackTask_Point)(nil),

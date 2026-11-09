@@ -41,20 +41,22 @@ class NextTaskRequest(_message.Message):
     def __init__(self) -> None: ...
 
 class NextTaskResponse(_message.Message):
-    __slots__ = ("track", "exemplar", "embed", "train", "prelabel", "preview")
+    __slots__ = ("track", "exemplar", "embed", "train", "prelabel", "preview", "inspect")
     TRACK_FIELD_NUMBER: _ClassVar[int]
     EXEMPLAR_FIELD_NUMBER: _ClassVar[int]
     EMBED_FIELD_NUMBER: _ClassVar[int]
     TRAIN_FIELD_NUMBER: _ClassVar[int]
     PRELABEL_FIELD_NUMBER: _ClassVar[int]
     PREVIEW_FIELD_NUMBER: _ClassVar[int]
+    INSPECT_FIELD_NUMBER: _ClassVar[int]
     track: TrackTask
     exemplar: ExemplarTask
     embed: EmbedTask
     train: _pipeline_pb2.TrainTask
     prelabel: _pipeline_pb2.PrelabelTask
     preview: _pipeline_pb2.PreviewTask
-    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ..., train: _Optional[_Union[_pipeline_pb2.TrainTask, _Mapping]] = ..., prelabel: _Optional[_Union[_pipeline_pb2.PrelabelTask, _Mapping]] = ..., preview: _Optional[_Union[_pipeline_pb2.PreviewTask, _Mapping]] = ...) -> None: ...
+    inspect: _pipeline_pb2.InspectTask
+    def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ..., train: _Optional[_Union[_pipeline_pb2.TrainTask, _Mapping]] = ..., prelabel: _Optional[_Union[_pipeline_pb2.PrelabelTask, _Mapping]] = ..., preview: _Optional[_Union[_pipeline_pb2.PreviewTask, _Mapping]] = ..., inspect: _Optional[_Union[_pipeline_pb2.InspectTask, _Mapping]] = ...) -> None: ...
 
 class TaskFrame(_message.Message):
     __slots__ = ("id", "url", "embedding_url")

@@ -133,7 +133,10 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 		if err := unmarshal(base.TrainingRun.Config, baseCfg); err != nil {
 			return nil, fmt.Errorf("decode run %d config: %w", base.TrainingRun.ID, err)
 		}
+		// Uploaded weights have no size, which only picks the COCO weights
+		// a run without a base starts from.
 		out.Size = baseCfg.GetSize()
+		return out, nil
 	}
 	if _, ok := krillv1.ModelSize_name[int32(out.GetSize())]; !ok || out.GetSize() == krillv1.ModelSize_MODEL_SIZE_UNSPECIFIED {
 		return nil, invalidConfig{errors.New("unknown model size")}
