@@ -34,6 +34,7 @@ class TrainingTrigger(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     TRAINING_TRIGGER_UNSPECIFIED: _ClassVar[TrainingTrigger]
     TRAINING_TRIGGER_MANUAL: _ClassVar[TrainingTrigger]
     TRAINING_TRIGGER_SCHEDULE: _ClassVar[TrainingTrigger]
+    TRAINING_TRIGGER_UPLOAD: _ClassVar[TrainingTrigger]
 
 class PrelabelSource(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -80,6 +81,7 @@ TRAINING_STATUS_CANCELLED: TrainingStatus
 TRAINING_TRIGGER_UNSPECIFIED: TrainingTrigger
 TRAINING_TRIGGER_MANUAL: TrainingTrigger
 TRAINING_TRIGGER_SCHEDULE: TrainingTrigger
+TRAINING_TRIGGER_UPLOAD: TrainingTrigger
 PRELABEL_SOURCE_UNSPECIFIED: PrelabelSource
 PRELABEL_SOURCE_YOLO: PrelabelSource
 PRELABEL_SOURCE_CV: PrelabelSource
@@ -162,7 +164,7 @@ class EvalMetrics(_message.Message):
     def __init__(self, all: _Optional[_Union[ClassMetrics, _Mapping]] = ..., classes: _Optional[_Iterable[_Union[ClassMetrics, _Mapping]]] = ...) -> None: ...
 
 class TrainingRun(_message.Message):
-    __slots__ = ("id", "status", "trigger", "created_by", "config", "dataset", "epoch", "history", "val", "test", "baseline_run_id", "baseline_val", "baseline_test", "pinned", "error", "log", "created_at", "started_at", "finished_at", "weights_url", "weights_bytes", "device", "verified_boxes")
+    __slots__ = ("id", "status", "trigger", "created_by", "config", "dataset", "epoch", "history", "val", "test", "baseline_run_id", "baseline_val", "baseline_test", "pinned", "error", "log", "created_at", "started_at", "finished_at", "weights_url", "weights_bytes", "device", "verified_boxes", "filename", "classes")
     ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     TRIGGER_FIELD_NUMBER: _ClassVar[int]
@@ -186,6 +188,8 @@ class TrainingRun(_message.Message):
     WEIGHTS_BYTES_FIELD_NUMBER: _ClassVar[int]
     DEVICE_FIELD_NUMBER: _ClassVar[int]
     VERIFIED_BOXES_FIELD_NUMBER: _ClassVar[int]
+    FILENAME_FIELD_NUMBER: _ClassVar[int]
+    CLASSES_FIELD_NUMBER: _ClassVar[int]
     id: int
     status: TrainingStatus
     trigger: TrainingTrigger
@@ -209,7 +213,17 @@ class TrainingRun(_message.Message):
     weights_bytes: int
     device: str
     verified_boxes: int
-    def __init__(self, id: _Optional[int] = ..., status: _Optional[_Union[TrainingStatus, str]] = ..., trigger: _Optional[_Union[TrainingTrigger, str]] = ..., created_by: _Optional[str] = ..., config: _Optional[_Union[TrainConfig, _Mapping]] = ..., dataset: _Optional[_Union[_export_pb2.ExportStats, _Mapping]] = ..., epoch: _Optional[int] = ..., history: _Optional[_Iterable[_Union[EpochMetrics, _Mapping]]] = ..., val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_run_id: _Optional[int] = ..., baseline_val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., pinned: _Optional[bool] = ..., error: _Optional[str] = ..., log: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., weights_url: _Optional[str] = ..., weights_bytes: _Optional[int] = ..., device: _Optional[str] = ..., verified_boxes: _Optional[int] = ...) -> None: ...
+    filename: str
+    classes: _containers.RepeatedCompositeFieldContainer[ModelClass]
+    def __init__(self, id: _Optional[int] = ..., status: _Optional[_Union[TrainingStatus, str]] = ..., trigger: _Optional[_Union[TrainingTrigger, str]] = ..., created_by: _Optional[str] = ..., config: _Optional[_Union[TrainConfig, _Mapping]] = ..., dataset: _Optional[_Union[_export_pb2.ExportStats, _Mapping]] = ..., epoch: _Optional[int] = ..., history: _Optional[_Iterable[_Union[EpochMetrics, _Mapping]]] = ..., val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_run_id: _Optional[int] = ..., baseline_val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., pinned: _Optional[bool] = ..., error: _Optional[str] = ..., log: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., weights_url: _Optional[str] = ..., weights_bytes: _Optional[int] = ..., device: _Optional[str] = ..., verified_boxes: _Optional[int] = ..., filename: _Optional[str] = ..., classes: _Optional[_Iterable[_Union[ModelClass, _Mapping]]] = ...) -> None: ...
+
+class ModelClass(_message.Message):
+    __slots__ = ("name", "label_type_id")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    label_type_id: int
+    def __init__(self, name: _Optional[str] = ..., label_type_id: _Optional[int] = ...) -> None: ...
 
 class RetrainSchedule(_message.Message):
     __slots__ = ("hour", "time_zone", "min_new_labels", "new_labels", "auto_pin", "next_check")
@@ -707,6 +721,32 @@ class ListModelTrialErrorsResponse(_message.Message):
     error_frames: int
     def __init__(self, frames: _Optional[_Iterable[_Union[ModelTrialFrame, _Mapping]]] = ..., total_frames: _Optional[int] = ..., error_frames: _Optional[int] = ...) -> None: ...
 
+class CreateModelUploadRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class CreateModelUploadResponse(_message.Message):
+    __slots__ = ("key", "upload_url")
+    KEY_FIELD_NUMBER: _ClassVar[int]
+    UPLOAD_URL_FIELD_NUMBER: _ClassVar[int]
+    key: str
+    upload_url: str
+    def __init__(self, key: _Optional[str] = ..., upload_url: _Optional[str] = ...) -> None: ...
+
+class AddModelRequest(_message.Message):
+    __slots__ = ("key", "filename")
+    KEY_FIELD_NUMBER: _ClassVar[int]
+    FILENAME_FIELD_NUMBER: _ClassVar[int]
+    key: str
+    filename: str
+    def __init__(self, key: _Optional[str] = ..., filename: _Optional[str] = ...) -> None: ...
+
+class AddModelResponse(_message.Message):
+    __slots__ = ("run",)
+    RUN_FIELD_NUMBER: _ClassVar[int]
+    run: TrainingRun
+    def __init__(self, run: _Optional[_Union[TrainingRun, _Mapping]] = ...) -> None: ...
+
 class PrelabelFrame(_message.Message):
     __slots__ = ("id", "url")
     ID_FIELD_NUMBER: _ClassVar[int]
@@ -742,6 +782,14 @@ class TrainTask(_message.Message):
     weights_upload_url: str
     has_test: bool
     def __init__(self, id: _Optional[int] = ..., run_id: _Optional[int] = ..., dataset_url: _Optional[str] = ..., classes: _Optional[_Iterable[str]] = ..., size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_weights_url: _Optional[str] = ..., baseline_weights_url: _Optional[str] = ..., weights_upload_url: _Optional[str] = ..., has_test: _Optional[bool] = ...) -> None: ...
+
+class InspectTask(_message.Message):
+    __slots__ = ("id", "weights_url")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    WEIGHTS_URL_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    weights_url: str
+    def __init__(self, id: _Optional[int] = ..., weights_url: _Optional[str] = ...) -> None: ...
 
 class PluginConfig(_message.Message):
     __slots__ = ("name", "params")

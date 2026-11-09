@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/pipeline_worker.proto.
  */
 export const file_krill_v1_pipeline_worker: GenFile = /*@__PURE__*/
-  fileDesc("Ch5rcmlsbC92MS9waXBlbGluZV93b3JrZXIucHJvdG8SCGtyaWxsLnYxIksKGlJlZ2lzdGVyUHJlbGFiZWxlcnNSZXF1ZXN0Ei0KC3ByZWxhYmVsZXJzGAEgAygLMhgua3JpbGwudjEuUHJlbGFiZWxlclNwZWMiHQobUmVnaXN0ZXJQcmVsYWJlbGVyc1Jlc3BvbnNlIiEKDkNoZWNrSW5SZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMiOwoPQ2hlY2tJblJlc3BvbnNlEigKBHRhc2sYASABKAsyGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIpUBChpSZXBvcnRUcmFpblByb2dyZXNzUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg4KBmVwb2NocxgCIAEoBRIlCgVlcG9jaBgDIAEoCzIWLmtyaWxsLnYxLkVwb2NoTWV0cmljcxISCgpldmFsdWF0aW5nGAQgASgIEgsKA2xvZxgFIAEoCRIOCgZkZXZpY2UYBiABKAkiHQobUmVwb3J0VHJhaW5Qcm9ncmVzc1Jlc3BvbnNlIu0BChJGaW5pc2hUcmFpblJlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIiCgN2YWwYAiABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIjCgR0ZXN0GAMgASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSKwoMYmFzZWxpbmVfdmFsGAQgASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSLAoNYmFzZWxpbmVfdGVzdBgFIAEoCzIVLmtyaWxsLnYxLkV2YWxNZXRyaWNzEhUKDXdlaWdodHNfYnl0ZXMYBiABKAMSCwoDbG9nGAcgASgJIhUKE0ZpbmlzaFRyYWluUmVzcG9uc2UibgoLUHJlbGFiZWxCb3gSEAoIZnJhbWVfaWQYASABKAMSDQoFbGFiZWwYAiABKAkSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94EhIKCmNvbmZpZGVuY2UYBCABKAISDgoGcGx1Z2luGAUgASgJInIKFlJlcG9ydFByZWxhYmVsc1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIkCgVib3hlcxgCIAMoCzIVLmtyaWxsLnYxLlByZWxhYmVsQm94EgwKBGRvbmUYAyABKAgSEwoLZnJhbWVzX2RvbmUYBCABKAUiGQoXUmVwb3J0UHJlbGFiZWxzUmVzcG9uc2UiXQoUUmVwb3J0UHJldmlld1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIjCgVib3hlcxgCIAMoCzIULmtyaWxsLnYxLlByZXZpZXdCb3gSDwoHdG9va19tcxgDIAEoBSIXChVSZXBvcnRQcmV2aWV3UmVzcG9uc2UyoQQKFVBpcGVsaW5lV29ya2VyU2VydmljZRJkChNSZWdpc3RlclByZWxhYmVsZXJzEiQua3JpbGwudjEuUmVnaXN0ZXJQcmVsYWJlbGVyc1JlcXVlc3QaJS5rcmlsbC52MS5SZWdpc3RlclByZWxhYmVsZXJzUmVzcG9uc2UiABJACgdDaGVja0luEhgua3JpbGwudjEuQ2hlY2tJblJlcXVlc3QaGS5rcmlsbC52MS5DaGVja0luUmVzcG9uc2UiABJkChNSZXBvcnRUcmFpblByb2dyZXNzEiQua3JpbGwudjEuUmVwb3J0VHJhaW5Qcm9ncmVzc1JlcXVlc3QaJS5rcmlsbC52MS5SZXBvcnRUcmFpblByb2dyZXNzUmVzcG9uc2UiABJMCgtGaW5pc2hUcmFpbhIcLmtyaWxsLnYxLkZpbmlzaFRyYWluUmVxdWVzdBodLmtyaWxsLnYxLkZpbmlzaFRyYWluUmVzcG9uc2UiABJYCg9SZXBvcnRQcmVsYWJlbHMSIC5rcmlsbC52MS5SZXBvcnRQcmVsYWJlbHNSZXF1ZXN0GiEua3JpbGwudjEuUmVwb3J0UHJlbGFiZWxzUmVzcG9uc2UiABJSCg1SZXBvcnRQcmV2aWV3Eh4ua3JpbGwudjEuUmVwb3J0UHJldmlld1JlcXVlc3QaHy5rcmlsbC52MS5SZXBvcnRQcmV2aWV3UmVzcG9uc2UiAEKUAQoMY29tLmtyaWxsLnYxQhNQaXBlbGluZVdvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_krill_v1_annotation, file_krill_v1_pipeline, file_krill_v1_worker]);
+  fileDesc("Ch5rcmlsbC92MS9waXBlbGluZV93b3JrZXIucHJvdG8SCGtyaWxsLnYxIksKGlJlZ2lzdGVyUHJlbGFiZWxlcnNSZXF1ZXN0Ei0KC3ByZWxhYmVsZXJzGAEgAygLMhgua3JpbGwudjEuUHJlbGFiZWxlclNwZWMiHQobUmVnaXN0ZXJQcmVsYWJlbGVyc1Jlc3BvbnNlIiEKDkNoZWNrSW5SZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMiOwoPQ2hlY2tJblJlc3BvbnNlEigKBHRhc2sYASABKAsyGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIpUBChpSZXBvcnRUcmFpblByb2dyZXNzUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg4KBmVwb2NocxgCIAEoBRIlCgVlcG9jaBgDIAEoCzIWLmtyaWxsLnYxLkVwb2NoTWV0cmljcxISCgpldmFsdWF0aW5nGAQgASgIEgsKA2xvZxgFIAEoCRIOCgZkZXZpY2UYBiABKAkiHQobUmVwb3J0VHJhaW5Qcm9ncmVzc1Jlc3BvbnNlIu0BChJGaW5pc2hUcmFpblJlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIiCgN2YWwYAiABKAsyFS5rcmlsbC52MS5FdmFsTWV0cmljcxIjCgR0ZXN0GAMgASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSKwoMYmFzZWxpbmVfdmFsGAQgASgLMhUua3JpbGwudjEuRXZhbE1ldHJpY3MSLAoNYmFzZWxpbmVfdGVzdBgFIAEoCzIVLmtyaWxsLnYxLkV2YWxNZXRyaWNzEhUKDXdlaWdodHNfYnl0ZXMYBiABKAMSCwoDbG9nGAcgASgJIhUKE0ZpbmlzaFRyYWluUmVzcG9uc2UibgoLUHJlbGFiZWxCb3gSEAoIZnJhbWVfaWQYASABKAMSDQoFbGFiZWwYAiABKAkSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94EhIKCmNvbmZpZGVuY2UYBCABKAISDgoGcGx1Z2luGAUgASgJInIKFlJlcG9ydFByZWxhYmVsc1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIkCgVib3hlcxgCIAMoCzIVLmtyaWxsLnYxLlByZWxhYmVsQm94EgwKBGRvbmUYAyABKAgSEwoLZnJhbWVzX2RvbmUYBCABKAUiGQoXUmVwb3J0UHJlbGFiZWxzUmVzcG9uc2UiXQoUUmVwb3J0UHJldmlld1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIjCgVib3hlcxgCIAMoCzIULmtyaWxsLnYxLlByZXZpZXdCb3gSDwoHdG9va19tcxgDIAEoBSIXChVSZXBvcnRQcmV2aWV3UmVzcG9uc2UiTAoURmluaXNoSW5zcGVjdFJlcXVlc3QSDwoHdGFza19pZBgBIAEoAxIPCgdjbGFzc2VzGAIgAygJEhIKCmltYWdlX3NpemUYAyABKAUiFwoVRmluaXNoSW5zcGVjdFJlc3BvbnNlMvUEChVQaXBlbGluZVdvcmtlclNlcnZpY2USZAoTUmVnaXN0ZXJQcmVsYWJlbGVycxIkLmtyaWxsLnYxLlJlZ2lzdGVyUHJlbGFiZWxlcnNSZXF1ZXN0GiUua3JpbGwudjEuUmVnaXN0ZXJQcmVsYWJlbGVyc1Jlc3BvbnNlIgASQAoHQ2hlY2tJbhIYLmtyaWxsLnYxLkNoZWNrSW5SZXF1ZXN0Ghkua3JpbGwudjEuQ2hlY2tJblJlc3BvbnNlIgASZAoTUmVwb3J0VHJhaW5Qcm9ncmVzcxIkLmtyaWxsLnYxLlJlcG9ydFRyYWluUHJvZ3Jlc3NSZXF1ZXN0GiUua3JpbGwudjEuUmVwb3J0VHJhaW5Qcm9ncmVzc1Jlc3BvbnNlIgASTAoLRmluaXNoVHJhaW4SHC5rcmlsbC52MS5GaW5pc2hUcmFpblJlcXVlc3QaHS5rcmlsbC52MS5GaW5pc2hUcmFpblJlc3BvbnNlIgASWAoPUmVwb3J0UHJlbGFiZWxzEiAua3JpbGwudjEuUmVwb3J0UHJlbGFiZWxzUmVxdWVzdBohLmtyaWxsLnYxLlJlcG9ydFByZWxhYmVsc1Jlc3BvbnNlIgASUgoNUmVwb3J0UHJldmlldxIeLmtyaWxsLnYxLlJlcG9ydFByZXZpZXdSZXF1ZXN0Gh8ua3JpbGwudjEuUmVwb3J0UHJldmlld1Jlc3BvbnNlIgASUgoNRmluaXNoSW5zcGVjdBIeLmtyaWxsLnYxLkZpbmlzaEluc3BlY3RSZXF1ZXN0Gh8ua3JpbGwudjEuRmluaXNoSW5zcGVjdFJlc3BvbnNlIgBClAEKDGNvbS5rcmlsbC52MUITUGlwZWxpbmVXb3JrZXJQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_krill_v1_annotation, file_krill_v1_pipeline, file_krill_v1_worker]);
 
 /**
  * @generated from message krill.v1.RegisterPrelabelersRequest
@@ -335,9 +335,53 @@ export const ReportPreviewResponseSchema: GenMessage<ReportPreviewResponse> = /*
   messageDesc(file_krill_v1_pipeline_worker, 12);
 
 /**
- * PipelineWorkerService is called by the GPU worker for training,
- * pre-labeling, and pre-labeler previews. Requests carry the worker token.
- * Failures go through WorkerService.FailTask.
+ * @generated from message krill.v1.FinishInspectRequest
+ */
+export type FinishInspectRequest = Message<"krill.v1.FinishInspectRequest"> & {
+  /**
+   * @generated from field: int64 task_id = 1;
+   */
+  taskId: bigint;
+
+  /**
+   * Class names in class id order.
+   *
+   * @generated from field: repeated string classes = 2;
+   */
+  classes: string[];
+
+  /**
+   * The image size the model trained at, or 0 when the weights don't say.
+   *
+   * @generated from field: int32 image_size = 3;
+   */
+  imageSize: number;
+};
+
+/**
+ * Describes the message krill.v1.FinishInspectRequest.
+ * Use `create(FinishInspectRequestSchema)` to create a new message.
+ */
+export const FinishInspectRequestSchema: GenMessage<FinishInspectRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline_worker, 13);
+
+/**
+ * @generated from message krill.v1.FinishInspectResponse
+ */
+export type FinishInspectResponse = Message<"krill.v1.FinishInspectResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.FinishInspectResponse.
+ * Use `create(FinishInspectResponseSchema)` to create a new message.
+ */
+export const FinishInspectResponseSchema: GenMessage<FinishInspectResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_pipeline_worker, 14);
+
+/**
+ * PipelineWorkerService is called by the GPU worker for training, reading
+ * uploaded models, pre-labeling, and pre-labeler previews. Requests carry the
+ * worker token. Failures go through WorkerService.FailTask.
  *
  * @generated from service krill.v1.PipelineWorkerService
  */
@@ -400,6 +444,14 @@ export const PipelineWorkerService: GenService<{
     methodKind: "unary";
     input: typeof ReportPreviewRequestSchema;
     output: typeof ReportPreviewResponseSchema;
+  },
+  /**
+   * @generated from rpc krill.v1.PipelineWorkerService.FinishInspect
+   */
+  finishInspect: {
+    methodKind: "unary";
+    input: typeof FinishInspectRequestSchema;
+    output: typeof FinishInspectResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_pipeline_worker, 0);
