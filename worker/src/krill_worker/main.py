@@ -14,7 +14,7 @@ from krill_worker.frames import decode_frame, fetch, prefetch, upload
 from krill_worker.heartbeat import Heartbeat
 from krill_worker.logs import LogBuffer
 from krill_worker.models import ModelLoadError, Models
-from krill_worker.pipeline import YoloModels, run_prelabel, run_preview
+from krill_worker.pipeline import YoloModels, run_inspect, run_prelabel, run_preview
 from krill_worker.prelabelers import Frame
 from krill_worker.prelabelers.plugins import PLUGINS
 from krill_worker.stats import accelerator, gpu_stats
@@ -153,6 +153,7 @@ Task = (
     | pipeline_pb2.TrainTask
     | pipeline_pb2.PrelabelTask
     | pipeline_pb2.PreviewTask
+    | pipeline_pb2.InspectTask
 )
 
 
@@ -215,6 +216,8 @@ def serve(
                 run_prelabel(api, res.prelabel, yolo)
             elif kind == "preview":
                 run_preview(api, res.preview)
+            elif kind == "inspect":
+                run_inspect(api, res.inspect)
             else:
                 models.run(lambda tracker: run_task(api, tracker, res, heartbeat.cancelled))
         except ModelLoadError as e:
