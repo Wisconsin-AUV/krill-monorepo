@@ -310,6 +310,7 @@ func (s *Service) SignInWithCode(ctx context.Context, req *krillv1.SignInWithCod
 	if err != nil {
 		return nil, err
 	}
+	setCookie(ctx, s.opts().Cookies.LastLogin("code"))
 	return &krillv1.SignInWithCodeResponse{User: ToProto(user)}, nil
 }
 
