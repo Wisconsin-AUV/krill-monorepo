@@ -26,6 +26,7 @@ var trainingStatuses = map[string]krillv1.TrainingStatus{
 var triggers = map[string]krillv1.TrainingTrigger{
 	triggerManual:   krillv1.TrainingTrigger_TRAINING_TRIGGER_MANUAL,
 	triggerSchedule: krillv1.TrainingTrigger_TRAINING_TRIGGER_SCHEDULE,
+	triggerUpload:   krillv1.TrainingTrigger_TRAINING_TRIGGER_UPLOAD,
 }
 
 var prelabelStatuses = map[string]krillv1.PrelabelStatus{
@@ -44,6 +45,7 @@ var prelabelSources = map[string]krillv1.PrelabelSource{
 const (
 	triggerManual   = "manual"
 	triggerSchedule = "schedule"
+	triggerUpload   = "upload"
 	sourceYolo      = "yolo"
 	sourceCV        = "cv"
 )
@@ -92,6 +94,7 @@ func trainingRun(r db.TrainingRun, createdBy string, withLog bool) (*krillv1.Tra
 		WeightsBytes:  r.WeightsBytes,
 		Device:        r.Device,
 		VerifiedBoxes: r.VerifiedBoxes,
+		Filename:      r.Filename,
 	}
 	if withLog {
 		out.Log = r.Log

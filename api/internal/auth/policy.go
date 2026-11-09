@@ -212,6 +212,8 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.PipelineServiceListModelTrialsProcedure:      label,
 	krillv1connect.PipelineServiceCancelModelTrialProcedure:     reviewLabels,
 	krillv1connect.PipelineServiceListModelTrialErrorsProcedure: label,
+	krillv1connect.PipelineServiceCreateModelUploadProcedure:    manageSystem,
+	krillv1connect.PipelineServiceAddModelProcedure:             manageSystem,
 
 	krillv1connect.PipelineWorkerServiceRegisterPrelabelersProcedure: worker,
 	krillv1connect.PipelineWorkerServiceCheckInProcedure:             worker,
@@ -219,4 +221,5 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.PipelineWorkerServiceFinishTrainProcedure:         worker,
 	krillv1connect.PipelineWorkerServiceReportPrelabelsProcedure:     worker,
 	krillv1connect.PipelineWorkerServiceReportPreviewProcedure:       worker,
+	krillv1connect.PipelineWorkerServiceFinishInspectProcedure:       worker,
 }

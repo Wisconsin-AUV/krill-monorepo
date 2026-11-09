@@ -60,6 +60,10 @@ func TrainingWeightsKey(runID int64) string {
 	return fmt.Sprintf("training-runs/%d/best.pt", runID)
 }
 
+// ModelUploadsPrefix holds weights the browser uploaded, until AddModel
+// copies them to a run.
+const ModelUploadsPrefix = "model-uploads/"
+
 // PrelabelerPreviewKey is the mask from a pre-labeler's latest preview. Each
 // preview replaces it.
 func PrelabelerPreviewKey(name string) string {

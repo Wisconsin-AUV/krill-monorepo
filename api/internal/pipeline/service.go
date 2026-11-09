@@ -108,6 +108,11 @@ func (s *Service) GetTrainingRun(ctx context.Context, req *krillv1.GetTrainingRu
 			return nil, rpc.Internal(err, "sign weights url")
 		}
 	}
+	if row.TrainingRun.Trigger == triggerUpload {
+		if run.Classes, err = modelClasses(row.TrainingRun); err != nil {
+			return nil, rpc.Internal(err, "load run")
+		}
+	}
 	out := &krillv1.GetTrainingRunResponse{Run: run}
 	pinned, err := s.p.q.GetPinnedTrainingRun(ctx)
 	switch {

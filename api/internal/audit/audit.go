@@ -66,6 +66,7 @@ const (
 	ModelTrain          = "model.train"
 	ModelCancel         = "model.cancel"
 	ModelPin            = "model.pin"
+	ModelUpload         = "model.upload"
 	PrelabelStart       = "prelabel.start"
 	PrelabelCancel      = "prelabel.cancel"
 	PrelabelerSave      = "prelabeler.update"
