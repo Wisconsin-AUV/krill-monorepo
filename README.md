@@ -24,13 +24,20 @@ just api      # :8080
 just web      # :5173
 ```
 
+Accounts sign up as labelers unless an admin invited them. Sign up, then make yourself an admin:
+
+```sh
+just user-role you@example.com admin
+```
+
 To run the full stack with the GPU worker, set the passwords and `KRILL_WORKER_TOKEN` in `.env`, then:
 
 ```sh
 just up
+docker compose --env-file .env -f deploy/docker-compose.yml exec api krill user role you@example.com admin
 ```
 
-The app is served from `:8080`. Browsers load frames straight from MinIO, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach.
+The app is served from `:8080`. Browsers load frames straight from MinIO, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach. After the first admin, roles are changed from the admin panel.
 
 ## Contributing
 
