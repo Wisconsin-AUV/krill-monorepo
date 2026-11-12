@@ -14,7 +14,7 @@ WORKDIR /src
 COPY api/go.mod api/go.sum* ./
 RUN go mod download
 COPY api/ ./
-RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION}" -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION}" -o /out/krill ./cmd/api
 
 FROM debian:bookworm-slim
 # pg_dump must be at least the server's major version, which is newer than
@@ -30,9 +30,9 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends postgresql-client-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=build /out/api /usr/local/bin/api
+COPY --from=build /out/krill /usr/local/bin/krill
 COPY --from=web /src/dist /srv/web
 ENV KRILL_WEB_DIR=/srv/web
 USER nobody
 EXPOSE 8080
-ENTRYPOINT ["api"]
+ENTRYPOINT ["krill"]

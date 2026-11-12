@@ -80,6 +80,37 @@ func cleanupUser(t *testing.T, s *Service, res *krillv1.RegisterResponse) {
 	t.Cleanup(func() { _, _ = s.q.DeleteUser(context.Background(), uuid.MustParse(res.GetUser().GetId())) })
 }
 
+// On a fresh instance the first account gets past closed sign-up, but only
+// as a labeler, and the next one is turned away.
+func TestFirstAccountIsNotAdmin(t *testing.T) {
+	s, _ := testService(t)
+	ctx := t.Context()
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	if _, err := tx.Exec(ctx, `DELETE FROM users`); err != nil {
+		t.Fatal(err)
+	}
+	q := s.q.WithTx(tx)
+	closed := signupRules{allowSignup: false}
+
+	g, err := grantSignup(ctx, q, closed, "", "first@example.com", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.role != "labeler" {
+		t.Fatalf("first account role = %q, want labeler", g.role)
+	}
+	if _, err := q.CreateUser(ctx, db.CreateUserParams{Name: "first", Username: "first", Email: "first@example.com", Role: g.role}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := grantSignup(ctx, q, closed, "", "second@example.com", false); !errors.Is(err, errClosed) {
+		t.Fatalf("second account err = %v, want sign-up closed", err)
+	}
+}
+
 func TestInviteSignsUpPastClosedSignup(t *testing.T) {
 	s := closedService(t)
 

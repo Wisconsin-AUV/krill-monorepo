@@ -36,7 +36,7 @@ type Config struct {
 	// when it is HTTPS.
 	PublicURL string
 	// AllowSignup lets anyone register as a labeler. The first account can
-	// always register and becomes an admin.
+	// always register.
 	AllowSignup bool
 	// SignupEmailDomain limits password sign-up to emails at this domain.
 	// Empty allows any email.

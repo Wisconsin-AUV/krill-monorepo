@@ -9,6 +9,9 @@ LOCK TABLE users IN SHARE ROW EXCLUSIVE MODE;
 -- name: CountUsers :one
 SELECT count(*)::int FROM users;
 
+-- name: AdminExists :one
+SELECT EXISTS (SELECT 1 FROM users WHERE role = 'admin' AND NOT disabled);
+
 -- name: GetUser :one
 SELECT * FROM users WHERE id = $1;
 

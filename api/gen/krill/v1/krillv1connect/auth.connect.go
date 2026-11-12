@@ -75,8 +75,8 @@ type AuthServiceClient interface {
 	GetSession(context.Context, *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
 	// Login accepts a username or an email.
 	Login(context.Context, *v1.LoginRequest) (*v1.LoginResponse, error)
-	// Register creates a labeler and signs them in. The first account is an
-	// admin. An invite or a pre-approved email sets the role instead.
+	// Register creates a labeler and signs them in. An invite or a
+	// pre-approved email sets the role instead.
 	Register(context.Context, *v1.RegisterRequest) (*v1.RegisterResponse, error)
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 	UpdateProfile(context.Context, *v1.UpdateProfileRequest) (*v1.UpdateProfileResponse, error)
@@ -329,8 +329,8 @@ type AuthServiceHandler interface {
 	GetSession(context.Context, *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
 	// Login accepts a username or an email.
 	Login(context.Context, *v1.LoginRequest) (*v1.LoginResponse, error)
-	// Register creates a labeler and signs them in. The first account is an
-	// admin. An invite or a pre-approved email sets the role instead.
+	// Register creates a labeler and signs them in. An invite or a
+	// pre-approved email sets the role instead.
 	Register(context.Context, *v1.RegisterRequest) (*v1.RegisterResponse, error)
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 	UpdateProfile(context.Context, *v1.UpdateProfileRequest) (*v1.UpdateProfileResponse, error)

@@ -90,6 +90,13 @@ func commitVersion() string {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		if err := runCommand(context.Background(), os.Args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if version == "dev" {
 		version = commitVersion()
 	}
@@ -175,6 +182,11 @@ func run(logHub *logs.Hub) error {
 		return fmt.Errorf("fail interrupted model trials: %w", err)
 	} else if n > 0 {
 		slog.Warn("marked interrupted model trials as failed", "count", n)
+	}
+	if ok, err := db.New(pool).AdminExists(ctx); err != nil {
+		return fmt.Errorf("check for an admin: %w", err)
+	} else if !ok {
+		slog.Warn("no admin yet; sign up, then run `krill user role <your email> admin` on the server")
 	}
 
 	store, err := storage.New(ctx, storage.Config{
