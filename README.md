@@ -22,11 +22,7 @@ just setup
 just dev      # Postgres :5432, MinIO :9000 (console :9001)
 just api      # :8080
 just web      # :5173
-```
-
-Accounts sign up as labelers unless an admin invited them. Sign up, then make yourself an admin:
-
-```sh
+# after registering, make your account an admin
 just user-role you@example.com admin
 ```
 
@@ -34,6 +30,7 @@ To run the full stack with the GPU worker, set the passwords and `KRILL_WORKER_T
 
 ```sh
 just up
+# after registering, make your account an admin
 docker compose --env-file .env -f deploy/docker-compose.yml exec api krill user role you@example.com admin
 ```
 
