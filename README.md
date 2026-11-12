@@ -22,15 +22,19 @@ just setup
 just dev      # Postgres :5432, MinIO :9000 (console :9001)
 just api      # :8080
 just web      # :5173
+# after registering, make your account an admin
+just user-role you@example.com admin
 ```
 
 To run the full stack with the GPU worker, set the passwords and `KRILL_WORKER_TOKEN` in `.env`, then:
 
 ```sh
 just up
+# after registering, make your account an admin
+docker compose --env-file .env -f deploy/docker-compose.yml exec api krill user role you@example.com admin
 ```
 
-The app is served from `:8080`. Browsers load frames straight from MinIO, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach.
+The app is served from `:8080`. Browsers load frames straight from MinIO, so `KRILL_S3_PUBLIC_ENDPOINT` must be an address they can reach. After the first admin, roles are changed from the admin panel.
 
 ## Contributing
 

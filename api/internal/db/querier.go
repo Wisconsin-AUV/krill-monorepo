@@ -16,6 +16,7 @@ type Querier interface {
 	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
 	AddClipFrames(ctx context.Context, id int64) (int64, error)
 	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
+	AdminExists(ctx context.Context) (bool, error)
 	AdvanceModelTrial(ctx context.Context, arg AdvanceModelTrialParams) (int64, error)
 	AdvancePrelabelRun(ctx context.Context, arg AdvancePrelabelRunParams) error
 	ApprovedSignupOpen(ctx context.Context) (bool, error)

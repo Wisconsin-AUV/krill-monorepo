@@ -10,6 +10,11 @@ All notable changes to this project are documented here. The format follows
 
 - Upload YOLO weights trained outside Krill from the Models page. They become a run you can trial, pin, or fine-tune from. Their classes match label types by export class name, and classes Krill doesn't have are ignored.
 
+### Changed
+
+- The first account signs up as a labeler instead of an admin, so whoever reaches a new instance first can't take it over. Make an admin on the server with `krill user role <email or username> admin`. The API logs a warning at startup until an admin exists.
+- The API image's binary is `krill` instead of `api`.
+
 ### Fixed
 
 - The sign-in page marks the method you last used, whether that was your password or an emailed code, even when Slack sign-in is off.
