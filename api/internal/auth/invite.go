@@ -49,15 +49,17 @@ type grant struct {
 }
 
 // grantSignup decides whether an account with email may sign up and with
-// which role. The first account is always an admin. Otherwise an invite
-// token, then a pre-approved email, sets the role and skips the rules;
-// failing both, the rules apply and the account is a labeler. Without
-// checkApproved a pre-approval is ignored, for emails Slack hasn't verified.
+// which role. An invite token, then a pre-approved email, sets the role and
+// skips the rules; failing both, the rules apply and the account is a
+// labeler. Without checkApproved a pre-approval is ignored, for emails Slack
+// hasn't verified. Nobody signs up as an admin without an invite; the first
+// admin is made on the server with `krill user role`.
 //
 // It runs in the sign-up's transaction. A used invite or pre-approval stays
 // locked until it commits, so it can't be used twice at once.
 func grantSignup(ctx context.Context, q *db.Queries, rules signupRules, token, email string, checkApproved bool) (grant, error) {
-	// The table lock stops two first sign-ups from both becoming admin.
+	// Closed sign-up still lets the first account in, since there is nobody
+	// yet to invite it. The table lock keeps that to one account.
 	if err := q.LockUsers(ctx); err != nil {
 		return grant{}, fmt.Errorf("lock users: %w", err)
 	}
@@ -65,12 +67,7 @@ func grantSignup(ctx context.Context, q *db.Queries, rules signupRules, token, e
 	if err != nil {
 		return grant{}, fmt.Errorf("count users: %w", err)
 	}
-	if n == 0 {
-		if !InEmailDomain(email, rules.emailDomain) {
-			return grant{}, errDomain{rules.emailDomain}
-		}
-		return grant{role: "admin"}, nil
-	}
+	open := rules.allowSignup || n == 0
 
 	if token != "" {
 		inv, err := q.UseInvite(ctx, hashToken(token))
@@ -106,7 +103,7 @@ func grantSignup(ctx context.Context, q *db.Queries, rules signupRules, token, e
 	if !InEmailDomain(email, rules.emailDomain) {
 		return grant{}, errDomain{rules.emailDomain}
 	}
-	if !rules.allowSignup {
+	if !open {
 		return grant{}, errClosed
 	}
 	return grant{role: "labeler"}, nil

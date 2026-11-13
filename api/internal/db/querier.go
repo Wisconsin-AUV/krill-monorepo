@@ -16,6 +16,7 @@ type Querier interface {
 	AddApprovedEmail(ctx context.Context, arg AddApprovedEmailParams) (ApprovedEmail, error)
 	AddClipFrames(ctx context.Context, id int64) (int64, error)
 	AddInviteUse(ctx context.Context, arg AddInviteUseParams) error
+	AdminExists(ctx context.Context) (bool, error)
 	AdvanceModelTrial(ctx context.Context, arg AdvanceModelTrialParams) (int64, error)
 	AdvancePrelabelRun(ctx context.Context, arg AdvancePrelabelRunParams) error
 	ApprovedSignupOpen(ctx context.Context) (bool, error)
@@ -59,6 +60,7 @@ type Querier interface {
 	CreateStorageScan(ctx context.Context, createdBy pgtype.UUID) (int64, error)
 	CreateTrack(ctx context.Context, arg CreateTrackParams) (Track, error)
 	CreateTrainingRun(ctx context.Context, arg CreateTrainingRunParams) (TrainingRun, error)
+	CreateUploadedTrainingRun(ctx context.Context, arg CreateUploadedTrainingRunParams) (TrainingRun, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	CreateWorkerToken(ctx context.Context, arg CreateWorkerTokenParams) (WorkerToken, error)
@@ -139,6 +141,8 @@ type Querier interface {
 	GetLastSuccessfulBackup(ctx context.Context) (Backup, error)
 	GetLatestFinishedStorageScanID(ctx context.Context) (int64, error)
 	GetLatestStorageScanID(ctx context.Context) (int64, error)
+	// Uploads are left out, since they don't train on the labels the schedule
+	// counts.
 	GetLatestTrainingRun(ctx context.Context) (TrainingRun, error)
 	// Covers tracks in the trash too, since they move with the rest.
 	GetMergeImpact(ctx context.Context, id int64) (GetMergeImpactRow, error)

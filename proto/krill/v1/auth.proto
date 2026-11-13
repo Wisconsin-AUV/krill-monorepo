@@ -11,8 +11,8 @@ service AuthService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
   // Login accepts a username or an email.
   rpc Login(LoginRequest) returns (LoginResponse) {}
-  // Register creates a labeler and signs them in. The first account is an
-  // admin. An invite or a pre-approved email sets the role instead.
+  // Register creates a labeler and signs them in. An invite or a
+  // pre-approved email sets the role instead.
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
   rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {}

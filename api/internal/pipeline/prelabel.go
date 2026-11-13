@@ -148,6 +148,10 @@ func (p *Pipeline) yoloLabeler(ctx context.Context, runID int64, minConf float32
 	}
 	l := &labeler{source: sourceYolo, version: strconv.FormatInt(runID, 10), targets: map[string]target{}}
 	for i, c := range classes {
+		// An uploaded model's classes that match no label type.
+		if c.LabelTypeID == 0 {
+			continue
+		}
 		attrs, err := json.Marshal(c.Attributes)
 		if err != nil {
 			return nil, err

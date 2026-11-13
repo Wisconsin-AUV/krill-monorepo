@@ -84,6 +84,10 @@ func parseKey(key string) parsedKey {
 			return parsedKey{kind: KindOther}
 		}
 		return parsedKey{kind: KindModel, run: id}
+	case strings.HasPrefix(key, storage.ModelUploadsPrefix):
+		// No run refers to an upload, so it's an orphan once AddModel has had
+		// the grace period to copy it.
+		return parsedKey{kind: KindModel}
 	case len(parts) == 4 && parts[0] == "label-types" && parts[2] == "examples":
 		return parsedKey{kind: KindLabelExample}
 	case strings.HasPrefix(key, storage.BackupsPrefix):

@@ -53,7 +53,7 @@ export function withNext(path: string, params: URLSearchParams): string {
   return next ? `${path}?next=${encodeURIComponent(next)}` : path
 }
 
-export type LoginMethod = 'password' | 'slack'
+export type LoginMethod = 'password' | 'code' | 'slack'
 
 // Set by the API after a successful sign-in.
 export function lastLoginMethod(cookies = document.cookie): LoginMethod | null {
@@ -61,5 +61,5 @@ export function lastLoginMethod(cookies = document.cookie): LoginMethod | null {
     .split('; ')
     .find((c) => c.startsWith('krill_last_login='))
     ?.split('=')[1]
-  return value === 'password' || value === 'slack' ? value : null
+  return value === 'password' || value === 'code' || value === 'slack' ? value : null
 }

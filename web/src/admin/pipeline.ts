@@ -5,6 +5,7 @@ import {
   ModelTrialStatus,
   PrelabelStatus,
   TrainingStatus,
+  TrainingTrigger,
   type ModelTrial,
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
@@ -34,6 +35,15 @@ export const sizeNames: Record<ModelSize, string> = {
   [ModelSize.UNSPECIFIED]: '',
   [ModelSize.NANO]: 'YOLO nano',
   [ModelSize.SMALL]: 'YOLO small',
+}
+
+export function uploaded(r: TrainingRun) {
+  return r.trigger === TrainingTrigger.UPLOAD
+}
+
+// Runs fine-tuned from uploaded weights have no size.
+export function modelName(r: TrainingRun) {
+  return uploaded(r) ? 'Uploaded' : sizeNames[r.config?.size ?? 0] || 'YOLO'
 }
 
 export function trainingActive(r: TrainingRun) {

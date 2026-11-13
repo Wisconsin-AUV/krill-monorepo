@@ -51,6 +51,9 @@ const (
 	// PipelineWorkerServiceReportPreviewProcedure is the fully-qualified name of the
 	// PipelineWorkerService's ReportPreview RPC.
 	PipelineWorkerServiceReportPreviewProcedure = "/krill.v1.PipelineWorkerService/ReportPreview"
+	// PipelineWorkerServiceFinishInspectProcedure is the fully-qualified name of the
+	// PipelineWorkerService's FinishInspect RPC.
+	PipelineWorkerServiceFinishInspectProcedure = "/krill.v1.PipelineWorkerService/FinishInspect"
 )
 
 // PipelineWorkerServiceClient is a client for the krill.v1.PipelineWorkerService service.
@@ -68,6 +71,7 @@ type PipelineWorkerServiceClient interface {
 	// set on the last one.
 	ReportPrelabels(context.Context, *v1.ReportPrelabelsRequest) (*v1.ReportPrelabelsResponse, error)
 	ReportPreview(context.Context, *v1.ReportPreviewRequest) (*v1.ReportPreviewResponse, error)
+	FinishInspect(context.Context, *v1.FinishInspectRequest) (*v1.FinishInspectResponse, error)
 }
 
 // NewPipelineWorkerServiceClient constructs a client for the krill.v1.PipelineWorkerService
@@ -117,6 +121,12 @@ func NewPipelineWorkerServiceClient(httpClient connect.HTTPClient, baseURL strin
 			connect.WithSchema(pipelineWorkerServiceMethods.ByName("ReportPreview")),
 			connect.WithClientOptions(opts...),
 		),
+		finishInspect: connect.NewClient[v1.FinishInspectRequest, v1.FinishInspectResponse](
+			httpClient,
+			baseURL+PipelineWorkerServiceFinishInspectProcedure,
+			connect.WithSchema(pipelineWorkerServiceMethods.ByName("FinishInspect")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -128,6 +138,7 @@ type pipelineWorkerServiceClient struct {
 	finishTrain         *connect.Client[v1.FinishTrainRequest, v1.FinishTrainResponse]
 	reportPrelabels     *connect.Client[v1.ReportPrelabelsRequest, v1.ReportPrelabelsResponse]
 	reportPreview       *connect.Client[v1.ReportPreviewRequest, v1.ReportPreviewResponse]
+	finishInspect       *connect.Client[v1.FinishInspectRequest, v1.FinishInspectResponse]
 }
 
 // RegisterPrelabelers calls krill.v1.PipelineWorkerService.RegisterPrelabelers.
@@ -184,6 +195,15 @@ func (c *pipelineWorkerServiceClient) ReportPreview(ctx context.Context, req *v1
 	return nil, err
 }
 
+// FinishInspect calls krill.v1.PipelineWorkerService.FinishInspect.
+func (c *pipelineWorkerServiceClient) FinishInspect(ctx context.Context, req *v1.FinishInspectRequest) (*v1.FinishInspectResponse, error) {
+	response, err := c.finishInspect.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PipelineWorkerServiceHandler is an implementation of the krill.v1.PipelineWorkerService service.
 type PipelineWorkerServiceHandler interface {
 	// RegisterPrelabelers tells the API which CV plugins the worker has.
@@ -199,6 +219,7 @@ type PipelineWorkerServiceHandler interface {
 	// set on the last one.
 	ReportPrelabels(context.Context, *v1.ReportPrelabelsRequest) (*v1.ReportPrelabelsResponse, error)
 	ReportPreview(context.Context, *v1.ReportPreviewRequest) (*v1.ReportPreviewResponse, error)
+	FinishInspect(context.Context, *v1.FinishInspectRequest) (*v1.FinishInspectResponse, error)
 }
 
 // NewPipelineWorkerServiceHandler builds an HTTP handler from the service implementation. It
@@ -244,6 +265,12 @@ func NewPipelineWorkerServiceHandler(svc PipelineWorkerServiceHandler, opts ...c
 		connect.WithSchema(pipelineWorkerServiceMethods.ByName("ReportPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pipelineWorkerServiceFinishInspectHandler := connect.NewUnaryHandlerSimple(
+		PipelineWorkerServiceFinishInspectProcedure,
+		svc.FinishInspect,
+		connect.WithSchema(pipelineWorkerServiceMethods.ByName("FinishInspect")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.PipelineWorkerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PipelineWorkerServiceRegisterPrelabelersProcedure:
@@ -258,6 +285,8 @@ func NewPipelineWorkerServiceHandler(svc PipelineWorkerServiceHandler, opts ...c
 			pipelineWorkerServiceReportPrelabelsHandler.ServeHTTP(w, r)
 		case PipelineWorkerServiceReportPreviewProcedure:
 			pipelineWorkerServiceReportPreviewHandler.ServeHTTP(w, r)
+		case PipelineWorkerServiceFinishInspectProcedure:
+			pipelineWorkerServiceFinishInspectHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -289,4 +318,8 @@ func (UnimplementedPipelineWorkerServiceHandler) ReportPrelabels(context.Context
 
 func (UnimplementedPipelineWorkerServiceHandler) ReportPreview(context.Context, *v1.ReportPreviewRequest) (*v1.ReportPreviewResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineWorkerService.ReportPreview is not implemented"))
+}
+
+func (UnimplementedPipelineWorkerServiceHandler) FinishInspect(context.Context, *v1.FinishInspectRequest) (*v1.FinishInspectResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineWorkerService.FinishInspect is not implemented"))
 }

@@ -1,12 +1,14 @@
-"""Pre-labeling unlabeled frames and previewing a CV pre-labeler on one."""
+"""Pre-labeling unlabeled frames, previewing a CV pre-labeler on one, and
+reading the classes of uploaded YOLO weights."""
 
 import logging
 import os
+import tempfile
 import time
 import urllib.request
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import cv2
 from krill.v1 import annotation_pb2, pipeline_pb2, pipeline_worker_pb2
@@ -175,3 +177,33 @@ def run_preview(
     api.report_preview(
         pipeline_worker_pb2.ReportPreviewRequest(task_id=task.id, boxes=boxes, took_ms=took)
     )
+
+
+def image_size(imgsz: Any) -> int:
+    """Ultralytics saves imgsz as an int, or a list for rectangular training."""
+    if isinstance(imgsz, int):
+        return imgsz
+    if isinstance(imgsz, (list, tuple)) and imgsz:
+        return max(int(v) for v in imgsz)
+    return 0
+
+
+def run_inspect(api: Api, task: pipeline_pb2.InspectTask) -> None:
+    # Imported here so the worker runs without Ultralytics installed.
+    from ultralytics import YOLO
+
+    with tempfile.TemporaryDirectory(prefix="krill-inspect-") as tmp:
+        model = YOLO(str(download(task.weights_url, Path(tmp) / "upload.pt")))
+    # Segment and pose models also find boxes, but their val and training
+    # need labels a Krill export doesn't have.
+    if model.task != "detect":
+        raise ValueError(f"these are {model.task} weights, not detection weights")
+    names = model.names
+    api.finish_inspect(
+        pipeline_worker_pb2.FinishInspectRequest(
+            task_id=task.id,
+            classes=[str(names[i]) for i in range(len(names))],
+            image_size=image_size(model.overrides.get("imgsz")),
+        )
+    )
+    log.info("inspected task %d: %d classes", task.id, len(names))

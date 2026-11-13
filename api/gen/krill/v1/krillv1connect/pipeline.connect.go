@@ -81,6 +81,12 @@ const (
 	// PipelineServiceListModelTrialErrorsProcedure is the fully-qualified name of the PipelineService's
 	// ListModelTrialErrors RPC.
 	PipelineServiceListModelTrialErrorsProcedure = "/krill.v1.PipelineService/ListModelTrialErrors"
+	// PipelineServiceCreateModelUploadProcedure is the fully-qualified name of the PipelineService's
+	// CreateModelUpload RPC.
+	PipelineServiceCreateModelUploadProcedure = "/krill.v1.PipelineService/CreateModelUpload"
+	// PipelineServiceAddModelProcedure is the fully-qualified name of the PipelineService's AddModel
+	// RPC.
+	PipelineServiceAddModelProcedure = "/krill.v1.PipelineService/AddModel"
 )
 
 // PipelineServiceClient is a client for the krill.v1.PipelineService service.
@@ -120,6 +126,15 @@ type PipelineServiceClient interface {
 	// ListModelTrialErrors lists the labeled frames a run's finished trials got
 	// most wrong, scored the way trial summaries are.
 	ListModelTrialErrors(context.Context, *v1.ListModelTrialErrorsRequest) (*v1.ListModelTrialErrorsResponse, error)
+	// CreateModelUpload returns a presigned URL the browser uploads YOLO
+	// weights trained outside Krill to. Call AddModel with the key once it
+	// finishes.
+	CreateModelUpload(context.Context, *v1.CreateModelUploadRequest) (*v1.CreateModelUploadResponse, error)
+	// AddModel has a GPU worker read the uploaded weights' classes, matches
+	// them to label types by their export class names, and adds the weights as
+	// a finished run that trials and pinning can use. It fails when no class
+	// matches.
+	AddModel(context.Context, *v1.AddModelRequest) (*v1.AddModelResponse, error)
 }
 
 // NewPipelineServiceClient constructs a client for the krill.v1.PipelineService service. By
@@ -229,6 +244,18 @@ func NewPipelineServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(pipelineServiceMethods.ByName("ListModelTrialErrors")),
 			connect.WithClientOptions(opts...),
 		),
+		createModelUpload: connect.NewClient[v1.CreateModelUploadRequest, v1.CreateModelUploadResponse](
+			httpClient,
+			baseURL+PipelineServiceCreateModelUploadProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("CreateModelUpload")),
+			connect.WithClientOptions(opts...),
+		),
+		addModel: connect.NewClient[v1.AddModelRequest, v1.AddModelResponse](
+			httpClient,
+			baseURL+PipelineServiceAddModelProcedure,
+			connect.WithSchema(pipelineServiceMethods.ByName("AddModel")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -250,6 +277,8 @@ type pipelineServiceClient struct {
 	listModelTrials      *connect.Client[v1.ListModelTrialsRequest, v1.ListModelTrialsResponse]
 	cancelModelTrial     *connect.Client[v1.CancelModelTrialRequest, v1.CancelModelTrialResponse]
 	listModelTrialErrors *connect.Client[v1.ListModelTrialErrorsRequest, v1.ListModelTrialErrorsResponse]
+	createModelUpload    *connect.Client[v1.CreateModelUploadRequest, v1.CreateModelUploadResponse]
+	addModel             *connect.Client[v1.AddModelRequest, v1.AddModelResponse]
 }
 
 // ListTrainingRuns calls krill.v1.PipelineService.ListTrainingRuns.
@@ -396,6 +425,24 @@ func (c *pipelineServiceClient) ListModelTrialErrors(ctx context.Context, req *v
 	return nil, err
 }
 
+// CreateModelUpload calls krill.v1.PipelineService.CreateModelUpload.
+func (c *pipelineServiceClient) CreateModelUpload(ctx context.Context, req *v1.CreateModelUploadRequest) (*v1.CreateModelUploadResponse, error) {
+	response, err := c.createModelUpload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// AddModel calls krill.v1.PipelineService.AddModel.
+func (c *pipelineServiceClient) AddModel(ctx context.Context, req *v1.AddModelRequest) (*v1.AddModelResponse, error) {
+	response, err := c.addModel.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PipelineServiceHandler is an implementation of the krill.v1.PipelineService service.
 type PipelineServiceHandler interface {
 	ListTrainingRuns(context.Context, *v1.ListTrainingRunsRequest) (*v1.ListTrainingRunsResponse, error)
@@ -433,6 +480,15 @@ type PipelineServiceHandler interface {
 	// ListModelTrialErrors lists the labeled frames a run's finished trials got
 	// most wrong, scored the way trial summaries are.
 	ListModelTrialErrors(context.Context, *v1.ListModelTrialErrorsRequest) (*v1.ListModelTrialErrorsResponse, error)
+	// CreateModelUpload returns a presigned URL the browser uploads YOLO
+	// weights trained outside Krill to. Call AddModel with the key once it
+	// finishes.
+	CreateModelUpload(context.Context, *v1.CreateModelUploadRequest) (*v1.CreateModelUploadResponse, error)
+	// AddModel has a GPU worker read the uploaded weights' classes, matches
+	// them to label types by their export class names, and adds the weights as
+	// a finished run that trials and pinning can use. It fails when no class
+	// matches.
+	AddModel(context.Context, *v1.AddModelRequest) (*v1.AddModelResponse, error)
 }
 
 // NewPipelineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -538,6 +594,18 @@ func NewPipelineServiceHandler(svc PipelineServiceHandler, opts ...connect.Handl
 		connect.WithSchema(pipelineServiceMethods.ByName("ListModelTrialErrors")),
 		connect.WithHandlerOptions(opts...),
 	)
+	pipelineServiceCreateModelUploadHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceCreateModelUploadProcedure,
+		svc.CreateModelUpload,
+		connect.WithSchema(pipelineServiceMethods.ByName("CreateModelUpload")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pipelineServiceAddModelHandler := connect.NewUnaryHandlerSimple(
+		PipelineServiceAddModelProcedure,
+		svc.AddModel,
+		connect.WithSchema(pipelineServiceMethods.ByName("AddModel")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/krill.v1.PipelineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PipelineServiceListTrainingRunsProcedure:
@@ -572,6 +640,10 @@ func NewPipelineServiceHandler(svc PipelineServiceHandler, opts ...connect.Handl
 			pipelineServiceCancelModelTrialHandler.ServeHTTP(w, r)
 		case PipelineServiceListModelTrialErrorsProcedure:
 			pipelineServiceListModelTrialErrorsHandler.ServeHTTP(w, r)
+		case PipelineServiceCreateModelUploadProcedure:
+			pipelineServiceCreateModelUploadHandler.ServeHTTP(w, r)
+		case PipelineServiceAddModelProcedure:
+			pipelineServiceAddModelHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -643,4 +715,12 @@ func (UnimplementedPipelineServiceHandler) CancelModelTrial(context.Context, *v1
 
 func (UnimplementedPipelineServiceHandler) ListModelTrialErrors(context.Context, *v1.ListModelTrialErrorsRequest) (*v1.ListModelTrialErrorsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.ListModelTrialErrors is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) CreateModelUpload(context.Context, *v1.CreateModelUploadRequest) (*v1.CreateModelUploadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.CreateModelUpload is not implemented"))
+}
+
+func (UnimplementedPipelineServiceHandler) AddModel(context.Context, *v1.AddModelRequest) (*v1.AddModelResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.PipelineService.AddModel is not implemented"))
 }

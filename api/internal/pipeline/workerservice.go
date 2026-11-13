@@ -178,6 +178,24 @@ func (s *WorkerService) ReportPrelabels(ctx context.Context, req *krillv1.Report
 	return &krillv1.ReportPrelabelsResponse{}, nil
 }
 
+func (s *WorkerService) FinishInspect(_ context.Context, req *krillv1.FinishInspectRequest) (*krillv1.FinishInspectResponse, error) {
+	t, ok := s.p.Dispatcher.Lookup(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	v, ok := s.p.inspects.Load(req.GetTaskId())
+	if !ok || t.Msg().GetInspect() == nil {
+		return nil, rpc.Invalid("task %d is not an inspect task", req.GetTaskId())
+	}
+	select {
+	case v.(chan *krillv1.FinishInspectRequest) <- req:
+	default:
+		return nil, rpc.Invalid("task %d was already reported", req.GetTaskId())
+	}
+	t.Finish(nil)
+	return &krillv1.FinishInspectResponse{}, nil
+}
+
 type previewResult struct {
 	boxes  []*krillv1.PreviewBox
 	tookMs int32

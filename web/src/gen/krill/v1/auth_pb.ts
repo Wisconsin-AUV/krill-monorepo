@@ -577,8 +577,8 @@ export const AuthService: GenService<{
     output: typeof LoginResponseSchema;
   },
   /**
-   * Register creates a labeler and signs them in. The first account is an
-   * admin. An invite or a pre-approved email sets the role instead.
+   * Register creates a labeler and signs them in. An invite or a
+   * pre-approved email sets the role instead.
    *
    * @generated from rpc krill.v1.AuthService.Register
    */

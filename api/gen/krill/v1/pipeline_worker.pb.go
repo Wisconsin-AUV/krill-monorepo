@@ -721,6 +721,104 @@ func (*ReportPreviewResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_pipeline_worker_proto_rawDescGZIP(), []int{12}
 }
 
+type FinishInspectRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	TaskId int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// Class names in class id order.
+	Classes []string `protobuf:"bytes,2,rep,name=classes,proto3" json:"classes,omitempty"`
+	// The image size the model trained at, or 0 when the weights don't say.
+	ImageSize     int32 `protobuf:"varint,3,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FinishInspectRequest) Reset() {
+	*x = FinishInspectRequest{}
+	mi := &file_krill_v1_pipeline_worker_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FinishInspectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FinishInspectRequest) ProtoMessage() {}
+
+func (x *FinishInspectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_worker_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FinishInspectRequest.ProtoReflect.Descriptor instead.
+func (*FinishInspectRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_worker_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *FinishInspectRequest) GetTaskId() int64 {
+	if x != nil {
+		return x.TaskId
+	}
+	return 0
+}
+
+func (x *FinishInspectRequest) GetClasses() []string {
+	if x != nil {
+		return x.Classes
+	}
+	return nil
+}
+
+func (x *FinishInspectRequest) GetImageSize() int32 {
+	if x != nil {
+		return x.ImageSize
+	}
+	return 0
+}
+
+type FinishInspectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FinishInspectResponse) Reset() {
+	*x = FinishInspectResponse{}
+	mi := &file_krill_v1_pipeline_worker_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FinishInspectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FinishInspectResponse) ProtoMessage() {}
+
+func (x *FinishInspectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_pipeline_worker_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FinishInspectResponse.ProtoReflect.Descriptor instead.
+func (*FinishInspectResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_pipeline_worker_proto_rawDescGZIP(), []int{14}
+}
+
 var File_krill_v1_pipeline_worker_proto protoreflect.FileDescriptor
 
 const file_krill_v1_pipeline_worker_proto_rawDesc = "" +
@@ -771,14 +869,21 @@ const file_krill_v1_pipeline_worker_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12*\n" +
 	"\x05boxes\x18\x02 \x03(\v2\x14.krill.v1.PreviewBoxR\x05boxes\x12\x17\n" +
 	"\atook_ms\x18\x03 \x01(\x05R\x06tookMs\"\x17\n" +
-	"\x15ReportPreviewResponse2\xa1\x04\n" +
+	"\x15ReportPreviewResponse\"h\n" +
+	"\x14FinishInspectRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x18\n" +
+	"\aclasses\x18\x02 \x03(\tR\aclasses\x12\x1d\n" +
+	"\n" +
+	"image_size\x18\x03 \x01(\x05R\timageSize\"\x17\n" +
+	"\x15FinishInspectResponse2\xf5\x04\n" +
 	"\x15PipelineWorkerService\x12d\n" +
 	"\x13RegisterPrelabelers\x12$.krill.v1.RegisterPrelabelersRequest\x1a%.krill.v1.RegisterPrelabelersResponse\"\x00\x12@\n" +
 	"\aCheckIn\x12\x18.krill.v1.CheckInRequest\x1a\x19.krill.v1.CheckInResponse\"\x00\x12d\n" +
 	"\x13ReportTrainProgress\x12$.krill.v1.ReportTrainProgressRequest\x1a%.krill.v1.ReportTrainProgressResponse\"\x00\x12L\n" +
 	"\vFinishTrain\x12\x1c.krill.v1.FinishTrainRequest\x1a\x1d.krill.v1.FinishTrainResponse\"\x00\x12X\n" +
 	"\x0fReportPrelabels\x12 .krill.v1.ReportPrelabelsRequest\x1a!.krill.v1.ReportPrelabelsResponse\"\x00\x12R\n" +
-	"\rReportPreview\x12\x1e.krill.v1.ReportPreviewRequest\x1a\x1f.krill.v1.ReportPreviewResponse\"\x00B\x94\x01\n" +
+	"\rReportPreview\x12\x1e.krill.v1.ReportPreviewRequest\x1a\x1f.krill.v1.ReportPreviewResponse\"\x00\x12R\n" +
+	"\rFinishInspect\x12\x1e.krill.v1.FinishInspectRequest\x1a\x1f.krill.v1.FinishInspectResponse\"\x00B\x94\x01\n" +
 	"\fcom.krill.v1B\x13PipelineWorkerProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -793,7 +898,7 @@ func file_krill_v1_pipeline_worker_proto_rawDescGZIP() []byte {
 	return file_krill_v1_pipeline_worker_proto_rawDescData
 }
 
-var file_krill_v1_pipeline_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_krill_v1_pipeline_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_krill_v1_pipeline_worker_proto_goTypes = []any{
 	(*RegisterPrelabelersRequest)(nil),  // 0: krill.v1.RegisterPrelabelersRequest
 	(*RegisterPrelabelersResponse)(nil), // 1: krill.v1.RegisterPrelabelersResponse
@@ -808,38 +913,42 @@ var file_krill_v1_pipeline_worker_proto_goTypes = []any{
 	(*ReportPrelabelsResponse)(nil),     // 10: krill.v1.ReportPrelabelsResponse
 	(*ReportPreviewRequest)(nil),        // 11: krill.v1.ReportPreviewRequest
 	(*ReportPreviewResponse)(nil),       // 12: krill.v1.ReportPreviewResponse
-	(*PrelabelerSpec)(nil),              // 13: krill.v1.PrelabelerSpec
-	(*NextTaskResponse)(nil),            // 14: krill.v1.NextTaskResponse
-	(*EpochMetrics)(nil),                // 15: krill.v1.EpochMetrics
-	(*EvalMetrics)(nil),                 // 16: krill.v1.EvalMetrics
-	(*Box)(nil),                         // 17: krill.v1.Box
-	(*PreviewBox)(nil),                  // 18: krill.v1.PreviewBox
+	(*FinishInspectRequest)(nil),        // 13: krill.v1.FinishInspectRequest
+	(*FinishInspectResponse)(nil),       // 14: krill.v1.FinishInspectResponse
+	(*PrelabelerSpec)(nil),              // 15: krill.v1.PrelabelerSpec
+	(*NextTaskResponse)(nil),            // 16: krill.v1.NextTaskResponse
+	(*EpochMetrics)(nil),                // 17: krill.v1.EpochMetrics
+	(*EvalMetrics)(nil),                 // 18: krill.v1.EvalMetrics
+	(*Box)(nil),                         // 19: krill.v1.Box
+	(*PreviewBox)(nil),                  // 20: krill.v1.PreviewBox
 }
 var file_krill_v1_pipeline_worker_proto_depIdxs = []int32{
-	13, // 0: krill.v1.RegisterPrelabelersRequest.prelabelers:type_name -> krill.v1.PrelabelerSpec
-	14, // 1: krill.v1.CheckInResponse.task:type_name -> krill.v1.NextTaskResponse
-	15, // 2: krill.v1.ReportTrainProgressRequest.epoch:type_name -> krill.v1.EpochMetrics
-	16, // 3: krill.v1.FinishTrainRequest.val:type_name -> krill.v1.EvalMetrics
-	16, // 4: krill.v1.FinishTrainRequest.test:type_name -> krill.v1.EvalMetrics
-	16, // 5: krill.v1.FinishTrainRequest.baseline_val:type_name -> krill.v1.EvalMetrics
-	16, // 6: krill.v1.FinishTrainRequest.baseline_test:type_name -> krill.v1.EvalMetrics
-	17, // 7: krill.v1.PrelabelBox.box:type_name -> krill.v1.Box
+	15, // 0: krill.v1.RegisterPrelabelersRequest.prelabelers:type_name -> krill.v1.PrelabelerSpec
+	16, // 1: krill.v1.CheckInResponse.task:type_name -> krill.v1.NextTaskResponse
+	17, // 2: krill.v1.ReportTrainProgressRequest.epoch:type_name -> krill.v1.EpochMetrics
+	18, // 3: krill.v1.FinishTrainRequest.val:type_name -> krill.v1.EvalMetrics
+	18, // 4: krill.v1.FinishTrainRequest.test:type_name -> krill.v1.EvalMetrics
+	18, // 5: krill.v1.FinishTrainRequest.baseline_val:type_name -> krill.v1.EvalMetrics
+	18, // 6: krill.v1.FinishTrainRequest.baseline_test:type_name -> krill.v1.EvalMetrics
+	19, // 7: krill.v1.PrelabelBox.box:type_name -> krill.v1.Box
 	8,  // 8: krill.v1.ReportPrelabelsRequest.boxes:type_name -> krill.v1.PrelabelBox
-	18, // 9: krill.v1.ReportPreviewRequest.boxes:type_name -> krill.v1.PreviewBox
+	20, // 9: krill.v1.ReportPreviewRequest.boxes:type_name -> krill.v1.PreviewBox
 	0,  // 10: krill.v1.PipelineWorkerService.RegisterPrelabelers:input_type -> krill.v1.RegisterPrelabelersRequest
 	2,  // 11: krill.v1.PipelineWorkerService.CheckIn:input_type -> krill.v1.CheckInRequest
 	4,  // 12: krill.v1.PipelineWorkerService.ReportTrainProgress:input_type -> krill.v1.ReportTrainProgressRequest
 	6,  // 13: krill.v1.PipelineWorkerService.FinishTrain:input_type -> krill.v1.FinishTrainRequest
 	9,  // 14: krill.v1.PipelineWorkerService.ReportPrelabels:input_type -> krill.v1.ReportPrelabelsRequest
 	11, // 15: krill.v1.PipelineWorkerService.ReportPreview:input_type -> krill.v1.ReportPreviewRequest
-	1,  // 16: krill.v1.PipelineWorkerService.RegisterPrelabelers:output_type -> krill.v1.RegisterPrelabelersResponse
-	3,  // 17: krill.v1.PipelineWorkerService.CheckIn:output_type -> krill.v1.CheckInResponse
-	5,  // 18: krill.v1.PipelineWorkerService.ReportTrainProgress:output_type -> krill.v1.ReportTrainProgressResponse
-	7,  // 19: krill.v1.PipelineWorkerService.FinishTrain:output_type -> krill.v1.FinishTrainResponse
-	10, // 20: krill.v1.PipelineWorkerService.ReportPrelabels:output_type -> krill.v1.ReportPrelabelsResponse
-	12, // 21: krill.v1.PipelineWorkerService.ReportPreview:output_type -> krill.v1.ReportPreviewResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
+	13, // 16: krill.v1.PipelineWorkerService.FinishInspect:input_type -> krill.v1.FinishInspectRequest
+	1,  // 17: krill.v1.PipelineWorkerService.RegisterPrelabelers:output_type -> krill.v1.RegisterPrelabelersResponse
+	3,  // 18: krill.v1.PipelineWorkerService.CheckIn:output_type -> krill.v1.CheckInResponse
+	5,  // 19: krill.v1.PipelineWorkerService.ReportTrainProgress:output_type -> krill.v1.ReportTrainProgressResponse
+	7,  // 20: krill.v1.PipelineWorkerService.FinishTrain:output_type -> krill.v1.FinishTrainResponse
+	10, // 21: krill.v1.PipelineWorkerService.ReportPrelabels:output_type -> krill.v1.ReportPrelabelsResponse
+	12, // 22: krill.v1.PipelineWorkerService.ReportPreview:output_type -> krill.v1.ReportPreviewResponse
+	14, // 23: krill.v1.PipelineWorkerService.FinishInspect:output_type -> krill.v1.FinishInspectResponse
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
 	10, // [10:10] is the sub-list for extension extendee
 	0,  // [0:10] is the sub-list for field type_name
@@ -859,7 +968,7 @@ func file_krill_v1_pipeline_worker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_pipeline_worker_proto_rawDesc), len(file_krill_v1_pipeline_worker_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

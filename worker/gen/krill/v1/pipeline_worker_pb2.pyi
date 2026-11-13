@@ -116,3 +116,17 @@ class ReportPreviewRequest(_message.Message):
 class ReportPreviewResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class FinishInspectRequest(_message.Message):
+    __slots__ = ("task_id", "classes", "image_size")
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    CLASSES_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    task_id: int
+    classes: _containers.RepeatedScalarFieldContainer[str]
+    image_size: int
+    def __init__(self, task_id: _Optional[int] = ..., classes: _Optional[_Iterable[str]] = ..., image_size: _Optional[int] = ...) -> None: ...
+
+class FinishInspectResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

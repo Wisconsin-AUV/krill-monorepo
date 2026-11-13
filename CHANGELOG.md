@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-13
+
+### Added
+
+- Upload YOLO weights trained outside Krill from the Models page. They become a run you can trial, pin, or fine-tune from. Their classes match label types by export class name, and classes Krill doesn't have are ignored. Only detection weights are accepted, not segmentation or pose.
+
+### Changed
+
+- The first account signs up as a labeler instead of an admin, so whoever reaches a new instance first can't take it over. Make an admin on the server with `krill user role <email or username> admin`. The API logs a warning at startup until an admin exists.
+- The API image's binary is `krill` instead of `api`.
+
+### Fixed
+
+- The sign-in page marks the method you last used, whether that was your password or an emailed code, even when Slack sign-in is off.
+
 ## [0.6.1] - 2026-10-28
 
 ### Fixed
@@ -169,7 +184,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.4.0...v0.5.0

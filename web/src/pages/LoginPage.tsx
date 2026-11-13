@@ -102,6 +102,9 @@ export function LoginPage() {
   }
 
   const onPasswordStep = step === 'password'
+  // Password and code sign-in both start at Continue, so it carries the badge
+  // for either until the password step splits them into their own buttons.
+  const submitLastUsed = lastUsed === 'password' || (lastUsed === 'code' && !onPasswordStep)
   if (step === 'code') return <CodeSignIn login={login} onBack={() => setStep('password')} />
 
   return (
@@ -185,7 +188,7 @@ export function LoginPage() {
               'Continue'
             )}
           </Button>
-          {lastUsed === 'password' && data?.slackEnabled && <LastUsedBadge />}
+          {submitLastUsed && <LastUsedBadge />}
         </div>
         {data?.slackEnabled && !onPasswordStep && (
           <SlackButton label="Continue with Slack" lastUsed={lastUsed === 'slack'} />
@@ -196,25 +199,28 @@ export function LoginPage() {
               {data?.emailCodesEnabled && (
                 <>
                   <OrDivider />
-                  <Button
-                    type="button"
-                    outline
-                    className="w-full"
-                    onClick={emailCode}
-                    disabled={sendingCode}
-                  >
-                    {sendingCode ? (
-                      <>
-                        <LoadingSpinner className="my-1 size-4" />
-                        <span className="sr-only">Sending code</span>
-                      </>
-                    ) : (
-                      <>
-                        <EnvelopeIcon data-slot="icon" />
-                        Email sign-in code
-                      </>
-                    )}
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      outline
+                      className="w-full"
+                      onClick={emailCode}
+                      disabled={sendingCode}
+                    >
+                      {sendingCode ? (
+                        <>
+                          <LoadingSpinner className="my-1 size-4" />
+                          <span className="sr-only">Sending code</span>
+                        </>
+                      ) : (
+                        <>
+                          <EnvelopeIcon data-slot="icon" />
+                          Email sign-in code
+                        </>
+                      )}
+                    </Button>
+                    {lastUsed === 'code' && <LastUsedBadge />}
+                  </div>
                 </>
               )}
               <TextButton onClick={back} className="mt-8 flex items-center justify-center gap-1">

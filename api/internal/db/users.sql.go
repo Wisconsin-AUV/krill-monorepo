@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminExists = `-- name: AdminExists :one
+SELECT EXISTS (SELECT 1 FROM users WHERE role = 'admin' AND NOT disabled)
+`
+
+func (q *Queries) AdminExists(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, adminExists)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const clearPassword = `-- name: ClearPassword :exec
 UPDATE users SET password_hash = NULL WHERE id = $1
 `

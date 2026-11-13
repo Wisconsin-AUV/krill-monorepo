@@ -1,6 +1,6 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
-import { CubeIcon, PlayIcon } from '@heroicons/react/20/solid'
+import { ArrowUpTrayIcon, CubeIcon, PlayIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { Meter } from '@/components/Meter'
@@ -32,15 +32,17 @@ import { formatNumber, formatRelative, plural } from '@/lib/format'
 import { invalidateService } from '@/lib/queryClient'
 import {
   elapsed,
+  modelName,
   percent,
   prelabelActive,
   prelabelStatus,
   runName,
-  sizeNames,
   trainingActive,
   trainingStatus,
+  uploaded,
 } from './pipeline'
 import { TrainDialog } from './TrainDialog'
+import { UploadModelDialog } from './UploadModelDialog'
 
 const POLL = 5000
 
@@ -100,7 +102,7 @@ function PinnedCard({ run }: { run: TrainingRun | undefined }) {
       </p>
       <p className="mt-1">
         {s && `${percent(s.map5095)} mAP50-95 on ${run.test ? 'test' : 'val'} · `}
-        {sizeNames[run.config?.size ?? 0]}
+        {modelName(run)}
         {run.finishedAt && ` · ${formatRelative(timestampDate(run.finishedAt))}`}
       </p>
     </Card>
@@ -225,9 +227,10 @@ function RunsTable({ runs, now }: { runs: TrainingRun[]; now: number }) {
               <TableCell className="text-zinc-500 dark:text-zinc-400">
                 {r.trigger === TrainingTrigger.SCHEDULE ? 'Schedule' : r.createdBy || '—'}
               </TableCell>
-              <TableCell className="text-zinc-500 dark:text-zinc-400">
-                {sizeNames[r.config?.size ?? 0]} · {r.config?.epochs} epochs · {r.config?.imageSize}
-                px
+              <TableCell className="max-w-64 truncate text-zinc-500 dark:text-zinc-400">
+                {uploaded(r)
+                  ? `Uploaded · ${r.filename || 'weights'}`
+                  : `${modelName(r)} · ${r.config?.epochs} epochs · ${r.config?.imageSize}px`}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {d && d.trainImages + d.valImages > 0
@@ -256,6 +259,7 @@ function RunsTable({ runs, now }: { runs: TrainingRun[]; now: number }) {
 
 export function ModelsPage() {
   const [training, setTraining] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const runs = useQuery(
     PipelineService.method.listTrainingRuns,
     {},
@@ -280,10 +284,16 @@ export function ModelsPage() {
     <PageContentBlock title="Models · Admin · Krill">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Heading>Models</Heading>
-        <Button color="sky" onClick={() => setTraining(true)} disabled={!data || active}>
-          <PlayIcon data-slot="icon" />
-          Train now
-        </Button>
+        <div className="flex gap-3">
+          <Button outline onClick={() => setUploading(true)}>
+            <ArrowUpTrayIcon data-slot="icon" />
+            Upload
+          </Button>
+          <Button color="sky" onClick={() => setTraining(true)} disabled={!data || active}>
+            <PlayIcon data-slot="icon" />
+            Train now
+          </Button>
+        </div>
       </div>
       {runs.error ? (
         <QueryError title="Could not load runs" error={runs.error} className="mt-8" />
@@ -322,6 +332,7 @@ export function ModelsPage() {
         defaults={data?.defaults}
         runs={data?.runs ?? []}
       />
+      <UploadModelDialog open={uploading} onClose={() => setUploading(false)} />
     </PageContentBlock>
   )
 }

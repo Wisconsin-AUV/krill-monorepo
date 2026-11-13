@@ -27,6 +27,10 @@ api:
 web:
     cd web && pnpm dev
 
+# set a user's role against the dev database, like `just user-role you@example.com admin`
+user-role login role:
+    cd api && go run ./cmd/api user role {{login}} {{role}}
+
 # preview the email templates on :3001
 emails:
     cd emails && pnpm dev
