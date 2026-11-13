@@ -8,7 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- Upload YOLO weights trained outside Krill from the Models page. They become a run you can trial, pin, or fine-tune from. Their classes match label types by export class name, and classes Krill doesn't have are ignored.
+- Upload YOLO weights trained outside Krill from the Models page. They become a run you can trial, pin, or fine-tune from. Their classes match label types by export class name, and classes Krill doesn't have are ignored. Only detection weights are accepted, not segmentation or pose.
 
 ### Changed
 
