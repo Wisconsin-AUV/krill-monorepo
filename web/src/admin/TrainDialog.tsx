@@ -1,21 +1,15 @@
 import { create } from '@bufbuild/protobuf'
 import { useMutation } from '@connectrpc/connect-query'
-import { ChevronRightIcon } from '@heroicons/react/20/solid'
-import { clsx } from 'clsx'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { AugmentationFields, NumberField } from '@/components/AugmentationFields'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
 import { Checkbox, CheckboxField } from '@/components/ui/Checkbox'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
-import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import {
-  AugmentationSchema,
-  ExportOptionsSchema,
-  type Augmentation,
-} from '@/gen/krill/v1/export_pb'
+import { AugmentationSchema, ExportOptionsSchema } from '@/gen/krill/v1/export_pb'
 import {
   ModelSize,
   PipelineService,
@@ -25,115 +19,7 @@ import {
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
 import { invalidateService } from '@/lib/queryClient'
-import { float32, runName, sizeNames } from './pipeline'
-
-function NumberField({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  step,
-}: {
-  label: string
-  value: number
-  onChange: (v: number) => void
-  min: number
-  max: number
-  step?: number | 'any'
-}) {
-  return (
-    <Field>
-      <Label>{label}</Label>
-      <Input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={Number.isNaN(value) ? '' : value}
-        onChange={(e) => onChange(e.target.valueAsNumber)}
-        required
-      />
-    </Field>
-  )
-}
-
-type AugmentationKey = Exclude<keyof Augmentation, '$typeName' | '$unknown'>
-
-const augmentationFields: {
-  key: AugmentationKey
-  label: string
-  min: number
-  max: number
-  step?: number | 'any'
-}[] = [
-  { key: 'degrees', label: 'Rotation (°)', min: 0, max: 180 },
-  { key: 'translate', label: 'Shift', min: 0, max: 0.9, step: 'any' },
-  { key: 'scale', label: 'Zoom', min: 0, max: 0.9, step: 'any' },
-  { key: 'aspect', label: 'Stretch', min: 1, max: 2, step: 'any' },
-  { key: 'shear', label: 'Shear (°)', min: 0, max: 45 },
-  { key: 'perspective', label: 'Perspective', min: 0, max: 0.001, step: 'any' },
-  { key: 'hsvH', label: 'Hue', min: 0, max: 1, step: 'any' },
-  { key: 'hsvS', label: 'Saturation', min: 0, max: 1, step: 'any' },
-  { key: 'hsvV', label: 'Brightness', min: 0, max: 1, step: 'any' },
-  { key: 'mosaic', label: 'Mosaic', min: 0, max: 1, step: 'any' },
-  { key: 'fliplr', label: 'Mirror', min: 0, max: 1, step: 'any' },
-  { key: 'flipud', label: 'Upside down', min: 0, max: 1, step: 'any' },
-  { key: 'underwater', label: 'Underwater', min: 0, max: 1, step: 'any' },
-  { key: 'shadows', label: 'Light and shadow', min: 0, max: 1, step: 'any' },
-  { key: 'noise', label: 'Noise', min: 0, max: 1, step: 'any' },
-]
-
-function AugmentationFields({
-  value,
-  onChange,
-}: {
-  value: Record<AugmentationKey, number>
-  onChange: (v: Record<AugmentationKey, number>) => void
-}) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Fieldset>
-      <Legend>
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-sm focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-        >
-          <ChevronRightIcon
-            className={clsx(
-              'size-4 fill-zinc-400 transition-transform duration-150 dark:fill-zinc-500',
-              open && 'rotate-90',
-            )}
-          />
-          Augmentation
-        </button>
-      </Legend>
-      {open && (
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          {augmentationFields.map((f) => (
-            <NumberField
-              key={f.key}
-              label={f.label}
-              value={value[f.key]}
-              onChange={(v) => onChange({ ...value, [f.key]: v })}
-              min={f.min}
-              max={f.max}
-              step={f.step}
-            />
-          ))}
-        </div>
-      )}
-    </Fieldset>
-  )
-}
-
-function augmentationValues(a: Augmentation | undefined) {
-  const out = {} as Record<AugmentationKey, number>
-  for (const f of augmentationFields) out[f.key] = float32(a?.[f.key] ?? 0)
-  return out
-}
+import { augmentationValues, runName, sizeNames } from './pipeline'
 
 function TrainForm({
   defaults,
