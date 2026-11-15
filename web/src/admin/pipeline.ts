@@ -6,6 +6,7 @@ import {
   PrelabelStatus,
   TrainingStatus,
   TrainingTrigger,
+  type Augmentation,
   type ModelTrial,
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
@@ -89,4 +90,31 @@ export const trialStatus: Record<ModelTrialStatus, { label: string; color: Badge
 
 export function trialActive(t: ModelTrial) {
   return t.status === ModelTrialStatus.QUEUED || t.status === ModelTrialStatus.RUNNING
+}
+
+// Floats come back from protobuf as float32, so 0.015 would show as
+// 0.014999999664723873.
+export function float32(v: number) {
+  return Number(v.toPrecision(3))
+}
+
+export function augmentationSummary(a: Augmentation) {
+  const pct = (p: number) => `${Math.round(p * 100)}%`
+  const parts = [
+    a.degrees > 0 && `±${float32(a.degrees)}°`,
+    a.translate > 0 && `shift ${float32(a.translate)}`,
+    a.scale > 0 && `zoom ${float32(a.scale)}`,
+    a.aspect > 1 && `stretch ${float32(a.aspect)}`,
+    a.shear > 0 && `shear ${float32(a.shear)}°`,
+    a.perspective > 0 && `perspective ${float32(a.perspective)}`,
+    (a.hsvH > 0 || a.hsvS > 0 || a.hsvV > 0) &&
+      `HSV ${float32(a.hsvH)}/${float32(a.hsvS)}/${float32(a.hsvV)}`,
+    a.mosaic > 0 && `mosaic ${pct(a.mosaic)}`,
+    a.fliplr > 0 && `mirror ${pct(a.fliplr)}`,
+    a.flipud > 0 && `upside down ${pct(a.flipud)}`,
+    a.underwater > 0 && `underwater ${pct(a.underwater)}`,
+    a.shadows > 0 && `light and shadow ${pct(a.shadows)}`,
+    a.noise > 0 && `noise ${pct(a.noise)}`,
+  ]
+  return parts.filter(Boolean).join(' · ') || 'None'
 }

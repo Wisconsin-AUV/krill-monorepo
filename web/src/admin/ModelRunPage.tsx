@@ -40,7 +40,15 @@ import { invalidateService } from '@/lib/queryClient'
 import { EpochChart } from './EpochChart'
 import { RunStatus } from './ModelsPage'
 import { RunTrials } from './RunTrials'
-import { elapsed, modelName, percent, runName, trainingActive, uploaded } from './pipeline'
+import {
+  augmentationSummary,
+  elapsed,
+  modelName,
+  percent,
+  runName,
+  trainingActive,
+  uploaded,
+} from './pipeline'
 
 const POLL = 5000
 const fullDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -215,6 +223,7 @@ function trainDetails(run: TrainingRun, now: number): [string, React.ReactNode][
           o.dedup ? `dedup ≤${o.dedupDistance}` : 'no dedup',
         ].join(' · '),
     ],
+    ['Augmentation', c?.augmentation && augmentationSummary(c.augmentation)],
     ['Verified boxes', formatNumber(run.verifiedBoxes)],
     ['GPU', run.device || '—'],
     ['Queued', run.createdAt && fullDate.format(timestampDate(run.createdAt))],
