@@ -34,6 +34,7 @@ import (
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/content"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/distractor"
 	"github.com/wauv/krill/api/internal/email"
 	"github.com/wauv/krill/api/internal/export"
 	"github.com/wauv/krill/api/internal/gold"
@@ -322,6 +323,7 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewContentServiceHandler(content.NewService(pool, store, jobs, nodes, trashRetention), rpcOpts))
 	mux.Handle(krillv1connect.NewPipelineServiceHandler(pipeline.NewService(pipe), rpcOpts))
 	mux.Handle(krillv1connect.NewPipelineWorkerServiceHandler(pipeline.NewWorkerService(pipe), rpcOpts))
+	mux.Handle(krillv1connect.NewDistractorServiceHandler(distractor.NewService(pool, store), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

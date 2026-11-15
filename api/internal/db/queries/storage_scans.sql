@@ -104,7 +104,9 @@ SELECT id, status FROM datasets;
 -- name: ScanLabelExampleKeys :many
 SELECT object_key FROM label_examples
 UNION ALL
-SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL;
+SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL
+UNION ALL
+SELECT object_key FROM distractors;
 
 -- name: ScanBackups :many
 SELECT object_key, status FROM backups;

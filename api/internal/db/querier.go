@@ -52,6 +52,7 @@ type Querier interface {
 	CreateClip(ctx context.Context, arg CreateClipParams) (int64, error)
 	CreateContentJob(ctx context.Context, arg CreateContentJobParams) (ContentJob, error)
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
+	CreateDistractor(ctx context.Context, arg CreateDistractorParams) (Distractor, error)
 	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
@@ -71,6 +72,7 @@ type Querier interface {
 	DeleteClip(ctx context.Context, id int64) (DeleteClipRow, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
+	DeleteDistractor(ctx context.Context, id int64) (Distractor, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
 	DeleteEmptyTracks(ctx context.Context, ids []int64) error
 	DeleteExpiredSessions(ctx context.Context) error
@@ -229,6 +231,8 @@ type Querier interface {
 	ListContentJobs(ctx context.Context, since pgtype.Timestamptz) ([]ListContentJobsRow, error)
 	ListContentVideos(ctx context.Context, model string) ([]ListContentVideosRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
+	ListDistractorKeys(ctx context.Context, limit int32) ([]string, error)
+	ListDistractors(ctx context.Context) ([]ListDistractorsRow, error)
 	ListDoneClipFrames(ctx context.Context, clipID int64) ([]int64, error)
 	// The boxes a summary scores: those at or above the threshold on frames
 	// someone marked done.

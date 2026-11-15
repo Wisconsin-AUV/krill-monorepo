@@ -218,6 +218,11 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.PipelineServiceCreateModelUploadProcedure:    manageSystem,
 	krillv1connect.PipelineServiceAddModelProcedure:             manageSystem,
 
+	krillv1connect.DistractorServiceListDistractorsProcedure:        manageSystem,
+	krillv1connect.DistractorServiceCreateDistractorUploadProcedure: manageSystem,
+	krillv1connect.DistractorServiceAddDistractorProcedure:          manageSystem,
+	krillv1connect.DistractorServiceDeleteDistractorProcedure:       manageSystem,
+
 	krillv1connect.PipelineWorkerServiceRegisterPrelabelersProcedure: worker,
 	krillv1connect.PipelineWorkerServiceCheckInProcedure:             worker,
 	krillv1connect.PipelineWorkerServiceReportTrainProgressProcedure: worker,

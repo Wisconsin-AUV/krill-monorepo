@@ -456,6 +456,8 @@ const scanLabelExampleKeys = `-- name: ScanLabelExampleKeys :many
 SELECT object_key FROM label_examples
 UNION ALL
 SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL
+UNION ALL
+SELECT object_key FROM distractors
 `
 
 func (q *Queries) ScanLabelExampleKeys(ctx context.Context) ([]string, error) {

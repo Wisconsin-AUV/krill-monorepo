@@ -39,6 +39,8 @@ const (
 	trainTimeout   = 36 * time.Hour
 	// maxLog keeps the end of a run's log.
 	maxLog = 32 << 10
+	// maxTrainDistractors are picked at random for a run to download.
+	maxTrainDistractors = 500
 )
 
 var sizes = map[string]krillv1.ModelSize{
@@ -110,16 +112,16 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 	if out.Dataset == nil {
 		out.Dataset = export.Defaults(cfg)
 	}
-	if out.Augmentation == nil {
-		out.Augmentation = defaultAugmentation()
-	}
-	if err := checkAugmentation(out.GetAugmentation()); err != nil {
+	var err error
+	if out.Augmentation, err = export.NormalizeAugmentation(out.GetAugmentation()); err != nil {
 		return nil, invalidConfig{err}
 	}
-	var err error
 	if out.Dataset, err = export.Normalize(out.GetDataset()); err != nil {
 		return nil, invalidConfig{err}
 	}
+	// Training augments each epoch as it loads images instead.
+	out.Dataset.AugmentedCopies = 0
+	out.Dataset.Augmentation = nil
 	if err := config.CheckTraining(int(out.GetEpochs()), int(out.GetImageSize()), int(out.GetBatch())); err != nil {
 		var fe *config.FieldError
 		if errors.As(err, &fe) {
@@ -358,6 +360,19 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	}
 	if msg.WeightsUploadUrl, err = p.Store.PresignPutInternal(ctx, storage.TrainingWeightsKey(id), trainURLExpiry); err != nil {
 		return err
+	}
+	if cfg.GetAugmentation().GetDistractors() > 0 {
+		keys, err := q.ListDistractorKeys(ctx, maxTrainDistractors)
+		if err != nil {
+			return fmt.Errorf("list distractors: %w", err)
+		}
+		for _, k := range keys {
+			u, err := p.Store.PresignGetInternal(ctx, k, trainURLExpiry)
+			if err != nil {
+				return err
+			}
+			msg.DistractorUrls = append(msg.DistractorUrls, u)
+		}
 	}
 	if base := cfg.GetBaseRunId(); base != 0 {
 		row, err := q.GetTrainingRun(ctx, base)

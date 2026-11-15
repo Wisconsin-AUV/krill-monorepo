@@ -151,6 +151,8 @@ func TestScanAndCleanUp(t *testing.T) {
 	example := storage.LabelExamplesPrefix(labelType) + "kept"
 	exec(t, ctx, tx, `INSERT INTO label_examples (label_type_id, object_key) VALUES ($1, $2) RETURNING id`, labelType, example)
 	abandoned := storage.LabelExamplesPrefix(labelType) + "abandoned"
+	distractor := storage.DistractorsPrefix + "0123456789abcdef0123456789abcdef"
+	exec(t, ctx, tx, `INSERT INTO distractors (object_key, width, height, size_bytes) VALUES ($1, 1, 1, 7) RETURNING id`, distractor)
 	run := func(status string) int64 {
 		return exec(t, ctx, tx, `INSERT INTO training_runs (status, trigger, config) VALUES ($1, 'manual', '{}') RETURNING id`, status)
 	}
@@ -174,6 +176,7 @@ func TestScanAndCleanUp(t *testing.T) {
 	store.put(storage.DatasetKey(goneDataset), 600, old)
 	store.put(example, 5, old)
 	store.put(abandoned, 6, old)
+	store.put(distractor, 7, old)
 	store.put(storage.BackupKey("stray.dump"), 700, old)
 	store.put("misc/readme.txt", 1, old)
 	store.put(storage.TrainingWeightsKey(trained), 800, old)
@@ -245,7 +248,7 @@ func TestScanAndCleanUp(t *testing.T) {
 	if res.skipped != 2 || res.deleted != 7 || res.bytes != 2000+20+600+100+700+50+1100 {
 		t.Errorf("cleanup = %+v", res)
 	}
-	for _, k := range []string{abandoned, storage.FrameKey(ready, 2), storage.FrameKey(processing, 0), example, storage.VideoSourceKey(ready)} {
+	for _, k := range []string{abandoned, storage.FrameKey(ready, 2), storage.FrameKey(processing, 0), example, distractor, storage.VideoSourceKey(ready)} {
 		if _, ok := store.objects[k]; !ok {
 			t.Errorf("%s was deleted", k)
 		}
@@ -268,6 +271,7 @@ func TestParseKey(t *testing.T) {
 		{"videos/012/source", parsedKey{kind: KindOther}},
 		{"datasets/3/dataset.zip", parsedKey{kind: KindExport, dataset: 3}},
 		{"label-types/4/examples/ab12", parsedKey{kind: KindLabelExample}},
+		{"distractors/ab12", parsedKey{kind: KindLabelExample}},
 		{"backups/krill.dump", parsedKey{kind: KindBackup}},
 		{"videos", parsedKey{kind: KindOther}},
 	}

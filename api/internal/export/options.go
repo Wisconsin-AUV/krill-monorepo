@@ -1,27 +1,32 @@
-package pipeline
+package export
 
 import (
 	"fmt"
 	"math"
 
+	"google.golang.org/protobuf/proto"
+
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 )
 
-// defaultAugmentation keeps Ultralytics' defaults except for mirroring, and
+const maxAugmentedCopies = 10
+
+// DefaultAugmentation keeps Ultralytics' defaults except for mirroring, and
 // rotates a little since the sub rolls and signs lie at any angle.
-func defaultAugmentation() *krillv1.Augmentation {
+func DefaultAugmentation() *krillv1.Augmentation {
 	return &krillv1.Augmentation{
-		Degrees:    10,
-		Translate:  0.1,
-		Scale:      0.5,
-		HsvH:       0.015,
-		HsvS:       0.7,
-		HsvV:       0.4,
-		Mosaic:     1,
-		Aspect:     1.2,
-		Underwater: 0.3,
-		Shadows:    0.3,
-		Noise:      0.2,
+		Degrees:     10,
+		Translate:   0.1,
+		Scale:       0.5,
+		HsvH:        0.015,
+		HsvS:        0.7,
+		HsvV:        0.4,
+		Mosaic:      1,
+		Aspect:      1.2,
+		Underwater:  0.3,
+		Shadows:     0.3,
+		Noise:       0.2,
+		Distractors: 0.2,
 	}
 }
 
@@ -48,19 +53,25 @@ var augmentLimits = []augmentLimit{
 	{"underwater", (*krillv1.Augmentation).GetUnderwater, 0, 1},
 	{"shadows", (*krillv1.Augmentation).GetShadows, 0, 1},
 	{"noise", (*krillv1.Augmentation).GetNoise, 0, 1},
+	{"distractors", (*krillv1.Augmentation).GetDistractors, 0, 1},
 }
 
-// checkAugmentation rejects out-of-range values. An aspect of 0 means no
+// NormalizeAugmentation returns the defaults for an unset augmentation, and
+// otherwise a copy, rejecting out-of-range values. An aspect of 0 means no
 // stretch, since the field can't be told apart from unset.
-func checkAugmentation(a *krillv1.Augmentation) error {
+func NormalizeAugmentation(in *krillv1.Augmentation) (*krillv1.Augmentation, error) {
+	if in == nil {
+		return DefaultAugmentation(), nil
+	}
+	a := proto.Clone(in).(*krillv1.Augmentation)
 	if a.GetAspect() == 0 {
 		a.Aspect = 1
 	}
 	for _, l := range augmentLimits {
 		v := l.get(a)
 		if math.IsNaN(float64(v)) || v < l.min || v > l.max {
-			return fmt.Errorf("%s must be between %g and %g", l.name, l.min, l.max)
+			return nil, fmt.Errorf("%s must be between %g and %g", l.name, l.min, l.max)
 		}
 	}
-	return nil
+	return a, nil
 }

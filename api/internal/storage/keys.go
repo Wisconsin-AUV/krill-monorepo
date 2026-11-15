@@ -69,3 +69,6 @@ const ModelUploadsPrefix = "model-uploads/"
 func PrelabelerPreviewKey(name string) string {
 	return fmt.Sprintf("prelabelers/%s/preview.png", name)
 }
+
+// DistractorsPrefix holds the distractor library's images.
+const DistractorsPrefix = "distractors/"
