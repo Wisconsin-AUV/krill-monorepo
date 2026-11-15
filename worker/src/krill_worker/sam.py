@@ -18,7 +18,7 @@ from transformers import (
 from krill_worker import attention
 from krill_worker.models import supports_exemplars
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, Embedding, PointPrompt, Prompt, mask_box
+from krill_worker.track import Box, BoxPrompt, Embedding, Mask, PointPrompt, Prompt
 
 # Score a found object needs to be proposed. Labelers delete false positives,
 # so this leans toward recall.
@@ -74,6 +74,11 @@ class SamTracker:
 
     def embed(self, frame: Frame) -> bytes:
         """Serialize the frame's image features as the tracker's vision cache expects them."""
+        buf = io.BytesIO()
+        torch.save({"model": self.model_id, "vision_feats": self._features(frame)}, buf)
+        return buf.getvalue()
+
+    def _features(self, frame: Frame) -> Embedding:
         inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
         with torch.inference_mode():
             out = self.model.get_image_features(
@@ -84,12 +89,9 @@ class SamTracker:
         # file where they would be five times the size of the features.
         if self._position_embeddings is None:
             self._position_embeddings = list(out.fpn_position_encoding)
-        feats = [
+        return [
             f.to("cpu").clone(memory_format=torch.contiguous_format) for f in out.fpn_hidden_states
         ]
-        buf = io.BytesIO()
-        torch.save({"model": self.model_id, "vision_feats": feats}, buf)
-        return buf.getvalue()
 
     def load_embedding(self, data: bytes) -> Embedding:
         payload = torch.load(io.BytesIO(data), map_location="cpu", weights_only=True)
@@ -100,8 +102,8 @@ class SamTracker:
 
     def track(
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
-    ) -> Iterator[Box | None]:
-        """Yield the object's box on each frame, or None where it is not visible.
+    ) -> Iterator[Mask | None]:
+        """Yield the object's mask on each frame.
 
         The prompt is on the first frame. Frames with an embedding skip the
         image encoder.
@@ -126,7 +128,12 @@ class SamTracker:
                 )
             self._forget(session, i)
             masks = self.processor.post_process_masks([out.pred_masks], original_sizes=[size])[0]
-            yield mask_box(masks[0, 0].cpu().numpy())
+            yield masks[0, 0].cpu().numpy()
+
+    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
+        """The mask of the object in each box, encoding the frame only once."""
+        embedding = self._features(frame)
+        return [next(self.track([(frame, embedding)], BoxPrompt(b))) for b in boxes]
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
         """Return every object on the frame like the one in box, most confident first."""

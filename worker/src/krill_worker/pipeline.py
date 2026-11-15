@@ -15,6 +15,7 @@ from krill.v1 import annotation_pb2, pipeline_pb2, pipeline_worker_pb2
 
 from krill_worker.api import Api
 from krill_worker.frames import decode_frame, fetch, prefetch, upload
+from krill_worker.geometry import to_proto
 from krill_worker.prelabelers import Proposal
 from krill_worker.prelabelers.cv import CvPreLabeler
 from krill_worker.prelabelers.plugins import PLUGINS
@@ -82,7 +83,7 @@ def batched(items: Iterable[T], n: int) -> Iterator[list[T]]:
 
 def to_box(p: Proposal) -> annotation_pb2.Box:
     cx, cy, w, h = p.box
-    return annotation_pb2.Box(x=cx - w / 2, y=cy - h / 2, width=w, height=h)
+    return to_proto((cx - w / 2, cy - h / 2, w, h), p.corners)
 
 
 def plugin(config: pipeline_pb2.PluginConfig) -> CvPreLabeler[object]:
@@ -196,14 +197,15 @@ def run_inspect(api: Api, task: pipeline_pb2.InspectTask) -> None:
         model = YOLO(str(download(task.weights_url, Path(tmp) / "upload.pt")))
     # Segment and pose models also find boxes, but their val and training
     # need labels a Krill export doesn't have.
-    if model.task != "detect":
-        raise ValueError(f"these are {model.task} weights, not detection weights")
+    if model.task not in ("detect", "obb"):
+        raise ValueError(f"these are {model.task} weights, not detection or OBB weights")
     names = model.names
     api.finish_inspect(
         pipeline_worker_pb2.FinishInspectRequest(
             task_id=task.id,
             classes=[str(names[i]) for i in range(len(names))],
             image_size=image_size(model.overrides.get("imgsz")),
+            oriented=model.task == "obb",
         )
     )
     log.info("inspected task %d: %d classes", task.id, len(names))

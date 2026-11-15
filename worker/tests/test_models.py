@@ -9,7 +9,7 @@ from krill_worker.heartbeat import Heartbeat
 from krill_worker.main import run_task
 from krill_worker.models import ModelLoadError, Models, cached_models
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, Embedding, Prompt
+from krill_worker.track import Box, Embedding, Mask, Prompt
 
 SMALL = "facebook/sam2.1-hiera-small"
 SAM3 = "facebook/sam3"
@@ -122,7 +122,7 @@ class EndlessTracker:
 
     def track(
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
-    ) -> Iterator[Box | None]:
+    ) -> Iterator[Mask | None]:
         while True:
             yield None
 
@@ -130,6 +130,9 @@ class EndlessTracker:
         raise AssertionError("not called")
 
     def load_embedding(self, data: bytes) -> Embedding:
+        raise AssertionError("not called")
+
+    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
         raise AssertionError("not called")
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:

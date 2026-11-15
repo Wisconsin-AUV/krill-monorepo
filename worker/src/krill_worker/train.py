@@ -116,7 +116,8 @@ def data_yaml(root: Path, classes: Sequence[str], has_test: bool) -> Path:
 
 
 def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
-    """Convert Ultralytics' DetMetrics, with one row per class in the split."""
+    """Convert Ultralytics' DetMetrics or OBBMetrics, with one row per class in
+    the split."""
     box = m.box
     per_class = getattr(m, "nt_per_class", None)
     per_image = getattr(m, "nt_per_image", None)
@@ -228,8 +229,9 @@ def run_train(
             if task.base_weights_url:
                 base = download(task.base_weights_url, root / "base.pt")
             else:
-                # Ultralytics downloads its COCO weights to this path.
-                base = cache_dir() / f"yolo11{SIZES[task.size]}.pt"
+                # Ultralytics downloads its pretrained weights to this path.
+                obb = "-obb" if task.oriented else ""
+                base = cache_dir() / f"yolo11{SIZES[task.size]}{obb}.pt"
             progress()
             check_in()
 

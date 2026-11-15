@@ -9,7 +9,7 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker.api import Api
 from krill_worker.main import run_embed, run_track
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, Embedding, Prompt
+from krill_worker.track import Box, Embedding, Mask, Prompt
 
 MODEL = "facebook/sam2.1-hiera-small"
 
@@ -43,10 +43,13 @@ class FakeTracker:
 
     def track(
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
-    ) -> Iterator[Box | None]:
+    ) -> Iterator[Mask | None]:
         for frame, embedding in frames:
             self.seen.append((int(frame.mean()), embedding))
             yield None
+
+    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
+        raise AssertionError("not called")
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
         raise AssertionError("not called")
