@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Training and exports don't rotate images by default, since the box around a rotated object is looser than the object. Saturation varies by 0.4 instead of 0.7, so classes told apart by color stay apart.
+
+### Fixed
+
+- Objects pasted onto distractors keep their size, angle, and color. Training resized, rotated, and recolored them on top of what it does to every image, so small objects could shrink to a few pixels and lose their color.
+- Light and shadow patches that overlap no longer black out or blow out what's under them.
+
 ## [0.8.0] - 2026-11-15
 
 ### Added
