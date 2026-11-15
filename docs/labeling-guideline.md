@@ -6,6 +6,7 @@ Each section needs example images of correct and incorrect labels.
 ## General rules
 
 - Boxes are tight around the visible part of the object.
+- Rotate boxes of oriented types to the smallest rectangle around the object. A sign seen at an angle looks like a trapezoid, so the box covers its longest edges.
 - Box objects even when they are only partly visible.
 - One object is one track. Keep drawing the same track on later frames instead of starting a new one.
 - Set track attributes (size, color, role) once. Tracks with unset attributes are left out of exports.
