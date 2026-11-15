@@ -12,6 +12,11 @@ All notable changes to this project are documented here. The format follows
 - SAM tracking fits a rotated box to the object on each frame for oriented types. An oriented type can have a reference design, the file its prints are made from, and boxes are then fit to the design's corners.
 - Fit rotations, in an oriented type's settings, fits rotated boxes to the boxes it already had.
 - YOLO-OBB weights can be uploaded, pinned, and trialed like detection weights, and their pre-labels and trial boxes are rotated.
+- Augmentation settings when starting a training run, shown on the run's page. Besides Ultralytics' rotation, shift, zoom, shear, perspective, color, mosaic, and flips, Krill can stretch images, tint them blue-green like water, add patches of light and shadow, and add sensor noise. Val and test images are never changed.
+
+### Changed
+
+- Training no longer mirrors images by default, since a mirrored arrow or printed sign means something else, and it rotates images up to 10° either way.
 
 ## [0.7.0] - 2026-11-13
 

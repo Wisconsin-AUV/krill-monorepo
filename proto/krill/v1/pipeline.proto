@@ -72,6 +72,39 @@ message TrainConfig {
   // size then comes from that run.
   int64 base_run_id = 5;
   ExportOptions dataset = 6;
+  // Unset uses the defaults.
+  Augmentation augmentation = 7;
+}
+
+// Augmentation is how training images are varied each epoch. Val and test
+// images are never changed.
+message Augmentation {
+  // Ultralytics' own, in its units. Rotation in degrees either way.
+  float degrees = 1;
+  // Shift as a share of the image size, either way.
+  float translate = 2;
+  // Zoom gain either way.
+  float scale = 3;
+  // Degrees either way.
+  float shear = 4;
+  float perspective = 5;
+  // Hue, saturation, and brightness gains either way.
+  float hsv_h = 6;
+  float hsv_s = 7;
+  float hsv_v = 8;
+  // Probabilities. Mirroring is off by default because it changes what
+  // arrows and printed signs mean.
+  float fliplr = 9;
+  float flipud = 10;
+  float mosaic = 11;
+  // Krill's own, applied to each image before mosaic. The most an image is
+  // stretched wider or taller, as a ratio of at least 1.
+  float aspect = 12;
+  // Probabilities that an image is tinted blue-green like water, gets
+  // patches of light and shadow, or gets sensor noise.
+  float underwater = 13;
+  float shadows = 14;
+  float noise = 15;
 }
 
 enum TrainingStatus {
@@ -190,7 +223,8 @@ message ListTrainingRunsResponse {
   // Newest first.
   repeated TrainingRun runs = 1;
   int64 pinned_run_id = 2;
-  // The config a run started now gets for fields left unset.
+  // The config a run started now gets for fields left unset, including the
+  // default augmentation.
   TrainConfig defaults = 3;
   RetrainSchedule schedule = 4;
 }
@@ -595,6 +629,7 @@ message TrainTask {
   bool has_test = 12;
   // The dataset's labels are YOLO-OBB corners, so train an OBB model.
   bool oriented = 13;
+  Augmentation augmentation = 14;
 }
 
 // InspectTask loads uploaded weights and reports their classes.
