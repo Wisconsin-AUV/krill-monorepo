@@ -168,8 +168,8 @@ func toward(c []float64, w, h, k int, share float64) image.Point {
 
 // pasteBoxes pastes like Augment, without the whole-frame edits that the same
 // settings would also turn on.
-func pasteBoxes(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augmentation, r *rand.Rand, distractor *image.RGBA) (*image.RGBA, []ItemBox) {
-	out, bs := pasteObjects(img, toAugBoxes(boxes, oriented), distractor, a, r, oriented)
+func pasteBoxes(img *image.RGBA, boxes []ItemBox, oriented bool, r *rand.Rand, distractor *image.RGBA) (*image.RGBA, []ItemBox) {
+	out, bs := pasteObjects(img, toAugBoxes(boxes, oriented), distractor, r, oriented)
 	return out, fromAugBoxes(bs, oriented)
 }
 
@@ -190,16 +190,22 @@ func TestPastesOrientedObjects(t *testing.T) {
 		}
 	}
 	green := color.RGBA{0, 200, 0, 255}
-	a := &krillv1.Augmentation{Distractors: 1, Degrees: 180, Scale: 0.5, Aspect: 1.5}
 	r := testRand()
 	for range 30 {
-		out, got := pasteBoxes(img, []ItemBox{{Class: 2, Corners: sq}}, true, a, r, solid(64, 64, green))
+		out, got := pasteBoxes(img, []ItemBox{{Class: 2, Corners: sq}}, true, r, solid(64, 64, green))
 		if len(got) != 1 {
 			t.Fatalf("%d boxes, want 1", len(got))
 		}
 		c := got[0].Corners
 		if got[0].Class != 2 || !clockwiseOnScreen(c) {
 			t.Fatalf("box = %+v, want class 2 clockwise", got[0])
+		}
+		// The warp after pasting resizes and rotates the whole frame, so
+		// pasting only moves objects.
+		for k := 1; k < 4; k++ {
+			if !near([]float64{c[2*k] - c[0], c[2*k+1] - c[1]}, []float64{sq[2*k] - sq[0], sq[2*k+1] - sq[1]}) {
+				t.Fatalf("pasted %v, want %v moved", c, sq)
+			}
 		}
 		for k, want := range map[int]color.RGBA{0: red, 1: white, 2: red, 3: red} {
 			p := toward(c, w, h, k, 0.25)
@@ -265,9 +271,8 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 	back := solid(50, 50, blue)
 	imgPix, backPix := slices.Clone(img.Pix), slices.Clone(back.Pix)
 	corners := slices.Clone(boxes[0].Corners)
-	a := &krillv1.Augmentation{Distractors: 1, Degrees: 30, Scale: 0.5, Aspect: 1.5, HsvV: 0.4}
 
-	if _, got := pasteBoxes(img, boxes, true, a, testRand(), back); len(got) != 1 {
+	if _, got := pasteBoxes(img, boxes, true, testRand(), back); len(got) != 1 {
 		t.Errorf("%d boxes, want 1", len(got))
 	}
 	if !slices.Equal(img.Pix, imgPix) || !slices.Equal(back.Pix, backPix) || !slices.Equal(boxes[0].Corners, corners) {
@@ -283,6 +288,21 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 		for x := range 100 {
 			if c := out.RGBAAt(x, y); c != blue {
 				t.Fatalf("frame without boxes: (%d, %d) = %v, want the distractor", x, y, c)
+			}
+		}
+	}
+}
+
+func TestOverlappingShadowsStayWithinThePatchGain(t *testing.T) {
+	const v = 200
+	lo, hi := uint8(v*(1-maxPatchGain)), uint8(min(255, math.Round(v*(1+maxPatchGain))))
+	r := testRand()
+	for range 200 {
+		img := solid(60, 40, color.RGBA{v, v, v, 255})
+		shadows(img, r)
+		for i, c := range img.Pix {
+			if i%4 != 3 && (c < lo || c > hi) {
+				t.Fatalf("pixel channel %d = %d, want between %d and %d", i, c, lo, hi)
 			}
 		}
 	}

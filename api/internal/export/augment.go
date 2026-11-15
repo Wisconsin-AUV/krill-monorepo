@@ -29,10 +29,6 @@ const (
 	// feather is how many pixels around each pasted object blend into the
 	// distractor, so its cut edge doesn't stand out as a hard line.
 	feather = 4
-	// Pasted objects keep at least minPasteSide pixels across, unless they
-	// were smaller to begin with, and at most maxPasteShare of the frame.
-	minPasteSide  = 12
-	maxPasteShare = 0.9
 	// A pasted object may overlap one already pasted by up to maxPasteIoU,
 	// and cover up to maxPasteCover of either, so both stay recognizable.
 	maxPasteIoU   = 0.1
@@ -136,7 +132,7 @@ func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augment
 	bs := toAugBoxes(boxes, oriented)
 	if distractor != nil && r.Float64() < float64(a.GetDistractors()) {
 		if d := distractor(r); d != nil {
-			img, bs = pasteObjects(img, bs, d, a, r, oriented)
+			img, bs = pasteObjects(img, bs, d, r, oriented)
 		}
 	}
 	if a.GetAspect() > 1 {
@@ -222,10 +218,12 @@ func cover(src *image.RGBA, w, h int, r *rand.Rand) *image.RGBA {
 	return scaled.SubImage(image.Rect(x, y, x+w, y+h)).(*image.RGBA)
 }
 
-// pasteObjects cuts each box out of img and pastes it, resized, rotated,
-// stretched, and recolored on its own, at a random free spot on the
-// distractor. Objects that find no free spot are left out.
-func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krillv1.Augmentation, r *rand.Rand, oriented bool) (*image.RGBA, []augBox) {
+// pasteObjects cuts each box out of img and pastes it, unchanged, at a random
+// free spot on the distractor. Objects that find no free spot are left out.
+// The warp and color jitter after it apply to the whole frame, so resizing,
+// rotating, or recoloring objects here as well would compound them, and the
+// zoom twice over shrinks small objects to a few pixels.
+func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, r *rand.Rand, oriented bool) (*image.RGBA, []augBox) {
 	w, h := img.Rect.Dx(), img.Rect.Dy()
 	fw, fh := float64(w), float64(h)
 	back := cover(distractor, w, h, r)
@@ -241,45 +239,22 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 			continue
 		}
 		x1, y1, x2, y2 := p.bounds()
-		cx, cy := (p[0]+p[2]+p[4]+p[6])/4, (p[1]+p[3]+p[5]+p[7])/4
+		x1, y1 = max(x1, 0), max(y1, 0)
+		x2, y2 = min(x2, fw), min(y2, fh)
+		bw, bh := x2-x1, y2-y1
+		if bw <= 0 || bh <= 0 {
+			continue
+		}
 
-		gain := uniform(r, 1-float64(a.GetScale()), 1+float64(a.GetScale()))
-		sx, sy := gain, gain
-		if a.GetAspect() > 1 {
-			if ratio := uniform(r, 1, float64(a.GetAspect())); r.Float64() < 0.5 {
-				sx /= ratio
-			} else {
-				sy /= ratio
-			}
-		}
-		deg := float64(a.GetDegrees())
-		rad := uniform(r, -deg, deg) * math.Pi / 180
-		cos, sin := math.Cos(rad), math.Sin(rad)
-		m := [4]float64{cos * sx, -sin * sy, sin * sx, cos * sy}
-
-		var q corners
-		for k := range 4 {
-			dx, dy := p[2*k]-cx, p[2*k+1]-cy
-			q[2*k], q[2*k+1] = m[0]*dx+m[1]*dy, m[2]*dx+m[3]*dy
-		}
-		qx1, qy1, qx2, qy2 := q.bounds()
-		qw, qh := qx2-qx1, qy2-qy1
-		k := 1.0
-		if floor := min(minPasteSide, x2-x1, y2-y1); min(qw, qh) < floor {
-			k = floor / min(qw, qh)
-		}
-		k = min(k, maxPasteShare*fw/qw, maxPasteShare*fh/qh)
-		for j := range q {
-			q[j] *= k
-		}
-		m = [4]float64{m[0] * k, m[1] * k, m[2] * k, m[3] * k}
-		qx1, qy1, qw, qh = qx1*k, qy1*k, qw*k, qh*k
-
+		// Moving by whole pixels copies the object's pixels exactly, so a
+		// spot keeps the box's fraction of a pixel.
+		fx, fy := x1-math.Floor(x1), y1-math.Floor(y1)
 		var spot rect
 		found := false
 		for range placeTries {
-			x, y := uniform(r, 0, fw-qw), uniform(r, 0, fh-qh)
-			spot = rect{x, y, x + qw, y + qh}
+			x := float64(r.IntN(int(fw-bw-fx)+1)) + fx
+			y := float64(r.IntN(int(fh-bh-fy)+1)) + fy
+			spot = rect{x, y, x + bw, y + bh}
 			if !overlapsAny(spot, placed) {
 				found = true
 				break
@@ -289,17 +264,13 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 			continue
 		}
 		placed = append(placed, spot)
-		dcx, dcy := spot.x1-qx1, spot.y1-qy1
+		dx, dy := spot.x1-x1, spot.y1-y1
+		q := p
 		for j := range 4 {
-			q[2*j] += dcx
-			q[2*j+1] += dcy
+			q[2*j] += dx
+			q[2*j+1] += dy
 		}
-
-		det := m[0]*m[3] - m[1]*m[2]
-		inv := [4]float64{m[3] / det, -m[1] / det, -m[2] / det, m[0] / det}
-		vg := 1 + uniform(r, -1, 1)*float64(a.GetHsvV())
-		sg := 1 + uniform(r, -1, 1)*float64(a.GetHsvS())
-		paste(out, img, q, inv, [4]float64{cx, cy, dcx, dcy}, vg, sg)
+		paste(out, img, q, dx, dy)
 
 		if !oriented {
 			x1, y1, x2, y2 := q.bounds()
@@ -312,12 +283,11 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 	return out, kept
 }
 
-// paste blends the source under the destination quad q into dst, opaque
-// inside q and fading over feather pixels outside it. inv maps a point,
-// relative to the destination center, back to the source relative to the
-// source center; at holds the source center, then the destination center.
-func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) {
+// paste blends src, moved by whole pixels dx and dy, into dst: opaque inside
+// q, where it lands, and fading over feather pixels outside it.
+func paste(dst, src *image.RGBA, q corners, dx, dy float64) {
 	w, h := src.Rect.Dx(), src.Rect.Dy()
+	ox, oy := int(dx), int(dy)
 	x1, y1, x2, y2 := q.bounds()
 	area := image.Rect(int(math.Floor(x1))-feather, int(math.Floor(y1))-feather, int(math.Ceil(x2))+feather, int(math.Ceil(y2))+feather).Intersect(dst.Rect)
 
@@ -342,7 +312,9 @@ func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) 
 
 	for y := area.Min.Y; y < area.Max.Y; y++ {
 		py := float64(y) + 0.5
+		sy := min(max(y-oy, 0), h-1)
 		row := dst.Pix[y*dst.Stride:]
+		srow := src.Pix[sy*src.Stride:]
 		for x := area.Min.X; x < area.Max.X; x++ {
 			px := float64(x) + 0.5
 			d := math.Inf(-1)
@@ -356,24 +328,10 @@ func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) 
 			if d > 0 {
 				alpha = 1 - d/feather
 			}
-			rx, ry := px-at[2], py-at[3]
-			sx := at[0] + inv[0]*rx + inv[1]*ry - 0.5
-			sy := at[1] + inv[2]*rx + inv[3]*ry - 0.5
-			sx, sy = min(max(sx, 0), float64(w-1)), min(max(sy, 0), float64(h-1))
-			x0, y0 := int(sx), int(sy)
-			xa, ya := min(x0+1, w-1), min(y0+1, h-1)
-			fx, fy := sx-float64(x0), sy-float64(y0)
-			var c [3]float64
+			sx := min(max(x-ox, 0), w-1)
+			i, si := x*4, sx*4
 			for ch := range 3 {
-				top := float64(src.Pix[y0*src.Stride+x0*4+ch])*(1-fx) + float64(src.Pix[y0*src.Stride+xa*4+ch])*fx
-				bot := float64(src.Pix[ya*src.Stride+x0*4+ch])*(1-fx) + float64(src.Pix[ya*src.Stride+xa*4+ch])*fx
-				c[ch] = top*(1-fy) + bot*fy
-			}
-			gray := 0.299*c[0] + 0.587*c[1] + 0.114*c[2]
-			i := x * 4
-			for ch := range 3 {
-				v := (gray + (c[ch]-gray)*sg) * vg
-				row[i+ch] = clampByte(v*alpha + float64(row[i+ch])*(1-alpha) + 0.5)
+				row[i+ch] = clampByte(float64(srow[si+ch])*alpha + float64(row[i+ch])*(1-alpha) + 0.5)
 			}
 		}
 	}
@@ -467,6 +425,11 @@ func shadows(img *image.RGBA, r *rand.Rand) {
 		for i, p := range patch {
 			gain[i] += p * g
 		}
+	}
+	// Overlapping patches add up, and could otherwise black out a labeled
+	// object or blow it out to white.
+	for i, g := range gain {
+		gain[i] = min(max(g, 1-maxPatchGain), 1+maxPatchGain)
 	}
 
 	row := make([]float32, mw)
