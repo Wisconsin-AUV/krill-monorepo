@@ -15,6 +15,7 @@ from typing import Any
 
 from krill.v1 import pipeline_pb2, pipeline_worker_pb2, worker_pb2
 
+from krill_worker import augment
 from krill_worker.api import Api, ApiError
 from krill_worker.frames import upload
 from krill_worker.pipeline import cache_dir, download
@@ -239,7 +240,15 @@ def run_train(
             model.add_callback("on_train_batch_end", check_in)
             model.add_callback("on_val_batch_end", check_in)
             model.add_callback("on_fit_epoch_end", on_epoch)
+            aug: dict[str, Any] = {}
+            if task.HasField("augmentation"):
+                base_trainer = model.task_map[model.task]["trainer"]
+                aug = {
+                    **augment.ultralytics_args(task.augmentation),
+                    "trainer": augment.trainer(base_trainer, task.augmentation),
+                }
             model.train(
+                **aug,
                 data=str(data),
                 epochs=task.epochs,
                 imgsz=task.image_size,
