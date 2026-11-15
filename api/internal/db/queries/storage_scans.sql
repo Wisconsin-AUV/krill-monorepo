@@ -102,7 +102,9 @@ WHERE f.video_id = $1;
 SELECT id, status FROM datasets;
 
 -- name: ScanLabelExampleKeys :many
-SELECT object_key FROM label_examples;
+SELECT object_key FROM label_examples
+UNION ALL
+SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL;
 
 -- name: ScanBackups :many
 SELECT object_key, status FROM backups;

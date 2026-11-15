@@ -113,7 +113,7 @@ func (q *Queries) GetDataset(ctx context.Context, id int64) (Dataset, error) {
 }
 
 const listAllLabelTypes = `-- name: ListAllLabelTypes :many
-SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types ORDER BY position, id
+SELECT id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key FROM label_types ORDER BY position, id
 `
 
 func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
@@ -135,6 +135,8 @@ func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
 			&i.CreatedAt,
 			&i.Title,
 			&i.Guideline,
+			&i.Oriented,
+			&i.ReferenceKey,
 		); err != nil {
 			return nil, err
 		}
@@ -189,7 +191,7 @@ WITH last_boxes AS (
     WHERE a.status <> 'rejected'
     ORDER BY a.track_id, f.idx DESC
 )
-SELECT a.frame_id, a.x, a.y, a.width, a.height, a.status, t.label_type_id, t.attributes,
+SELECT a.frame_id, a.x, a.y, a.width, a.height, a.corners, a.status, t.label_type_id, t.attributes,
     (l.status = 'proposed' AND l.source = 'sam')::bool AS track_unconfirmed
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
@@ -205,15 +207,16 @@ ORDER BY a.frame_id, a.track_id
 `
 
 type ListExportAnnotationsRow struct {
-	FrameID          int64   `json:"frame_id"`
-	X                float64 `json:"x"`
-	Y                float64 `json:"y"`
-	Width            float64 `json:"width"`
-	Height           float64 `json:"height"`
-	Status           string  `json:"status"`
-	LabelTypeID      int64   `json:"label_type_id"`
-	Attributes       []byte  `json:"attributes"`
-	TrackUnconfirmed bool    `json:"track_unconfirmed"`
+	FrameID          int64     `json:"frame_id"`
+	X                float64   `json:"x"`
+	Y                float64   `json:"y"`
+	Width            float64   `json:"width"`
+	Height           float64   `json:"height"`
+	Corners          []float64 `json:"corners"`
+	Status           string    `json:"status"`
+	LabelTypeID      int64     `json:"label_type_id"`
+	Attributes       []byte    `json:"attributes"`
+	TrackUnconfirmed bool      `json:"track_unconfirmed"`
 }
 
 // A tracked object whose last box is still a proposal may have drifted, so
@@ -234,6 +237,7 @@ func (q *Queries) ListExportAnnotations(ctx context.Context, videoIds []int64) (
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Corners,
 			&i.Status,
 			&i.LabelTypeID,
 			&i.Attributes,

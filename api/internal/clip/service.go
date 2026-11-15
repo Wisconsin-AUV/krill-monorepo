@@ -82,7 +82,10 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 	}
 	annotations := make([]*krillv1.Annotation, len(annRows))
 	for i, a := range annRows {
-		annotations[i] = annotation.Annotation(a)
+		if !a.Oriented {
+			a.Annotation.Corners = nil
+		}
+		annotations[i] = annotation.Annotation(a.Annotation)
 	}
 
 	gold := map[int64]bool{}

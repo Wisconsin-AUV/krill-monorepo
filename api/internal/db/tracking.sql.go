@@ -230,23 +230,72 @@ func (q *Queries) SetDrift(ctx context.Context, arg SetDriftParams) error {
 	return err
 }
 
+const setFittedCorners = `-- name: SetFittedCorners :execrows
+UPDATE annotations a SET
+    x = ($1::float8[])[i],
+    y = ($2::float8[])[i],
+    width = ($3::float8[])[i],
+    height = ($4::float8[])[i],
+    corners = ($5::float8[])[(i - 1) * 8 + 1:i * 8]
+FROM generate_subscripts($6::bigint[], 1) AS i, tracks t, label_types lt
+WHERE a.id = ($6::bigint[])[i]
+    AND a.updated_at = ($7::timestamptz[])[i]
+    AND a.corners IS NULL
+    AND t.id = a.track_id AND lt.id = t.label_type_id
+    AND lt.id = $8 AND lt.oriented
+`
+
+type SetFittedCornersParams struct {
+	Xs          []float64            `json:"xs"`
+	Ys          []float64            `json:"ys"`
+	Widths      []float64            `json:"widths"`
+	Heights     []float64            `json:"heights"`
+	Corners     []float64            `json:"corners"`
+	Ids         []int64              `json:"ids"`
+	UpdatedAts  []pgtype.Timestamptz `json:"updated_ats"`
+	LabelTypeID int64                `json:"label_type_id"`
+}
+
+// Boxes anyone changed since the fit listed them, which @updated_ats records,
+// are left alone, as are boxes moved to another type. @corners holds eight
+// values per box.
+func (q *Queries) SetFittedCorners(ctx context.Context, arg SetFittedCornersParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setFittedCorners,
+		arg.Xs,
+		arg.Ys,
+		arg.Widths,
+		arg.Heights,
+		arg.Corners,
+		arg.Ids,
+		arg.UpdatedAts,
+		arg.LabelTypeID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertProposals = `-- name: UpsertProposals :execrows
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, model_version)
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version)
 SELECT
     $1,
-    unnest($2::bigint[]),
-    unnest($3::float8[]),
-    unnest($4::float8[]),
-    unnest($5::float8[]),
-    unnest($6::float8[]),
-    $7,
+    ($2::bigint[])[i],
+    ($3::float8[])[i],
+    ($4::float8[])[i],
+    ($5::float8[])[i],
+    ($6::float8[])[i],
+    CASE WHEN ($7::bool[])[i] THEN ($8::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    $9,
     'proposed',
-    $8
+    $10
+FROM generate_subscripts($2::bigint[], 1) AS i
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
     y = excluded.y,
     width = excluded.width,
     height = excluded.height,
+    corners = excluded.corners,
     source = excluded.source,
     model_version = excluded.model_version,
     updated_at = now()
@@ -260,11 +309,15 @@ type UpsertProposalsParams struct {
 	Ys           []float64 `json:"ys"`
 	Widths       []float64 `json:"widths"`
 	Heights      []float64 `json:"heights"`
+	HasCorners   []bool    `json:"has_corners"`
+	Corners      []float64 `json:"corners"`
 	Source       string    `json:"source"`
 	ModelVersion string    `json:"model_version"`
 }
 
 // Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
+// @corners holds eight values per box, which are ignored unless the box's
+// @has_corners is set.
 func (q *Queries) UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error) {
 	result, err := q.db.Exec(ctx, upsertProposals,
 		arg.TrackID,
@@ -273,6 +326,8 @@ func (q *Queries) UpsertProposals(ctx context.Context, arg UpsertProposalsParams
 		arg.Ys,
 		arg.Widths,
 		arg.Heights,
+		arg.HasCorners,
+		arg.Corners,
 		arg.Source,
 		arg.ModelVersion,
 	)

@@ -41,6 +41,7 @@ type Querier interface {
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (CountTracksForLabelTypeRow, error)
+	CountUnrotatedBoxes(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
 	// Held-out boxes are left out because no run trains on them.
 	CountVerifiedBoxes(ctx context.Context) (int32, error)
@@ -175,8 +176,12 @@ type Querier interface {
 	InsertFrames(ctx context.Context, arg []InsertFramesParams) (int64, error)
 	InsertGoldAttempt(ctx context.Context, arg InsertGoldAttemptParams) (int64, error)
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
-	// Boxes a worker reports after the trial stopped are dropped.
+	// Boxes a worker reports after the trial stopped are dropped. @corners holds
+	// eight values per box, which are ignored unless the box's @has_corners is
+	// set.
 	InsertModelTrialBoxes(ctx context.Context, arg InsertModelTrialBoxesParams) (int64, error)
+	// @corners holds eight values per box, which are kept only when the box's
+	// @has_corners is set and its track's label type is oriented.
 	InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error)
 	InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error
 	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
@@ -210,7 +215,7 @@ type Querier interface {
 	// box columns null when frame_id is set.
 	ListBoxStates(ctx context.Context, arg ListBoxStatesParams) ([]ListBoxStatesRow, error)
 	ListBoxesOnFrames(ctx context.Context, frameIds []int64) ([]ListBoxesOnFramesRow, error)
-	ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error)
+	ListClipAnnotations(ctx context.Context, clipID int64) ([]ListClipAnnotationsRow, error)
 	ListClipClaims(ctx context.Context, clipIds []int64) ([]ListClipClaimsRow, error)
 	ListClipFrames(ctx context.Context, clipID int64) ([]Frame, error)
 	ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64, error)
@@ -298,6 +303,7 @@ type Querier interface {
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUnlabeledClipFrames(ctx context.Context, clipID int64) ([]ListUnlabeledClipFramesRow, error)
+	ListUnrotatedBoxes(ctx context.Context, labelTypeID int64) ([]ListUnrotatedBoxesRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	ListVideoClipIDs(ctx context.Context, videoID int64) ([]int64, error)
@@ -389,9 +395,15 @@ type Querier interface {
 	SetDatasetProgress(ctx context.Context, arg SetDatasetProgressParams) error
 	SetDatasetStats(ctx context.Context, arg SetDatasetStatsParams) error
 	SetDrift(ctx context.Context, arg SetDriftParams) error
+	// Boxes anyone changed since the fit listed them, which @updated_ats records,
+	// are left alone, as are boxes moved to another type. @corners holds eight
+	// values per box.
+	SetFittedCorners(ctx context.Context, arg SetFittedCornersParams) (int64, error)
 	// Credit stays with whoever first set the current status.
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
+	// Returns the key it replaced.
+	SetLabelReference(ctx context.Context, arg SetLabelReferenceParams) (pgtype.Text, error)
 	SetLabelTypePosition(ctx context.Context, arg SetLabelTypePositionParams) error
 	SetMergedIdentity(ctx context.Context, arg SetMergedIdentityParams) (User, error)
 	SetModelTrialTracks(ctx context.Context, arg SetModelTrialTracksParams) error
@@ -427,6 +439,8 @@ type Querier interface {
 	UpsertAnnotation(ctx context.Context, arg UpsertAnnotationParams) (Annotation, error)
 	UpsertPrelabelerSpec(ctx context.Context, arg UpsertPrelabelerSpecParams) error
 	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
+	// @corners holds eight values per box, which are ignored unless the box's
+	// @has_corners is set.
 	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	UseApprovedEmail(ctx context.Context, arg UseApprovedEmailParams) error

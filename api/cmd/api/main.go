@@ -215,6 +215,7 @@ func run(logHub *logs.Hub) error {
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewEmbedWorker(pool, store, dispatcher))
+	river.AddWorker(workers, tracker.NewOrientWorker(pool, store, dispatcher))
 	liveConfig := func() config.Config { return live.Load().cfg }
 	river.AddWorker(workers, storagescan.NewScanWorker(pool, store))
 	river.AddWorker(workers, storagescan.NewCleanupWorker(pool, store))
@@ -236,6 +237,7 @@ func run(logHub *logs.Hub) error {
 		ingest.Queue:          {MaxWorkers: 1},
 		annotation.TrackQueue: {MaxWorkers: 1},
 		ingest.EmbedQueue:     {MaxWorkers: 1},
+		taxonomy.OrientQueue:  {MaxWorkers: 1},
 		storagescan.Queue:     {MaxWorkers: 1},
 		backup.Queue:          {MaxWorkers: 1},
 	}
@@ -278,7 +280,7 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewVideoServiceHandler(video.NewService(pool, store, jobs, embedAtIngest), rpcOpts))
 	mux.Handle(krillv1connect.NewClipServiceHandler(clip.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewQueueServiceHandler(queue.NewService(pool, store), rpcOpts))
-	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewLabelServiceHandler(taxonomy.NewService(pool, store, jobs), rpcOpts))
 	mux.Handle(krillv1connect.NewAnnotationServiceHandler(annotation.NewService(pool, store, jobs, goldRouting), rpcOpts))
 	mux.Handle(krillv1connect.NewWorkerServiceHandler(tracker.NewService(pool, dispatcher, nodes).
 		WithModel(func() string { return live.Load().cfg.SamModel }).

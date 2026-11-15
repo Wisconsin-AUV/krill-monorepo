@@ -30,20 +30,22 @@ RETURNING t.clip_id;
 SELECT * FROM tracks WHERE clip_id = $1 ORDER BY id;
 
 -- name: ListClipAnnotations :many
-SELECT a.*
+SELECT sqlc.embed(a), lt.oriented
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN label_types lt ON lt.id = t.label_type_id
 WHERE t.clip_id = $1
 ORDER BY a.frame_id, a.track_id;
 
 -- name: UpsertAnnotation :one
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
-VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid)
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, 'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid)
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
     y = excluded.y,
     width = excluded.width,
     height = excluded.height,
+    corners = excluded.corners,
     source = 'human',
     status = 'verified',
     model_version = '',
@@ -65,9 +67,12 @@ RETURNING (SELECT t.clip_id FROM tracks t WHERE t.id = a.track_id)::bigint AS cl
 SELECT count(*)::int FROM annotations WHERE track_id = $1;
 
 -- name: CopyAnnotations :many
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
-SELECT a.track_id, sqlc.arg('to_frame_id'), a.x, a.y, a.width, a.height, 'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, created_by, updated_by)
+SELECT a.track_id, sqlc.arg('to_frame_id'), a.x, a.y, a.width, a.height, CASE WHEN lt.oriented THEN a.corners END,
+    'human', 'verified', sqlc.arg('user_id')::uuid, sqlc.arg('user_id')::uuid
 FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN label_types lt ON lt.id = t.label_type_id
 WHERE a.frame_id = sqlc.arg('from_frame_id')
     AND a.status <> 'rejected'
     AND (cardinality(sqlc.arg('track_ids')::bigint[]) = 0 OR a.track_id = ANY(sqlc.arg('track_ids')::bigint[]))
@@ -103,15 +108,16 @@ WHERE id = $1 AND status = 'empty';
 -- Each track comes with its first verified box, or its middle box when none
 -- is verified yet.
 SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
-    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
+    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height,
+    (CASE WHEN lt.oriented THEN b.corners END)::float8[] AS corners
 FROM tracks t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
 JOIN label_types lt ON lt.id = t.label_type_id
 JOIN LATERAL (
-    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
+    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height, r.corners
     FROM (
-        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.status,
+        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.corners, a.status,
             row_number() OVER (ORDER BY f.idx) AS n,
             count(*) OVER () AS total
         FROM annotations a

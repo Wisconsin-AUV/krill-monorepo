@@ -155,16 +155,18 @@ func (q *Queries) GetModelTrialID(ctx context.Context, arg GetModelTrialIDParams
 }
 
 const insertModelTrialBoxes = `-- name: InsertModelTrialBoxes :execrows
-INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, confidence)
+INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, confidence)
 SELECT
     $1,
-    unnest($2::bigint[]),
-    unnest($3::int[]),
-    unnest($4::float8[]),
-    unnest($5::float8[]),
-    unnest($6::float8[]),
-    unnest($7::float8[]),
-    unnest($8::real[])
+    ($2::bigint[])[i],
+    ($3::int[])[i],
+    ($4::float8[])[i],
+    ($5::float8[])[i],
+    ($6::float8[])[i],
+    ($7::float8[])[i],
+    CASE WHEN ($8::bool[])[i] THEN ($9::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    ($10::real[])[i]
+FROM generate_subscripts($2::bigint[], 1) AS i
 WHERE EXISTS (SELECT 1 FROM model_trials t WHERE t.id = $1 AND t.status = 'running')
 `
 
@@ -176,10 +178,14 @@ type InsertModelTrialBoxesParams struct {
 	Ys          []float64 `json:"ys"`
 	Widths      []float64 `json:"widths"`
 	Heights     []float64 `json:"heights"`
+	HasCorners  []bool    `json:"has_corners"`
+	Corners     []float64 `json:"corners"`
 	Confidences []float32 `json:"confidences"`
 }
 
-// Boxes a worker reports after the trial stopped are dropped.
+// Boxes a worker reports after the trial stopped are dropped. @corners holds
+// eight values per box, which are ignored unless the box's @has_corners is
+// set.
 func (q *Queries) InsertModelTrialBoxes(ctx context.Context, arg InsertModelTrialBoxesParams) (int64, error) {
 	result, err := q.db.Exec(ctx, insertModelTrialBoxes,
 		arg.TrialID,
@@ -189,6 +195,8 @@ func (q *Queries) InsertModelTrialBoxes(ctx context.Context, arg InsertModelTria
 		arg.Ys,
 		arg.Widths,
 		arg.Heights,
+		arg.HasCorners,
+		arg.Corners,
 		arg.Confidences,
 	)
 	if err != nil {
@@ -318,7 +326,7 @@ func (q *Queries) ListDoneVerifiedBoxes(ctx context.Context, clipID int64) ([]Li
 }
 
 const listModelTrialBoxes = `-- name: ListModelTrialBoxes :many
-SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.confidence, b.track
+SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.confidence, b.track
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = $1
@@ -326,16 +334,17 @@ ORDER BY f.idx, b.confidence DESC, b.id
 `
 
 type ListModelTrialBoxesRow struct {
-	ID         int64   `json:"id"`
-	FrameID    int64   `json:"frame_id"`
-	FrameIdx   int32   `json:"frame_idx"`
-	Class      int32   `json:"class"`
-	X          float64 `json:"x"`
-	Y          float64 `json:"y"`
-	Width      float64 `json:"width"`
-	Height     float64 `json:"height"`
-	Confidence float32 `json:"confidence"`
-	Track      int32   `json:"track"`
+	ID         int64     `json:"id"`
+	FrameID    int64     `json:"frame_id"`
+	FrameIdx   int32     `json:"frame_idx"`
+	Class      int32     `json:"class"`
+	X          float64   `json:"x"`
+	Y          float64   `json:"y"`
+	Width      float64   `json:"width"`
+	Height     float64   `json:"height"`
+	Corners    []float64 `json:"corners"`
+	Confidence float32   `json:"confidence"`
+	Track      int32     `json:"track"`
 }
 
 func (q *Queries) ListModelTrialBoxes(ctx context.Context, trialID int64) ([]ListModelTrialBoxesRow, error) {
@@ -356,6 +365,7 @@ func (q *Queries) ListModelTrialBoxes(ctx context.Context, trialID int64) ([]Lis
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Corners,
 			&i.Confidence,
 			&i.Track,
 		); err != nil {

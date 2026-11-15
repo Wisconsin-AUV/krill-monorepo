@@ -85,11 +85,9 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 		}
 		args.Point = &Point{X: x, Y: y}
 	case *krillv1.TrackObjectRequest_Box:
-		x, y, w, h, err := ClampBox(p.Box)
-		if err != nil {
-			return nil, rpc.Invalid("%s", err)
+		if p.Box == nil {
+			return nil, rpc.Invalid("box is required")
 		}
-		args.Box = &Box{X: x, Y: y, Width: w, Height: h}
 	default:
 		return nil, rpc.Invalid("a point or box is required")
 	}
@@ -97,6 +95,26 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 	frame, err := s.q.GetFrame(ctx, req.GetFrameId())
 	if err != nil {
 		return nil, rpc.DBError(err, "frame")
+	}
+	labelTypeID := req.GetLabelTypeId()
+	if req.GetTrackId() != 0 {
+		track, err := s.q.GetTrack(ctx, req.GetTrackId())
+		if err != nil {
+			return nil, rpc.DBError(err, "track")
+		}
+		labelTypeID = track.LabelTypeID
+	}
+	var corners []float64
+	if p, ok := req.GetPrompt().(*krillv1.TrackObjectRequest_Box); ok {
+		oriented, err := s.oriented(ctx, labelTypeID)
+		if err != nil {
+			return nil, err
+		}
+		x, y, w, h, c, err := ClampCorners(p.Box, oriented)
+		if err != nil {
+			return nil, rpc.Invalid("%s", err)
+		}
+		args.Box, corners = &Box{X: x, Y: y, Width: w, Height: h}, c
 	}
 	var attrs []byte
 	if req.GetTrackId() == 0 {
@@ -132,7 +150,8 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 			return nil, rpc.Internal(err, "save box")
 		}
 		_, err = q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-			TrackID: track.ID, FrameID: frame.ID, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, UserID: auth.CallerID(ctx),
+			TrackID: track.ID, FrameID: frame.ID, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Corners: corners,
+			UserID: auth.CallerID(ctx),
 		})
 		if err != nil {
 			return nil, rpc.Internal(err, "save box")

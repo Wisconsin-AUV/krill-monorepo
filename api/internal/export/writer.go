@@ -15,6 +15,7 @@ import (
 // back to the exact frames and settings that produced it.
 type Manifest struct {
 	Name       string          `json:"name"`
+	Task       string          `json:"task"`
 	CreatedAt  time.Time       `json:"created_at"`
 	Version    string          `json:"krill_version"`
 	Options    json.RawMessage `json:"options"`
@@ -32,9 +33,21 @@ func itemName(it Item) string {
 	return fmt.Sprintf("v%d_f%06d", it.Frame.VideoID, it.Frame.Idx)
 }
 
-func labelLines(it Item) string {
+func labelLines(it Item, oriented bool) string {
 	var b strings.Builder
 	for _, box := range it.Boxes {
+		if oriented {
+			c := box.Corners
+			if len(c) != 8 {
+				c = []float64{box.X, box.Y, box.X + box.W, box.Y, box.X + box.W, box.Y + box.H, box.X, box.Y + box.H}
+			}
+			fmt.Fprintf(&b, "%d", box.Class)
+			for _, v := range c {
+				fmt.Fprintf(&b, " %.6f", clamp01(v))
+			}
+			b.WriteByte('\n')
+			continue
+		}
 		cx := clamp01(box.X + box.W/2)
 		cy := clamp01(box.Y + box.H/2)
 		fmt.Fprintf(&b, "%d %.6f %.6f %.6f %.6f\n", box.Class, cx, cy, clamp01(box.W), clamp01(box.H))
@@ -104,7 +117,7 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 		if err != nil {
 			return fmt.Errorf("add labels %s: %w", name, err)
 		}
-		if _, err := io.WriteString(lbl, labelLines(it)); err != nil {
+		if _, err := io.WriteString(lbl, labelLines(it, p.Oriented)); err != nil {
 			return fmt.Errorf("write labels %s: %w", name, err)
 		}
 		onProgress(i+1, len(p.Items))
@@ -119,6 +132,10 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 	}
 
 	m.Classes = p.Classes
+	m.Task = "detect"
+	if p.Oriented {
+		m.Task = "obb"
+	}
 	manifest, err := create("manifest.json", zip.Deflate)
 	if err != nil {
 		return fmt.Errorf("add manifest: %w", err)

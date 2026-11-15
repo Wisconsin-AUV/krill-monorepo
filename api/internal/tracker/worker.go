@@ -73,7 +73,21 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 		return fmt.Errorf("clear old proposals: %w", err)
 	}
 
-	msg := &krillv1.TrackTask{Id: id, Frames: make([]*krillv1.TaskFrame, len(frames))}
+	track, err := q.GetTrack(ctx, args.TrackID)
+	if err != nil {
+		return fmt.Errorf("load track: %w", err)
+	}
+	lt, err := q.GetLabelType(ctx, track.LabelTypeID)
+	if err != nil {
+		return fmt.Errorf("load label type: %w", err)
+	}
+
+	msg := &krillv1.TrackTask{Id: id, Frames: make([]*krillv1.TaskFrame, len(frames)), Oriented: lt.Oriented}
+	if lt.Oriented {
+		if msg.ReferenceUrl, err = referenceURL(ctx, w.store, lt); err != nil {
+			return err
+		}
+	}
 	if clip.EmbeddedAt.Valid {
 		msg.EmbeddingModel = clip.EmbedModel
 	}
@@ -102,6 +116,15 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 	t := newTask(id, args.TrackID, msg)
 	t.jobID = jobID
 	return run(ctx, w.dispatcher, t, pickupTimeout)
+}
+
+// referenceURL presigns the label type's reference design, or returns "" when
+// it has none.
+func referenceURL(ctx context.Context, store *storage.Store, lt db.LabelType) (string, error) {
+	if !lt.ReferenceKey.Valid {
+		return "", nil
+	}
+	return store.PresignGetInternal(ctx, lt.ReferenceKey.String, frameURLExpiry)
 }
 
 // run hands t to the GPU worker and waits for it to finish.

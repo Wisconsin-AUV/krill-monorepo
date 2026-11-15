@@ -21,10 +21,10 @@ SELECT * FROM training_runs WHERE pinned;
 
 -- name: CreateUploadedTrainingRun :one
 INSERT INTO training_runs (
-    status, trigger, created_by, config, classes, filename, weights_bytes, started_at, finished_at
+    status, trigger, created_by, config, classes, filename, weights_bytes, oriented, started_at, finished_at
 )
 VALUES (
-    'succeeded', 'upload', sqlc.narg('created_by')::uuid, @config, @classes, @filename, @weights_bytes,
+    'succeeded', 'upload', sqlc.narg('created_by')::uuid, @config, @classes, @filename, @weights_bytes, @oriented,
     now(), now()
 )
 RETURNING *;
@@ -43,7 +43,7 @@ UPDATE training_runs SET status = 'preparing', started_at = now()
 WHERE id = $1 AND status = 'queued';
 
 -- name: SetTrainingDataset :exec
-UPDATE training_runs SET dataset = @dataset, classes = @classes, epochs = @epochs
+UPDATE training_runs SET dataset = @dataset, classes = @classes, epochs = @epochs, oriented = @oriented
 WHERE id = @id;
 
 -- name: SetTrainingProgress :exec
@@ -234,18 +234,24 @@ WHERE f.id = a.frame_id AND f.video_id = $1
 RETURNING a.track_id;
 
 -- name: InsertPrelabels :execrows
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, model_version, confidence)
+-- @corners holds eight values per box, which are kept only when the box's
+-- @has_corners is set and its track's label type is oriented.
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version, confidence)
 SELECT
-    unnest(@track_ids::bigint[]),
-    unnest(@frame_ids::bigint[]),
-    unnest(@xs::float8[]),
-    unnest(@ys::float8[]),
-    unnest(@widths::float8[]),
-    unnest(@heights::float8[]),
+    t.id,
+    (@frame_ids::bigint[])[i],
+    (@xs::float8[])[i],
+    (@ys::float8[])[i],
+    (@widths::float8[])[i],
+    (@heights::float8[])[i],
+    CASE WHEN lt.oriented AND (@has_corners::bool[])[i] THEN (@corners::float8[])[(i - 1) * 8 + 1:i * 8] END,
     @source,
     'proposed',
-    unnest(@model_versions::text[]),
-    unnest(@confidences::real[])
+    (@model_versions::text[])[i],
+    (@confidences::real[])[i]
+FROM generate_subscripts(@track_ids::bigint[], 1) AS i
+JOIN tracks t ON t.id = (@track_ids::bigint[])[i]
+JOIN label_types lt ON lt.id = t.label_type_id
 ON CONFLICT (track_id, frame_id) DO NOTHING;
 
 -- name: ListPrelabelers :many

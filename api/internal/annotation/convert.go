@@ -53,7 +53,7 @@ func Annotation(a db.Annotation) *krillv1.Annotation {
 		Id:      a.ID,
 		TrackId: a.TrackID,
 		FrameId: a.FrameID,
-		Box:     &krillv1.Box{X: a.X, Y: a.Y, Width: a.Width, Height: a.Height},
+		Box:     &krillv1.Box{X: a.X, Y: a.Y, Width: a.Width, Height: a.Height, Corners: Corners(a.Corners)},
 		Source:  sourceToProto[a.Source],
 		Status:  statusToProto[a.Status],
 		Drift:   a.Drift.String == "flagged",

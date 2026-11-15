@@ -454,6 +454,8 @@ func (q *Queries) ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error) {
 
 const scanLabelExampleKeys = `-- name: ScanLabelExampleKeys :many
 SELECT object_key FROM label_examples
+UNION ALL
+SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL
 `
 
 func (q *Queries) ScanLabelExampleKeys(ctx context.Context) ([]string, error) {
