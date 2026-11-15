@@ -36,26 +36,30 @@ const (
 	// DistractorServiceListDistractorsProcedure is the fully-qualified name of the DistractorService's
 	// ListDistractors RPC.
 	DistractorServiceListDistractorsProcedure = "/krill.v1.DistractorService/ListDistractors"
-	// DistractorServiceCreateDistractorUploadProcedure is the fully-qualified name of the
-	// DistractorService's CreateDistractorUpload RPC.
-	DistractorServiceCreateDistractorUploadProcedure = "/krill.v1.DistractorService/CreateDistractorUpload"
-	// DistractorServiceAddDistractorProcedure is the fully-qualified name of the DistractorService's
-	// AddDistractor RPC.
-	DistractorServiceAddDistractorProcedure = "/krill.v1.DistractorService/AddDistractor"
-	// DistractorServiceDeleteDistractorProcedure is the fully-qualified name of the DistractorService's
-	// DeleteDistractor RPC.
-	DistractorServiceDeleteDistractorProcedure = "/krill.v1.DistractorService/DeleteDistractor"
+	// DistractorServiceCreateDistractorProcedure is the fully-qualified name of the DistractorService's
+	// CreateDistractor RPC.
+	DistractorServiceCreateDistractorProcedure = "/krill.v1.DistractorService/CreateDistractor"
+	// DistractorServiceProcessDistractorProcedure is the fully-qualified name of the
+	// DistractorService's ProcessDistractor RPC.
+	DistractorServiceProcessDistractorProcedure = "/krill.v1.DistractorService/ProcessDistractor"
+	// DistractorServiceDeleteDistractorsProcedure is the fully-qualified name of the
+	// DistractorService's DeleteDistractors RPC.
+	DistractorServiceDeleteDistractorsProcedure = "/krill.v1.DistractorService/DeleteDistractors"
 )
 
 // DistractorServiceClient is a client for the krill.v1.DistractorService service.
 type DistractorServiceClient interface {
 	ListDistractors(context.Context, *v1.ListDistractorsRequest) (*v1.ListDistractorsResponse, error)
-	// CreateDistractorUpload returns a presigned URL the browser uploads an
-	// image to. Call AddDistractor with the key once it finishes.
-	CreateDistractorUpload(context.Context, *v1.CreateDistractorUploadRequest) (*v1.CreateDistractorUploadResponse, error)
-	// AddDistractor fails when the upload isn't a JPEG, PNG, or WebP image.
-	AddDistractor(context.Context, *v1.AddDistractorRequest) (*v1.AddDistractorResponse, error)
-	DeleteDistractor(context.Context, *v1.DeleteDistractorRequest) (*v1.DeleteDistractorResponse, error)
+	// CreateDistractor adds a distractor waiting for its image, and returns a
+	// presigned URL the browser uploads the image to. Call ProcessDistractor
+	// once it finishes.
+	CreateDistractor(context.Context, *v1.CreateDistractorRequest) (*v1.CreateDistractorResponse, error)
+	// ProcessDistractor queues turning the upload upright and shrinking it to
+	// at most 2048 pixels on its long side. It also retries a failed one. An
+	// upload that isn't a JPEG, PNG, or WebP image fails it, and the
+	// distractor is deleted.
+	ProcessDistractor(context.Context, *v1.ProcessDistractorRequest) (*v1.ProcessDistractorResponse, error)
+	DeleteDistractors(context.Context, *v1.DeleteDistractorsRequest) (*v1.DeleteDistractorsResponse, error)
 }
 
 // NewDistractorServiceClient constructs a client for the krill.v1.DistractorService service. By
@@ -75,22 +79,22 @@ func NewDistractorServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(distractorServiceMethods.ByName("ListDistractors")),
 			connect.WithClientOptions(opts...),
 		),
-		createDistractorUpload: connect.NewClient[v1.CreateDistractorUploadRequest, v1.CreateDistractorUploadResponse](
+		createDistractor: connect.NewClient[v1.CreateDistractorRequest, v1.CreateDistractorResponse](
 			httpClient,
-			baseURL+DistractorServiceCreateDistractorUploadProcedure,
-			connect.WithSchema(distractorServiceMethods.ByName("CreateDistractorUpload")),
+			baseURL+DistractorServiceCreateDistractorProcedure,
+			connect.WithSchema(distractorServiceMethods.ByName("CreateDistractor")),
 			connect.WithClientOptions(opts...),
 		),
-		addDistractor: connect.NewClient[v1.AddDistractorRequest, v1.AddDistractorResponse](
+		processDistractor: connect.NewClient[v1.ProcessDistractorRequest, v1.ProcessDistractorResponse](
 			httpClient,
-			baseURL+DistractorServiceAddDistractorProcedure,
-			connect.WithSchema(distractorServiceMethods.ByName("AddDistractor")),
+			baseURL+DistractorServiceProcessDistractorProcedure,
+			connect.WithSchema(distractorServiceMethods.ByName("ProcessDistractor")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteDistractor: connect.NewClient[v1.DeleteDistractorRequest, v1.DeleteDistractorResponse](
+		deleteDistractors: connect.NewClient[v1.DeleteDistractorsRequest, v1.DeleteDistractorsResponse](
 			httpClient,
-			baseURL+DistractorServiceDeleteDistractorProcedure,
-			connect.WithSchema(distractorServiceMethods.ByName("DeleteDistractor")),
+			baseURL+DistractorServiceDeleteDistractorsProcedure,
+			connect.WithSchema(distractorServiceMethods.ByName("DeleteDistractors")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -98,10 +102,10 @@ func NewDistractorServiceClient(httpClient connect.HTTPClient, baseURL string, o
 
 // distractorServiceClient implements DistractorServiceClient.
 type distractorServiceClient struct {
-	listDistractors        *connect.Client[v1.ListDistractorsRequest, v1.ListDistractorsResponse]
-	createDistractorUpload *connect.Client[v1.CreateDistractorUploadRequest, v1.CreateDistractorUploadResponse]
-	addDistractor          *connect.Client[v1.AddDistractorRequest, v1.AddDistractorResponse]
-	deleteDistractor       *connect.Client[v1.DeleteDistractorRequest, v1.DeleteDistractorResponse]
+	listDistractors   *connect.Client[v1.ListDistractorsRequest, v1.ListDistractorsResponse]
+	createDistractor  *connect.Client[v1.CreateDistractorRequest, v1.CreateDistractorResponse]
+	processDistractor *connect.Client[v1.ProcessDistractorRequest, v1.ProcessDistractorResponse]
+	deleteDistractors *connect.Client[v1.DeleteDistractorsRequest, v1.DeleteDistractorsResponse]
 }
 
 // ListDistractors calls krill.v1.DistractorService.ListDistractors.
@@ -113,27 +117,27 @@ func (c *distractorServiceClient) ListDistractors(ctx context.Context, req *v1.L
 	return nil, err
 }
 
-// CreateDistractorUpload calls krill.v1.DistractorService.CreateDistractorUpload.
-func (c *distractorServiceClient) CreateDistractorUpload(ctx context.Context, req *v1.CreateDistractorUploadRequest) (*v1.CreateDistractorUploadResponse, error) {
-	response, err := c.createDistractorUpload.CallUnary(ctx, connect.NewRequest(req))
+// CreateDistractor calls krill.v1.DistractorService.CreateDistractor.
+func (c *distractorServiceClient) CreateDistractor(ctx context.Context, req *v1.CreateDistractorRequest) (*v1.CreateDistractorResponse, error) {
+	response, err := c.createDistractor.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// AddDistractor calls krill.v1.DistractorService.AddDistractor.
-func (c *distractorServiceClient) AddDistractor(ctx context.Context, req *v1.AddDistractorRequest) (*v1.AddDistractorResponse, error) {
-	response, err := c.addDistractor.CallUnary(ctx, connect.NewRequest(req))
+// ProcessDistractor calls krill.v1.DistractorService.ProcessDistractor.
+func (c *distractorServiceClient) ProcessDistractor(ctx context.Context, req *v1.ProcessDistractorRequest) (*v1.ProcessDistractorResponse, error) {
+	response, err := c.processDistractor.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
 	return nil, err
 }
 
-// DeleteDistractor calls krill.v1.DistractorService.DeleteDistractor.
-func (c *distractorServiceClient) DeleteDistractor(ctx context.Context, req *v1.DeleteDistractorRequest) (*v1.DeleteDistractorResponse, error) {
-	response, err := c.deleteDistractor.CallUnary(ctx, connect.NewRequest(req))
+// DeleteDistractors calls krill.v1.DistractorService.DeleteDistractors.
+func (c *distractorServiceClient) DeleteDistractors(ctx context.Context, req *v1.DeleteDistractorsRequest) (*v1.DeleteDistractorsResponse, error) {
+	response, err := c.deleteDistractors.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -143,12 +147,16 @@ func (c *distractorServiceClient) DeleteDistractor(ctx context.Context, req *v1.
 // DistractorServiceHandler is an implementation of the krill.v1.DistractorService service.
 type DistractorServiceHandler interface {
 	ListDistractors(context.Context, *v1.ListDistractorsRequest) (*v1.ListDistractorsResponse, error)
-	// CreateDistractorUpload returns a presigned URL the browser uploads an
-	// image to. Call AddDistractor with the key once it finishes.
-	CreateDistractorUpload(context.Context, *v1.CreateDistractorUploadRequest) (*v1.CreateDistractorUploadResponse, error)
-	// AddDistractor fails when the upload isn't a JPEG, PNG, or WebP image.
-	AddDistractor(context.Context, *v1.AddDistractorRequest) (*v1.AddDistractorResponse, error)
-	DeleteDistractor(context.Context, *v1.DeleteDistractorRequest) (*v1.DeleteDistractorResponse, error)
+	// CreateDistractor adds a distractor waiting for its image, and returns a
+	// presigned URL the browser uploads the image to. Call ProcessDistractor
+	// once it finishes.
+	CreateDistractor(context.Context, *v1.CreateDistractorRequest) (*v1.CreateDistractorResponse, error)
+	// ProcessDistractor queues turning the upload upright and shrinking it to
+	// at most 2048 pixels on its long side. It also retries a failed one. An
+	// upload that isn't a JPEG, PNG, or WebP image fails it, and the
+	// distractor is deleted.
+	ProcessDistractor(context.Context, *v1.ProcessDistractorRequest) (*v1.ProcessDistractorResponse, error)
+	DeleteDistractors(context.Context, *v1.DeleteDistractorsRequest) (*v1.DeleteDistractorsResponse, error)
 }
 
 // NewDistractorServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -164,34 +172,34 @@ func NewDistractorServiceHandler(svc DistractorServiceHandler, opts ...connect.H
 		connect.WithSchema(distractorServiceMethods.ByName("ListDistractors")),
 		connect.WithHandlerOptions(opts...),
 	)
-	distractorServiceCreateDistractorUploadHandler := connect.NewUnaryHandlerSimple(
-		DistractorServiceCreateDistractorUploadProcedure,
-		svc.CreateDistractorUpload,
-		connect.WithSchema(distractorServiceMethods.ByName("CreateDistractorUpload")),
+	distractorServiceCreateDistractorHandler := connect.NewUnaryHandlerSimple(
+		DistractorServiceCreateDistractorProcedure,
+		svc.CreateDistractor,
+		connect.WithSchema(distractorServiceMethods.ByName("CreateDistractor")),
 		connect.WithHandlerOptions(opts...),
 	)
-	distractorServiceAddDistractorHandler := connect.NewUnaryHandlerSimple(
-		DistractorServiceAddDistractorProcedure,
-		svc.AddDistractor,
-		connect.WithSchema(distractorServiceMethods.ByName("AddDistractor")),
+	distractorServiceProcessDistractorHandler := connect.NewUnaryHandlerSimple(
+		DistractorServiceProcessDistractorProcedure,
+		svc.ProcessDistractor,
+		connect.WithSchema(distractorServiceMethods.ByName("ProcessDistractor")),
 		connect.WithHandlerOptions(opts...),
 	)
-	distractorServiceDeleteDistractorHandler := connect.NewUnaryHandlerSimple(
-		DistractorServiceDeleteDistractorProcedure,
-		svc.DeleteDistractor,
-		connect.WithSchema(distractorServiceMethods.ByName("DeleteDistractor")),
+	distractorServiceDeleteDistractorsHandler := connect.NewUnaryHandlerSimple(
+		DistractorServiceDeleteDistractorsProcedure,
+		svc.DeleteDistractors,
+		connect.WithSchema(distractorServiceMethods.ByName("DeleteDistractors")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/krill.v1.DistractorService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DistractorServiceListDistractorsProcedure:
 			distractorServiceListDistractorsHandler.ServeHTTP(w, r)
-		case DistractorServiceCreateDistractorUploadProcedure:
-			distractorServiceCreateDistractorUploadHandler.ServeHTTP(w, r)
-		case DistractorServiceAddDistractorProcedure:
-			distractorServiceAddDistractorHandler.ServeHTTP(w, r)
-		case DistractorServiceDeleteDistractorProcedure:
-			distractorServiceDeleteDistractorHandler.ServeHTTP(w, r)
+		case DistractorServiceCreateDistractorProcedure:
+			distractorServiceCreateDistractorHandler.ServeHTTP(w, r)
+		case DistractorServiceProcessDistractorProcedure:
+			distractorServiceProcessDistractorHandler.ServeHTTP(w, r)
+		case DistractorServiceDeleteDistractorsProcedure:
+			distractorServiceDeleteDistractorsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -205,14 +213,14 @@ func (UnimplementedDistractorServiceHandler) ListDistractors(context.Context, *v
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.ListDistractors is not implemented"))
 }
 
-func (UnimplementedDistractorServiceHandler) CreateDistractorUpload(context.Context, *v1.CreateDistractorUploadRequest) (*v1.CreateDistractorUploadResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.CreateDistractorUpload is not implemented"))
+func (UnimplementedDistractorServiceHandler) CreateDistractor(context.Context, *v1.CreateDistractorRequest) (*v1.CreateDistractorResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.CreateDistractor is not implemented"))
 }
 
-func (UnimplementedDistractorServiceHandler) AddDistractor(context.Context, *v1.AddDistractorRequest) (*v1.AddDistractorResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.AddDistractor is not implemented"))
+func (UnimplementedDistractorServiceHandler) ProcessDistractor(context.Context, *v1.ProcessDistractorRequest) (*v1.ProcessDistractorResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.ProcessDistractor is not implemented"))
 }
 
-func (UnimplementedDistractorServiceHandler) DeleteDistractor(context.Context, *v1.DeleteDistractorRequest) (*v1.DeleteDistractorResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.DeleteDistractor is not implemented"))
+func (UnimplementedDistractorServiceHandler) DeleteDistractors(context.Context, *v1.DeleteDistractorsRequest) (*v1.DeleteDistractorsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.DistractorService.DeleteDistractors is not implemented"))
 }

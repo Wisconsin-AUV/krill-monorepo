@@ -2,17 +2,17 @@
 // @generated from file krill/v1/distractor.proto (package krill.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Message } from "@bufbuild/protobuf";
+import type { Message, UnknownEnum } from "@bufbuild/protobuf";
 
 /**
  * Describes the file krill/v1/distractor.proto.
  */
 export const file_krill_v1_distractor: GenFile = /*@__PURE__*/
-  fileDesc("ChlrcmlsbC92MS9kaXN0cmFjdG9yLnByb3RvEghrcmlsbC52MSKuAQoKRGlzdHJhY3RvchIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSEAoIZmlsZW5hbWUYAyABKAkSDQoFd2lkdGgYBCABKAUSDgoGaGVpZ2h0GAUgASgFEhIKCnNpemVfYnl0ZXMYBiABKAMSEgoKY3JlYXRlZF9ieRgHIAEoCRIuCgpjcmVhdGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIYChZMaXN0RGlzdHJhY3RvcnNSZXF1ZXN0IkQKF0xpc3REaXN0cmFjdG9yc1Jlc3BvbnNlEikKC2Rpc3RyYWN0b3JzGAEgAygLMhQua3JpbGwudjEuRGlzdHJhY3RvciIfCh1DcmVhdGVEaXN0cmFjdG9yVXBsb2FkUmVxdWVzdCJBCh5DcmVhdGVEaXN0cmFjdG9yVXBsb2FkUmVzcG9uc2USCwoDa2V5GAEgASgJEhIKCnVwbG9hZF91cmwYAiABKAkiNQoUQWRkRGlzdHJhY3RvclJlcXVlc3QSCwoDa2V5GAEgASgJEhAKCGZpbGVuYW1lGAIgASgJIkEKFUFkZERpc3RyYWN0b3JSZXNwb25zZRIoCgpkaXN0cmFjdG9yGAEgASgLMhQua3JpbGwudjEuRGlzdHJhY3RvciIlChdEZWxldGVEaXN0cmFjdG9yUmVxdWVzdBIKCgJpZBgBIAEoAyIaChhEZWxldGVEaXN0cmFjdG9yUmVzcG9uc2UyjQMKEURpc3RyYWN0b3JTZXJ2aWNlElgKD0xpc3REaXN0cmFjdG9ycxIgLmtyaWxsLnYxLkxpc3REaXN0cmFjdG9yc1JlcXVlc3QaIS5rcmlsbC52MS5MaXN0RGlzdHJhY3RvcnNSZXNwb25zZSIAEm0KFkNyZWF0ZURpc3RyYWN0b3JVcGxvYWQSJy5rcmlsbC52MS5DcmVhdGVEaXN0cmFjdG9yVXBsb2FkUmVxdWVzdBooLmtyaWxsLnYxLkNyZWF0ZURpc3RyYWN0b3JVcGxvYWRSZXNwb25zZSIAElIKDUFkZERpc3RyYWN0b3ISHi5rcmlsbC52MS5BZGREaXN0cmFjdG9yUmVxdWVzdBofLmtyaWxsLnYxLkFkZERpc3RyYWN0b3JSZXNwb25zZSIAElsKEERlbGV0ZURpc3RyYWN0b3ISIS5rcmlsbC52MS5EZWxldGVEaXN0cmFjdG9yUmVxdWVzdBoiLmtyaWxsLnYxLkRlbGV0ZURpc3RyYWN0b3JSZXNwb25zZSIAQpABCgxjb20ua3JpbGwudjFCD0Rpc3RyYWN0b3JQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChlrcmlsbC92MS9kaXN0cmFjdG9yLnByb3RvEghrcmlsbC52MSKAAgoKRGlzdHJhY3RvchIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSFQoNdGh1bWJuYWlsX3VybBgJIAEoCRIQCghmaWxlbmFtZRgDIAEoCRINCgV3aWR0aBgEIAEoBRIOCgZoZWlnaHQYBSABKAUSEgoKc2l6ZV9ieXRlcxgGIAEoAxISCgpjcmVhdGVkX2J5GAcgASgJEi4KCmNyZWF0ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEioKBnN0YXR1cxgKIAEoDjIaLmtyaWxsLnYxLkRpc3RyYWN0b3JTdGF0dXMSDQoFZXJyb3IYCyABKAkiGAoWTGlzdERpc3RyYWN0b3JzUmVxdWVzdCJEChdMaXN0RGlzdHJhY3RvcnNSZXNwb25zZRIpCgtkaXN0cmFjdG9ycxgBIAMoCzIULmtyaWxsLnYxLkRpc3RyYWN0b3IiOQoXQ3JlYXRlRGlzdHJhY3RvclJlcXVlc3QSEAoIZmlsZW5hbWUYASABKAkSDAoEc2l6ZRgCIAEoAyJYChhDcmVhdGVEaXN0cmFjdG9yUmVzcG9uc2USKAoKZGlzdHJhY3RvchgBIAEoCzIULmtyaWxsLnYxLkRpc3RyYWN0b3ISEgoKdXBsb2FkX3VybBgCIAEoCSImChhQcm9jZXNzRGlzdHJhY3RvclJlcXVlc3QSCgoCaWQYASABKAMiGwoZUHJvY2Vzc0Rpc3RyYWN0b3JSZXNwb25zZSInChhEZWxldGVEaXN0cmFjdG9yc1JlcXVlc3QSCwoDaWRzGAEgAygDIhsKGURlbGV0ZURpc3RyYWN0b3JzUmVzcG9uc2Uq0QEKEERpc3RyYWN0b3JTdGF0dXMSIQodRElTVFJBQ1RPUl9TVEFUVVNfVU5TUEVDSUZJRUQQABIfChtESVNUUkFDVE9SX1NUQVRVU19VUExPQURJTkcQARIcChhESVNUUkFDVE9SX1NUQVRVU19RVUVVRUQQAhIgChxESVNUUkFDVE9SX1NUQVRVU19QUk9DRVNTSU5HEAMSGwoXRElTVFJBQ1RPUl9TVEFUVVNfUkVBRFkQBBIcChhESVNUUkFDVE9SX1NUQVRVU19GQUlMRUQQBTKKAwoRRGlzdHJhY3RvclNlcnZpY2USWAoPTGlzdERpc3RyYWN0b3JzEiAua3JpbGwudjEuTGlzdERpc3RyYWN0b3JzUmVxdWVzdBohLmtyaWxsLnYxLkxpc3REaXN0cmFjdG9yc1Jlc3BvbnNlIgASWwoQQ3JlYXRlRGlzdHJhY3RvchIhLmtyaWxsLnYxLkNyZWF0ZURpc3RyYWN0b3JSZXF1ZXN0GiIua3JpbGwudjEuQ3JlYXRlRGlzdHJhY3RvclJlc3BvbnNlIgASXgoRUHJvY2Vzc0Rpc3RyYWN0b3ISIi5rcmlsbC52MS5Qcm9jZXNzRGlzdHJhY3RvclJlcXVlc3QaIy5rcmlsbC52MS5Qcm9jZXNzRGlzdHJhY3RvclJlc3BvbnNlIgASXgoRRGVsZXRlRGlzdHJhY3RvcnMSIi5rcmlsbC52MS5EZWxldGVEaXN0cmFjdG9yc1JlcXVlc3QaIy5rcmlsbC52MS5EZWxldGVEaXN0cmFjdG9yc1Jlc3BvbnNlIgBCkAEKDGNvbS5rcmlsbC52MUIPRGlzdHJhY3RvclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message krill.v1.Distractor
@@ -24,11 +24,16 @@ export type Distractor = Message<"krill.v1.Distractor"> & {
   id: bigint;
 
   /**
-   * Presigned MinIO URL.
+   * Presigned MinIO URLs, set once the distractor is ready.
    *
    * @generated from field: string url = 2;
    */
   url: string;
+
+  /**
+   * @generated from field: string thumbnail_url = 9;
+   */
+  thumbnailUrl: string;
 
   /**
    * @generated from field: string filename = 3;
@@ -36,6 +41,8 @@ export type Distractor = Message<"krill.v1.Distractor"> & {
   filename: string;
 
   /**
+   * The processed image's, so zero until the distractor is ready.
+   *
    * @generated from field: int32 width = 4;
    */
   width: number;
@@ -59,6 +66,16 @@ export type Distractor = Message<"krill.v1.Distractor"> & {
    * @generated from field: google.protobuf.Timestamp created_at = 8;
    */
   createdAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: krill.v1.DistractorStatus status = 10;
+   */
+  status: DistractorStatus;
+
+  /**
+   * @generated from field: string error = 11;
+   */
+  error: string;
 };
 
 /**
@@ -101,26 +118,35 @@ export const ListDistractorsResponseSchema: GenMessage<ListDistractorsResponse> 
   messageDesc(file_krill_v1_distractor, 2);
 
 /**
- * @generated from message krill.v1.CreateDistractorUploadRequest
+ * @generated from message krill.v1.CreateDistractorRequest
  */
-export type CreateDistractorUploadRequest = Message<"krill.v1.CreateDistractorUploadRequest"> & {
+export type CreateDistractorRequest = Message<"krill.v1.CreateDistractorRequest"> & {
+  /**
+   * @generated from field: string filename = 1;
+   */
+  filename: string;
+
+  /**
+   * @generated from field: int64 size = 2;
+   */
+  size: bigint;
 };
 
 /**
- * Describes the message krill.v1.CreateDistractorUploadRequest.
- * Use `create(CreateDistractorUploadRequestSchema)` to create a new message.
+ * Describes the message krill.v1.CreateDistractorRequest.
+ * Use `create(CreateDistractorRequestSchema)` to create a new message.
  */
-export const CreateDistractorUploadRequestSchema: GenMessage<CreateDistractorUploadRequest> = /*@__PURE__*/
+export const CreateDistractorRequestSchema: GenMessage<CreateDistractorRequest> = /*@__PURE__*/
   messageDesc(file_krill_v1_distractor, 3);
 
 /**
- * @generated from message krill.v1.CreateDistractorUploadResponse
+ * @generated from message krill.v1.CreateDistractorResponse
  */
-export type CreateDistractorUploadResponse = Message<"krill.v1.CreateDistractorUploadResponse"> & {
+export type CreateDistractorResponse = Message<"krill.v1.CreateDistractorResponse"> & {
   /**
-   * @generated from field: string key = 1;
+   * @generated from field: krill.v1.Distractor distractor = 1;
    */
-  key: string;
+  distractor?: Distractor | undefined;
 
   /**
    * @generated from field: string upload_url = 2;
@@ -129,55 +155,16 @@ export type CreateDistractorUploadResponse = Message<"krill.v1.CreateDistractorU
 };
 
 /**
- * Describes the message krill.v1.CreateDistractorUploadResponse.
- * Use `create(CreateDistractorUploadResponseSchema)` to create a new message.
+ * Describes the message krill.v1.CreateDistractorResponse.
+ * Use `create(CreateDistractorResponseSchema)` to create a new message.
  */
-export const CreateDistractorUploadResponseSchema: GenMessage<CreateDistractorUploadResponse> = /*@__PURE__*/
+export const CreateDistractorResponseSchema: GenMessage<CreateDistractorResponse> = /*@__PURE__*/
   messageDesc(file_krill_v1_distractor, 4);
 
 /**
- * @generated from message krill.v1.AddDistractorRequest
+ * @generated from message krill.v1.ProcessDistractorRequest
  */
-export type AddDistractorRequest = Message<"krill.v1.AddDistractorRequest"> & {
-  /**
-   * @generated from field: string key = 1;
-   */
-  key: string;
-
-  /**
-   * @generated from field: string filename = 2;
-   */
-  filename: string;
-};
-
-/**
- * Describes the message krill.v1.AddDistractorRequest.
- * Use `create(AddDistractorRequestSchema)` to create a new message.
- */
-export const AddDistractorRequestSchema: GenMessage<AddDistractorRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_distractor, 5);
-
-/**
- * @generated from message krill.v1.AddDistractorResponse
- */
-export type AddDistractorResponse = Message<"krill.v1.AddDistractorResponse"> & {
-  /**
-   * @generated from field: krill.v1.Distractor distractor = 1;
-   */
-  distractor?: Distractor | undefined;
-};
-
-/**
- * Describes the message krill.v1.AddDistractorResponse.
- * Use `create(AddDistractorResponseSchema)` to create a new message.
- */
-export const AddDistractorResponseSchema: GenMessage<AddDistractorResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_distractor, 6);
-
-/**
- * @generated from message krill.v1.DeleteDistractorRequest
- */
-export type DeleteDistractorRequest = Message<"krill.v1.DeleteDistractorRequest"> & {
+export type ProcessDistractorRequest = Message<"krill.v1.ProcessDistractorRequest"> & {
   /**
    * @generated from field: int64 id = 1;
    */
@@ -185,24 +172,100 @@ export type DeleteDistractorRequest = Message<"krill.v1.DeleteDistractorRequest"
 };
 
 /**
- * Describes the message krill.v1.DeleteDistractorRequest.
- * Use `create(DeleteDistractorRequestSchema)` to create a new message.
+ * Describes the message krill.v1.ProcessDistractorRequest.
+ * Use `create(ProcessDistractorRequestSchema)` to create a new message.
  */
-export const DeleteDistractorRequestSchema: GenMessage<DeleteDistractorRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_distractor, 7);
+export const ProcessDistractorRequestSchema: GenMessage<ProcessDistractorRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_distractor, 5);
 
 /**
- * @generated from message krill.v1.DeleteDistractorResponse
+ * @generated from message krill.v1.ProcessDistractorResponse
  */
-export type DeleteDistractorResponse = Message<"krill.v1.DeleteDistractorResponse"> & {
+export type ProcessDistractorResponse = Message<"krill.v1.ProcessDistractorResponse"> & {
 };
 
 /**
- * Describes the message krill.v1.DeleteDistractorResponse.
- * Use `create(DeleteDistractorResponseSchema)` to create a new message.
+ * Describes the message krill.v1.ProcessDistractorResponse.
+ * Use `create(ProcessDistractorResponseSchema)` to create a new message.
  */
-export const DeleteDistractorResponseSchema: GenMessage<DeleteDistractorResponse> = /*@__PURE__*/
+export const ProcessDistractorResponseSchema: GenMessage<ProcessDistractorResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_distractor, 6);
+
+/**
+ * @generated from message krill.v1.DeleteDistractorsRequest
+ */
+export type DeleteDistractorsRequest = Message<"krill.v1.DeleteDistractorsRequest"> & {
+  /**
+   * @generated from field: repeated int64 ids = 1;
+   */
+  ids: bigint[];
+};
+
+/**
+ * Describes the message krill.v1.DeleteDistractorsRequest.
+ * Use `create(DeleteDistractorsRequestSchema)` to create a new message.
+ */
+export const DeleteDistractorsRequestSchema: GenMessage<DeleteDistractorsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_distractor, 7);
+
+/**
+ * @generated from message krill.v1.DeleteDistractorsResponse
+ */
+export type DeleteDistractorsResponse = Message<"krill.v1.DeleteDistractorsResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.DeleteDistractorsResponse.
+ * Use `create(DeleteDistractorsResponseSchema)` to create a new message.
+ */
+export const DeleteDistractorsResponseSchema: GenMessage<DeleteDistractorsResponse> = /*@__PURE__*/
   messageDesc(file_krill_v1_distractor, 8);
+
+/**
+ * @generated from enum krill.v1.DistractorStatus
+ */
+export const DistractorStatus = {
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_UPLOADING = 1;
+   */
+  UPLOADING: 1,
+
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_QUEUED = 2;
+   */
+  QUEUED: 2,
+
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_PROCESSING = 3;
+   */
+  PROCESSING: 3,
+
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_READY = 4;
+   */
+  READY: 4,
+
+  /**
+   * @generated from enum value: DISTRACTOR_STATUS_FAILED = 5;
+   */
+  FAILED: 5,
+} as const;
+
+/**
+ * @generated from enum krill.v1.DistractorStatus
+ */
+export type DistractorStatus = (typeof DistractorStatus)[keyof typeof DistractorStatus] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.DistractorStatus.
+ */
+export const DistractorStatusSchema: GenEnum<DistractorStatus> = /*@__PURE__*/
+  enumDesc(file_krill_v1_distractor, 0);
 
 /**
  * DistractorService manages the library of distractor images: scenes with
@@ -221,33 +284,37 @@ export const DistractorService: GenService<{
     output: typeof ListDistractorsResponseSchema;
   },
   /**
-   * CreateDistractorUpload returns a presigned URL the browser uploads an
-   * image to. Call AddDistractor with the key once it finishes.
+   * CreateDistractor adds a distractor waiting for its image, and returns a
+   * presigned URL the browser uploads the image to. Call ProcessDistractor
+   * once it finishes.
    *
-   * @generated from rpc krill.v1.DistractorService.CreateDistractorUpload
+   * @generated from rpc krill.v1.DistractorService.CreateDistractor
    */
-  createDistractorUpload: {
+  createDistractor: {
     methodKind: "unary";
-    input: typeof CreateDistractorUploadRequestSchema;
-    output: typeof CreateDistractorUploadResponseSchema;
+    input: typeof CreateDistractorRequestSchema;
+    output: typeof CreateDistractorResponseSchema;
   },
   /**
-   * AddDistractor fails when the upload isn't a JPEG, PNG, or WebP image.
+   * ProcessDistractor queues turning the upload upright and shrinking it to
+   * at most 2048 pixels on its long side. It also retries a failed one. An
+   * upload that isn't a JPEG, PNG, or WebP image fails it, and the
+   * distractor is deleted.
    *
-   * @generated from rpc krill.v1.DistractorService.AddDistractor
+   * @generated from rpc krill.v1.DistractorService.ProcessDistractor
    */
-  addDistractor: {
+  processDistractor: {
     methodKind: "unary";
-    input: typeof AddDistractorRequestSchema;
-    output: typeof AddDistractorResponseSchema;
+    input: typeof ProcessDistractorRequestSchema;
+    output: typeof ProcessDistractorResponseSchema;
   },
   /**
-   * @generated from rpc krill.v1.DistractorService.DeleteDistractor
+   * @generated from rpc krill.v1.DistractorService.DeleteDistractors
    */
-  deleteDistractor: {
+  deleteDistractors: {
     methodKind: "unary";
-    input: typeof DeleteDistractorRequestSchema;
-    output: typeof DeleteDistractorResponseSchema;
+    input: typeof DeleteDistractorsRequestSchema;
+    output: typeof DeleteDistractorsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_krill_v1_distractor, 0);

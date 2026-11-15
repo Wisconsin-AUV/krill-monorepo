@@ -22,17 +22,79 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DistractorStatus int32
+
+const (
+	DistractorStatus_DISTRACTOR_STATUS_UNSPECIFIED DistractorStatus = 0
+	DistractorStatus_DISTRACTOR_STATUS_UPLOADING   DistractorStatus = 1
+	DistractorStatus_DISTRACTOR_STATUS_QUEUED      DistractorStatus = 2
+	DistractorStatus_DISTRACTOR_STATUS_PROCESSING  DistractorStatus = 3
+	DistractorStatus_DISTRACTOR_STATUS_READY       DistractorStatus = 4
+	DistractorStatus_DISTRACTOR_STATUS_FAILED      DistractorStatus = 5
+)
+
+// Enum value maps for DistractorStatus.
+var (
+	DistractorStatus_name = map[int32]string{
+		0: "DISTRACTOR_STATUS_UNSPECIFIED",
+		1: "DISTRACTOR_STATUS_UPLOADING",
+		2: "DISTRACTOR_STATUS_QUEUED",
+		3: "DISTRACTOR_STATUS_PROCESSING",
+		4: "DISTRACTOR_STATUS_READY",
+		5: "DISTRACTOR_STATUS_FAILED",
+	}
+	DistractorStatus_value = map[string]int32{
+		"DISTRACTOR_STATUS_UNSPECIFIED": 0,
+		"DISTRACTOR_STATUS_UPLOADING":   1,
+		"DISTRACTOR_STATUS_QUEUED":      2,
+		"DISTRACTOR_STATUS_PROCESSING":  3,
+		"DISTRACTOR_STATUS_READY":       4,
+		"DISTRACTOR_STATUS_FAILED":      5,
+	}
+)
+
+func (x DistractorStatus) Enum() *DistractorStatus {
+	p := new(DistractorStatus)
+	*p = x
+	return p
+}
+
+func (x DistractorStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DistractorStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_distractor_proto_enumTypes[0].Descriptor()
+}
+
+func (DistractorStatus) Type() protoreflect.EnumType {
+	return &file_krill_v1_distractor_proto_enumTypes[0]
+}
+
+func (x DistractorStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DistractorStatus.Descriptor instead.
+func (DistractorStatus) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{0}
+}
+
 type Distractor struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Presigned MinIO URL.
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	Filename      string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	// Presigned MinIO URLs, set once the distractor is ready.
+	Url          string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	ThumbnailUrl string `protobuf:"bytes,9,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
+	Filename     string `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	// The processed image's, so zero until the distractor is ready.
 	Width         int32                  `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
 	Height        int32                  `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
 	SizeBytes     int64                  `protobuf:"varint,6,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
 	CreatedBy     string                 `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Status        DistractorStatus       `protobuf:"varint,10,opt,name=status,proto3,enum=krill.v1.DistractorStatus" json:"status,omitempty"`
+	Error         string                 `protobuf:"bytes,11,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -81,6 +143,13 @@ func (x *Distractor) GetUrl() string {
 	return ""
 }
 
+func (x *Distractor) GetThumbnailUrl() string {
+	if x != nil {
+		return x.ThumbnailUrl
+	}
+	return ""
+}
+
 func (x *Distractor) GetFilename() string {
 	if x != nil {
 		return x.Filename
@@ -121,6 +190,20 @@ func (x *Distractor) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *Distractor) GetStatus() DistractorStatus {
+	if x != nil {
+		return x.Status
+	}
+	return DistractorStatus_DISTRACTOR_STATUS_UNSPECIFIED
+}
+
+func (x *Distractor) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
 }
 
 type ListDistractorsRequest struct {
@@ -204,26 +287,28 @@ func (x *ListDistractorsResponse) GetDistractors() []*Distractor {
 	return nil
 }
 
-type CreateDistractorUploadRequest struct {
+type CreateDistractorRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	Size          int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateDistractorUploadRequest) Reset() {
-	*x = CreateDistractorUploadRequest{}
+func (x *CreateDistractorRequest) Reset() {
+	*x = CreateDistractorRequest{}
 	mi := &file_krill_v1_distractor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateDistractorUploadRequest) String() string {
+func (x *CreateDistractorRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateDistractorUploadRequest) ProtoMessage() {}
+func (*CreateDistractorRequest) ProtoMessage() {}
 
-func (x *CreateDistractorUploadRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateDistractorRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_krill_v1_distractor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -235,137 +320,48 @@ func (x *CreateDistractorUploadRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateDistractorUploadRequest.ProtoReflect.Descriptor instead.
-func (*CreateDistractorUploadRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateDistractorRequest.ProtoReflect.Descriptor instead.
+func (*CreateDistractorRequest) Descriptor() ([]byte, []int) {
 	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{3}
 }
 
-type CreateDistractorUploadResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	UploadUrl     string                 `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateDistractorUploadResponse) Reset() {
-	*x = CreateDistractorUploadResponse{}
-	mi := &file_krill_v1_distractor_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateDistractorUploadResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateDistractorUploadResponse) ProtoMessage() {}
-
-func (x *CreateDistractorUploadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_distractor_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateDistractorUploadResponse.ProtoReflect.Descriptor instead.
-func (*CreateDistractorUploadResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CreateDistractorUploadResponse) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *CreateDistractorUploadResponse) GetUploadUrl() string {
-	if x != nil {
-		return x.UploadUrl
-	}
-	return ""
-}
-
-type AddDistractorRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AddDistractorRequest) Reset() {
-	*x = AddDistractorRequest{}
-	mi := &file_krill_v1_distractor_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AddDistractorRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddDistractorRequest) ProtoMessage() {}
-
-func (x *AddDistractorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_distractor_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddDistractorRequest.ProtoReflect.Descriptor instead.
-func (*AddDistractorRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *AddDistractorRequest) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *AddDistractorRequest) GetFilename() string {
+func (x *CreateDistractorRequest) GetFilename() string {
 	if x != nil {
 		return x.Filename
 	}
 	return ""
 }
 
-type AddDistractorResponse struct {
+func (x *CreateDistractorRequest) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type CreateDistractorResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Distractor    *Distractor            `protobuf:"bytes,1,opt,name=distractor,proto3" json:"distractor,omitempty"`
+	UploadUrl     string                 `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AddDistractorResponse) Reset() {
-	*x = AddDistractorResponse{}
-	mi := &file_krill_v1_distractor_proto_msgTypes[6]
+func (x *CreateDistractorResponse) Reset() {
+	*x = CreateDistractorResponse{}
+	mi := &file_krill_v1_distractor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AddDistractorResponse) String() string {
+func (x *CreateDistractorResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddDistractorResponse) ProtoMessage() {}
+func (*CreateDistractorResponse) ProtoMessage() {}
 
-func (x *AddDistractorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_distractor_proto_msgTypes[6]
+func (x *CreateDistractorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_distractor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,40 +372,47 @@ func (x *AddDistractorResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddDistractorResponse.ProtoReflect.Descriptor instead.
-func (*AddDistractorResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use CreateDistractorResponse.ProtoReflect.Descriptor instead.
+func (*CreateDistractorResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *AddDistractorResponse) GetDistractor() *Distractor {
+func (x *CreateDistractorResponse) GetDistractor() *Distractor {
 	if x != nil {
 		return x.Distractor
 	}
 	return nil
 }
 
-type DeleteDistractorRequest struct {
+func (x *CreateDistractorResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+type ProcessDistractorRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteDistractorRequest) Reset() {
-	*x = DeleteDistractorRequest{}
-	mi := &file_krill_v1_distractor_proto_msgTypes[7]
+func (x *ProcessDistractorRequest) Reset() {
+	*x = ProcessDistractorRequest{}
+	mi := &file_krill_v1_distractor_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteDistractorRequest) String() string {
+func (x *ProcessDistractorRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteDistractorRequest) ProtoMessage() {}
+func (*ProcessDistractorRequest) ProtoMessage() {}
 
-func (x *DeleteDistractorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_distractor_proto_msgTypes[7]
+func (x *ProcessDistractorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_distractor_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,38 +423,118 @@ func (x *DeleteDistractorRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteDistractorRequest.ProtoReflect.Descriptor instead.
-func (*DeleteDistractorRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use ProcessDistractorRequest.ProtoReflect.Descriptor instead.
+func (*ProcessDistractorRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *DeleteDistractorRequest) GetId() int64 {
+func (x *ProcessDistractorRequest) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-type DeleteDistractorResponse struct {
+type ProcessDistractorResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteDistractorResponse) Reset() {
-	*x = DeleteDistractorResponse{}
+func (x *ProcessDistractorResponse) Reset() {
+	*x = ProcessDistractorResponse{}
+	mi := &file_krill_v1_distractor_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProcessDistractorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProcessDistractorResponse) ProtoMessage() {}
+
+func (x *ProcessDistractorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_distractor_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProcessDistractorResponse.ProtoReflect.Descriptor instead.
+func (*ProcessDistractorResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{6}
+}
+
+type DeleteDistractorsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []int64                `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDistractorsRequest) Reset() {
+	*x = DeleteDistractorsRequest{}
+	mi := &file_krill_v1_distractor_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDistractorsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDistractorsRequest) ProtoMessage() {}
+
+func (x *DeleteDistractorsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_distractor_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDistractorsRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDistractorsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DeleteDistractorsRequest) GetIds() []int64 {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+type DeleteDistractorsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDistractorsResponse) Reset() {
+	*x = DeleteDistractorsResponse{}
 	mi := &file_krill_v1_distractor_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteDistractorResponse) String() string {
+func (x *DeleteDistractorsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteDistractorResponse) ProtoMessage() {}
+func (*DeleteDistractorsResponse) ProtoMessage() {}
 
-func (x *DeleteDistractorResponse) ProtoReflect() protoreflect.Message {
+func (x *DeleteDistractorsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_krill_v1_distractor_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -463,8 +546,8 @@ func (x *DeleteDistractorResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteDistractorResponse.ProtoReflect.Descriptor instead.
-func (*DeleteDistractorResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteDistractorsResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDistractorsResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_distractor_proto_rawDescGZIP(), []int{8}
 }
 
@@ -472,11 +555,12 @@ var File_krill_v1_distractor_proto protoreflect.FileDescriptor
 
 const file_krill_v1_distractor_proto_rawDesc = "" +
 	"\n" +
-	"\x19krill/v1/distractor.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf1\x01\n" +
+	"\x19krill/v1/distractor.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe0\x02\n" +
 	"\n" +
 	"Distractor\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12#\n" +
+	"\rthumbnail_url\x18\t \x01(\tR\fthumbnailUrl\x12\x1a\n" +
 	"\bfilename\x18\x03 \x01(\tR\bfilename\x12\x14\n" +
 	"\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x05 \x01(\x05R\x06height\x12\x1d\n" +
@@ -485,30 +569,40 @@ const file_krill_v1_distractor_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\a \x01(\tR\tcreatedBy\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x18\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x122\n" +
+	"\x06status\x18\n" +
+	" \x01(\x0e2\x1a.krill.v1.DistractorStatusR\x06status\x12\x14\n" +
+	"\x05error\x18\v \x01(\tR\x05error\"\x18\n" +
 	"\x16ListDistractorsRequest\"Q\n" +
 	"\x17ListDistractorsResponse\x126\n" +
-	"\vdistractors\x18\x01 \x03(\v2\x14.krill.v1.DistractorR\vdistractors\"\x1f\n" +
-	"\x1dCreateDistractorUploadRequest\"Q\n" +
-	"\x1eCreateDistractorUploadResponse\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1d\n" +
-	"\n" +
-	"upload_url\x18\x02 \x01(\tR\tuploadUrl\"D\n" +
-	"\x14AddDistractorRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\"M\n" +
-	"\x15AddDistractorResponse\x124\n" +
+	"\vdistractors\x18\x01 \x03(\v2\x14.krill.v1.DistractorR\vdistractors\"I\n" +
+	"\x17CreateDistractorRequest\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x03R\x04size\"o\n" +
+	"\x18CreateDistractorResponse\x124\n" +
 	"\n" +
 	"distractor\x18\x01 \x01(\v2\x14.krill.v1.DistractorR\n" +
-	"distractor\")\n" +
-	"\x17DeleteDistractorRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1a\n" +
-	"\x18DeleteDistractorResponse2\x8d\x03\n" +
+	"distractor\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x02 \x01(\tR\tuploadUrl\"*\n" +
+	"\x18ProcessDistractorRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1b\n" +
+	"\x19ProcessDistractorResponse\",\n" +
+	"\x18DeleteDistractorsRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\x03R\x03ids\"\x1b\n" +
+	"\x19DeleteDistractorsResponse*\xd1\x01\n" +
+	"\x10DistractorStatus\x12!\n" +
+	"\x1dDISTRACTOR_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
+	"\x1bDISTRACTOR_STATUS_UPLOADING\x10\x01\x12\x1c\n" +
+	"\x18DISTRACTOR_STATUS_QUEUED\x10\x02\x12 \n" +
+	"\x1cDISTRACTOR_STATUS_PROCESSING\x10\x03\x12\x1b\n" +
+	"\x17DISTRACTOR_STATUS_READY\x10\x04\x12\x1c\n" +
+	"\x18DISTRACTOR_STATUS_FAILED\x10\x052\x8a\x03\n" +
 	"\x11DistractorService\x12X\n" +
-	"\x0fListDistractors\x12 .krill.v1.ListDistractorsRequest\x1a!.krill.v1.ListDistractorsResponse\"\x00\x12m\n" +
-	"\x16CreateDistractorUpload\x12'.krill.v1.CreateDistractorUploadRequest\x1a(.krill.v1.CreateDistractorUploadResponse\"\x00\x12R\n" +
-	"\rAddDistractor\x12\x1e.krill.v1.AddDistractorRequest\x1a\x1f.krill.v1.AddDistractorResponse\"\x00\x12[\n" +
-	"\x10DeleteDistractor\x12!.krill.v1.DeleteDistractorRequest\x1a\".krill.v1.DeleteDistractorResponse\"\x00B\x90\x01\n" +
+	"\x0fListDistractors\x12 .krill.v1.ListDistractorsRequest\x1a!.krill.v1.ListDistractorsResponse\"\x00\x12[\n" +
+	"\x10CreateDistractor\x12!.krill.v1.CreateDistractorRequest\x1a\".krill.v1.CreateDistractorResponse\"\x00\x12^\n" +
+	"\x11ProcessDistractor\x12\".krill.v1.ProcessDistractorRequest\x1a#.krill.v1.ProcessDistractorResponse\"\x00\x12^\n" +
+	"\x11DeleteDistractors\x12\".krill.v1.DeleteDistractorsRequest\x1a#.krill.v1.DeleteDistractorsResponse\"\x00B\x90\x01\n" +
 	"\fcom.krill.v1B\x0fDistractorProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\bKrill.V1\xca\x02\bKrill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3"
 
 var (
@@ -523,36 +617,39 @@ func file_krill_v1_distractor_proto_rawDescGZIP() []byte {
 	return file_krill_v1_distractor_proto_rawDescData
 }
 
+var file_krill_v1_distractor_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_krill_v1_distractor_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_krill_v1_distractor_proto_goTypes = []any{
-	(*Distractor)(nil),                     // 0: krill.v1.Distractor
-	(*ListDistractorsRequest)(nil),         // 1: krill.v1.ListDistractorsRequest
-	(*ListDistractorsResponse)(nil),        // 2: krill.v1.ListDistractorsResponse
-	(*CreateDistractorUploadRequest)(nil),  // 3: krill.v1.CreateDistractorUploadRequest
-	(*CreateDistractorUploadResponse)(nil), // 4: krill.v1.CreateDistractorUploadResponse
-	(*AddDistractorRequest)(nil),           // 5: krill.v1.AddDistractorRequest
-	(*AddDistractorResponse)(nil),          // 6: krill.v1.AddDistractorResponse
-	(*DeleteDistractorRequest)(nil),        // 7: krill.v1.DeleteDistractorRequest
-	(*DeleteDistractorResponse)(nil),       // 8: krill.v1.DeleteDistractorResponse
-	(*timestamppb.Timestamp)(nil),          // 9: google.protobuf.Timestamp
+	(DistractorStatus)(0),             // 0: krill.v1.DistractorStatus
+	(*Distractor)(nil),                // 1: krill.v1.Distractor
+	(*ListDistractorsRequest)(nil),    // 2: krill.v1.ListDistractorsRequest
+	(*ListDistractorsResponse)(nil),   // 3: krill.v1.ListDistractorsResponse
+	(*CreateDistractorRequest)(nil),   // 4: krill.v1.CreateDistractorRequest
+	(*CreateDistractorResponse)(nil),  // 5: krill.v1.CreateDistractorResponse
+	(*ProcessDistractorRequest)(nil),  // 6: krill.v1.ProcessDistractorRequest
+	(*ProcessDistractorResponse)(nil), // 7: krill.v1.ProcessDistractorResponse
+	(*DeleteDistractorsRequest)(nil),  // 8: krill.v1.DeleteDistractorsRequest
+	(*DeleteDistractorsResponse)(nil), // 9: krill.v1.DeleteDistractorsResponse
+	(*timestamppb.Timestamp)(nil),     // 10: google.protobuf.Timestamp
 }
 var file_krill_v1_distractor_proto_depIdxs = []int32{
-	9, // 0: krill.v1.Distractor.created_at:type_name -> google.protobuf.Timestamp
-	0, // 1: krill.v1.ListDistractorsResponse.distractors:type_name -> krill.v1.Distractor
-	0, // 2: krill.v1.AddDistractorResponse.distractor:type_name -> krill.v1.Distractor
-	1, // 3: krill.v1.DistractorService.ListDistractors:input_type -> krill.v1.ListDistractorsRequest
-	3, // 4: krill.v1.DistractorService.CreateDistractorUpload:input_type -> krill.v1.CreateDistractorUploadRequest
-	5, // 5: krill.v1.DistractorService.AddDistractor:input_type -> krill.v1.AddDistractorRequest
-	7, // 6: krill.v1.DistractorService.DeleteDistractor:input_type -> krill.v1.DeleteDistractorRequest
-	2, // 7: krill.v1.DistractorService.ListDistractors:output_type -> krill.v1.ListDistractorsResponse
-	4, // 8: krill.v1.DistractorService.CreateDistractorUpload:output_type -> krill.v1.CreateDistractorUploadResponse
-	6, // 9: krill.v1.DistractorService.AddDistractor:output_type -> krill.v1.AddDistractorResponse
-	8, // 10: krill.v1.DistractorService.DeleteDistractor:output_type -> krill.v1.DeleteDistractorResponse
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	10, // 0: krill.v1.Distractor.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 1: krill.v1.Distractor.status:type_name -> krill.v1.DistractorStatus
+	1,  // 2: krill.v1.ListDistractorsResponse.distractors:type_name -> krill.v1.Distractor
+	1,  // 3: krill.v1.CreateDistractorResponse.distractor:type_name -> krill.v1.Distractor
+	2,  // 4: krill.v1.DistractorService.ListDistractors:input_type -> krill.v1.ListDistractorsRequest
+	4,  // 5: krill.v1.DistractorService.CreateDistractor:input_type -> krill.v1.CreateDistractorRequest
+	6,  // 6: krill.v1.DistractorService.ProcessDistractor:input_type -> krill.v1.ProcessDistractorRequest
+	8,  // 7: krill.v1.DistractorService.DeleteDistractors:input_type -> krill.v1.DeleteDistractorsRequest
+	3,  // 8: krill.v1.DistractorService.ListDistractors:output_type -> krill.v1.ListDistractorsResponse
+	5,  // 9: krill.v1.DistractorService.CreateDistractor:output_type -> krill.v1.CreateDistractorResponse
+	7,  // 10: krill.v1.DistractorService.ProcessDistractor:output_type -> krill.v1.ProcessDistractorResponse
+	9,  // 11: krill.v1.DistractorService.DeleteDistractors:output_type -> krill.v1.DeleteDistractorsResponse
+	8,  // [8:12] is the sub-list for method output_type
+	4,  // [4:8] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_distractor_proto_init() }
@@ -565,13 +662,14 @@ func file_krill_v1_distractor_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_distractor_proto_rawDesc), len(file_krill_v1_distractor_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_krill_v1_distractor_proto_goTypes,
 		DependencyIndexes: file_krill_v1_distractor_proto_depIdxs,
+		EnumInfos:         file_krill_v1_distractor_proto_enumTypes,
 		MessageInfos:      file_krill_v1_distractor_proto_msgTypes,
 	}.Build()
 	File_krill_v1_distractor_proto = out.File
