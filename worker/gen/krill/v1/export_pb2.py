@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/export.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x01\n\rExportOptions\x12!\n\x0cval_fraction\x18\x01 \x01(\x02R\x0bvalFraction\x12\x16\n\x06stride\x18\x02 \x01(\x05R\x06stride\x12\x14\n\x05\x64\x65\x64up\x18\x03 \x01(\x08R\x05\x64\x65\x64up\x12%\n\x0e\x64\x65\x64up_distance\x18\x04 \x01(\x05R\rdedupDistance\x12\x1b\n\tvideo_ids\x18\x05 \x03(\x03R\x08videoIds\"\xc1\x01\n\x10\x45xportClassStats\x12\x0e\n\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n\x0btrain_boxes\x18\x03 \x01(\x05R\ntrainBoxes\x12\x1b\n\tval_boxes\x18\x04 \x01(\x05R\x08valBoxes\x12\x14\n\x05\x63lips\x18\x05 \x01(\x05R\x05\x63lips\x12\x16\n\x06videos\x18\x06 \x01(\x05R\x06videos\x12\x1d\n\ntest_boxes\x18\x07 \x01(\x05R\ttestBoxes\"\x9d\x01\n\x10\x45xportVideoStats\x12\x19\n\x08video_id\x18\x01 \x01(\x03R\x07videoId\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n\x06pinned\x18\x04 \x01(\x08R\x06pinned\x12\x16\n\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n\x05\x62oxes\x18\x06 \x01(\x05R\x05\x62oxes\"\xd5\x04\n\x0b\x45xportStats\x12!\n\x0ctrain_images\x18\x01 \x01(\x05R\x0btrainImages\x12\x1d\n\nval_images\x18\x02 \x01(\x05R\tvalImages\x12\x1f\n\x0btrain_boxes\x18\x03 \x01(\x05R\ntrainBoxes\x12\x1b\n\tval_boxes\x18\x04 \x01(\x05R\x08valBoxes\x12\'\n\x0fnegative_images\x18\x05 \x01(\x05R\x0enegativeImages\x12)\n\x10unlabeled_frames\x18\x06 \x01(\x05R\x0funlabeledFrames\x12+\n\x11incomplete_frames\x18\x07 \x01(\x05R\x10incompleteFrames\x12+\n\x11unverified_frames\x18\x08 \x01(\x05R\x10unverifiedFrames\x12%\n\x0estride_skipped\x18\t \x01(\x05R\rstrideSkipped\x12+\n\x11\x64uplicate_skipped\x18\n \x01(\x05R\x10\x64uplicateSkipped\x12\x34\n\x07\x63lasses\x18\x0b \x03(\x0b\x32\x1a.krill.v1.ExportClassStatsR\x07\x63lasses\x12\x32\n\x06videos\x18\x0c \x03(\x0b\x32\x1a.krill.v1.ExportVideoStatsR\x06videos\x12\x1f\n\x0btest_images\x18\r \x01(\x05R\ntestImages\x12\x1d\n\ntest_boxes\x18\x0e \x01(\x05R\ttestBoxes\x12\x1a\n\x08oriented\x18\x0f \x01(\x08R\x08oriented\"\xa8\x03\n\x06\x45xport\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12.\n\x06status\x18\x03 \x01(\x0e\x32\x16.krill.v1.ExportStatusR\x06status\x12\x14\n\x05\x65rror\x18\x04 \x01(\tR\x05\x65rror\x12\x1a\n\x08progress\x18\x05 \x01(\x02R\x08progress\x12\x31\n\x07options\x18\x06 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\x12+\n\x05stats\x18\x07 \x01(\x0b\x32\x15.krill.v1.ExportStatsR\x05stats\x12\x1d\n\nsize_bytes\x18\x08 \x01(\x03R\tsizeBytes\x12!\n\x0c\x64ownload_url\x18\t \x01(\tR\x0b\x64ownloadUrl\x12\x39\n\ncreated_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12;\n\x0b\x66inished_at\x18\x0b \x01(\x0b\x32\x1a.google.protobuf.TimestampR\nfinishedAt\"I\n\x14PreviewExportRequest\x12\x31\n\x07options\x18\x01 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\"D\n\x15PreviewExportResponse\x12+\n\x05stats\x18\x01 \x01(\x0b\x32\x15.krill.v1.ExportStatsR\x05stats\"\\\n\x13\x43reateExportRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x31\n\x07options\x18\x02 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\"@\n\x14\x43reateExportResponse\x12(\n\x06\x65xport\x18\x01 \x01(\x0b\x32\x10.krill.v1.ExportR\x06\x65xport\"\x14\n\x12ListExportsRequest\"A\n\x13ListExportsResponse\x12*\n\x07\x65xports\x18\x01 \x03(\x0b\x32\x10.krill.v1.ExportR\x07\x65xports\"%\n\x13\x44\x65leteExportRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x16\n\x14\x44\x65leteExportResponse\"\x1a\n\x18GetExportDefaultsRequest\"N\n\x19GetExportDefaultsResponse\x12\x31\n\x07options\x18\x01 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options*\x95\x01\n\x0c\x45xportStatus\x12\x1d\n\x19\x45XPORT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n\x14\x45XPORT_STATUS_QUEUED\x10\x01\x12\x19\n\x15\x45XPORT_STATUS_RUNNING\x10\x02\x12\x17\n\x13\x45XPORT_STATUS_READY\x10\x03\x12\x18\n\x14\x45XPORT_STATUS_FAILED\x10\x04\x32\xb3\x03\n\rExportService\x12R\n\rPreviewExport\x12\x1e.krill.v1.PreviewExportRequest\x1a\x1f.krill.v1.PreviewExportResponse\"\x00\x12O\n\x0c\x43reateExport\x12\x1d.krill.v1.CreateExportRequest\x1a\x1e.krill.v1.CreateExportResponse\"\x00\x12L\n\x0bListExports\x12\x1c.krill.v1.ListExportsRequest\x1a\x1d.krill.v1.ListExportsResponse\"\x00\x12O\n\x0c\x44\x65leteExport\x12\x1d.krill.v1.DeleteExportRequest\x1a\x1e.krill.v1.DeleteExportResponse\"\x00\x12^\n\x11GetExportDefaults\x12\".krill.v1.GetExportDefaultsRequest\x1a#.krill.v1.GetExportDefaultsResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0b\x45xportProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15krill/v1/export.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x02\n\rExportOptions\x12!\n\x0cval_fraction\x18\x01 \x01(\x02R\x0bvalFraction\x12\x16\n\x06stride\x18\x02 \x01(\x05R\x06stride\x12\x14\n\x05\x64\x65\x64up\x18\x03 \x01(\x08R\x05\x64\x65\x64up\x12%\n\x0e\x64\x65\x64up_distance\x18\x04 \x01(\x05R\rdedupDistance\x12\x1b\n\tvideo_ids\x18\x05 \x03(\x03R\x08videoIds\x12)\n\x10\x61ugmented_copies\x18\x06 \x01(\x05R\x0f\x61ugmentedCopies\x12:\n\x0c\x61ugmentation\x18\x07 \x01(\x0b\x32\x16.krill.v1.AugmentationR\x0c\x61ugmentation\"\xa5\x03\n\x0c\x41ugmentation\x12\x18\n\x07\x64\x65grees\x18\x01 \x01(\x02R\x07\x64\x65grees\x12\x1c\n\ttranslate\x18\x02 \x01(\x02R\ttranslate\x12\x14\n\x05scale\x18\x03 \x01(\x02R\x05scale\x12\x14\n\x05shear\x18\x04 \x01(\x02R\x05shear\x12 \n\x0bperspective\x18\x05 \x01(\x02R\x0bperspective\x12\x13\n\x05hsv_h\x18\x06 \x01(\x02R\x04hsvH\x12\x13\n\x05hsv_s\x18\x07 \x01(\x02R\x04hsvS\x12\x13\n\x05hsv_v\x18\x08 \x01(\x02R\x04hsvV\x12\x16\n\x06\x66liplr\x18\t \x01(\x02R\x06\x66liplr\x12\x16\n\x06\x66lipud\x18\n \x01(\x02R\x06\x66lipud\x12\x16\n\x06mosaic\x18\x0b \x01(\x02R\x06mosaic\x12\x16\n\x06\x61spect\x18\x0c \x01(\x02R\x06\x61spect\x12\x1e\n\nunderwater\x18\r \x01(\x02R\nunderwater\x12\x18\n\x07shadows\x18\x0e \x01(\x02R\x07shadows\x12\x14\n\x05noise\x18\x0f \x01(\x02R\x05noise\x12 \n\x0b\x64istractors\x18\x10 \x01(\x02R\x0b\x64istractors\"\xc1\x01\n\x10\x45xportClassStats\x12\x0e\n\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n\x0btrain_boxes\x18\x03 \x01(\x05R\ntrainBoxes\x12\x1b\n\tval_boxes\x18\x04 \x01(\x05R\x08valBoxes\x12\x14\n\x05\x63lips\x18\x05 \x01(\x05R\x05\x63lips\x12\x16\n\x06videos\x18\x06 \x01(\x05R\x06videos\x12\x1d\n\ntest_boxes\x18\x07 \x01(\x05R\ttestBoxes\"\x9d\x01\n\x10\x45xportVideoStats\x12\x19\n\x08video_id\x18\x01 \x01(\x03R\x07videoId\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n\x06pinned\x18\x04 \x01(\x08R\x06pinned\x12\x16\n\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n\x05\x62oxes\x18\x06 \x01(\x05R\x05\x62oxes\"\x80\x05\n\x0b\x45xportStats\x12!\n\x0ctrain_images\x18\x01 \x01(\x05R\x0btrainImages\x12\x1d\n\nval_images\x18\x02 \x01(\x05R\tvalImages\x12\x1f\n\x0btrain_boxes\x18\x03 \x01(\x05R\ntrainBoxes\x12\x1b\n\tval_boxes\x18\x04 \x01(\x05R\x08valBoxes\x12\'\n\x0fnegative_images\x18\x05 \x01(\x05R\x0enegativeImages\x12)\n\x10unlabeled_frames\x18\x06 \x01(\x05R\x0funlabeledFrames\x12+\n\x11incomplete_frames\x18\x07 \x01(\x05R\x10incompleteFrames\x12+\n\x11unverified_frames\x18\x08 \x01(\x05R\x10unverifiedFrames\x12%\n\x0estride_skipped\x18\t \x01(\x05R\rstrideSkipped\x12+\n\x11\x64uplicate_skipped\x18\n \x01(\x05R\x10\x64uplicateSkipped\x12\x34\n\x07\x63lasses\x18\x0b \x03(\x0b\x32\x1a.krill.v1.ExportClassStatsR\x07\x63lasses\x12\x32\n\x06videos\x18\x0c \x03(\x0b\x32\x1a.krill.v1.ExportVideoStatsR\x06videos\x12\x1f\n\x0btest_images\x18\r \x01(\x05R\ntestImages\x12\x1d\n\ntest_boxes\x18\x0e \x01(\x05R\ttestBoxes\x12\x1a\n\x08oriented\x18\x0f \x01(\x08R\x08oriented\x12)\n\x10\x61ugmented_images\x18\x10 \x01(\x05R\x0f\x61ugmentedImages\"\xa8\x03\n\x06\x45xport\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12.\n\x06status\x18\x03 \x01(\x0e\x32\x16.krill.v1.ExportStatusR\x06status\x12\x14\n\x05\x65rror\x18\x04 \x01(\tR\x05\x65rror\x12\x1a\n\x08progress\x18\x05 \x01(\x02R\x08progress\x12\x31\n\x07options\x18\x06 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\x12+\n\x05stats\x18\x07 \x01(\x0b\x32\x15.krill.v1.ExportStatsR\x05stats\x12\x1d\n\nsize_bytes\x18\x08 \x01(\x03R\tsizeBytes\x12!\n\x0c\x64ownload_url\x18\t \x01(\tR\x0b\x64ownloadUrl\x12\x39\n\ncreated_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\x12;\n\x0b\x66inished_at\x18\x0b \x01(\x0b\x32\x1a.google.protobuf.TimestampR\nfinishedAt\"I\n\x14PreviewExportRequest\x12\x31\n\x07options\x18\x01 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\"D\n\x15PreviewExportResponse\x12+\n\x05stats\x18\x01 \x01(\x0b\x32\x15.krill.v1.ExportStatsR\x05stats\"\\\n\x13\x43reateExportRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x31\n\x07options\x18\x02 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options\"@\n\x14\x43reateExportResponse\x12(\n\x06\x65xport\x18\x01 \x01(\x0b\x32\x10.krill.v1.ExportR\x06\x65xport\"\x14\n\x12ListExportsRequest\"A\n\x13ListExportsResponse\x12*\n\x07\x65xports\x18\x01 \x03(\x0b\x32\x10.krill.v1.ExportR\x07\x65xports\"%\n\x13\x44\x65leteExportRequest\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x16\n\x14\x44\x65leteExportResponse\"\x1a\n\x18GetExportDefaultsRequest\"N\n\x19GetExportDefaultsResponse\x12\x31\n\x07options\x18\x01 \x01(\x0b\x32\x17.krill.v1.ExportOptionsR\x07options*\x95\x01\n\x0c\x45xportStatus\x12\x1d\n\x19\x45XPORT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n\x14\x45XPORT_STATUS_QUEUED\x10\x01\x12\x19\n\x15\x45XPORT_STATUS_RUNNING\x10\x02\x12\x17\n\x13\x45XPORT_STATUS_READY\x10\x03\x12\x18\n\x14\x45XPORT_STATUS_FAILED\x10\x04\x32\xb3\x03\n\rExportService\x12R\n\rPreviewExport\x12\x1e.krill.v1.PreviewExportRequest\x1a\x1f.krill.v1.PreviewExportResponse\"\x00\x12O\n\x0c\x43reateExport\x12\x1d.krill.v1.CreateExportRequest\x1a\x1e.krill.v1.CreateExportResponse\"\x00\x12L\n\x0bListExports\x12\x1c.krill.v1.ListExportsRequest\x1a\x1d.krill.v1.ListExportsResponse\"\x00\x12O\n\x0c\x44\x65leteExport\x12\x1d.krill.v1.DeleteExportRequest\x1a\x1e.krill.v1.DeleteExportResponse\"\x00\x12^\n\x11GetExportDefaults\x12\".krill.v1.GetExportDefaultsRequest\x1a#.krill.v1.GetExportDefaultsResponse\"\x00\x42\x8c\x01\n\x0c\x63om.krill.v1B\x0b\x45xportProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,38 +33,40 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'krill.v1.export_pb2', _glob
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.krill.v1B\013ExportProtoP\001Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\242\002\003KXX\252\002\010Krill.V1\312\002\010Krill\\V1\342\002\024Krill\\V1\\GPBMetadata\352\002\tKrill::V1'
-  _globals['_EXPORTSTATUS']._serialized_start=2184
-  _globals['_EXPORTSTATUS']._serialized_end=2333
+  _globals['_EXPORTSTATUS']._serialized_start=2754
+  _globals['_EXPORTSTATUS']._serialized_end=2903
   _globals['_EXPORTOPTIONS']._serialized_start=69
-  _globals['_EXPORTOPTIONS']._serialized_end=233
-  _globals['_EXPORTCLASSSTATS']._serialized_start=236
-  _globals['_EXPORTCLASSSTATS']._serialized_end=429
-  _globals['_EXPORTVIDEOSTATS']._serialized_start=432
-  _globals['_EXPORTVIDEOSTATS']._serialized_end=589
-  _globals['_EXPORTSTATS']._serialized_start=592
-  _globals['_EXPORTSTATS']._serialized_end=1189
-  _globals['_EXPORT']._serialized_start=1192
-  _globals['_EXPORT']._serialized_end=1616
-  _globals['_PREVIEWEXPORTREQUEST']._serialized_start=1618
-  _globals['_PREVIEWEXPORTREQUEST']._serialized_end=1691
-  _globals['_PREVIEWEXPORTRESPONSE']._serialized_start=1693
-  _globals['_PREVIEWEXPORTRESPONSE']._serialized_end=1761
-  _globals['_CREATEEXPORTREQUEST']._serialized_start=1763
-  _globals['_CREATEEXPORTREQUEST']._serialized_end=1855
-  _globals['_CREATEEXPORTRESPONSE']._serialized_start=1857
-  _globals['_CREATEEXPORTRESPONSE']._serialized_end=1921
-  _globals['_LISTEXPORTSREQUEST']._serialized_start=1923
-  _globals['_LISTEXPORTSREQUEST']._serialized_end=1943
-  _globals['_LISTEXPORTSRESPONSE']._serialized_start=1945
-  _globals['_LISTEXPORTSRESPONSE']._serialized_end=2010
-  _globals['_DELETEEXPORTREQUEST']._serialized_start=2012
-  _globals['_DELETEEXPORTREQUEST']._serialized_end=2049
-  _globals['_DELETEEXPORTRESPONSE']._serialized_start=2051
-  _globals['_DELETEEXPORTRESPONSE']._serialized_end=2073
-  _globals['_GETEXPORTDEFAULTSREQUEST']._serialized_start=2075
-  _globals['_GETEXPORTDEFAULTSREQUEST']._serialized_end=2101
-  _globals['_GETEXPORTDEFAULTSRESPONSE']._serialized_start=2103
-  _globals['_GETEXPORTDEFAULTSRESPONSE']._serialized_end=2181
-  _globals['_EXPORTSERVICE']._serialized_start=2336
-  _globals['_EXPORTSERVICE']._serialized_end=2771
+  _globals['_EXPORTOPTIONS']._serialized_end=336
+  _globals['_AUGMENTATION']._serialized_start=339
+  _globals['_AUGMENTATION']._serialized_end=760
+  _globals['_EXPORTCLASSSTATS']._serialized_start=763
+  _globals['_EXPORTCLASSSTATS']._serialized_end=956
+  _globals['_EXPORTVIDEOSTATS']._serialized_start=959
+  _globals['_EXPORTVIDEOSTATS']._serialized_end=1116
+  _globals['_EXPORTSTATS']._serialized_start=1119
+  _globals['_EXPORTSTATS']._serialized_end=1759
+  _globals['_EXPORT']._serialized_start=1762
+  _globals['_EXPORT']._serialized_end=2186
+  _globals['_PREVIEWEXPORTREQUEST']._serialized_start=2188
+  _globals['_PREVIEWEXPORTREQUEST']._serialized_end=2261
+  _globals['_PREVIEWEXPORTRESPONSE']._serialized_start=2263
+  _globals['_PREVIEWEXPORTRESPONSE']._serialized_end=2331
+  _globals['_CREATEEXPORTREQUEST']._serialized_start=2333
+  _globals['_CREATEEXPORTREQUEST']._serialized_end=2425
+  _globals['_CREATEEXPORTRESPONSE']._serialized_start=2427
+  _globals['_CREATEEXPORTRESPONSE']._serialized_end=2491
+  _globals['_LISTEXPORTSREQUEST']._serialized_start=2493
+  _globals['_LISTEXPORTSREQUEST']._serialized_end=2513
+  _globals['_LISTEXPORTSRESPONSE']._serialized_start=2515
+  _globals['_LISTEXPORTSRESPONSE']._serialized_end=2580
+  _globals['_DELETEEXPORTREQUEST']._serialized_start=2582
+  _globals['_DELETEEXPORTREQUEST']._serialized_end=2619
+  _globals['_DELETEEXPORTRESPONSE']._serialized_start=2621
+  _globals['_DELETEEXPORTRESPONSE']._serialized_end=2643
+  _globals['_GETEXPORTDEFAULTSREQUEST']._serialized_start=2645
+  _globals['_GETEXPORTDEFAULTSREQUEST']._serialized_end=2671
+  _globals['_GETEXPORTDEFAULTSRESPONSE']._serialized_start=2673
+  _globals['_GETEXPORTDEFAULTSRESPONSE']._serialized_end=2751
+  _globals['_EXPORTSERVICE']._serialized_start=2906
+  _globals['_EXPORTSERVICE']._serialized_end=3341
 # @@protoc_insertion_point(module_scope)

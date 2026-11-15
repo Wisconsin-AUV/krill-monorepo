@@ -15,6 +15,7 @@ require (
 	github.com/riverqueue/river/rivertype v0.47.0
 	github.com/shirou/gopsutil/v4 v4.26.9
 	golang.org/x/crypto v0.55.0
+	golang.org/x/image v0.45.0
 	golang.org/x/mod v0.42.0
 	golang.org/x/sync v0.23.0
 	google.golang.org/protobuf v1.36.12

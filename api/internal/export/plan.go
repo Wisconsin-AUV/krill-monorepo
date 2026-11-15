@@ -23,6 +23,8 @@ type Options struct {
 	Stride        int
 	Dedup         bool
 	DedupDistance int
+	// AugmentedCopies are written of each train image.
+	AugmentedCopies int
 }
 
 type LabelType struct {
@@ -79,6 +81,13 @@ type Plan struct {
 	Stats   *krillv1.ExportStats
 	// Oriented plans are written as YOLO-OBB.
 	Oriented bool
+	// Copies is how many augmented copies of each train item are written,
+	// with Augmentation.
+	Copies       int
+	Augmentation *krillv1.Augmentation
+	// Distractors are the object keys of distractor images to paste objects
+	// onto.
+	Distractors []string
 }
 
 type videoPlan struct {
@@ -221,8 +230,10 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 		cs.Videos = int32(len(cover[i].videos)) //nolint:gosec // video counts fit in int32
 	}
 	stats.Classes = classStats
+	copies := max(opts.AugmentedCopies, 0)
+	stats.AugmentedImages = stats.TrainImages * int32(copies) //nolint:gosec // copies are at most maxAugmentedCopies
 
-	return Plan{Classes: classes, Items: items, Stats: stats, Oriented: stats.Oriented}
+	return Plan{Classes: classes, Items: items, Stats: stats, Oriented: stats.Oriented, Copies: copies}
 }
 
 // assignSplits keeps pinned videos where they are, then fills val with

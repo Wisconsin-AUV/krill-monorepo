@@ -148,6 +148,22 @@ def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
     return out
 
 
+def download_distractors(urls: Sequence[str], to: Path) -> list[Path]:
+    """Download what it can: a missing distractor only means fewer
+    backgrounds to choose from."""
+    if not urls:
+        return []
+    to.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for i, url in enumerate(urls):
+        try:
+            paths.append(download(url, to / f"{i}.img"))
+        except OSError as e:
+            log.warning("distractor %d failed to download: %s", i, e)
+    log.info("downloaded %d of %d distractors", len(paths), len(urls))
+    return paths
+
+
 def run_train(
     api: Api,
     task: pipeline_pb2.TrainTask,
@@ -243,9 +259,10 @@ def run_train(
             aug: dict[str, Any] = {}
             if task.HasField("augmentation"):
                 base_trainer = model.task_map[model.task]["trainer"]
+                distractors = download_distractors(task.distractor_urls, root / "distractors")
                 aug = {
                     **augment.ultralytics_args(task.augmentation),
-                    "trainer": augment.trainer(base_trainer, task.augmentation),
+                    "trainer": augment.trainer(base_trainer, task.augmentation, distractors),
                 }
             model.train(
                 **aug,

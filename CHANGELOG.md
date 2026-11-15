@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 - YOLO-OBB weights can be uploaded, pinned, and trialed like detection weights, and their pre-labels and trial boxes are rotated.
 - Augmentation settings when starting a training run, shown on the run's page. Besides Ultralytics' rotation, shift, zoom, shear, perspective, color, mosaic, and flips, Krill can stretch images, tint them blue-green like water, add patches of light and shadow, and add sensor noise. Val and test images are never changed.
 
+- Exports can write augmented copies of each train image, with the same augmentation as training except mosaic, so models trained outside Krill get it too.
+- A distractors augmentation that cuts the labeled objects out and pastes them at random spots on a random distractor image, each resized, rotated, stretched, and recolored on its own, while training and in exported copies. Admins manage the distractor images under Pipeline in the admin panel.
+
 ### Changed
 
 - Training no longer mirrors images by default, since a mirrored arrow or printed sign means something else, and it rotates images up to 10° either way.

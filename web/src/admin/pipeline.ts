@@ -6,10 +6,10 @@ import {
   PrelabelStatus,
   TrainingStatus,
   TrainingTrigger,
-  type Augmentation,
   type ModelTrial,
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
+import type { Augmentation } from '@/gen/krill/v1/export_pb'
 import { formatDuration } from '@/lib/format'
 
 export const trainingStatus: Record<TrainingStatus, { label: string; color: BadgeColor }> = {
@@ -98,6 +98,40 @@ export function float32(v: number) {
   return Number(v.toPrecision(3))
 }
 
+export type AugmentationKey = Exclude<keyof Augmentation, '$typeName' | '$unknown'>
+export type AugmentationValues = Record<AugmentationKey, number>
+
+export const augmentationFields: {
+  key: AugmentationKey
+  label: string
+  min: number
+  max: number
+  step?: number | 'any'
+}[] = [
+  { key: 'degrees', label: 'Rotation (°)', min: 0, max: 180 },
+  { key: 'translate', label: 'Shift', min: 0, max: 0.9, step: 'any' },
+  { key: 'scale', label: 'Zoom', min: 0, max: 0.9, step: 'any' },
+  { key: 'aspect', label: 'Stretch', min: 1, max: 2, step: 'any' },
+  { key: 'shear', label: 'Shear (°)', min: 0, max: 45 },
+  { key: 'perspective', label: 'Perspective', min: 0, max: 0.001, step: 'any' },
+  { key: 'hsvH', label: 'Hue', min: 0, max: 1, step: 'any' },
+  { key: 'hsvS', label: 'Saturation', min: 0, max: 1, step: 'any' },
+  { key: 'hsvV', label: 'Brightness', min: 0, max: 1, step: 'any' },
+  { key: 'mosaic', label: 'Mosaic', min: 0, max: 1, step: 'any' },
+  { key: 'fliplr', label: 'Mirror', min: 0, max: 1, step: 'any' },
+  { key: 'flipud', label: 'Upside down', min: 0, max: 1, step: 'any' },
+  { key: 'underwater', label: 'Underwater', min: 0, max: 1, step: 'any' },
+  { key: 'shadows', label: 'Light and shadow', min: 0, max: 1, step: 'any' },
+  { key: 'noise', label: 'Noise', min: 0, max: 1, step: 'any' },
+  { key: 'distractors', label: 'Distractors', min: 0, max: 1, step: 'any' },
+]
+
+export function augmentationValues(a: Augmentation | undefined) {
+  const out = {} as AugmentationValues
+  for (const f of augmentationFields) out[f.key] = float32(a?.[f.key] ?? 0)
+  return out
+}
+
 export function augmentationSummary(a: Augmentation) {
   const pct = (p: number) => `${Math.round(p * 100)}%`
   const parts = [
@@ -115,6 +149,7 @@ export function augmentationSummary(a: Augmentation) {
     a.underwater > 0 && `underwater ${pct(a.underwater)}`,
     a.shadows > 0 && `light and shadow ${pct(a.shadows)}`,
     a.noise > 0 && `noise ${pct(a.noise)}`,
+    a.distractors > 0 && `distractors ${pct(a.distractors)}`,
   ]
   return parts.filter(Boolean).join(' · ') || 'None'
 }

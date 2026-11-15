@@ -2,13 +2,24 @@ package export
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
+	"image"
+	"image/jpeg"
 	"io"
+	"math/rand/v2"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
+
+	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
+	"github.com/wauv/krill/api/internal/storage"
 )
 
 // Manifest is written next to the dataset so a trained model can be traced
@@ -27,15 +38,20 @@ type Manifest struct {
 	TestVideos []int64         `json:"test_videos,omitempty"`
 }
 
-type FrameOpener func(ctx context.Context, f Frame) (io.ReadCloser, error)
+// jpegQuality is what augmented copies are encoded at.
+const jpegQuality = 90
 
 func itemName(it Item) string {
 	return fmt.Sprintf("v%d_f%06d", it.Frame.VideoID, it.Frame.Idx)
 }
 
-func labelLines(it Item, oriented bool) string {
+func isTrain(it Item) bool {
+	return it.Split != splitVal && it.Split != splitTest
+}
+
+func labelLines(boxes []ItemBox, oriented bool) string {
 	var b strings.Builder
-	for _, box := range it.Boxes {
+	for _, box := range boxes {
 		if oriented {
 			c := box.Corners
 			if len(c) != 8 {
@@ -74,14 +90,43 @@ func dataYAML(classes []string, test bool) string {
 
 // Write streams the dataset as a zip in the Ultralytics layout:
 // images/{train,val,test}/*.jpg, labels/{train,val,test}/*.txt, data.yaml, and
-// manifest.json.
-func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpener, onProgress func(done, total int)) error {
+// manifest.json. Each train image is followed by its augmented copies.
+func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open Opener, onProgress func(done, total int)) error {
 	zw := zip.NewWriter(w)
 	create := func(name string, method uint16) (io.Writer, error) {
 		return zw.CreateHeader(&zip.FileHeader{Name: name, Method: method, Modified: m.CreatedAt})
 	}
+	add := func(split, name string, jpg []byte, boxes []ItemBox) error {
+		// JPEGs are already compressed, so store them as-is.
+		img, err := create(fmt.Sprintf("images/%s/%s.jpg", split, name), zip.Store)
+		if err != nil {
+			return fmt.Errorf("add image %s: %w", name, err)
+		}
+		if _, err := img.Write(jpg); err != nil {
+			return fmt.Errorf("write image %s: %w", name, err)
+		}
+		lbl, err := create(fmt.Sprintf("labels/%s/%s.txt", split, name), zip.Deflate)
+		if err != nil {
+			return fmt.Errorf("add labels %s: %w", name, err)
+		}
+		if _, err := io.WriteString(lbl, labelLines(boxes, p.Oriented)); err != nil {
+			return fmt.Errorf("write labels %s: %w", name, err)
+		}
+		return nil
+	}
 
-	for i, it := range p.Items {
+	total := len(p.Items)
+	var aug *augmenter
+	if p.Copies > 0 {
+		aug = newAugmenter(ctx, p, m, open)
+		for _, it := range p.Items {
+			if isTrain(it) {
+				total += p.Copies
+			}
+		}
+	}
+	done := 0
+	for _, it := range p.Items {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -98,29 +143,37 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 			m.TrainFiles = append(m.TrainFiles, name)
 		}
 
-		// JPEGs are already compressed, so store them as-is.
-		img, err := create(fmt.Sprintf("images/%s/%s.jpg", it.Split, name), zip.Store)
-		if err != nil {
-			return fmt.Errorf("add image %s: %w", name, err)
-		}
-		src, err := open(ctx, it.Frame)
+		src, err := open(ctx, storage.FrameKey(it.Frame.VideoID, it.Frame.Idx))
 		if err != nil {
 			return err
 		}
-		_, err = io.Copy(img, src)
+		jpg, err := io.ReadAll(src)
 		_ = src.Close()
 		if err != nil {
-			return fmt.Errorf("copy image %s: %w", name, err)
+			return fmt.Errorf("read image %s: %w", name, err)
 		}
+		if err := add(it.Split, name, jpg, it.Boxes); err != nil {
+			return err
+		}
+		done++
+		onProgress(done, total)
 
-		lbl, err := create(fmt.Sprintf("labels/%s/%s.txt", it.Split, name), zip.Deflate)
+		if aug == nil || !isTrain(it) {
+			continue
+		}
+		copies, err := aug.copies(jpg, it.Boxes)
 		if err != nil {
-			return fmt.Errorf("add labels %s: %w", name, err)
+			return fmt.Errorf("augment image %s: %w", name, err)
 		}
-		if _, err := io.WriteString(lbl, labelLines(it, p.Oriented)); err != nil {
-			return fmt.Errorf("write labels %s: %w", name, err)
+		for k, c := range copies {
+			cname := fmt.Sprintf("%s_a%d", name, k+1)
+			m.TrainFiles = append(m.TrainFiles, cname)
+			if err := add(it.Split, cname, c.jpg, c.boxes); err != nil {
+				return err
+			}
+			done++
+			onProgress(done, total)
 		}
-		onProgress(i+1, len(p.Items))
 	}
 
 	yaml, err := create("data.yaml", zip.Deflate)
@@ -149,4 +202,67 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open FrameOpene
 		return fmt.Errorf("finish zip: %w", err)
 	}
 	return nil
+}
+
+type augmented struct {
+	jpg   []byte
+	boxes []ItemBox
+}
+
+// augmenter makes the augmented copies of train images, seeded by the
+// export's name and creation time.
+type augmenter struct {
+	rng      *rand.Rand
+	opts     *krillv1.Augmentation
+	n        int
+	oriented bool
+	pick     func(*rand.Rand) *image.RGBA
+}
+
+// maxAugmentWorkers bounds how many copies are made at once, each holding a
+// few decoded frames.
+const maxAugmentWorkers = 4
+
+func newAugmenter(ctx context.Context, p Plan, m Manifest, open Opener) *augmenter {
+	h := fnv.New64a()
+	_, _ = io.WriteString(h, m.Name)
+	seed := h.Sum64()
+	a := &augmenter{
+		rng:      rand.New(rand.NewPCG(seed, uint64(m.CreatedAt.UnixNano()))), //nolint:gosec // variety, not secrecy
+		opts:     p.Augmentation,
+		n:        p.Copies,
+		oriented: p.Oriented,
+	}
+	if len(p.Distractors) > 0 && p.Augmentation.GetDistractors() > 0 {
+		a.pick = newDistractorLibrary(ctx, p.Distractors, open).pick
+	}
+	return a
+}
+
+func (a *augmenter) copies(jpg []byte, boxes []ItemBox) ([]augmented, error) {
+	src, err := jpeg.Decode(bytes.NewReader(jpg))
+	if err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	base := toRGBA(src)
+	out := make([]augmented, a.n)
+	var g errgroup.Group
+	g.SetLimit(min(runtime.GOMAXPROCS(0), maxAugmentWorkers))
+	for k := range out {
+		r := rand.New(rand.NewPCG(a.rng.Uint64(), a.rng.Uint64())) //nolint:gosec // variety, not secrecy
+		g.Go(func() error {
+			img := &image.RGBA{Pix: slices.Clone(base.Pix), Stride: base.Stride, Rect: base.Rect}
+			img, bs := Augment(img, boxes, a.oriented, a.opts, r, a.pick)
+			var buf bytes.Buffer
+			if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: jpegQuality}); err != nil {
+				return fmt.Errorf("encode: %w", err)
+			}
+			out[k] = augmented{jpg: buf.Bytes(), boxes: bs}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

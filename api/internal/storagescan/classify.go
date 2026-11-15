@@ -90,6 +90,10 @@ func parseKey(key string) parsedKey {
 		return parsedKey{kind: KindModel}
 	case len(parts) == 4 && parts[0] == "label-types" && parts[2] == "examples":
 		return parsedKey{kind: KindLabelExample}
+	// Distractors are reference images like label examples, and are counted
+	// with them.
+	case len(parts) == 2 && key == storage.DistractorsPrefix+parts[1]:
+		return parsedKey{kind: KindLabelExample}
 	case strings.HasPrefix(key, storage.BackupsPrefix):
 		return parsedKey{kind: KindBackup}
 	}

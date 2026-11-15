@@ -20,11 +20,12 @@ const (
 // Normalize fills defaults and rejects out-of-range options.
 func Normalize(o *krillv1.ExportOptions) (*krillv1.ExportOptions, error) {
 	out := &krillv1.ExportOptions{
-		ValFraction:   o.GetValFraction(),
-		Stride:        o.GetStride(),
-		Dedup:         o.GetDedup(),
-		DedupDistance: o.GetDedupDistance(),
-		VideoIds:      o.GetVideoIds(),
+		ValFraction:     o.GetValFraction(),
+		Stride:          o.GetStride(),
+		Dedup:           o.GetDedup(),
+		DedupDistance:   o.GetDedupDistance(),
+		VideoIds:        o.GetVideoIds(),
+		AugmentedCopies: o.GetAugmentedCopies(),
 	}
 	if out.GetStride() == 0 {
 		out.Stride = 1
@@ -40,6 +41,13 @@ func Normalize(o *krillv1.ExportOptions) (*krillv1.ExportOptions, error) {
 	}
 	if out.GetDedupDistance() < 0 || out.GetDedupDistance() > maxDedupDistance {
 		return nil, fmt.Errorf("dedup_distance must be between 0 and %d", maxDedupDistance)
+	}
+	if out.GetAugmentedCopies() < 0 || out.GetAugmentedCopies() > maxAugmentedCopies {
+		return nil, fmt.Errorf("augmented_copies must be between 0 and %d", maxAugmentedCopies)
+	}
+	var err error
+	if out.Augmentation, err = NormalizeAugmentation(o.GetAugmentation()); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -101,10 +109,23 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 		}
 	}
 
-	return Build(Options{
-		ValFraction:   float64(o.GetValFraction()),
-		Stride:        int(o.GetStride()),
-		Dedup:         o.GetDedup(),
-		DedupDistance: int(o.GetDedupDistance()),
-	}, types, videos, frames, boxes), nil
+	plan := Build(Options{
+		ValFraction:     float64(o.GetValFraction()),
+		Stride:          int(o.GetStride()),
+		Dedup:           o.GetDedup(),
+		DedupDistance:   int(o.GetDedupDistance()),
+		AugmentedCopies: int(o.GetAugmentedCopies()),
+	}, types, videos, frames, boxes)
+	if plan.Copies > 0 {
+		plan.Augmentation = o.GetAugmentation()
+		if plan.Augmentation == nil {
+			plan.Augmentation = DefaultAugmentation()
+		}
+	}
+	if plan.Copies > 0 && plan.Augmentation.GetDistractors() > 0 {
+		if plan.Distractors, err = q.ListDistractorKeys(ctx, maxDistractors); err != nil {
+			return Plan{}, fmt.Errorf("list distractors: %w", err)
+		}
+	}
+	return plan, nil
 }

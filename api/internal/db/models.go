@@ -116,6 +116,17 @@ type Dataset struct {
 	FinishedAt pgtype.Timestamptz `json:"finished_at"`
 }
 
+type Distractor struct {
+	ID        int64              `json:"id"`
+	ObjectKey string             `json:"object_key"`
+	Filename  string             `json:"filename"`
+	Width     int32              `json:"width"`
+	Height    int32              `json:"height"`
+	SizeBytes int64              `json:"size_bytes"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type EmailCode struct {
 	UserID    uuid.UUID          `json:"user_id"`
 	Purpose   string             `json:"purpose"`
