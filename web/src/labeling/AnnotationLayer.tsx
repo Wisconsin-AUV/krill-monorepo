@@ -9,8 +9,9 @@ import {
 } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import { missingAttributes, withAlpha } from '@/lib/labels'
+import { bounds, fromTopLeft, isRotated, konvaBox, toCorners } from '@/lib/obb'
 import type { Size } from '@/workspace/useWorkspaceStore'
-import { idKey, useLabelStore, type BoxRect } from './useLabelStore'
+import { idKey, useLabelStore, type BoxRect, type BoxShape } from './useLabelStore'
 
 const sourceNames: Partial<Record<AnnotationSource, string>> = {
   [AnnotationSource.SAM]: 'SAM',
@@ -45,6 +46,20 @@ function toNormalized(node: Konva.Node, size: Size): BoxRect {
     width: w / size.width,
     height: h / size.height,
   }
+}
+
+// A box that already has corners keeps them when turned back to level, so it
+// isn't counted as unrotated and refit.
+function toOriented(node: Konva.Node, hadCorners: boolean, size: Size): BoxShape {
+  const r = fromTopLeft({
+    x: node.x(),
+    y: node.y(),
+    width: Math.max(node.width() * node.scaleX(), 1),
+    height: Math.max(node.height() * node.scaleY(), 1),
+    rotation: node.rotation(),
+  })
+  const corners = toCorners(r, size)
+  return isRotated(r) || hadCorners ? { ...bounds(corners), corners } : bounds(corners)
 }
 
 // Holding Cmd/Ctrl lets clicks pass through boxes to the stage, so a new box
@@ -118,10 +133,20 @@ export function AnnotationLayer({
     if (drawThrough && c) c.style.cursor = ''
   }, [drawThrough])
 
-  const commit = (a: Annotation, node: Konva.Node) => {
-    const box = toNormalized(node, imageSize)
-    node.scaleX(1)
-    node.scaleY(1)
+  const selectedType = selectedBox ? tracks.get(idKey(selectedBox.trackId))?.type : undefined
+
+  const commit = (a: Annotation, node: Konva.Node, oriented: boolean) => {
+    if (!oriented) {
+      const box = toNormalized(node, imageSize)
+      node.scaleX(1)
+      node.scaleY(1)
+      void moveBox(a.trackId, a.frameId, box)
+      return
+    }
+    const box = toOriented(node, (a.box?.corners.length ?? 0) > 0, imageSize)
+    // The rect is redrawn from what was saved, which can match the props it
+    // had before the edit and so not be reapplied.
+    node.setAttrs({ ...konvaBox(box, true, imageSize), scaleX: 1, scaleY: 1 })
     void moveBox(a.trackId, a.frameId, box)
   }
 
@@ -139,10 +164,9 @@ export function AnnotationLayer({
         (() => {
           const info = tracks.get(idKey(ghost.trackId))
           const color = info?.type?.color ?? FALLBACK_COLOR
-          const p = toPixels(ghost.box!, imageSize)
           return (
             <Rect
-              {...p}
+              {...konvaBox(ghost.box!, !!info?.type?.oriented, imageSize)}
               stroke={color}
               strokeWidth={stroke}
               dash={[6 / scale, 4 / scale]}
@@ -159,6 +183,7 @@ export function AnnotationLayer({
           const selected = a.trackId === selectedTrackId
           const proposed = a.status === AnnotationStatus.PROPOSED
           const drift = proposed && !!drifted?.has(idKey(a.trackId))
+          const oriented = !!info?.type?.oriented
           const p = toPixels(a.box!, imageSize)
           const missing = info
             ? missingAttributes(info.type, info.track.attributes).length > 0
@@ -168,7 +193,7 @@ export function AnnotationLayer({
             <Fragment key={idKey(a.trackId)}>
               <Rect
                 ref={selected ? selectedRect : undefined}
-                {...p}
+                {...konvaBox(a.box!, oriented, imageSize)}
                 stroke={drift ? DRIFT_COLOR : color}
                 strokeWidth={selected ? 3 : 2}
                 dash={proposed ? [6, 4] : undefined}
@@ -189,8 +214,8 @@ export function AnnotationLayer({
                   const c = e.target.getStage()?.container()
                   if (c) c.style.cursor = ''
                 }}
-                onDragEnd={(e) => commit(a, e.target)}
-                onTransformEnd={(e) => commit(a, e.target)}
+                onDragEnd={(e) => commit(a, e.target, oriented)}
+                onTransformEnd={(e) => commit(a, e.target, oriented)}
               />
               <Label
                 x={p.x}
@@ -220,17 +245,14 @@ export function AnnotationLayer({
 
       <Transformer
         ref={transformer}
-        rotateEnabled={false}
+        rotateEnabled={!!selectedType?.oriented}
+        rotationSnaps={[0, 90, 180, 270]}
         flipEnabled={false}
         keepRatio={false}
         ignoreStroke
         anchorSize={8}
         anchorCornerRadius={2}
-        borderStroke={
-          selectedBox
-            ? (tracks.get(idKey(selectedBox.trackId))?.type?.color ?? FALLBACK_COLOR)
-            : FALLBACK_COLOR
-        }
+        borderStroke={selectedType?.color ?? FALLBACK_COLOR}
         anchorStroke="#ffffff"
         anchorFill="#18181b"
         boundBoxFunc={(oldBox, newBox) =>

@@ -100,7 +100,10 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
 
       {used.length > 0 && (
         <div>
-          <h3 className="text-sm/6 font-medium text-zinc-950 dark:text-white">Classes</h3>
+          <h3 className="flex items-center gap-2 text-sm/6 font-medium text-zinc-950 dark:text-white">
+            Classes
+            {stats.oriented && <Badge>OBB</Badge>}
+          </h3>
           <table className="mt-2 w-full text-left text-sm/6">
             <thead className="text-xs/6 text-zinc-500 dark:text-zinc-400">
               <tr className="border-b border-zinc-950/10 dark:border-white/10">

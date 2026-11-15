@@ -1,8 +1,9 @@
-import { create } from '@bufbuild/protobuf'
+import { create, type MessageInitShape } from '@bufbuild/protobuf'
 import {
   AnnotationSchema,
   AnnotationSource,
   AnnotationStatus,
+  BoxSchema,
   CopyBoxesResponseSchema,
   CreateTrackResponseSchema,
   DeleteBoxResponseSchema,
@@ -13,12 +14,11 @@ import {
   TrackSchema,
   UpdateTrackResponseSchema,
   type Annotation,
-  type Box,
   type Track,
 } from '@/gen/krill/v1/annotation_pb'
 import type { AnnotationBackend } from './useLabelStore'
 
-type BoxInit = Partial<Pick<Box, 'x' | 'y' | 'width' | 'height'>> | undefined
+type BoxInit = MessageInitShape<typeof BoxSchema> | undefined
 
 // localBackend keeps edits in memory, for labeling a frame without saving it.
 export function localBackend(): AnnotationBackend {
