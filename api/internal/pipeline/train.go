@@ -110,6 +110,12 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 	if out.Dataset == nil {
 		out.Dataset = export.Defaults(cfg)
 	}
+	if out.Augmentation == nil {
+		out.Augmentation = defaultAugmentation()
+	}
+	if err := checkAugmentation(out.GetAugmentation()); err != nil {
+		return nil, invalidConfig{err}
+	}
 	var err error
 	if out.Dataset, err = export.Normalize(out.GetDataset()); err != nil {
 		return nil, invalidConfig{err}
@@ -336,15 +342,16 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 
 	tid := p.Dispatcher.NextID()
 	msg := &krillv1.TrainTask{
-		Id:        tid,
-		RunId:     id,
-		Classes:   plan.Classes,
-		Size:      cfg.GetSize(),
-		Epochs:    cfg.GetEpochs(),
-		ImageSize: cfg.GetImageSize(),
-		Batch:     cfg.GetBatch(),
-		HasTest:   stats.GetTestImages() > 0,
-		Oriented:  plan.Oriented,
+		Id:           tid,
+		RunId:        id,
+		Classes:      plan.Classes,
+		Size:         cfg.GetSize(),
+		Epochs:       cfg.GetEpochs(),
+		ImageSize:    cfg.GetImageSize(),
+		Batch:        cfg.GetBatch(),
+		HasTest:      stats.GetTestImages() > 0,
+		Oriented:     plan.Oriented,
+		Augmentation: cfg.GetAugmentation(),
 	}
 	if msg.DatasetUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingDatasetKey(id), trainURLExpiry); err != nil {
 		return err
