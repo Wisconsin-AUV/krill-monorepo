@@ -179,9 +179,9 @@ export type Augmentation = Message<"krill.v1.Augmentation"> & {
   noise: number;
 
   /**
-   * Probability that an image's objects are cut out and pasted at random
-   * spots on a random distractor image, each resized, rotated, stretched, and
-   * recolored on its own. Does nothing until distractors are added.
+   * Probability that an image's objects are cut out and pasted, unchanged, at
+   * random spots on a random distractor image. Does nothing until distractors
+   * are added.
    *
    * @generated from field: float distractors = 16;
    */
