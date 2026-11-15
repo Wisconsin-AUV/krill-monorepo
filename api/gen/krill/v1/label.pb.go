@@ -86,11 +86,17 @@ type LabelType struct {
 	TrackCount  int32             `protobuf:"varint,7,opt,name=track_count,json=trackCount,proto3" json:"track_count,omitempty"`
 	BoxCount    int32             `protobuf:"varint,8,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
 	// Shown to labelers instead of name. Empty means use name.
-	Title         string          `protobuf:"bytes,9,opt,name=title,proto3" json:"title,omitempty"`
-	Guideline     string          `protobuf:"bytes,10,opt,name=guideline,proto3" json:"guideline,omitempty"`
-	Examples      []*LabelExample `protobuf:"bytes,11,rep,name=examples,proto3" json:"examples,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Title     string          `protobuf:"bytes,9,opt,name=title,proto3" json:"title,omitempty"`
+	Guideline string          `protobuf:"bytes,10,opt,name=guideline,proto3" json:"guideline,omitempty"`
+	Examples  []*LabelExample `protobuf:"bytes,11,rep,name=examples,proto3" json:"examples,omitempty"`
+	// Boxes are rotated rectangles, exported and trained as YOLO-OBB.
+	Oriented bool `protobuf:"varint,12,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	// Presigned URL of the reference design. Empty when there is none.
+	ReferenceUrl string `protobuf:"bytes,13,opt,name=reference_url,json=referenceUrl,proto3" json:"reference_url,omitempty"`
+	// Boxes of an oriented type with no rotation yet.
+	UnrotatedBoxCount int32 `protobuf:"varint,14,opt,name=unrotated_box_count,json=unrotatedBoxCount,proto3" json:"unrotated_box_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *LabelType) Reset() {
@@ -198,6 +204,27 @@ func (x *LabelType) GetExamples() []*LabelExample {
 		return x.Examples
 	}
 	return nil
+}
+
+func (x *LabelType) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
+}
+
+func (x *LabelType) GetReferenceUrl() string {
+	if x != nil {
+		return x.ReferenceUrl
+	}
+	return ""
+}
+
+func (x *LabelType) GetUnrotatedBoxCount() int32 {
+	if x != nil {
+		return x.UnrotatedBoxCount
+	}
+	return 0
 }
 
 type LabelExample struct {
@@ -348,6 +375,7 @@ type CreateLabelTypeRequest struct {
 	Attributes    []*LabelAttribute      `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty"`
 	Title         string                 `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`
 	Guideline     string                 `protobuf:"bytes,6,opt,name=guideline,proto3" json:"guideline,omitempty"`
+	Oriented      bool                   `protobuf:"varint,7,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -424,6 +452,13 @@ func (x *CreateLabelTypeRequest) GetGuideline() string {
 	return ""
 }
 
+func (x *CreateLabelTypeRequest) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
+}
+
 type CreateLabelTypeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	LabelType     *LabelType             `protobuf:"bytes,1,opt,name=label_type,json=labelType,proto3" json:"label_type,omitempty"`
@@ -477,6 +512,7 @@ type UpdateLabelTypeRequest struct {
 	Attributes    []*LabelAttribute      `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty"`
 	Title         string                 `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
 	Guideline     string                 `protobuf:"bytes,7,opt,name=guideline,proto3" json:"guideline,omitempty"`
+	Oriented      bool                   `protobuf:"varint,8,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -558,6 +594,13 @@ func (x *UpdateLabelTypeRequest) GetGuideline() string {
 		return x.Guideline
 	}
 	return ""
+}
+
+func (x *UpdateLabelTypeRequest) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
 }
 
 type UpdateLabelTypeResponse struct {
@@ -1052,6 +1095,191 @@ func (*DeleteLabelExampleResponse) Descriptor() ([]byte, []int) {
 	return file_krill_v1_label_proto_rawDescGZIP(), []int{18}
 }
 
+type SetLabelReferenceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId   int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetLabelReferenceRequest) Reset() {
+	*x = SetLabelReferenceRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetLabelReferenceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetLabelReferenceRequest) ProtoMessage() {}
+
+func (x *SetLabelReferenceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetLabelReferenceRequest.ProtoReflect.Descriptor instead.
+func (*SetLabelReferenceRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SetLabelReferenceRequest) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+func (x *SetLabelReferenceRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+type SetLabelReferenceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LabelType     *LabelType             `protobuf:"bytes,1,opt,name=label_type,json=labelType,proto3" json:"label_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetLabelReferenceResponse) Reset() {
+	*x = SetLabelReferenceResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetLabelReferenceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetLabelReferenceResponse) ProtoMessage() {}
+
+func (x *SetLabelReferenceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetLabelReferenceResponse.ProtoReflect.Descriptor instead.
+func (*SetLabelReferenceResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SetLabelReferenceResponse) GetLabelType() *LabelType {
+	if x != nil {
+		return x.LabelType
+	}
+	return nil
+}
+
+type FitRotationsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId   int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FitRotationsRequest) Reset() {
+	*x = FitRotationsRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FitRotationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FitRotationsRequest) ProtoMessage() {}
+
+func (x *FitRotationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FitRotationsRequest.ProtoReflect.Descriptor instead.
+func (*FitRotationsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *FitRotationsRequest) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+type FitRotationsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Boxes queued for fitting.
+	BoxCount      int32 `protobuf:"varint,1,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FitRotationsResponse) Reset() {
+	*x = FitRotationsResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FitRotationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FitRotationsResponse) ProtoMessage() {}
+
+func (x *FitRotationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FitRotationsResponse.ProtoReflect.Descriptor instead.
+func (*FitRotationsResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *FitRotationsResponse) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
 // AttributeValueMapping says what a source track's attribute value becomes.
 type AttributeValueMapping struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
@@ -1068,7 +1296,7 @@ type AttributeValueMapping struct {
 
 func (x *AttributeValueMapping) Reset() {
 	*x = AttributeValueMapping{}
-	mi := &file_krill_v1_label_proto_msgTypes[19]
+	mi := &file_krill_v1_label_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1080,7 +1308,7 @@ func (x *AttributeValueMapping) String() string {
 func (*AttributeValueMapping) ProtoMessage() {}
 
 func (x *AttributeValueMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[19]
+	mi := &file_krill_v1_label_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,7 +1321,7 @@ func (x *AttributeValueMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttributeValueMapping.ProtoReflect.Descriptor instead.
 func (*AttributeValueMapping) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{19}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AttributeValueMapping) GetSourceAttribute() string {
@@ -1146,7 +1374,7 @@ type ExportClassChange struct {
 
 func (x *ExportClassChange) Reset() {
 	*x = ExportClassChange{}
-	mi := &file_krill_v1_label_proto_msgTypes[20]
+	mi := &file_krill_v1_label_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1158,7 +1386,7 @@ func (x *ExportClassChange) String() string {
 func (*ExportClassChange) ProtoMessage() {}
 
 func (x *ExportClassChange) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[20]
+	mi := &file_krill_v1_label_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1171,7 +1399,7 @@ func (x *ExportClassChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportClassChange.ProtoReflect.Descriptor instead.
 func (*ExportClassChange) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{20}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ExportClassChange) GetName() string {
@@ -1214,7 +1442,7 @@ type PreviewMergeLabelTypesRequest struct {
 
 func (x *PreviewMergeLabelTypesRequest) Reset() {
 	*x = PreviewMergeLabelTypesRequest{}
-	mi := &file_krill_v1_label_proto_msgTypes[21]
+	mi := &file_krill_v1_label_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1226,7 +1454,7 @@ func (x *PreviewMergeLabelTypesRequest) String() string {
 func (*PreviewMergeLabelTypesRequest) ProtoMessage() {}
 
 func (x *PreviewMergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[21]
+	mi := &file_krill_v1_label_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1239,7 +1467,7 @@ func (x *PreviewMergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewMergeLabelTypesRequest.ProtoReflect.Descriptor instead.
 func (*PreviewMergeLabelTypesRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{21}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *PreviewMergeLabelTypesRequest) GetSourceId() int64 {
@@ -1291,7 +1519,7 @@ type PreviewMergeLabelTypesResponse struct {
 
 func (x *PreviewMergeLabelTypesResponse) Reset() {
 	*x = PreviewMergeLabelTypesResponse{}
-	mi := &file_krill_v1_label_proto_msgTypes[22]
+	mi := &file_krill_v1_label_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1303,7 +1531,7 @@ func (x *PreviewMergeLabelTypesResponse) String() string {
 func (*PreviewMergeLabelTypesResponse) ProtoMessage() {}
 
 func (x *PreviewMergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[22]
+	mi := &file_krill_v1_label_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1316,7 +1544,7 @@ func (x *PreviewMergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewMergeLabelTypesResponse.ProtoReflect.Descriptor instead.
 func (*PreviewMergeLabelTypesResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{22}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *PreviewMergeLabelTypesResponse) GetTrackCount() int32 {
@@ -1415,7 +1643,7 @@ type MergeLabelTypesRequest struct {
 
 func (x *MergeLabelTypesRequest) Reset() {
 	*x = MergeLabelTypesRequest{}
-	mi := &file_krill_v1_label_proto_msgTypes[23]
+	mi := &file_krill_v1_label_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1427,7 +1655,7 @@ func (x *MergeLabelTypesRequest) String() string {
 func (*MergeLabelTypesRequest) ProtoMessage() {}
 
 func (x *MergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[23]
+	mi := &file_krill_v1_label_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1440,7 +1668,7 @@ func (x *MergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLabelTypesRequest.ProtoReflect.Descriptor instead.
 func (*MergeLabelTypesRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{23}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *MergeLabelTypesRequest) GetSourceId() int64 {
@@ -1477,7 +1705,7 @@ type MergeLabelTypesResponse struct {
 
 func (x *MergeLabelTypesResponse) Reset() {
 	*x = MergeLabelTypesResponse{}
-	mi := &file_krill_v1_label_proto_msgTypes[24]
+	mi := &file_krill_v1_label_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1489,7 +1717,7 @@ func (x *MergeLabelTypesResponse) String() string {
 func (*MergeLabelTypesResponse) ProtoMessage() {}
 
 func (x *MergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[24]
+	mi := &file_krill_v1_label_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1502,7 +1730,7 @@ func (x *MergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLabelTypesResponse.ProtoReflect.Descriptor instead.
 func (*MergeLabelTypesResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{24}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *MergeLabelTypesResponse) GetTrackCount() int32 {
@@ -1540,7 +1768,7 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x14krill/v1/label.proto\x12\bkrill.v1\">\n" +
 	"\x0eLabelAttribute\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aoptions\x18\x02 \x03(\tR\aoptions\"\xe3\x02\n" +
+	"\aoptions\x18\x02 \x03(\tR\aoptions\"\xd4\x03\n" +
 	"\tLabelType\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -1556,7 +1784,10 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x05title\x18\t \x01(\tR\x05title\x12\x1c\n" +
 	"\tguideline\x18\n" +
 	" \x01(\tR\tguideline\x122\n" +
-	"\bexamples\x18\v \x03(\v2\x16.krill.v1.LabelExampleR\bexamples\"J\n" +
+	"\bexamples\x18\v \x03(\v2\x16.krill.v1.LabelExampleR\bexamples\x12\x1a\n" +
+	"\boriented\x18\f \x01(\bR\boriented\x12#\n" +
+	"\rreference_url\x18\r \x01(\tR\freferenceUrl\x12.\n" +
+	"\x13unrotated_box_count\x18\x0e \x01(\x05R\x11unrotatedBoxCount\"J\n" +
 	"\fLabelExample\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x18\n" +
@@ -1564,7 +1795,7 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x15ListLabelTypesRequest\"N\n" +
 	"\x16ListLabelTypesResponse\x124\n" +
 	"\vlabel_types\x18\x01 \x03(\v2\x13.krill.v1.LabelTypeR\n" +
-	"labelTypes\"\xd2\x01\n" +
+	"labelTypes\"\xee\x01\n" +
 	"\x16CreateLabelTypeRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05color\x18\x02 \x01(\tR\x05color\x12 \n" +
@@ -1573,10 +1804,11 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"attributes\x18\x04 \x03(\v2\x18.krill.v1.LabelAttributeR\n" +
 	"attributes\x12\x14\n" +
 	"\x05title\x18\x05 \x01(\tR\x05title\x12\x1c\n" +
-	"\tguideline\x18\x06 \x01(\tR\tguideline\"M\n" +
+	"\tguideline\x18\x06 \x01(\tR\tguideline\x12\x1a\n" +
+	"\boriented\x18\a \x01(\bR\boriented\"M\n" +
 	"\x17CreateLabelTypeResponse\x122\n" +
 	"\n" +
-	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"\xe2\x01\n" +
+	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"\xfe\x01\n" +
 	"\x16UpdateLabelTypeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -1586,7 +1818,8 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"attributes\x18\x05 \x03(\v2\x18.krill.v1.LabelAttributeR\n" +
 	"attributes\x12\x14\n" +
 	"\x05title\x18\x06 \x01(\tR\x05title\x12\x1c\n" +
-	"\tguideline\x18\a \x01(\tR\tguideline\"M\n" +
+	"\tguideline\x18\a \x01(\tR\tguideline\x12\x1a\n" +
+	"\boriented\x18\b \x01(\bR\boriented\"M\n" +
 	"\x17UpdateLabelTypeResponse\x122\n" +
 	"\n" +
 	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"(\n" +
@@ -1612,7 +1845,17 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\aexample\x18\x01 \x01(\v2\x16.krill.v1.LabelExampleR\aexample\"+\n" +
 	"\x19DeleteLabelExampleRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1c\n" +
-	"\x1aDeleteLabelExampleResponse\"\xd8\x01\n" +
+	"\x1aDeleteLabelExampleResponse\"P\n" +
+	"\x18SetLabelReferenceRequest\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\"O\n" +
+	"\x19SetLabelReferenceResponse\x122\n" +
+	"\n" +
+	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"9\n" +
+	"\x13FitRotationsRequest\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\"3\n" +
+	"\x14FitRotationsResponse\x12\x1b\n" +
+	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\"\xd8\x01\n" +
 	"\x15AttributeValueMapping\x12)\n" +
 	"\x10source_attribute\x18\x01 \x01(\tR\x0fsourceAttribute\x12#\n" +
 	"\rsource_option\x18\x02 \x01(\tR\fsourceOption\x12)\n" +
@@ -1655,7 +1898,7 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"trackCount\x12\x1b\n" +
 	"\tbox_count\x18\x02 \x01(\x05R\bboxCount\x12(\n" +
 	"\x10gold_frame_count\x18\x03 \x01(\x05R\x0egoldFrameCount\x12.\n" +
-	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount2\xce\a\n" +
+	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount2\xff\b\n" +
 	"\fLabelService\x12U\n" +
 	"\x0eListLabelTypes\x12\x1f.krill.v1.ListLabelTypesRequest\x1a .krill.v1.ListLabelTypesResponse\"\x00\x12X\n" +
 	"\x0fCreateLabelType\x12 .krill.v1.CreateLabelTypeRequest\x1a!.krill.v1.CreateLabelTypeResponse\"\x00\x12X\n" +
@@ -1664,7 +1907,9 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x11ReorderLabelTypes\x12\".krill.v1.ReorderLabelTypesRequest\x1a#.krill.v1.ReorderLabelTypesResponse\"\x00\x12s\n" +
 	"\x18CreateLabelExampleUpload\x12).krill.v1.CreateLabelExampleUploadRequest\x1a*.krill.v1.CreateLabelExampleUploadResponse\"\x00\x12X\n" +
 	"\x0fAddLabelExample\x12 .krill.v1.AddLabelExampleRequest\x1a!.krill.v1.AddLabelExampleResponse\"\x00\x12a\n" +
-	"\x12DeleteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00\x12m\n" +
+	"\x12DeleteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00\x12^\n" +
+	"\x11SetLabelReference\x12\".krill.v1.SetLabelReferenceRequest\x1a#.krill.v1.SetLabelReferenceResponse\"\x00\x12O\n" +
+	"\fFitRotations\x12\x1d.krill.v1.FitRotationsRequest\x1a\x1e.krill.v1.FitRotationsResponse\"\x00\x12m\n" +
 	"\x16PreviewMergeLabelTypes\x12'.krill.v1.PreviewMergeLabelTypesRequest\x1a(.krill.v1.PreviewMergeLabelTypesResponse\"\x00\x12X\n" +
 	"\x0fMergeLabelTypes\x12 .krill.v1.MergeLabelTypesRequest\x1a!.krill.v1.MergeLabelTypesResponse\"\x00B\x8b\x01\n" +
 	"\fcom.krill.v1B\n" +
@@ -1682,7 +1927,7 @@ func file_krill_v1_label_proto_rawDescGZIP() []byte {
 	return file_krill_v1_label_proto_rawDescData
 }
 
-var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_krill_v1_label_proto_goTypes = []any{
 	(*LabelAttribute)(nil),                   // 0: krill.v1.LabelAttribute
 	(*LabelType)(nil),                        // 1: krill.v1.LabelType
@@ -1703,12 +1948,16 @@ var file_krill_v1_label_proto_goTypes = []any{
 	(*AddLabelExampleResponse)(nil),          // 16: krill.v1.AddLabelExampleResponse
 	(*DeleteLabelExampleRequest)(nil),        // 17: krill.v1.DeleteLabelExampleRequest
 	(*DeleteLabelExampleResponse)(nil),       // 18: krill.v1.DeleteLabelExampleResponse
-	(*AttributeValueMapping)(nil),            // 19: krill.v1.AttributeValueMapping
-	(*ExportClassChange)(nil),                // 20: krill.v1.ExportClassChange
-	(*PreviewMergeLabelTypesRequest)(nil),    // 21: krill.v1.PreviewMergeLabelTypesRequest
-	(*PreviewMergeLabelTypesResponse)(nil),   // 22: krill.v1.PreviewMergeLabelTypesResponse
-	(*MergeLabelTypesRequest)(nil),           // 23: krill.v1.MergeLabelTypesRequest
-	(*MergeLabelTypesResponse)(nil),          // 24: krill.v1.MergeLabelTypesResponse
+	(*SetLabelReferenceRequest)(nil),         // 19: krill.v1.SetLabelReferenceRequest
+	(*SetLabelReferenceResponse)(nil),        // 20: krill.v1.SetLabelReferenceResponse
+	(*FitRotationsRequest)(nil),              // 21: krill.v1.FitRotationsRequest
+	(*FitRotationsResponse)(nil),             // 22: krill.v1.FitRotationsResponse
+	(*AttributeValueMapping)(nil),            // 23: krill.v1.AttributeValueMapping
+	(*ExportClassChange)(nil),                // 24: krill.v1.ExportClassChange
+	(*PreviewMergeLabelTypesRequest)(nil),    // 25: krill.v1.PreviewMergeLabelTypesRequest
+	(*PreviewMergeLabelTypesResponse)(nil),   // 26: krill.v1.PreviewMergeLabelTypesResponse
+	(*MergeLabelTypesRequest)(nil),           // 27: krill.v1.MergeLabelTypesRequest
+	(*MergeLabelTypesResponse)(nil),          // 28: krill.v1.MergeLabelTypesResponse
 }
 var file_krill_v1_label_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
@@ -1720,35 +1969,40 @@ var file_krill_v1_label_proto_depIdxs = []int32{
 	1,  // 6: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
 	1,  // 7: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
 	2,  // 8: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
-	19, // 9: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	19, // 10: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
-	20, // 11: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
-	19, // 12: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	3,  // 13: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
-	5,  // 14: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
-	7,  // 15: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
-	9,  // 16: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
-	11, // 17: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
-	13, // 18: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
-	15, // 19: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
-	17, // 20: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
-	21, // 21: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
-	23, // 22: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
-	4,  // 23: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
-	6,  // 24: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
-	8,  // 25: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
-	10, // 26: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
-	12, // 27: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
-	14, // 28: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
-	16, // 29: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
-	18, // 30: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
-	22, // 31: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
-	24, // 32: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
-	23, // [23:33] is the sub-list for method output_type
-	13, // [13:23] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	1,  // 9: krill.v1.SetLabelReferenceResponse.label_type:type_name -> krill.v1.LabelType
+	23, // 10: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	23, // 11: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
+	24, // 12: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
+	23, // 13: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	3,  // 14: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
+	5,  // 15: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
+	7,  // 16: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
+	9,  // 17: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
+	11, // 18: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
+	13, // 19: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
+	15, // 20: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
+	17, // 21: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
+	19, // 22: krill.v1.LabelService.SetLabelReference:input_type -> krill.v1.SetLabelReferenceRequest
+	21, // 23: krill.v1.LabelService.FitRotations:input_type -> krill.v1.FitRotationsRequest
+	25, // 24: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
+	27, // 25: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
+	4,  // 26: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
+	6,  // 27: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
+	8,  // 28: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
+	10, // 29: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
+	12, // 30: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
+	14, // 31: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
+	16, // 32: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
+	18, // 33: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
+	20, // 34: krill.v1.LabelService.SetLabelReference:output_type -> krill.v1.SetLabelReferenceResponse
+	22, // 35: krill.v1.LabelService.FitRotations:output_type -> krill.v1.FitRotationsResponse
+	26, // 36: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
+	28, // 37: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
+	26, // [26:38] is the sub-list for method output_type
+	14, // [14:26] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_label_proto_init() }
@@ -1762,7 +2016,7 @@ func file_krill_v1_label_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_label_proto_rawDesc), len(file_krill_v1_label_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

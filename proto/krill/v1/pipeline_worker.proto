@@ -102,6 +102,8 @@ message FinishInspectRequest {
   repeated string classes = 2;
   // The image size the model trained at, or 0 when the weights don't say.
   int32 image_size = 3;
+  // An OBB model rather than a detection model.
+  bool oriented = 4;
 }
 
 message FinishInspectResponse {}

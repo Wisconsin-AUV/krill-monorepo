@@ -22,6 +22,9 @@ service WorkerService {
   // ReportEmbed finishes an embed task once every frame's embedding is
   // uploaded.
   rpc ReportEmbed(ReportEmbedRequest) returns (ReportEmbedResponse) {}
+  // ReportOrient saves rotated boxes for an orient task in batches, with done
+  // set on the last one.
+  rpc ReportOrient(ReportOrientRequest) returns (ReportOrientResponse) {}
   rpc FailTask(FailTaskRequest) returns (FailTaskResponse) {}
   // Heartbeat reports the worker's state every few seconds for the admin
   // panel. A worker that stops sending them shows as offline.
@@ -35,6 +38,7 @@ message NextTaskResponse {
     TrackTask track = 1;
     ExemplarTask exemplar = 2;
     EmbedTask embed = 3;
+    OrientTask orient = 4;
     TrainTask train = 10;
     PrelabelTask prelabel = 11;
     PreviewTask preview = 12;
@@ -62,6 +66,11 @@ message TrackTask {
   // Model that computed the frames' embeddings. Workers running a different
   // model ignore them.
   string embedding_model = 5;
+  // Report rotated boxes, for oriented label types.
+  bool oriented = 6;
+  // Presigned URL of the label type's reference design, which rotated boxes
+  // are fit to when set.
+  string reference_url = 7;
 }
 
 // EmbedTask computes the SAM image embedding of each frame.
@@ -84,6 +93,35 @@ message ExemplarTask {
   TaskFrame frame = 2;
   Box box = 3;
 }
+
+// OrientTask fits a rotated box to each axis-aligned box of one oriented
+// label type.
+message OrientTask {
+  int64 id = 1;
+  repeated OrientFrame frames = 2;
+  // Presigned URL of the label type's reference design. When empty, boxes
+  // are fit to the object's SAM mask.
+  string reference_url = 3;
+}
+
+message OrientFrame {
+  TaskFrame frame = 1;
+  repeated OrientBox boxes = 2;
+}
+
+message OrientBox {
+  int64 annotation_id = 1;
+  Box box = 2;
+}
+
+message ReportOrientRequest {
+  int64 task_id = 1;
+  // Boxes with corners. Boxes the worker couldn't fit are left out.
+  repeated OrientBox boxes = 2;
+  bool done = 3;
+}
+
+message ReportOrientResponse {}
 
 message TrackedBox {
   int64 frame_id = 1;

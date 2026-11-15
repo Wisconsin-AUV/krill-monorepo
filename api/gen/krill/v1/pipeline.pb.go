@@ -775,7 +775,9 @@ type TrainingRun struct {
 	Filename string `protobuf:"bytes,24,opt,name=filename,proto3" json:"filename,omitempty"`
 	// The model's class names in class order, for uploaded runs. Only
 	// GetTrainingRun sets it.
-	Classes       []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
+	Classes []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
+	// The model finds rotated boxes (YOLO-OBB).
+	Oriented      bool `protobuf:"varint,26,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -983,6 +985,13 @@ func (x *TrainingRun) GetClasses() []*ModelClass {
 		return x.Classes
 	}
 	return nil
+}
+
+func (x *TrainingRun) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
 }
 
 // ModelClass is one class of an uploaded model.
@@ -4246,8 +4255,10 @@ type TrainTask struct {
 	// Presigned PUT for the best epoch's weights.
 	WeightsUploadUrl string `protobuf:"bytes,11,opt,name=weights_upload_url,json=weightsUploadUrl,proto3" json:"weights_upload_url,omitempty"`
 	HasTest          bool   `protobuf:"varint,12,opt,name=has_test,json=hasTest,proto3" json:"has_test,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// The dataset's labels are YOLO-OBB corners, so train an OBB model.
+	Oriented      bool `protobuf:"varint,13,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TrainTask) Reset() {
@@ -4360,6 +4371,13 @@ func (x *TrainTask) GetWeightsUploadUrl() string {
 func (x *TrainTask) GetHasTest() bool {
 	if x != nil {
 		return x.HasTest
+	}
+	return false
+}
+
+func (x *TrainTask) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
 	}
 	return false
 }
@@ -4783,7 +4801,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\bmap50_95\x18\a \x01(\x01R\amap5095\"i\n" +
 	"\vEvalMetrics\x12(\n" +
 	"\x03all\x18\x01 \x01(\v2\x16.krill.v1.ClassMetricsR\x03all\x120\n" +
-	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x81\b\n" +
+	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x9d\b\n" +
 	"\vTrainingRun\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x120\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.krill.v1.TrainingStatusR\x06status\x123\n" +
@@ -4815,7 +4833,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x06device\x18\x16 \x01(\tR\x06device\x12%\n" +
 	"\x0everified_boxes\x18\x17 \x01(\x05R\rverifiedBoxes\x12\x1a\n" +
 	"\bfilename\x18\x18 \x01(\tR\bfilename\x12.\n" +
-	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\"D\n" +
+	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\x12\x1a\n" +
+	"\boriented\x18\x1a \x01(\bR\boriented\"D\n" +
 	"\n" +
 	"ModelClass\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
@@ -5069,7 +5088,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x03run\x18\x01 \x01(\v2\x15.krill.v1.TrainingRunR\x03run\"1\n" +
 	"\rPrelabelFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\"\x88\x03\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\"\xa4\x03\n" +
 	"\tTrainTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x15\n" +
 	"\x06run_id\x18\x02 \x01(\x03R\x05runId\x12\x1f\n" +
@@ -5085,7 +5104,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x14baseline_weights_url\x18\n" +
 	" \x01(\tR\x12baselineWeightsUrl\x12,\n" +
 	"\x12weights_upload_url\x18\v \x01(\tR\x10weightsUploadUrl\x12\x19\n" +
-	"\bhas_test\x18\f \x01(\bR\ahasTest\">\n" +
+	"\bhas_test\x18\f \x01(\bR\ahasTest\x12\x1a\n" +
+	"\boriented\x18\r \x01(\bR\boriented\">\n" +
 	"\vInspectTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
 	"\vweights_url\x18\x02 \x01(\tR\n" +

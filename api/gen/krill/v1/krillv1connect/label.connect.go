@@ -57,6 +57,12 @@ const (
 	// LabelServiceDeleteLabelExampleProcedure is the fully-qualified name of the LabelService's
 	// DeleteLabelExample RPC.
 	LabelServiceDeleteLabelExampleProcedure = "/krill.v1.LabelService/DeleteLabelExample"
+	// LabelServiceSetLabelReferenceProcedure is the fully-qualified name of the LabelService's
+	// SetLabelReference RPC.
+	LabelServiceSetLabelReferenceProcedure = "/krill.v1.LabelService/SetLabelReference"
+	// LabelServiceFitRotationsProcedure is the fully-qualified name of the LabelService's FitRotations
+	// RPC.
+	LabelServiceFitRotationsProcedure = "/krill.v1.LabelService/FitRotations"
 	// LabelServicePreviewMergeLabelTypesProcedure is the fully-qualified name of the LabelService's
 	// PreviewMergeLabelTypes RPC.
 	LabelServicePreviewMergeLabelTypesProcedure = "/krill.v1.LabelService/PreviewMergeLabelTypes"
@@ -75,10 +81,18 @@ type LabelServiceClient interface {
 	// ReorderLabelTypes sets the order, which is also the number-key order.
 	ReorderLabelTypes(context.Context, *v1.ReorderLabelTypesRequest) (*v1.ReorderLabelTypesResponse, error)
 	// CreateLabelExampleUpload returns a presigned URL the browser uploads an
-	// example image to. Call AddLabelExample with the key once it finishes.
+	// example image to. Call AddLabelExample or SetLabelReference with the key
+	// once it finishes.
 	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
 	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
 	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
+	// SetLabelReference sets the printed design an oriented type's objects are
+	// copies of. An empty key removes it.
+	SetLabelReference(context.Context, *v1.SetLabelReferenceRequest) (*v1.SetLabelReferenceResponse, error)
+	// FitRotations has a GPU worker fit a rotated box to every box of an
+	// oriented type that has none, matching the reference design when there is
+	// one and the object's SAM mask when there isn't.
+	FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -146,6 +160,18 @@ func NewLabelServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
 			connect.WithClientOptions(opts...),
 		),
+		setLabelReference: connect.NewClient[v1.SetLabelReferenceRequest, v1.SetLabelReferenceResponse](
+			httpClient,
+			baseURL+LabelServiceSetLabelReferenceProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("SetLabelReference")),
+			connect.WithClientOptions(opts...),
+		),
+		fitRotations: connect.NewClient[v1.FitRotationsRequest, v1.FitRotationsResponse](
+			httpClient,
+			baseURL+LabelServiceFitRotationsProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("FitRotations")),
+			connect.WithClientOptions(opts...),
+		),
 		previewMergeLabelTypes: connect.NewClient[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse](
 			httpClient,
 			baseURL+LabelServicePreviewMergeLabelTypesProcedure,
@@ -171,6 +197,8 @@ type labelServiceClient struct {
 	createLabelExampleUpload *connect.Client[v1.CreateLabelExampleUploadRequest, v1.CreateLabelExampleUploadResponse]
 	addLabelExample          *connect.Client[v1.AddLabelExampleRequest, v1.AddLabelExampleResponse]
 	deleteLabelExample       *connect.Client[v1.DeleteLabelExampleRequest, v1.DeleteLabelExampleResponse]
+	setLabelReference        *connect.Client[v1.SetLabelReferenceRequest, v1.SetLabelReferenceResponse]
+	fitRotations             *connect.Client[v1.FitRotationsRequest, v1.FitRotationsResponse]
 	previewMergeLabelTypes   *connect.Client[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse]
 	mergeLabelTypes          *connect.Client[v1.MergeLabelTypesRequest, v1.MergeLabelTypesResponse]
 }
@@ -247,6 +275,24 @@ func (c *labelServiceClient) DeleteLabelExample(ctx context.Context, req *v1.Del
 	return nil, err
 }
 
+// SetLabelReference calls krill.v1.LabelService.SetLabelReference.
+func (c *labelServiceClient) SetLabelReference(ctx context.Context, req *v1.SetLabelReferenceRequest) (*v1.SetLabelReferenceResponse, error) {
+	response, err := c.setLabelReference.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// FitRotations calls krill.v1.LabelService.FitRotations.
+func (c *labelServiceClient) FitRotations(ctx context.Context, req *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error) {
+	response, err := c.fitRotations.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PreviewMergeLabelTypes calls krill.v1.LabelService.PreviewMergeLabelTypes.
 func (c *labelServiceClient) PreviewMergeLabelTypes(ctx context.Context, req *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
 	response, err := c.previewMergeLabelTypes.CallUnary(ctx, connect.NewRequest(req))
@@ -275,10 +321,18 @@ type LabelServiceHandler interface {
 	// ReorderLabelTypes sets the order, which is also the number-key order.
 	ReorderLabelTypes(context.Context, *v1.ReorderLabelTypesRequest) (*v1.ReorderLabelTypesResponse, error)
 	// CreateLabelExampleUpload returns a presigned URL the browser uploads an
-	// example image to. Call AddLabelExample with the key once it finishes.
+	// example image to. Call AddLabelExample or SetLabelReference with the key
+	// once it finishes.
 	CreateLabelExampleUpload(context.Context, *v1.CreateLabelExampleUploadRequest) (*v1.CreateLabelExampleUploadResponse, error)
 	AddLabelExample(context.Context, *v1.AddLabelExampleRequest) (*v1.AddLabelExampleResponse, error)
 	DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error)
+	// SetLabelReference sets the printed design an oriented type's objects are
+	// copies of. An empty key removes it.
+	SetLabelReference(context.Context, *v1.SetLabelReferenceRequest) (*v1.SetLabelReferenceResponse, error)
+	// FitRotations has a GPU worker fit a rotated box to every box of an
+	// oriented type that has none, matching the reference design when there is
+	// one and the object's SAM mask when there isn't.
+	FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -342,6 +396,18 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(labelServiceMethods.ByName("DeleteLabelExample")),
 		connect.WithHandlerOptions(opts...),
 	)
+	labelServiceSetLabelReferenceHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceSetLabelReferenceProcedure,
+		svc.SetLabelReference,
+		connect.WithSchema(labelServiceMethods.ByName("SetLabelReference")),
+		connect.WithHandlerOptions(opts...),
+	)
+	labelServiceFitRotationsHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceFitRotationsProcedure,
+		svc.FitRotations,
+		connect.WithSchema(labelServiceMethods.ByName("FitRotations")),
+		connect.WithHandlerOptions(opts...),
+	)
 	labelServicePreviewMergeLabelTypesHandler := connect.NewUnaryHandlerSimple(
 		LabelServicePreviewMergeLabelTypesProcedure,
 		svc.PreviewMergeLabelTypes,
@@ -372,6 +438,10 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 			labelServiceAddLabelExampleHandler.ServeHTTP(w, r)
 		case LabelServiceDeleteLabelExampleProcedure:
 			labelServiceDeleteLabelExampleHandler.ServeHTTP(w, r)
+		case LabelServiceSetLabelReferenceProcedure:
+			labelServiceSetLabelReferenceHandler.ServeHTTP(w, r)
+		case LabelServiceFitRotationsProcedure:
+			labelServiceFitRotationsHandler.ServeHTTP(w, r)
 		case LabelServicePreviewMergeLabelTypesProcedure:
 			labelServicePreviewMergeLabelTypesHandler.ServeHTTP(w, r)
 		case LabelServiceMergeLabelTypesProcedure:
@@ -415,6 +485,14 @@ func (UnimplementedLabelServiceHandler) AddLabelExample(context.Context, *v1.Add
 
 func (UnimplementedLabelServiceHandler) DeleteLabelExample(context.Context, *v1.DeleteLabelExampleRequest) (*v1.DeleteLabelExampleResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.DeleteLabelExample is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) SetLabelReference(context.Context, *v1.SetLabelReferenceRequest) (*v1.SetLabelReferenceResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.SetLabelReference is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.FitRotations is not implemented"))
 }
 
 func (UnimplementedLabelServiceHandler) PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
