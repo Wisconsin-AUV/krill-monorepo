@@ -11,13 +11,15 @@ import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/
 import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { ExportOptionsSchema } from '@/gen/krill/v1/export_pb'
 import {
   AugmentationSchema,
+  ExportOptionsSchema,
+  type Augmentation,
+} from '@/gen/krill/v1/export_pb'
+import {
   ModelSize,
   PipelineService,
   TrainConfigSchema,
-  type Augmentation,
   TrainingStatus,
   type TrainConfig,
   type TrainingRun,

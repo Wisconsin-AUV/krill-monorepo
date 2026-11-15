@@ -12,7 +12,7 @@ from typing import Any
 import cv2
 import numpy as np
 import numpy.typing as npt
-from krill.v1 import pipeline_pb2
+from krill.v1 import export_pb2
 
 Image = npt.NDArray[np.uint8]
 
@@ -74,7 +74,7 @@ def noise(im: Image, rng: np.random.Generator) -> Image:
     return to_image(im.astype(np.float32) + rng.normal(0.0, sigma, im.shape))
 
 
-def vary(im: Image, aug: pipeline_pb2.Augmentation, rng: np.random.Generator) -> Image:
+def vary(im: Image, aug: export_pb2.Augmentation, rng: np.random.Generator) -> Image:
     if aug.aspect > 1:
         im = stretch(im, rng, aug.aspect)
     if im.ndim != 3 or im.shape[2] != 3:
@@ -88,7 +88,7 @@ def vary(im: Image, aug: pipeline_pb2.Augmentation, rng: np.random.Generator) ->
     return im
 
 
-def ultralytics_args(aug: pipeline_pb2.Augmentation) -> dict[str, float]:
+def ultralytics_args(aug: export_pb2.Augmentation) -> dict[str, float]:
     return {
         "degrees": aug.degrees,
         "translate": aug.translate,
@@ -104,7 +104,7 @@ def ultralytics_args(aug: pipeline_pb2.Augmentation) -> dict[str, float]:
     }
 
 
-def trainer(base: type[Any], aug: pipeline_pb2.Augmentation) -> type[Any]:
+def trainer(base: type[Any], aug: export_pb2.Augmentation) -> type[Any]:
     """Subclass an Ultralytics trainer so its training images, and never its
     val images, go through vary."""
 
@@ -119,7 +119,7 @@ def trainer(base: type[Any], aug: pipeline_pb2.Augmentation) -> type[Any]:
 
 
 def varied(
-    load: Callable[..., tuple[Image, Any, Any]], aug: pipeline_pb2.Augmentation
+    load: Callable[..., tuple[Image, Any, Any]], aug: export_pb2.Augmentation
 ) -> Callable[..., tuple[Image, Any, Any]]:
     def load_image(*args: Any, **kwargs: Any) -> tuple[Image, Any, Any]:
         im, original, _ = load(*args, **kwargs)

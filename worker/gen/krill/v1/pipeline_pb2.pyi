@@ -118,42 +118,8 @@ class TrainConfig(_message.Message):
     batch: int
     base_run_id: int
     dataset: _export_pb2.ExportOptions
-    augmentation: Augmentation
-    def __init__(self, size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_run_id: _Optional[int] = ..., dataset: _Optional[_Union[_export_pb2.ExportOptions, _Mapping]] = ..., augmentation: _Optional[_Union[Augmentation, _Mapping]] = ...) -> None: ...
-
-class Augmentation(_message.Message):
-    __slots__ = ("degrees", "translate", "scale", "shear", "perspective", "hsv_h", "hsv_s", "hsv_v", "fliplr", "flipud", "mosaic", "aspect", "underwater", "shadows", "noise")
-    DEGREES_FIELD_NUMBER: _ClassVar[int]
-    TRANSLATE_FIELD_NUMBER: _ClassVar[int]
-    SCALE_FIELD_NUMBER: _ClassVar[int]
-    SHEAR_FIELD_NUMBER: _ClassVar[int]
-    PERSPECTIVE_FIELD_NUMBER: _ClassVar[int]
-    HSV_H_FIELD_NUMBER: _ClassVar[int]
-    HSV_S_FIELD_NUMBER: _ClassVar[int]
-    HSV_V_FIELD_NUMBER: _ClassVar[int]
-    FLIPLR_FIELD_NUMBER: _ClassVar[int]
-    FLIPUD_FIELD_NUMBER: _ClassVar[int]
-    MOSAIC_FIELD_NUMBER: _ClassVar[int]
-    ASPECT_FIELD_NUMBER: _ClassVar[int]
-    UNDERWATER_FIELD_NUMBER: _ClassVar[int]
-    SHADOWS_FIELD_NUMBER: _ClassVar[int]
-    NOISE_FIELD_NUMBER: _ClassVar[int]
-    degrees: float
-    translate: float
-    scale: float
-    shear: float
-    perspective: float
-    hsv_h: float
-    hsv_s: float
-    hsv_v: float
-    fliplr: float
-    flipud: float
-    mosaic: float
-    aspect: float
-    underwater: float
-    shadows: float
-    noise: float
-    def __init__(self, degrees: _Optional[float] = ..., translate: _Optional[float] = ..., scale: _Optional[float] = ..., shear: _Optional[float] = ..., perspective: _Optional[float] = ..., hsv_h: _Optional[float] = ..., hsv_s: _Optional[float] = ..., hsv_v: _Optional[float] = ..., fliplr: _Optional[float] = ..., flipud: _Optional[float] = ..., mosaic: _Optional[float] = ..., aspect: _Optional[float] = ..., underwater: _Optional[float] = ..., shadows: _Optional[float] = ..., noise: _Optional[float] = ...) -> None: ...
+    augmentation: _export_pb2.Augmentation
+    def __init__(self, size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_run_id: _Optional[int] = ..., dataset: _Optional[_Union[_export_pb2.ExportOptions, _Mapping]] = ..., augmentation: _Optional[_Union[_export_pb2.Augmentation, _Mapping]] = ...) -> None: ...
 
 class EpochMetrics(_message.Message):
     __slots__ = ("epoch", "box_loss", "cls_loss", "precision", "recall", "map50", "map50_95")
@@ -794,7 +760,7 @@ class PrelabelFrame(_message.Message):
     def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ...) -> None: ...
 
 class TrainTask(_message.Message):
-    __slots__ = ("id", "run_id", "dataset_url", "classes", "size", "epochs", "image_size", "batch", "base_weights_url", "baseline_weights_url", "weights_upload_url", "has_test", "oriented", "augmentation")
+    __slots__ = ("id", "run_id", "dataset_url", "classes", "size", "epochs", "image_size", "batch", "base_weights_url", "baseline_weights_url", "weights_upload_url", "has_test", "oriented", "augmentation", "distractor_urls")
     ID_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
     DATASET_URL_FIELD_NUMBER: _ClassVar[int]
@@ -809,6 +775,7 @@ class TrainTask(_message.Message):
     HAS_TEST_FIELD_NUMBER: _ClassVar[int]
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
     AUGMENTATION_FIELD_NUMBER: _ClassVar[int]
+    DISTRACTOR_URLS_FIELD_NUMBER: _ClassVar[int]
     id: int
     run_id: int
     dataset_url: str
@@ -822,8 +789,9 @@ class TrainTask(_message.Message):
     weights_upload_url: str
     has_test: bool
     oriented: bool
-    augmentation: Augmentation
-    def __init__(self, id: _Optional[int] = ..., run_id: _Optional[int] = ..., dataset_url: _Optional[str] = ..., classes: _Optional[_Iterable[str]] = ..., size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_weights_url: _Optional[str] = ..., baseline_weights_url: _Optional[str] = ..., weights_upload_url: _Optional[str] = ..., has_test: _Optional[bool] = ..., oriented: _Optional[bool] = ..., augmentation: _Optional[_Union[Augmentation, _Mapping]] = ...) -> None: ...
+    augmentation: _export_pb2.Augmentation
+    distractor_urls: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, id: _Optional[int] = ..., run_id: _Optional[int] = ..., dataset_url: _Optional[str] = ..., classes: _Optional[_Iterable[str]] = ..., size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_weights_url: _Optional[str] = ..., baseline_weights_url: _Optional[str] = ..., weights_upload_url: _Optional[str] = ..., has_test: _Optional[bool] = ..., oriented: _Optional[bool] = ..., augmentation: _Optional[_Union[_export_pb2.Augmentation, _Mapping]] = ..., distractor_urls: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class InspectTask(_message.Message):
     __slots__ = ("id", "weights_url")

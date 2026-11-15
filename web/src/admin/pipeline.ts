@@ -6,10 +6,10 @@ import {
   PrelabelStatus,
   TrainingStatus,
   TrainingTrigger,
-  type Augmentation,
   type ModelTrial,
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
+import type { Augmentation } from '@/gen/krill/v1/export_pb'
 import { formatDuration } from '@/lib/format'
 
 export const trainingStatus: Record<TrainingStatus, { label: string; color: BadgeColor }> = {

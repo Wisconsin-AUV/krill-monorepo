@@ -12,7 +12,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/export.proto.
  */
 export const file_krill_v1_export: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS9leHBvcnQucHJvdG8SCGtyaWxsLnYxIm8KDUV4cG9ydE9wdGlvbnMSFAoMdmFsX2ZyYWN0aW9uGAEgASgCEg4KBnN0cmlkZRgCIAEoBRINCgVkZWR1cBgDIAEoCBIWCg5kZWR1cF9kaXN0YW5jZRgEIAEoBRIRCgl2aWRlb19pZHMYBSADKAMihwEKEEV4cG9ydENsYXNzU3RhdHMSCgoCaWQYASABKAUSDAoEbmFtZRgCIAEoCRITCgt0cmFpbl9ib3hlcxgDIAEoBRIRCgl2YWxfYm94ZXMYBCABKAUSDQoFY2xpcHMYBSABKAUSDgoGdmlkZW9zGAYgASgFEhIKCnRlc3RfYm94ZXMYByABKAUicAoQRXhwb3J0VmlkZW9TdGF0cxIQCgh2aWRlb19pZBgBIAEoAxIMCgRuYW1lGAIgASgJEg0KBXNwbGl0GAMgASgJEg4KBnBpbm5lZBgEIAEoCBIOCgZpbWFnZXMYBSABKAUSDQoFYm94ZXMYBiABKAUijwMKC0V4cG9ydFN0YXRzEhQKDHRyYWluX2ltYWdlcxgBIAEoBRISCgp2YWxfaW1hZ2VzGAIgASgFEhMKC3RyYWluX2JveGVzGAMgASgFEhEKCXZhbF9ib3hlcxgEIAEoBRIXCg9uZWdhdGl2ZV9pbWFnZXMYBSABKAUSGAoQdW5sYWJlbGVkX2ZyYW1lcxgGIAEoBRIZChFpbmNvbXBsZXRlX2ZyYW1lcxgHIAEoBRIZChF1bnZlcmlmaWVkX2ZyYW1lcxgIIAEoBRIWCg5zdHJpZGVfc2tpcHBlZBgJIAEoBRIZChFkdXBsaWNhdGVfc2tpcHBlZBgKIAEoBRIrCgdjbGFzc2VzGAsgAygLMhoua3JpbGwudjEuRXhwb3J0Q2xhc3NTdGF0cxIqCgZ2aWRlb3MYDCADKAsyGi5rcmlsbC52MS5FeHBvcnRWaWRlb1N0YXRzEhMKC3Rlc3RfaW1hZ2VzGA0gASgFEhIKCnRlc3RfYm94ZXMYDiABKAUSEAoIb3JpZW50ZWQYDyABKAgixgIKBkV4cG9ydBIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEiYKBnN0YXR1cxgDIAEoDjIWLmtyaWxsLnYxLkV4cG9ydFN0YXR1cxINCgVlcnJvchgEIAEoCRIQCghwcm9ncmVzcxgFIAEoAhIoCgdvcHRpb25zGAYgASgLMhcua3JpbGwudjEuRXhwb3J0T3B0aW9ucxIkCgVzdGF0cxgHIAEoCzIVLmtyaWxsLnYxLkV4cG9ydFN0YXRzEhIKCnNpemVfYnl0ZXMYCCABKAMSFAoMZG93bmxvYWRfdXJsGAkgASgJEi4KCmNyZWF0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJAChRQcmV2aWV3RXhwb3J0UmVxdWVzdBIoCgdvcHRpb25zGAEgASgLMhcua3JpbGwudjEuRXhwb3J0T3B0aW9ucyI9ChVQcmV2aWV3RXhwb3J0UmVzcG9uc2USJAoFc3RhdHMYASABKAsyFS5rcmlsbC52MS5FeHBvcnRTdGF0cyJNChNDcmVhdGVFeHBvcnRSZXF1ZXN0EgwKBG5hbWUYASABKAkSKAoHb3B0aW9ucxgCIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMiOAoUQ3JlYXRlRXhwb3J0UmVzcG9uc2USIAoGZXhwb3J0GAEgASgLMhAua3JpbGwudjEuRXhwb3J0IhQKEkxpc3RFeHBvcnRzUmVxdWVzdCI4ChNMaXN0RXhwb3J0c1Jlc3BvbnNlEiEKB2V4cG9ydHMYASADKAsyEC5rcmlsbC52MS5FeHBvcnQiIQoTRGVsZXRlRXhwb3J0UmVxdWVzdBIKCgJpZBgBIAEoAyIWChREZWxldGVFeHBvcnRSZXNwb25zZSIaChhHZXRFeHBvcnREZWZhdWx0c1JlcXVlc3QiRQoZR2V0RXhwb3J0RGVmYXVsdHNSZXNwb25zZRIoCgdvcHRpb25zGAEgASgLMhcua3JpbGwudjEuRXhwb3J0T3B0aW9ucyqVAQoMRXhwb3J0U3RhdHVzEh0KGUVYUE9SVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRFWFBPUlRfU1RBVFVTX1FVRVVFRBABEhkKFUVYUE9SVF9TVEFUVVNfUlVOTklORxACEhcKE0VYUE9SVF9TVEFUVVNfUkVBRFkQAxIYChRFWFBPUlRfU1RBVFVTX0ZBSUxFRBAEMrMDCg1FeHBvcnRTZXJ2aWNlElIKDVByZXZpZXdFeHBvcnQSHi5rcmlsbC52MS5QcmV2aWV3RXhwb3J0UmVxdWVzdBofLmtyaWxsLnYxLlByZXZpZXdFeHBvcnRSZXNwb25zZSIAEk8KDENyZWF0ZUV4cG9ydBIdLmtyaWxsLnYxLkNyZWF0ZUV4cG9ydFJlcXVlc3QaHi5rcmlsbC52MS5DcmVhdGVFeHBvcnRSZXNwb25zZSIAEkwKC0xpc3RFeHBvcnRzEhwua3JpbGwudjEuTGlzdEV4cG9ydHNSZXF1ZXN0Gh0ua3JpbGwudjEuTGlzdEV4cG9ydHNSZXNwb25zZSIAEk8KDERlbGV0ZUV4cG9ydBIdLmtyaWxsLnYxLkRlbGV0ZUV4cG9ydFJlcXVlc3QaHi5rcmlsbC52MS5EZWxldGVFeHBvcnRSZXNwb25zZSIAEl4KEUdldEV4cG9ydERlZmF1bHRzEiIua3JpbGwudjEuR2V0RXhwb3J0RGVmYXVsdHNSZXF1ZXN0GiMua3JpbGwudjEuR2V0RXhwb3J0RGVmYXVsdHNSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC0V4cG9ydFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChVrcmlsbC92MS9leHBvcnQucHJvdG8SCGtyaWxsLnYxIrcBCg1FeHBvcnRPcHRpb25zEhQKDHZhbF9mcmFjdGlvbhgBIAEoAhIOCgZzdHJpZGUYAiABKAUSDQoFZGVkdXAYAyABKAgSFgoOZGVkdXBfZGlzdGFuY2UYBCABKAUSEQoJdmlkZW9faWRzGAUgAygDEhgKEGF1Z21lbnRlZF9jb3BpZXMYBiABKAUSLAoMYXVnbWVudGF0aW9uGAcgASgLMhYua3JpbGwudjEuQXVnbWVudGF0aW9uIpsCCgxBdWdtZW50YXRpb24SDwoHZGVncmVlcxgBIAEoAhIRCgl0cmFuc2xhdGUYAiABKAISDQoFc2NhbGUYAyABKAISDQoFc2hlYXIYBCABKAISEwoLcGVyc3BlY3RpdmUYBSABKAISDQoFaHN2X2gYBiABKAISDQoFaHN2X3MYByABKAISDQoFaHN2X3YYCCABKAISDgoGZmxpcGxyGAkgASgCEg4KBmZsaXB1ZBgKIAEoAhIOCgZtb3NhaWMYCyABKAISDgoGYXNwZWN0GAwgASgCEhIKCnVuZGVyd2F0ZXIYDSABKAISDwoHc2hhZG93cxgOIAEoAhINCgVub2lzZRgPIAEoAhITCgtkaXN0cmFjdG9ycxgQIAEoAiKHAQoQRXhwb3J0Q2xhc3NTdGF0cxIKCgJpZBgBIAEoBRIMCgRuYW1lGAIgASgJEhMKC3RyYWluX2JveGVzGAMgASgFEhEKCXZhbF9ib3hlcxgEIAEoBRINCgVjbGlwcxgFIAEoBRIOCgZ2aWRlb3MYBiABKAUSEgoKdGVzdF9ib3hlcxgHIAEoBSJwChBFeHBvcnRWaWRlb1N0YXRzEhAKCHZpZGVvX2lkGAEgASgDEgwKBG5hbWUYAiABKAkSDQoFc3BsaXQYAyABKAkSDgoGcGlubmVkGAQgASgIEg4KBmltYWdlcxgFIAEoBRINCgVib3hlcxgGIAEoBSKpAwoLRXhwb3J0U3RhdHMSFAoMdHJhaW5faW1hZ2VzGAEgASgFEhIKCnZhbF9pbWFnZXMYAiABKAUSEwoLdHJhaW5fYm94ZXMYAyABKAUSEQoJdmFsX2JveGVzGAQgASgFEhcKD25lZ2F0aXZlX2ltYWdlcxgFIAEoBRIYChB1bmxhYmVsZWRfZnJhbWVzGAYgASgFEhkKEWluY29tcGxldGVfZnJhbWVzGAcgASgFEhkKEXVudmVyaWZpZWRfZnJhbWVzGAggASgFEhYKDnN0cmlkZV9za2lwcGVkGAkgASgFEhkKEWR1cGxpY2F0ZV9za2lwcGVkGAogASgFEisKB2NsYXNzZXMYCyADKAsyGi5rcmlsbC52MS5FeHBvcnRDbGFzc1N0YXRzEioKBnZpZGVvcxgMIAMoCzIaLmtyaWxsLnYxLkV4cG9ydFZpZGVvU3RhdHMSEwoLdGVzdF9pbWFnZXMYDSABKAUSEgoKdGVzdF9ib3hlcxgOIAEoBRIQCghvcmllbnRlZBgPIAEoCBIYChBhdWdtZW50ZWRfaW1hZ2VzGBAgASgFIsYCCgZFeHBvcnQSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRImCgZzdGF0dXMYAyABKA4yFi5rcmlsbC52MS5FeHBvcnRTdGF0dXMSDQoFZXJyb3IYBCABKAkSEAoIcHJvZ3Jlc3MYBSABKAISKAoHb3B0aW9ucxgGIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMSJAoFc3RhdHMYByABKAsyFS5rcmlsbC52MS5FeHBvcnRTdGF0cxISCgpzaXplX2J5dGVzGAggASgDEhQKDGRvd25sb2FkX3VybBgJIAEoCRIuCgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiQAoUUHJldmlld0V4cG9ydFJlcXVlc3QSKAoHb3B0aW9ucxgBIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMiPQoVUHJldmlld0V4cG9ydFJlc3BvbnNlEiQKBXN0YXRzGAEgASgLMhUua3JpbGwudjEuRXhwb3J0U3RhdHMiTQoTQ3JlYXRlRXhwb3J0UmVxdWVzdBIMCgRuYW1lGAEgASgJEigKB29wdGlvbnMYAiABKAsyFy5rcmlsbC52MS5FeHBvcnRPcHRpb25zIjgKFENyZWF0ZUV4cG9ydFJlc3BvbnNlEiAKBmV4cG9ydBgBIAEoCzIQLmtyaWxsLnYxLkV4cG9ydCIUChJMaXN0RXhwb3J0c1JlcXVlc3QiOAoTTGlzdEV4cG9ydHNSZXNwb25zZRIhCgdleHBvcnRzGAEgAygLMhAua3JpbGwudjEuRXhwb3J0IiEKE0RlbGV0ZUV4cG9ydFJlcXVlc3QSCgoCaWQYASABKAMiFgoURGVsZXRlRXhwb3J0UmVzcG9uc2UiGgoYR2V0RXhwb3J0RGVmYXVsdHNSZXF1ZXN0IkUKGUdldEV4cG9ydERlZmF1bHRzUmVzcG9uc2USKAoHb3B0aW9ucxgBIAEoCzIXLmtyaWxsLnYxLkV4cG9ydE9wdGlvbnMqlQEKDEV4cG9ydFN0YXR1cxIdChlFWFBPUlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGAoURVhQT1JUX1NUQVRVU19RVUVVRUQQARIZChVFWFBPUlRfU1RBVFVTX1JVTk5JTkcQAhIXChNFWFBPUlRfU1RBVFVTX1JFQURZEAMSGAoURVhQT1JUX1NUQVRVU19GQUlMRUQQBDKzAwoNRXhwb3J0U2VydmljZRJSCg1QcmV2aWV3RXhwb3J0Eh4ua3JpbGwudjEuUHJldmlld0V4cG9ydFJlcXVlc3QaHy5rcmlsbC52MS5QcmV2aWV3RXhwb3J0UmVzcG9uc2UiABJPCgxDcmVhdGVFeHBvcnQSHS5rcmlsbC52MS5DcmVhdGVFeHBvcnRSZXF1ZXN0Gh4ua3JpbGwudjEuQ3JlYXRlRXhwb3J0UmVzcG9uc2UiABJMCgtMaXN0RXhwb3J0cxIcLmtyaWxsLnYxLkxpc3RFeHBvcnRzUmVxdWVzdBodLmtyaWxsLnYxLkxpc3RFeHBvcnRzUmVzcG9uc2UiABJPCgxEZWxldGVFeHBvcnQSHS5rcmlsbC52MS5EZWxldGVFeHBvcnRSZXF1ZXN0Gh4ua3JpbGwudjEuRGVsZXRlRXhwb3J0UmVzcG9uc2UiABJeChFHZXRFeHBvcnREZWZhdWx0cxIiLmtyaWxsLnYxLkdldEV4cG9ydERlZmF1bHRzUmVxdWVzdBojLmtyaWxsLnYxLkdldEV4cG9ydERlZmF1bHRzUmVzcG9uc2UiAEKMAQoMY29tLmtyaWxsLnYxQgtFeHBvcnRQcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message krill.v1.ExportOptions
@@ -52,6 +52,21 @@ export type ExportOptions = Message<"krill.v1.ExportOptions"> & {
    * @generated from field: repeated int64 video_ids = 5;
    */
   videoIds: bigint[];
+
+  /**
+   * Augmented copies written of each train image, from 0 to 10.
+   *
+   * @generated from field: int32 augmented_copies = 6;
+   */
+  augmentedCopies: number;
+
+  /**
+   * Unset uses the defaults. Mosaic is left to whatever trains on the
+   * export.
+   *
+   * @generated from field: krill.v1.Augmentation augmentation = 7;
+   */
+  augmentation?: Augmentation | undefined;
 };
 
 /**
@@ -60,6 +75,125 @@ export type ExportOptions = Message<"krill.v1.ExportOptions"> & {
  */
 export const ExportOptionsSchema: GenMessage<ExportOptions> = /*@__PURE__*/
   messageDesc(file_krill_v1_export, 0);
+
+/**
+ * Augmentation is how training images are varied, each epoch while training
+ * and in the augmented copies an export writes. Val and test images are never
+ * changed.
+ *
+ * @generated from message krill.v1.Augmentation
+ */
+export type Augmentation = Message<"krill.v1.Augmentation"> & {
+  /**
+   * Ultralytics' own, in its units. Rotation in degrees either way.
+   *
+   * @generated from field: float degrees = 1;
+   */
+  degrees: number;
+
+  /**
+   * Shift as a share of the image size, either way.
+   *
+   * @generated from field: float translate = 2;
+   */
+  translate: number;
+
+  /**
+   * Zoom gain either way.
+   *
+   * @generated from field: float scale = 3;
+   */
+  scale: number;
+
+  /**
+   * Degrees either way.
+   *
+   * @generated from field: float shear = 4;
+   */
+  shear: number;
+
+  /**
+   * @generated from field: float perspective = 5;
+   */
+  perspective: number;
+
+  /**
+   * Hue, saturation, and brightness gains either way.
+   *
+   * @generated from field: float hsv_h = 6;
+   */
+  hsvH: number;
+
+  /**
+   * @generated from field: float hsv_s = 7;
+   */
+  hsvS: number;
+
+  /**
+   * @generated from field: float hsv_v = 8;
+   */
+  hsvV: number;
+
+  /**
+   * Probabilities. Mirroring is off by default because it changes what
+   * arrows and printed signs mean.
+   *
+   * @generated from field: float fliplr = 9;
+   */
+  fliplr: number;
+
+  /**
+   * @generated from field: float flipud = 10;
+   */
+  flipud: number;
+
+  /**
+   * @generated from field: float mosaic = 11;
+   */
+  mosaic: number;
+
+  /**
+   * Krill's own, applied to each image before mosaic. The most an image is
+   * stretched wider or taller, as a ratio of at least 1.
+   *
+   * @generated from field: float aspect = 12;
+   */
+  aspect: number;
+
+  /**
+   * Probabilities that an image is tinted blue-green like water, gets
+   * patches of light and shadow, or gets sensor noise.
+   *
+   * @generated from field: float underwater = 13;
+   */
+  underwater: number;
+
+  /**
+   * @generated from field: float shadows = 14;
+   */
+  shadows: number;
+
+  /**
+   * @generated from field: float noise = 15;
+   */
+  noise: number;
+
+  /**
+   * Probability that an image's objects are cut out and pasted at random
+   * spots on a random distractor image, each resized, rotated, stretched, and
+   * recolored on its own. Does nothing until distractors are added.
+   *
+   * @generated from field: float distractors = 16;
+   */
+  distractors: number;
+};
+
+/**
+ * Describes the message krill.v1.Augmentation.
+ * Use `create(AugmentationSchema)` to create a new message.
+ */
+export const AugmentationSchema: GenMessage<Augmentation> = /*@__PURE__*/
+  messageDesc(file_krill_v1_export, 1);
 
 /**
  * @generated from message krill.v1.ExportClassStats
@@ -109,7 +243,7 @@ export type ExportClassStats = Message<"krill.v1.ExportClassStats"> & {
  * Use `create(ExportClassStatsSchema)` to create a new message.
  */
 export const ExportClassStatsSchema: GenMessage<ExportClassStats> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 1);
+  messageDesc(file_krill_v1_export, 2);
 
 /**
  * @generated from message krill.v1.ExportVideoStats
@@ -153,7 +287,7 @@ export type ExportVideoStats = Message<"krill.v1.ExportVideoStats"> & {
  * Use `create(ExportVideoStatsSchema)` to create a new message.
  */
 export const ExportVideoStatsSchema: GenMessage<ExportVideoStats> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 2);
+  messageDesc(file_krill_v1_export, 3);
 
 /**
  * @generated from message krill.v1.ExportStats
@@ -245,6 +379,13 @@ export type ExportStats = Message<"krill.v1.ExportStats"> & {
    * @generated from field: bool oriented = 15;
    */
   oriented: boolean;
+
+  /**
+   * Augmented copies of train images, on top of train_images.
+   *
+   * @generated from field: int32 augmented_images = 16;
+   */
+  augmentedImages: number;
 };
 
 /**
@@ -252,7 +393,7 @@ export type ExportStats = Message<"krill.v1.ExportStats"> & {
  * Use `create(ExportStatsSchema)` to create a new message.
  */
 export const ExportStatsSchema: GenMessage<ExportStats> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 3);
+  messageDesc(file_krill_v1_export, 4);
 
 /**
  * @generated from message krill.v1.Export
@@ -321,7 +462,7 @@ export type Export = Message<"krill.v1.Export"> & {
  * Use `create(ExportSchema)` to create a new message.
  */
 export const ExportSchema: GenMessage<Export> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 4);
+  messageDesc(file_krill_v1_export, 5);
 
 /**
  * @generated from message krill.v1.PreviewExportRequest
@@ -338,7 +479,7 @@ export type PreviewExportRequest = Message<"krill.v1.PreviewExportRequest"> & {
  * Use `create(PreviewExportRequestSchema)` to create a new message.
  */
 export const PreviewExportRequestSchema: GenMessage<PreviewExportRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 5);
+  messageDesc(file_krill_v1_export, 6);
 
 /**
  * @generated from message krill.v1.PreviewExportResponse
@@ -355,7 +496,7 @@ export type PreviewExportResponse = Message<"krill.v1.PreviewExportResponse"> & 
  * Use `create(PreviewExportResponseSchema)` to create a new message.
  */
 export const PreviewExportResponseSchema: GenMessage<PreviewExportResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 6);
+  messageDesc(file_krill_v1_export, 7);
 
 /**
  * @generated from message krill.v1.CreateExportRequest
@@ -377,7 +518,7 @@ export type CreateExportRequest = Message<"krill.v1.CreateExportRequest"> & {
  * Use `create(CreateExportRequestSchema)` to create a new message.
  */
 export const CreateExportRequestSchema: GenMessage<CreateExportRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 7);
+  messageDesc(file_krill_v1_export, 8);
 
 /**
  * @generated from message krill.v1.CreateExportResponse
@@ -394,7 +535,7 @@ export type CreateExportResponse = Message<"krill.v1.CreateExportResponse"> & {
  * Use `create(CreateExportResponseSchema)` to create a new message.
  */
 export const CreateExportResponseSchema: GenMessage<CreateExportResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 8);
+  messageDesc(file_krill_v1_export, 9);
 
 /**
  * @generated from message krill.v1.ListExportsRequest
@@ -407,7 +548,7 @@ export type ListExportsRequest = Message<"krill.v1.ListExportsRequest"> & {
  * Use `create(ListExportsRequestSchema)` to create a new message.
  */
 export const ListExportsRequestSchema: GenMessage<ListExportsRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 9);
+  messageDesc(file_krill_v1_export, 10);
 
 /**
  * @generated from message krill.v1.ListExportsResponse
@@ -424,7 +565,7 @@ export type ListExportsResponse = Message<"krill.v1.ListExportsResponse"> & {
  * Use `create(ListExportsResponseSchema)` to create a new message.
  */
 export const ListExportsResponseSchema: GenMessage<ListExportsResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 10);
+  messageDesc(file_krill_v1_export, 11);
 
 /**
  * @generated from message krill.v1.DeleteExportRequest
@@ -441,7 +582,7 @@ export type DeleteExportRequest = Message<"krill.v1.DeleteExportRequest"> & {
  * Use `create(DeleteExportRequestSchema)` to create a new message.
  */
 export const DeleteExportRequestSchema: GenMessage<DeleteExportRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 11);
+  messageDesc(file_krill_v1_export, 12);
 
 /**
  * @generated from message krill.v1.DeleteExportResponse
@@ -454,7 +595,7 @@ export type DeleteExportResponse = Message<"krill.v1.DeleteExportResponse"> & {
  * Use `create(DeleteExportResponseSchema)` to create a new message.
  */
 export const DeleteExportResponseSchema: GenMessage<DeleteExportResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 12);
+  messageDesc(file_krill_v1_export, 13);
 
 /**
  * @generated from message krill.v1.GetExportDefaultsRequest
@@ -467,7 +608,7 @@ export type GetExportDefaultsRequest = Message<"krill.v1.GetExportDefaultsReques
  * Use `create(GetExportDefaultsRequestSchema)` to create a new message.
  */
 export const GetExportDefaultsRequestSchema: GenMessage<GetExportDefaultsRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 13);
+  messageDesc(file_krill_v1_export, 14);
 
 /**
  * @generated from message krill.v1.GetExportDefaultsResponse
@@ -484,7 +625,7 @@ export type GetExportDefaultsResponse = Message<"krill.v1.GetExportDefaultsRespo
  * Use `create(GetExportDefaultsResponseSchema)` to create a new message.
  */
 export const GetExportDefaultsResponseSchema: GenMessage<GetExportDefaultsResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_export, 14);
+  messageDesc(file_krill_v1_export, 15);
 
 /**
  * @generated from enum krill.v1.ExportStatus

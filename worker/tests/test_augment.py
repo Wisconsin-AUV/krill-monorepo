@@ -1,9 +1,9 @@
 import numpy as np
-from krill.v1 import pipeline_pb2
+from krill.v1 import export_pb2
 
 from krill_worker import augment
 
-EVERYTHING = pipeline_pb2.Augmentation(aspect=1.5, underwater=1, shadows=1, noise=1)
+EVERYTHING = export_pb2.Augmentation(aspect=1.5, underwater=1, shadows=1, noise=1)
 
 
 def test_vary_leaves_the_cached_image_alone() -> None:

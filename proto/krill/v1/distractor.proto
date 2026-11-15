@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// DistractorService manages the library of distractor images: scenes with
+// none of the labeled objects in them, which augmentation puts behind
+// objects.
+service DistractorService {
+  rpc ListDistractors(ListDistractorsRequest) returns (ListDistractorsResponse) {}
+  // CreateDistractorUpload returns a presigned URL the browser uploads an
+  // image to. Call AddDistractor with the key once it finishes.
+  rpc CreateDistractorUpload(CreateDistractorUploadRequest) returns (CreateDistractorUploadResponse) {}
+  // AddDistractor fails when the upload isn't a JPEG, PNG, or WebP image.
+  rpc AddDistractor(AddDistractorRequest) returns (AddDistractorResponse) {}
+  rpc DeleteDistractor(DeleteDistractorRequest) returns (DeleteDistractorResponse) {}
+}
+
+message Distractor {
+  int64 id = 1;
+  // Presigned MinIO URL.
+  string url = 2;
+  string filename = 3;
+  int32 width = 4;
+  int32 height = 5;
+  int64 size_bytes = 6;
+  string created_by = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ListDistractorsRequest {}
+
+message ListDistractorsResponse {
+  // Newest first.
+  repeated Distractor distractors = 1;
+}
+
+message CreateDistractorUploadRequest {}
+
+message CreateDistractorUploadResponse {
+  string key = 1;
+  string upload_url = 2;
+}
+
+message AddDistractorRequest {
+  string key = 1;
+  string filename = 2;
+}
+
+message AddDistractorResponse {
+  Distractor distractor = 1;
+}
+
+message DeleteDistractorRequest {
+  int64 id = 1;
+}
+
+message DeleteDistractorResponse {}

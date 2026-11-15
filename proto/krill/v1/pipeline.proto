@@ -76,37 +76,6 @@ message TrainConfig {
   Augmentation augmentation = 7;
 }
 
-// Augmentation is how training images are varied each epoch. Val and test
-// images are never changed.
-message Augmentation {
-  // Ultralytics' own, in its units. Rotation in degrees either way.
-  float degrees = 1;
-  // Shift as a share of the image size, either way.
-  float translate = 2;
-  // Zoom gain either way.
-  float scale = 3;
-  // Degrees either way.
-  float shear = 4;
-  float perspective = 5;
-  // Hue, saturation, and brightness gains either way.
-  float hsv_h = 6;
-  float hsv_s = 7;
-  float hsv_v = 8;
-  // Probabilities. Mirroring is off by default because it changes what
-  // arrows and printed signs mean.
-  float fliplr = 9;
-  float flipud = 10;
-  float mosaic = 11;
-  // Krill's own, applied to each image before mosaic. The most an image is
-  // stretched wider or taller, as a ratio of at least 1.
-  float aspect = 12;
-  // Probabilities that an image is tinted blue-green like water, gets
-  // patches of light and shadow, or gets sensor noise.
-  float underwater = 13;
-  float shadows = 14;
-  float noise = 15;
-}
-
 enum TrainingStatus {
   TRAINING_STATUS_UNSPECIFIED = 0;
   TRAINING_STATUS_QUEUED = 1;
@@ -630,6 +599,9 @@ message TrainTask {
   // The dataset's labels are YOLO-OBB corners, so train an OBB model.
   bool oriented = 13;
   Augmentation augmentation = 14;
+  // Presigned URLs of the distractor images, when the augmentation pastes
+  // objects onto them.
+  repeated string distractor_urls = 15;
 }
 
 // InspectTask loads uploaded weights and reports their classes.
