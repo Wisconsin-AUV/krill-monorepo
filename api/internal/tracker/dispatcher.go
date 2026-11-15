@@ -31,6 +31,8 @@ type task struct {
 	trackID int64
 	msg     *krillv1.NextTaskResponse
 	frames  map[int64]bool
+	// orient is set for orient tasks.
+	orient *orientBoxes
 	// model is set by ReportEmbed before done is signaled.
 	model atomic.Pointer[string]
 	// picked is closed when a worker takes the task, at pickedAt.
@@ -287,6 +289,8 @@ func (t *task) info() TaskInfo {
 		info.Kind, info.Frames = "exemplar", 1
 	case *krillv1.NextTaskResponse_Embed:
 		info.Kind, info.Frames = "embed", len(m.Embed.GetFrames())
+	case *krillv1.NextTaskResponse_Orient:
+		info.Kind, info.Frames = "orient", len(m.Orient.GetFrames())
 	case *krillv1.NextTaskResponse_Train:
 		info.Kind = "train"
 	case *krillv1.NextTaskResponse_Prelabel:

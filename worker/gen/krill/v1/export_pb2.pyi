@@ -72,7 +72,7 @@ class ExportVideoStats(_message.Message):
     def __init__(self, video_id: _Optional[int] = ..., name: _Optional[str] = ..., split: _Optional[str] = ..., pinned: _Optional[bool] = ..., images: _Optional[int] = ..., boxes: _Optional[int] = ...) -> None: ...
 
 class ExportStats(_message.Message):
-    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos", "test_images", "test_boxes")
+    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos", "test_images", "test_boxes", "oriented")
     TRAIN_IMAGES_FIELD_NUMBER: _ClassVar[int]
     VAL_IMAGES_FIELD_NUMBER: _ClassVar[int]
     TRAIN_BOXES_FIELD_NUMBER: _ClassVar[int]
@@ -87,6 +87,7 @@ class ExportStats(_message.Message):
     VIDEOS_FIELD_NUMBER: _ClassVar[int]
     TEST_IMAGES_FIELD_NUMBER: _ClassVar[int]
     TEST_BOXES_FIELD_NUMBER: _ClassVar[int]
+    ORIENTED_FIELD_NUMBER: _ClassVar[int]
     train_images: int
     val_images: int
     train_boxes: int
@@ -101,7 +102,8 @@ class ExportStats(_message.Message):
     videos: _containers.RepeatedCompositeFieldContainer[ExportVideoStats]
     test_images: int
     test_boxes: int
-    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ..., test_images: _Optional[int] = ..., test_boxes: _Optional[int] = ...) -> None: ...
+    oriented: bool
+    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ..., test_images: _Optional[int] = ..., test_boxes: _Optional[int] = ..., oriented: _Optional[bool] = ...) -> None: ...
 
 class Export(_message.Message):
     __slots__ = ("id", "name", "status", "error", "progress", "options", "stats", "size_bytes", "download_url", "created_at", "finished_at")

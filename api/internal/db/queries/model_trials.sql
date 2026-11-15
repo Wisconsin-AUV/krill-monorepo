@@ -75,24 +75,28 @@ UPDATE model_trials SET status = 'failed', error = 'The trial was interrupted by
 WHERE status = 'running';
 
 -- name: InsertModelTrialBoxes :execrows
--- Boxes a worker reports after the trial stopped are dropped.
-INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, confidence)
+-- Boxes a worker reports after the trial stopped are dropped. @corners holds
+-- eight values per box, which are ignored unless the box's @has_corners is
+-- set.
+INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, confidence)
 SELECT
     @trial_id,
-    unnest(@frame_ids::bigint[]),
-    unnest(@classes::int[]),
-    unnest(@xs::float8[]),
-    unnest(@ys::float8[]),
-    unnest(@widths::float8[]),
-    unnest(@heights::float8[]),
-    unnest(@confidences::real[])
+    (@frame_ids::bigint[])[i],
+    (@classes::int[])[i],
+    (@xs::float8[])[i],
+    (@ys::float8[])[i],
+    (@widths::float8[])[i],
+    (@heights::float8[])[i],
+    CASE WHEN (@has_corners::bool[])[i] THEN (@corners::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    (@confidences::real[])[i]
+FROM generate_subscripts(@frame_ids::bigint[], 1) AS i
 WHERE EXISTS (SELECT 1 FROM model_trials t WHERE t.id = @trial_id AND t.status = 'running');
 
 -- name: DeleteModelTrialBoxes :exec
 DELETE FROM model_trial_boxes WHERE trial_id = $1;
 
 -- name: ListModelTrialBoxes :many
-SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.confidence, b.track
+SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.confidence, b.track
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = $1

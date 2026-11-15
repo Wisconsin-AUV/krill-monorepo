@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Oriented label types, for objects like printed signs that sit at an angle. Their boxes are rotated rectangles, rotated with the handle above a selected box. When any type is oriented, exports and training use YOLO-OBB, and boxes of other types are written unrotated.
+- SAM tracking fits a rotated box to the object on each frame for oriented types. An oriented type can have a reference design, the file its prints are made from, and boxes are then fit to the design's corners.
+- Fit rotations, in an oriented type's settings, fits rotated boxes to the boxes it already had.
+- YOLO-OBB weights can be uploaded, pinned, and trialed like detection weights, and their pre-labels and trial boxes are rotated.
+
 ## [0.7.0] - 2026-11-13
 
 ### Added

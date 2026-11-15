@@ -14,10 +14,18 @@ service LabelService {
   // ReorderLabelTypes sets the order, which is also the number-key order.
   rpc ReorderLabelTypes(ReorderLabelTypesRequest) returns (ReorderLabelTypesResponse) {}
   // CreateLabelExampleUpload returns a presigned URL the browser uploads an
-  // example image to. Call AddLabelExample with the key once it finishes.
+  // example image to. Call AddLabelExample or SetLabelReference with the key
+  // once it finishes.
   rpc CreateLabelExampleUpload(CreateLabelExampleUploadRequest) returns (CreateLabelExampleUploadResponse) {}
   rpc AddLabelExample(AddLabelExampleRequest) returns (AddLabelExampleResponse) {}
   rpc DeleteLabelExample(DeleteLabelExampleRequest) returns (DeleteLabelExampleResponse) {}
+  // SetLabelReference sets the printed design an oriented type's objects are
+  // copies of. An empty key removes it.
+  rpc SetLabelReference(SetLabelReferenceRequest) returns (SetLabelReferenceResponse) {}
+  // FitRotations has a GPU worker fit a rotated box to every box of an
+  // oriented type that has none, matching the reference design when there is
+  // one and the object's SAM mask when there isn't.
+  rpc FitRotations(FitRotationsRequest) returns (FitRotationsResponse) {}
   // PreviewMergeLabelTypes shows what merging one type into another would
   // change.
   rpc PreviewMergeLabelTypes(PreviewMergeLabelTypesRequest) returns (PreviewMergeLabelTypesResponse) {}
@@ -46,6 +54,12 @@ message LabelType {
   string title = 9;
   string guideline = 10;
   repeated LabelExample examples = 11;
+  // Boxes are rotated rectangles, exported and trained as YOLO-OBB.
+  bool oriented = 12;
+  // Presigned URL of the reference design. Empty when there is none.
+  string reference_url = 13;
+  // Boxes of an oriented type with no rotation yet.
+  int32 unrotated_box_count = 14;
 }
 
 message LabelExample {
@@ -67,6 +81,7 @@ message CreateLabelTypeRequest {
   repeated LabelAttribute attributes = 4;
   string title = 5;
   string guideline = 6;
+  bool oriented = 7;
 }
 
 message CreateLabelTypeResponse {
@@ -81,6 +96,7 @@ message UpdateLabelTypeRequest {
   repeated LabelAttribute attributes = 5;
   string title = 6;
   string guideline = 7;
+  bool oriented = 8;
 }
 
 message UpdateLabelTypeResponse {
@@ -125,6 +141,24 @@ message DeleteLabelExampleRequest {
 }
 
 message DeleteLabelExampleResponse {}
+
+message SetLabelReferenceRequest {
+  int64 label_type_id = 1;
+  string key = 2;
+}
+
+message SetLabelReferenceResponse {
+  LabelType label_type = 1;
+}
+
+message FitRotationsRequest {
+  int64 label_type_id = 1;
+}
+
+message FitRotationsResponse {
+  // Boxes queued for fitting.
+  int32 box_count = 1;
+}
 
 // AttributeValueMapping says what a source track's attribute value becomes.
 message AttributeValueMapping {

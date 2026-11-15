@@ -1,4 +1,5 @@
 import math
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -9,6 +10,7 @@ from krill_worker.prelabelers import Frame
 from krill_worker.prelabelers.params import HsvRange, parse, specs
 from krill_worker.prelabelers.path_marker import PathMarker, PathMarkerParams
 from krill_worker.prelabelers.slalom import Slalom, SlalomParams
+from krill_worker.prelabelers.yolo import obb
 
 H, W = 480, 640
 POOL = (20, 90, 130)
@@ -129,3 +131,16 @@ def test_params_round_trip_through_the_api() -> None:
 
     with pytest.raises(ValueError):
         parse(SlalomParams, [pipeline_pb2.ParamValue(name="kernel", flag=True)])
+
+
+def test_obb_results_become_ordered_corners_and_clipped_boxes() -> None:
+    # Counterclockwise and partly off the left edge, as an OBB model may give.
+    corners = np.array([[[0.1, 0.5], [0.3, 0.6], [0.4, 0.4], [-0.1, 0.2]]])
+    obb_ = SimpleNamespace(xyxyxyxyn=corners, conf=np.array([0.9]), cls=np.array([1.0]))
+    r = SimpleNamespace(obb=obb_, names={0: "gate", 1: "marker"})
+
+    (p,) = obb(r)
+
+    assert p.label == "marker"
+    assert p.corners == ((-0.1, 0.2), (0.4, 0.4), (0.3, 0.6), (0.1, 0.5))
+    assert p.box == pytest.approx((0.2, 0.4, 0.4, 0.4))

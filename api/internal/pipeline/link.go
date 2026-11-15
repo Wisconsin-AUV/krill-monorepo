@@ -24,7 +24,9 @@ type detection struct {
 	frameID  int64
 	frameIdx int32
 	box      annotation.Box
-	conf     float32
+	// corners are dropped on save unless the target's label type is oriented.
+	corners []float64
+	conf    float32
 	// target groups detections that may share a track: one class, or one
 	// plugin output.
 	target int

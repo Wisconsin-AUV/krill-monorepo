@@ -78,7 +78,7 @@ func TestMergeLabelTypes(t *testing.T) {
 	if err := db.Migrate(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
-	s := NewService(pool, nil)
+	s := NewService(pool, nil, nil)
 
 	labelType := func(attrs string) int64 {
 		var id int64

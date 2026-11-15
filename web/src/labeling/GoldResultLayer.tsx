@@ -1,7 +1,8 @@
 import { Fragment } from 'react'
 import { Label, Rect, Tag, Text } from 'react-konva'
-import type { GoldResult } from '@/gen/krill/v1/gold_pb'
+import type { GoldBox, GoldResult } from '@/gen/krill/v1/gold_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { konvaBox } from '@/lib/obb'
 import type { Size } from '@/workspace/useWorkspaceStore'
 import { outcomeColors, resultBoxes } from './goldResult'
 
@@ -17,15 +18,15 @@ export function GoldResultLayer({
   scale: number
 }) {
   const matched = result.matches.map((m) => result.answer[m.answer])
+  const oriented = new Set(types.filter((t) => t.oriented).map((t) => t.id))
+  const shape = (b: GoldBox) =>
+    b.box ? konvaBox(b.box, oriented.has(b.labelTypeId), imageSize) : undefined
   return (
     <>
       {matched.map((b, i) => (
         <Rect
           key={`a${i}`}
-          x={(b.box?.x ?? 0) * imageSize.width}
-          y={(b.box?.y ?? 0) * imageSize.height}
-          width={(b.box?.width ?? 0) * imageSize.width}
-          height={(b.box?.height ?? 0) * imageSize.height}
+          {...shape(b)}
           stroke="#ffffff"
           strokeWidth={1}
           dash={[6, 4]}
@@ -40,10 +41,7 @@ export function GoldResultLayer({
         return (
           <Fragment key={i}>
             <Rect
-              x={x}
-              y={y}
-              width={(r.box.box?.width ?? 0) * imageSize.width}
-              height={(r.box.box?.height ?? 0) * imageSize.height}
+              {...shape(r.box)}
               stroke={color}
               strokeWidth={2}
               dash={r.answer ? [6, 4] : undefined}

@@ -77,6 +77,7 @@ export function RunStatus({ run }: { run: TrainingRun }) {
           {run.epoch}/{epochs}
         </span>
       )}
+      {run.oriented && <Badge>OBB</Badge>}
       {run.pinned && <Badge color="sky">Pinned</Badge>}
     </span>
   )

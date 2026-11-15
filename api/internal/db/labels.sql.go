@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countTrackValues = `-- name: CountTrackValues :many
@@ -65,6 +67,22 @@ func (q *Queries) CountTracksForLabelType(ctx context.Context, labelTypeID int64
 	return i, err
 }
 
+const countUnrotatedBoxes = `-- name: CountUnrotatedBoxes :one
+SELECT count(*)::int
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE t.label_type_id = $1 AND a.corners IS NULL AND a.status <> 'rejected' AND v.status = 'ready'
+`
+
+func (q *Queries) CountUnrotatedBoxes(ctx context.Context, labelTypeID int64) (int32, error) {
+	row := q.db.QueryRow(ctx, countUnrotatedBoxes, labelTypeID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createLabelExample = `-- name: CreateLabelExample :one
 INSERT INTO label_examples (label_type_id, object_key, caption)
 VALUES ($1, $2, $3)
@@ -91,9 +109,9 @@ func (q *Queries) CreateLabelExample(ctx context.Context, arg CreateLabelExample
 }
 
 const createLabelType = `-- name: CreateLabelType :one
-INSERT INTO label_types (name, title, color, description, guideline, attributes, position)
-VALUES ($1, $2, $3, $4, $5, $6, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
-RETURNING id, name, color, description, position, attributes, created_at, title, guideline
+INSERT INTO label_types (name, title, color, description, guideline, attributes, oriented, position)
+VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
+RETURNING id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key
 `
 
 type CreateLabelTypeParams struct {
@@ -103,6 +121,7 @@ type CreateLabelTypeParams struct {
 	Description string `json:"description"`
 	Guideline   string `json:"guideline"`
 	Attributes  []byte `json:"attributes"`
+	Oriented    bool   `json:"oriented"`
 }
 
 func (q *Queries) CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error) {
@@ -113,6 +132,7 @@ func (q *Queries) CreateLabelType(ctx context.Context, arg CreateLabelTypeParams
 		arg.Description,
 		arg.Guideline,
 		arg.Attributes,
+		arg.Oriented,
 	)
 	var i LabelType
 	err := row.Scan(
@@ -125,6 +145,8 @@ func (q *Queries) CreateLabelType(ctx context.Context, arg CreateLabelTypeParams
 		&i.CreatedAt,
 		&i.Title,
 		&i.Guideline,
+		&i.Oriented,
+		&i.ReferenceKey,
 	)
 	return i, err
 }
@@ -160,7 +182,7 @@ func (q *Queries) DeleteLabelType(ctx context.Context, id int64) (int64, error) 
 }
 
 const getLabelType = `-- name: GetLabelType :one
-SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types WHERE id = $1
+SELECT id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key FROM label_types WHERE id = $1
 `
 
 func (q *Queries) GetLabelType(ctx context.Context, id int64) (LabelType, error) {
@@ -176,6 +198,8 @@ func (q *Queries) GetLabelType(ctx context.Context, id int64) (LabelType, error)
 		&i.CreatedAt,
 		&i.Title,
 		&i.Guideline,
+		&i.Oriented,
+		&i.ReferenceKey,
 	)
 	return i, err
 }
@@ -272,7 +296,7 @@ func (q *Queries) ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 
 const listLabelTypes = `-- name: ListLabelTypes :many
 SELECT
-    lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at, lt.title, lt.guideline,
+    lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at, lt.title, lt.guideline, lt.oriented, lt.reference_key,
     (
         SELECT count(*) FROM tracks t JOIN live_clips c ON c.id = t.clip_id
         WHERE t.label_type_id = lt.id
@@ -280,15 +304,20 @@ SELECT
     (
         SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
         WHERE t.label_type_id = lt.id
-    )::int AS box_count
+    )::int AS box_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
+        WHERE t.label_type_id = lt.id AND lt.oriented AND a.corners IS NULL AND a.status <> 'rejected'
+    )::int AS unrotated_box_count
 FROM label_types lt
 ORDER BY lt.position, lt.id
 `
 
 type ListLabelTypesRow struct {
-	LabelType  LabelType `json:"label_type"`
-	TrackCount int32     `json:"track_count"`
-	BoxCount   int32     `json:"box_count"`
+	LabelType         LabelType `json:"label_type"`
+	TrackCount        int32     `json:"track_count"`
+	BoxCount          int32     `json:"box_count"`
+	UnrotatedBoxCount int32     `json:"unrotated_box_count"`
 }
 
 func (q *Queries) ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error) {
@@ -310,8 +339,64 @@ func (q *Queries) ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, erro
 			&i.LabelType.CreatedAt,
 			&i.LabelType.Title,
 			&i.LabelType.Guideline,
+			&i.LabelType.Oriented,
+			&i.LabelType.ReferenceKey,
 			&i.TrackCount,
 			&i.BoxCount,
+			&i.UnrotatedBoxCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnrotatedBoxes = `-- name: ListUnrotatedBoxes :many
+SELECT a.id, a.frame_id, f.idx AS frame_idx, f.video_id, a.x, a.y, a.width, a.height, a.updated_at
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.id = a.frame_id
+WHERE t.label_type_id = $1 AND a.corners IS NULL AND a.status <> 'rejected' AND v.status = 'ready'
+ORDER BY f.video_id, f.idx, a.id
+`
+
+type ListUnrotatedBoxesRow struct {
+	ID        int64              `json:"id"`
+	FrameID   int64              `json:"frame_id"`
+	FrameIdx  int32              `json:"frame_idx"`
+	VideoID   int64              `json:"video_id"`
+	X         float64            `json:"x"`
+	Y         float64            `json:"y"`
+	Width     float64            `json:"width"`
+	Height    float64            `json:"height"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListUnrotatedBoxes(ctx context.Context, labelTypeID int64) ([]ListUnrotatedBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listUnrotatedBoxes, labelTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUnrotatedBoxesRow
+	for rows.Next() {
+		var i ListUnrotatedBoxesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FrameID,
+			&i.FrameIdx,
+			&i.VideoID,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -324,7 +409,7 @@ func (q *Queries) ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, erro
 }
 
 const lockLabelTypes = `-- name: LockLabelTypes :many
-SELECT id, name, color, description, position, attributes, created_at, title, guideline FROM label_types WHERE id = ANY($1::bigint[]) ORDER BY id FOR UPDATE
+SELECT id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key FROM label_types WHERE id = ANY($1::bigint[]) ORDER BY id FOR UPDATE
 `
 
 func (q *Queries) LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error) {
@@ -346,6 +431,8 @@ func (q *Queries) LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType,
 			&i.CreatedAt,
 			&i.Title,
 			&i.Guideline,
+			&i.Oriented,
+			&i.ReferenceKey,
 		); err != nil {
 			return nil, err
 		}
@@ -486,6 +573,26 @@ func (q *Queries) MergeTracks(ctx context.Context, arg MergeTracksParams) (int64
 	return result.RowsAffected(), nil
 }
 
+const setLabelReference = `-- name: SetLabelReference :one
+UPDATE label_types new SET reference_key = $1
+FROM label_types old
+WHERE new.id = $2 AND old.id = new.id
+RETURNING old.reference_key AS old_key
+`
+
+type SetLabelReferenceParams struct {
+	ReferenceKey pgtype.Text `json:"reference_key"`
+	ID           int64       `json:"id"`
+}
+
+// Returns the key it replaced.
+func (q *Queries) SetLabelReference(ctx context.Context, arg SetLabelReferenceParams) (pgtype.Text, error) {
+	row := q.db.QueryRow(ctx, setLabelReference, arg.ReferenceKey, arg.ID)
+	var old_key pgtype.Text
+	err := row.Scan(&old_key)
+	return old_key, err
+}
+
 const setLabelTypePosition = `-- name: SetLabelTypePosition :exec
 UPDATE label_types SET position = $2 WHERE id = $1
 `
@@ -502,9 +609,9 @@ func (q *Queries) SetLabelTypePosition(ctx context.Context, arg SetLabelTypePosi
 
 const updateLabelType = `-- name: UpdateLabelType :one
 UPDATE label_types
-SET name = $2, title = $3, color = $4, description = $5, guideline = $6, attributes = $7
+SET name = $2, title = $3, color = $4, description = $5, guideline = $6, attributes = $7, oriented = $8
 WHERE id = $1
-RETURNING id, name, color, description, position, attributes, created_at, title, guideline
+RETURNING id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key
 `
 
 type UpdateLabelTypeParams struct {
@@ -515,6 +622,7 @@ type UpdateLabelTypeParams struct {
 	Description string `json:"description"`
 	Guideline   string `json:"guideline"`
 	Attributes  []byte `json:"attributes"`
+	Oriented    bool   `json:"oriented"`
 }
 
 func (q *Queries) UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams) (LabelType, error) {
@@ -526,6 +634,7 @@ func (q *Queries) UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams
 		arg.Description,
 		arg.Guideline,
 		arg.Attributes,
+		arg.Oriented,
 	)
 	var i LabelType
 	err := row.Scan(
@@ -538,6 +647,8 @@ func (q *Queries) UpdateLabelType(ctx context.Context, arg UpdateLabelTypeParams
 		&i.CreatedAt,
 		&i.Title,
 		&i.Guideline,
+		&i.Oriented,
+		&i.ReferenceKey,
 	)
 	return i, err
 }

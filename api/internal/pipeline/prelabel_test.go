@@ -398,3 +398,39 @@ func TestUndoingARelabelRejectsOnlyTheModelsClass(t *testing.T) {
 		t.Errorf("boxes = %+v, want only a gate", got)
 	}
 }
+
+func TestPrelabelsKeepCornersOnlyForOrientedTypes(t *testing.T) {
+	f := newReviewFixture(t, 2)
+	if _, err := f.pool.Exec(f.ctx, `UPDATE label_types SET oriented = true WHERE id = $1`, f.buoy); err != nil {
+		t.Fatal(err)
+	}
+	rotated := func(d detection, c ...float64) detection {
+		d.corners = c
+		return d
+	}
+	f.run(t,
+		f.det(0, buoyClass, 0.1),
+		rotated(f.det(0, buoyClass, 0.5), 0.6, 0.2, 0.7, 0.3, 0.6, 0.4, 0.5, 0.3),
+		rotated(f.det(1, gateClass, 0.1), 0.2, 0.2, 0.3, 0.3, 0.2, 0.4, 0.1, 0.3),
+	)
+	rows, err := f.pool.Query(f.ctx, `
+		SELECT a.x, a.corners FROM annotations a JOIN tracks tr ON tr.id = a.track_id
+		WHERE tr.clip_id = $1 ORDER BY a.frame_id, a.x`, f.clip.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	var got [][]float64
+	for rows.Next() {
+		var x float64
+		var c []float64
+		if err := rows.Scan(&x, &c); err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, c)
+	}
+	want := [][]float64{nil, {0.6, 0.2, 0.7, 0.3, 0.6, 0.4, 0.5, 0.3}, nil}
+	if !slices.EqualFunc(got, want, slices.Equal) {
+		t.Errorf("corners = %v, want %v", got, want)
+	}
+}

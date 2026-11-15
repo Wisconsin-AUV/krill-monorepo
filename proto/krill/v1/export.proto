@@ -80,6 +80,9 @@ message ExportStats {
   repeated ExportVideoStats videos = 12;
   int32 test_images = 13;
   int32 test_boxes = 14;
+  // Labels are written as YOLO-OBB corners because a label type is
+  // oriented. Boxes of other types are written as unrotated corners.
+  bool oriented = 15;
 }
 
 message Export {

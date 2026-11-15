@@ -70,6 +70,14 @@ func (s *Service) typeAttributes(ctx context.Context, q *db.Queries, labelTypeID
 	return attrs, nil
 }
 
+func (s *Service) oriented(ctx context.Context, labelTypeID int64) (bool, error) {
+	lt, err := s.q.GetLabelType(ctx, labelTypeID)
+	if err != nil {
+		return false, rpc.DBError(err, "label type")
+	}
+	return lt.Oriented, nil
+}
+
 // newTrackAttributes checks and encodes the attributes for a new track.
 func (s *Service) newTrackAttributes(ctx context.Context, labelTypeID int64, values map[string]string) ([]byte, error) {
 	defs, err := s.typeAttributes(ctx, s.q, labelTypeID)
@@ -90,7 +98,11 @@ func (s *Service) newTrackAttributes(ctx context.Context, labelTypeID int64, val
 }
 
 func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackRequest) (*krillv1.CreateTrackResponse, error) {
-	x, y, w, h, err := ClampBox(req.GetBox())
+	oriented, err := s.oriented(ctx, req.GetLabelTypeId())
+	if err != nil {
+		return nil, err
+	}
+	x, y, w, h, corners, err := ClampCorners(req.GetBox(), oriented)
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -121,7 +133,7 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 		return nil, rpc.Internal(err, "create box")
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, UserID: auth.CallerID(ctx),
+		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, Corners: corners, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create box")
@@ -226,30 +238,34 @@ func (s *Service) DeleteTrack(ctx context.Context, req *krillv1.DeleteTrackReque
 	return &krillv1.DeleteTrackResponse{}, nil
 }
 
-// sameClip returns the clip that both the track and the frame belong to.
-func (s *Service) sameClip(ctx context.Context, trackID, frameID int64) (int64, error) {
+// sameClip returns the track after checking the frame is in its clip.
+func (s *Service) sameClip(ctx context.Context, trackID, frameID int64) (db.Track, error) {
 	track, err := s.q.GetTrack(ctx, trackID)
 	if err != nil {
-		return 0, rpc.DBError(err, "track")
+		return db.Track{}, rpc.DBError(err, "track")
 	}
 	frame, err := s.q.GetFrame(ctx, frameID)
 	if err != nil {
-		return 0, rpc.DBError(err, "frame")
+		return db.Track{}, rpc.DBError(err, "frame")
 	}
 	if frame.ClipID != track.ClipID {
-		return 0, errWrongClip
+		return db.Track{}, errWrongClip
 	}
-	return track.ClipID, nil
+	return track, nil
 }
 
 func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*krillv1.SetBoxResponse, error) {
-	x, y, w, h, err := ClampBox(req.GetBox())
-	if err != nil {
-		return nil, rpc.Invalid("%s", err)
-	}
-	clipID, err := s.sameClip(ctx, req.GetTrackId(), req.GetFrameId())
+	track, err := s.sameClip(ctx, req.GetTrackId(), req.GetFrameId())
 	if err != nil {
 		return nil, err
+	}
+	oriented, err := s.oriented(ctx, track.LabelTypeID)
+	if err != nil {
+		return nil, err
+	}
+	x, y, w, h, corners, err := ClampCorners(req.GetBox(), oriented)
+	if err != nil {
+		return nil, rpc.Invalid("%s", err)
 	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -262,7 +278,7 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 		return nil, rpc.Internal(err, "save box")
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: req.GetTrackId(), FrameID: frameID, X: x, Y: y, Width: w, Height: h,
+		TrackID: req.GetTrackId(), FrameID: frameID, X: x, Y: y, Width: w, Height: h, Corners: corners,
 		UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
@@ -275,7 +291,7 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
-	s.claim(ctx, clipID)
+	s.claim(ctx, track.ClipID)
 	return &krillv1.SetBoxResponse{Annotation: Annotation(ann)}, nil
 }
 

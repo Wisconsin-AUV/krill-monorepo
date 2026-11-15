@@ -75,3 +75,17 @@ func TestWrite(t *testing.T) {
 		t.Errorf("manifest missing test videos: %s", files["manifest.json"])
 	}
 }
+
+func TestOrientedLabelLines(t *testing.T) {
+	it := Item{Boxes: []ItemBox{
+		// Rotated, with one corner past the left edge.
+		{Class: 0, X: 0, Y: 0.1, W: 0.4, H: 0.4, Corners: []float64{0.2, 0.1, 0.4, 0.3, 0.2, 0.5, -0.05, 0.3}},
+		// Unrotated, or of a type that isn't oriented.
+		{Class: 1, X: 0.5, Y: 0.6, W: 0.2, H: 0.1},
+	}}
+	want := "0 0.200000 0.100000 0.400000 0.300000 0.200000 0.500000 0.000000 0.300000\n" +
+		"1 0.500000 0.600000 0.700000 0.600000 0.700000 0.700000 0.500000 0.700000\n"
+	if got := labelLines(it, true); got != want {
+		t.Errorf("labelLines = %q, want %q", got, want)
+	}
+}

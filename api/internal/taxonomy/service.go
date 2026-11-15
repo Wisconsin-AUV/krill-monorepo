@@ -15,8 +15,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/gen/krill/v1/krillv1connect"
@@ -43,10 +45,11 @@ type Service struct {
 	pool  *pgxpool.Pool
 	q     *db.Queries
 	store *storage.Store
+	jobs  *river.Client[pgx.Tx]
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
-	return &Service{pool: pool, q: db.New(pool), store: store}
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs}
 }
 
 func toProto(lt db.LabelType, tracks, boxes int32) (*krillv1.LabelType, error) {
@@ -64,6 +67,7 @@ func toProto(lt db.LabelType, tracks, boxes int32) (*krillv1.LabelType, error) {
 		Position:    lt.Position,
 		TrackCount:  tracks,
 		BoxCount:    boxes,
+		Oriented:    lt.Oriented,
 	}
 	for _, a := range attrs {
 		out.Attributes = append(out.Attributes, &krillv1.LabelAttribute{Name: a.Name, Options: a.Options})
@@ -82,6 +86,7 @@ func fromProto(attrs []*krillv1.LabelAttribute) []Attribute {
 type typeInput struct {
 	name, title, color, description, guideline string
 	attrs                                      []byte
+	oriented                                   bool
 }
 
 type typeRequest interface {
@@ -91,6 +96,7 @@ type typeRequest interface {
 	GetDescription() string
 	GetGuideline() string
 	GetAttributes() []*krillv1.LabelAttribute
+	GetOriented() bool
 }
 
 func validate(req typeRequest) (typeInput, error) {
@@ -104,6 +110,7 @@ func validate(req typeRequest) (typeInput, error) {
 		color:       color,
 		description: strings.TrimSpace(req.GetDescription()),
 		guideline:   strings.TrimSpace(req.GetGuideline()),
+		oriented:    req.GetOriented(),
 	}
 	for _, f := range []struct {
 		field, value string
@@ -158,6 +165,12 @@ func (s *Service) list(ctx context.Context, q *db.Queries) ([]*krillv1.LabelType
 			return nil, rpc.Internal(err, "decode label type")
 		}
 		out[i].Examples = byType[r.LabelType.ID]
+		out[i].UnrotatedBoxCount = r.UnrotatedBoxCount
+		if k := r.LabelType.ReferenceKey; k.Valid {
+			if out[i].ReferenceUrl, err = s.store.PresignGet(ctx, k.String, urlExpiry, ""); err != nil {
+				slog.WarnContext(ctx, "presign label reference", "label_type_id", r.LabelType.ID, "err", err)
+			}
+		}
 	}
 	return out, nil
 }
@@ -183,7 +196,7 @@ func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelT
 	q := s.q.WithTx(tx)
 	lt, err := q.CreateLabelType(ctx, db.CreateLabelTypeParams{
 		Name: in.name, Title: in.title, Color: in.color, Description: in.description,
-		Guideline: in.guideline, Attributes: in.attrs,
+		Guideline: in.guideline, Attributes: in.attrs, Oriented: in.oriented,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -221,7 +234,7 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 	}
 	lt, err := q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
 		ID: req.GetId(), Name: in.name, Title: in.title, Color: in.color, Description: in.description,
-		Guideline: in.guideline, Attributes: in.attrs,
+		Guideline: in.guideline, Attributes: in.attrs, Oriented: in.oriented,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -317,6 +330,7 @@ func changedFields(a, b db.LabelType) []string {
 		{"description", a.Description != b.Description},
 		{"guideline", a.Guideline != b.Guideline},
 		{"attributes", !bytes.Equal(a.Attributes, b.Attributes)},
+		{"oriented", a.Oriented != b.Oriented},
 	} {
 		if f.changed {
 			out = append(out, f.name)

@@ -43,16 +43,18 @@ ANNOTATION_STATUS_VERIFIED: AnnotationStatus
 ANNOTATION_STATUS_REJECTED: AnnotationStatus
 
 class Box(_message.Message):
-    __slots__ = ("x", "y", "width", "height")
+    __slots__ = ("x", "y", "width", "height", "corners")
     X_FIELD_NUMBER: _ClassVar[int]
     Y_FIELD_NUMBER: _ClassVar[int]
     WIDTH_FIELD_NUMBER: _ClassVar[int]
     HEIGHT_FIELD_NUMBER: _ClassVar[int]
+    CORNERS_FIELD_NUMBER: _ClassVar[int]
     x: float
     y: float
     width: float
     height: float
-    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ...) -> None: ...
+    corners: _containers.RepeatedCompositeFieldContainer[Point]
+    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ..., corners: _Optional[_Iterable[_Union[Point, _Mapping]]] = ...) -> None: ...
 
 class Point(_message.Message):
     __slots__ = ("x", "y")

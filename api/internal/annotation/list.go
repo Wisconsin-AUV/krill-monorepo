@@ -73,7 +73,7 @@ func (s *Service) ListTracksByType(ctx context.Context, req *krillv1.ListTracksB
 			VideoId:    r.VideoID,
 			FrameId:    r.FrameID,
 			FrameIndex: r.FrameIdx,
-			Box:        &krillv1.Box{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height},
+			Box:        &krillv1.Box{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height, Corners: Corners(r.Corners)},
 			FrameUrl:   url,
 		})
 	}

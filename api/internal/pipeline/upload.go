@@ -170,6 +170,7 @@ func (s *Service) AddModel(ctx context.Context, req *krillv1.AddModelRequest) (*
 		Classes:      classesJSON,
 		Filename:     filename,
 		WeightsBytes: obj.Size,
+		Oriented:     res.GetOriented(),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create run")

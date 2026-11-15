@@ -359,8 +359,11 @@ type ExportStats struct {
 	Videos           []*ExportVideoStats `protobuf:"bytes,12,rep,name=videos,proto3" json:"videos,omitempty"`
 	TestImages       int32               `protobuf:"varint,13,opt,name=test_images,json=testImages,proto3" json:"test_images,omitempty"`
 	TestBoxes        int32               `protobuf:"varint,14,opt,name=test_boxes,json=testBoxes,proto3" json:"test_boxes,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Labels are written as YOLO-OBB corners because a label type is
+	// oriented. Boxes of other types are written as unrotated corners.
+	Oriented      bool `protobuf:"varint,15,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExportStats) Reset() {
@@ -489,6 +492,13 @@ func (x *ExportStats) GetTestBoxes() int32 {
 		return x.TestBoxes
 	}
 	return 0
+}
+
+func (x *ExportStats) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
 }
 
 type Export struct {
@@ -1067,7 +1077,7 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n" +
 	"\x06pinned\x18\x04 \x01(\bR\x06pinned\x12\x16\n" +
 	"\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n" +
-	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\xb9\x04\n" +
+	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\xd5\x04\n" +
 	"\vExportStats\x12!\n" +
 	"\ftrain_images\x18\x01 \x01(\x05R\vtrainImages\x12\x1d\n" +
 	"\n" +
@@ -1087,7 +1097,8 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\vtest_images\x18\r \x01(\x05R\n" +
 	"testImages\x12\x1d\n" +
 	"\n" +
-	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\"\xa8\x03\n" +
+	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\x12\x1a\n" +
+	"\boriented\x18\x0f \x01(\bR\boriented\"\xa8\x03\n" +
 	"\x06Export\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +

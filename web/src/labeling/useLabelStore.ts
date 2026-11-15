@@ -14,6 +14,9 @@ import { flash } from '@/lib/flash'
 
 export type BoxRect = Pick<Box, 'x' | 'y' | 'width' | 'height'>
 
+// Corners are set only for rotated boxes of oriented label types.
+export type BoxShape = BoxRect & { corners?: { x: number; y: number }[] }
+
 // Normalized to the frame, like BoxRect.
 export type TrackPrompt = { point: { x: number; y: number } } | { box: BoxRect }
 
@@ -76,7 +79,7 @@ interface LabelState {
   toggleHidden: () => void
 
   drawBox: (frameId: bigint, box: BoxRect) => Promise<void>
-  moveBox: (trackId: bigint, frameId: bigint, box: BoxRect) => Promise<void>
+  moveBox: (trackId: bigint, frameId: bigint, box: BoxShape) => Promise<void>
   deleteBox: (trackId: bigint, frameId: bigint) => Promise<void>
   deleteTrack: (trackId: bigint) => Promise<void>
   updateTrack: (
@@ -113,8 +116,14 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
   return run
 }
 
-function rect(box: Box | undefined): BoxRect {
-  return { x: box?.x ?? 0, y: box?.y ?? 0, width: box?.width ?? 0, height: box?.height ?? 0 }
+function rect(box: Box | undefined): BoxShape {
+  return {
+    x: box?.x ?? 0,
+    y: box?.y ?? 0,
+    width: box?.width ?? 0,
+    height: box?.height ?? 0,
+    corners: box?.corners.map((p) => ({ x: p.x, y: p.y })) ?? [],
+  }
 }
 
 function trackingSet(clip: GetClipResponse): Record<Key, true> {
@@ -355,7 +364,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
       const prev = get().boxes[key(frameId)]?.[key(trackId)]
       const optimistic = {
         ...(prev ?? { id: 0n, trackId, frameId }),
-        box: { ...prev?.box, ...box },
+        box: { ...prev?.box, ...box, corners: box.corners ?? [] },
       } as Annotation
       putBox(optimistic)
       await withPending('Could not save box', async () => {
