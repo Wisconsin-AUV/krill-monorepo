@@ -1,6 +1,6 @@
-import { CloudArrowUpIcon, XMarkIcon } from '@heroicons/react/20/solid'
-import { clsx } from 'clsx'
-import { useRef, useState } from 'react'
+import { XMarkIcon } from '@heroicons/react/20/solid'
+import { useState } from 'react'
+import { DropZone } from '@/components/DropZone'
 import { Button } from '@/components/ui/Button'
 import {
   Dialog,
@@ -12,9 +12,13 @@ import {
 import { Field, FieldGroup, Label } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { VideoService } from '@/gen/krill/v1/video_pb'
+import { videoClient } from '@/lib/clients'
 import { formatBytes } from '@/lib/format'
+import { invalidateService } from '@/lib/queryClient'
+import { putParts } from '@/lib/upload'
 import { extractFpsOptions } from '@/lib/video'
-import { useUploadStore } from '@/store/useUploadStore'
+import { useUploadStore, type UploadTask } from '@/store/useUploadStore'
 
 interface Pending {
   file: File
@@ -28,16 +32,43 @@ function stripExtension(filename: string): string {
   return dot > 0 ? filename.slice(0, dot) : filename
 }
 
+function videoUpload(file: File, name: string, extractFps: number): UploadTask {
+  return {
+    name,
+    size: file.size,
+    run: async (signal, onProgress) => {
+      let videoId: bigint | undefined
+      try {
+        const created = await videoClient.createVideo({
+          name,
+          filename: file.name,
+          extractFps,
+          size: BigInt(file.size),
+        })
+        videoId = created.video?.id
+        await invalidateService(VideoService)
+        await putParts(created.partUrls, Number(created.partSize), file, onProgress, signal)
+        await videoClient.startIngest({ videoId, uploadId: created.uploadId })
+        return { to: `/videos/${videoId}`, label: 'View video' }
+      } catch (err) {
+        if (signal.aborted && videoId !== undefined) {
+          await videoClient.deleteVideo({ id: videoId }).catch(() => undefined)
+        }
+        throw err
+      } finally {
+        await invalidateService(VideoService)
+      }
+    },
+  }
+}
+
 export function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const start = useUploadStore((s) => s.start)
   const [pending, setPending] = useState<Pending[]>([])
   const [fps, setFps] = useState(DEFAULT_FPS)
-  const [dragging, setDragging] = useState(false)
-  const input = useRef<HTMLInputElement>(null)
 
-  function addFiles(list: FileList | null) {
-    if (!list) return
-    const videos = Array.from(list).filter(
+  function addFiles(files: File[]) {
+    const videos = files.filter(
       (f) => f.type.startsWith('video/') || /\.(mp4|mov|mkv|avi|webm)$/i.test(f.name),
     )
     setPending((p) => [...p, ...videos.map((file) => ({ file, name: stripExtension(file.name) }))])
@@ -52,7 +83,7 @@ export function UploadDialog({ open, onClose }: { open: boolean; onClose: () => 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (pending.length === 0) return
-    start(pending, fps)
+    start(pending.map((p) => videoUpload(p.file, p.name, fps)))
     close()
   }
 
@@ -65,44 +96,11 @@ export function UploadDialog({ open, onClose }: { open: boolean; onClose: () => 
         <DialogDescription>Uploads keep going if you leave this page.</DialogDescription>
         <DialogBody>
           <FieldGroup>
-            <button
-              type="button"
-              onClick={() => input.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault()
-                setDragging(true)
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault()
-                setDragging(false)
-                addFiles(e.dataTransfer.files)
-              }}
-              className={clsx(
-                'flex w-full flex-col items-center rounded-xl border border-dashed px-6 py-10 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
-                dragging
-                  ? 'border-sky-500 bg-sky-500/5'
-                  : 'border-zinc-950/15 hover:border-zinc-950/30 dark:border-white/15 dark:hover:border-white/30',
-              )}
-            >
-              <CloudArrowUpIcon className="size-10 text-zinc-400" aria-hidden="true" />
-              <span className="mt-3 text-sm/6 font-semibold text-zinc-950 dark:text-white">
-                Drop videos here or <span className="text-sky-600 dark:text-sky-400">browse</span>
-              </span>
-              <span className="text-xs/5 text-zinc-500 dark:text-zinc-400">
-                MP4, MOV, MKV, or WebM
-              </span>
-            </button>
-            <input
-              ref={input}
-              type="file"
+            <DropZone
+              label="videos"
+              hint="MP4, MOV, MKV, or WebM"
               accept="video/*"
-              multiple
-              hidden
-              onChange={(e) => {
-                addFiles(e.target.files)
-                e.target.value = ''
-              }}
+              onFiles={addFiles}
             />
 
             {pending.length > 0 && (
