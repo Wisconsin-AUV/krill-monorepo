@@ -36,6 +36,47 @@ message ExportOptions {
   int32 dedup_distance = 4;
   // Videos to include. Empty means every ready video.
   repeated int64 video_ids = 5;
+  // Augmented copies written of each train image, from 0 to 10.
+  int32 augmented_copies = 6;
+  // Unset uses the defaults. Mosaic is left to whatever trains on the
+  // export.
+  Augmentation augmentation = 7;
+}
+
+// Augmentation is how training images are varied, each epoch while training
+// and in the augmented copies an export writes. Val and test images are never
+// changed.
+message Augmentation {
+  // Ultralytics' own, in its units. Rotation in degrees either way.
+  float degrees = 1;
+  // Shift as a share of the image size, either way.
+  float translate = 2;
+  // Zoom gain either way.
+  float scale = 3;
+  // Degrees either way.
+  float shear = 4;
+  float perspective = 5;
+  // Hue, saturation, and brightness gains either way.
+  float hsv_h = 6;
+  float hsv_s = 7;
+  float hsv_v = 8;
+  // Probabilities. Mirroring is off by default because it changes what
+  // arrows and printed signs mean.
+  float fliplr = 9;
+  float flipud = 10;
+  float mosaic = 11;
+  // Krill's own, applied to each image before mosaic. The most an image is
+  // stretched wider or taller, as a ratio of at least 1.
+  float aspect = 12;
+  // Probabilities that an image is tinted blue-green like water, gets
+  // patches of light and shadow, or gets sensor noise.
+  float underwater = 13;
+  float shadows = 14;
+  float noise = 15;
+  // Probability that an image's objects are cut out and pasted at random
+  // spots on a random distractor image, each resized, rotated, stretched, and
+  // recolored on its own. Does nothing until distractors are added.
+  float distractors = 16;
 }
 
 message ExportClassStats {
@@ -80,6 +121,11 @@ message ExportStats {
   repeated ExportVideoStats videos = 12;
   int32 test_images = 13;
   int32 test_boxes = 14;
+  // Labels are written as YOLO-OBB corners because a label type is
+  // oriented. Boxes of other types are written as unrotated corners.
+  bool oriented = 15;
+  // Augmented copies of train images, on top of train_images.
+  int32 augmented_images = 16;
 }
 
 message Export {

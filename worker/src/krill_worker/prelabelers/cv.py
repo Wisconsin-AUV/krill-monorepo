@@ -11,6 +11,7 @@ import numpy as np
 import numpy.typing as npt
 from krill.v1 import pipeline_pb2
 
+from krill_worker.geometry import bounds, ordered
 from krill_worker.prelabelers import Frame, Point, Proposal
 from krill_worker.prelabelers.params import HsvRange, Mask, parse, specs
 
@@ -127,17 +128,9 @@ def proposal(
 ) -> Proposal:
     """A proposal boxing blob, normalized to a frame of shape."""
     h, w = shape[:2]
-    xs = np.clip(blob.corners[:, 0], 0, w)
-    ys = np.clip(blob.corners[:, 1], 0, h)
-    x0, x1, y0, y1 = float(xs.min()), float(xs.max()), float(ys.min()), float(ys.max())
-    box = ((x0 + x1) / 2 / w, (y0 + y1) / 2 / h, (x1 - x0) / w, (y1 - y0) / h)
+    corners = ordered(blob.corners / np.array([w, h]))
+    x, y, bw, bh = bounds(corners)
+    box = (x + bw / 2, y + bh / 2, bw, bh)
     if not oriented:
         return Proposal(label, box, confidence)
-    c = blob.corners
-    corners = (
-        (float(c[0, 0]) / w, float(c[0, 1]) / h),
-        (float(c[1, 0]) / w, float(c[1, 1]) / h),
-        (float(c[2, 0]) / w, float(c[2, 1]) / h),
-        (float(c[3, 0]) / w, float(c[3, 1]) / h),
-    )
     return Proposal(label, box, confidence, angle=blob.angle, corners=corners)

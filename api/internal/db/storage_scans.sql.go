@@ -452,8 +452,39 @@ func (q *Queries) ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error) {
 	return items, nil
 }
 
+const scanDistractors = `-- name: ScanDistractors :many
+SELECT id, status FROM distractors
+`
+
+type ScanDistractorsRow struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
+func (q *Queries) ScanDistractors(ctx context.Context) ([]ScanDistractorsRow, error) {
+	rows, err := q.db.Query(ctx, scanDistractors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ScanDistractorsRow
+	for rows.Next() {
+		var i ScanDistractorsRow
+		if err := rows.Scan(&i.ID, &i.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const scanLabelExampleKeys = `-- name: ScanLabelExampleKeys :many
 SELECT object_key FROM label_examples
+UNION ALL
+SELECT reference_key FROM label_types WHERE reference_key IS NOT NULL
 `
 
 func (q *Queries) ScanLabelExampleKeys(ctx context.Context) ([]string, error) {

@@ -25,6 +25,7 @@ import (
 	"github.com/wauv/krill/api/internal/ingest"
 	"github.com/wauv/krill/api/internal/jobmeta"
 	"github.com/wauv/krill/api/internal/rpc"
+	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/tracker"
 )
 
@@ -154,9 +155,9 @@ func (s *ComputeService) countJobs(ctx context.Context) ([]*krillv1.JobCount, er
 // task, by whether someone is waiting on them.
 func gpuBacklog(ctx context.Context, pool db.DBTX, dispatcher *tracker.Dispatcher) (interactive, background int, err error) {
 	err = pool.QueryRow(ctx, `
-		SELECT count(*) FILTER (WHERE queue = $1), count(*) FILTER (WHERE queue = $2)
-		FROM river_job WHERE state IN ('available', 'scheduled', 'pending') AND queue IN ($1, $2)`,
-		annotation.TrackQueue, ingest.EmbedQueue,
+		SELECT count(*) FILTER (WHERE queue = $1), count(*) FILTER (WHERE queue IN ($2, $3))
+		FROM river_job WHERE state IN ('available', 'scheduled', 'pending') AND queue IN ($1, $2, $3)`,
+		annotation.TrackQueue, ingest.EmbedQueue, taxonomy.OrientQueue,
 	).Scan(&interactive, &background)
 	if err != nil {
 		return 0, 0, fmt.Errorf("count GPU jobs: %w", err)

@@ -24,18 +24,58 @@ EXPORT_STATUS_READY: ExportStatus
 EXPORT_STATUS_FAILED: ExportStatus
 
 class ExportOptions(_message.Message):
-    __slots__ = ("val_fraction", "stride", "dedup", "dedup_distance", "video_ids")
+    __slots__ = ("val_fraction", "stride", "dedup", "dedup_distance", "video_ids", "augmented_copies", "augmentation")
     VAL_FRACTION_FIELD_NUMBER: _ClassVar[int]
     STRIDE_FIELD_NUMBER: _ClassVar[int]
     DEDUP_FIELD_NUMBER: _ClassVar[int]
     DEDUP_DISTANCE_FIELD_NUMBER: _ClassVar[int]
     VIDEO_IDS_FIELD_NUMBER: _ClassVar[int]
+    AUGMENTED_COPIES_FIELD_NUMBER: _ClassVar[int]
+    AUGMENTATION_FIELD_NUMBER: _ClassVar[int]
     val_fraction: float
     stride: int
     dedup: bool
     dedup_distance: int
     video_ids: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, val_fraction: _Optional[float] = ..., stride: _Optional[int] = ..., dedup: _Optional[bool] = ..., dedup_distance: _Optional[int] = ..., video_ids: _Optional[_Iterable[int]] = ...) -> None: ...
+    augmented_copies: int
+    augmentation: Augmentation
+    def __init__(self, val_fraction: _Optional[float] = ..., stride: _Optional[int] = ..., dedup: _Optional[bool] = ..., dedup_distance: _Optional[int] = ..., video_ids: _Optional[_Iterable[int]] = ..., augmented_copies: _Optional[int] = ..., augmentation: _Optional[_Union[Augmentation, _Mapping]] = ...) -> None: ...
+
+class Augmentation(_message.Message):
+    __slots__ = ("degrees", "translate", "scale", "shear", "perspective", "hsv_h", "hsv_s", "hsv_v", "fliplr", "flipud", "mosaic", "aspect", "underwater", "shadows", "noise", "distractors")
+    DEGREES_FIELD_NUMBER: _ClassVar[int]
+    TRANSLATE_FIELD_NUMBER: _ClassVar[int]
+    SCALE_FIELD_NUMBER: _ClassVar[int]
+    SHEAR_FIELD_NUMBER: _ClassVar[int]
+    PERSPECTIVE_FIELD_NUMBER: _ClassVar[int]
+    HSV_H_FIELD_NUMBER: _ClassVar[int]
+    HSV_S_FIELD_NUMBER: _ClassVar[int]
+    HSV_V_FIELD_NUMBER: _ClassVar[int]
+    FLIPLR_FIELD_NUMBER: _ClassVar[int]
+    FLIPUD_FIELD_NUMBER: _ClassVar[int]
+    MOSAIC_FIELD_NUMBER: _ClassVar[int]
+    ASPECT_FIELD_NUMBER: _ClassVar[int]
+    UNDERWATER_FIELD_NUMBER: _ClassVar[int]
+    SHADOWS_FIELD_NUMBER: _ClassVar[int]
+    NOISE_FIELD_NUMBER: _ClassVar[int]
+    DISTRACTORS_FIELD_NUMBER: _ClassVar[int]
+    degrees: float
+    translate: float
+    scale: float
+    shear: float
+    perspective: float
+    hsv_h: float
+    hsv_s: float
+    hsv_v: float
+    fliplr: float
+    flipud: float
+    mosaic: float
+    aspect: float
+    underwater: float
+    shadows: float
+    noise: float
+    distractors: float
+    def __init__(self, degrees: _Optional[float] = ..., translate: _Optional[float] = ..., scale: _Optional[float] = ..., shear: _Optional[float] = ..., perspective: _Optional[float] = ..., hsv_h: _Optional[float] = ..., hsv_s: _Optional[float] = ..., hsv_v: _Optional[float] = ..., fliplr: _Optional[float] = ..., flipud: _Optional[float] = ..., mosaic: _Optional[float] = ..., aspect: _Optional[float] = ..., underwater: _Optional[float] = ..., shadows: _Optional[float] = ..., noise: _Optional[float] = ..., distractors: _Optional[float] = ...) -> None: ...
 
 class ExportClassStats(_message.Message):
     __slots__ = ("id", "name", "train_boxes", "val_boxes", "clips", "videos", "test_boxes")
@@ -72,7 +112,7 @@ class ExportVideoStats(_message.Message):
     def __init__(self, video_id: _Optional[int] = ..., name: _Optional[str] = ..., split: _Optional[str] = ..., pinned: _Optional[bool] = ..., images: _Optional[int] = ..., boxes: _Optional[int] = ...) -> None: ...
 
 class ExportStats(_message.Message):
-    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos", "test_images", "test_boxes")
+    __slots__ = ("train_images", "val_images", "train_boxes", "val_boxes", "negative_images", "unlabeled_frames", "incomplete_frames", "unverified_frames", "stride_skipped", "duplicate_skipped", "classes", "videos", "test_images", "test_boxes", "oriented", "augmented_images")
     TRAIN_IMAGES_FIELD_NUMBER: _ClassVar[int]
     VAL_IMAGES_FIELD_NUMBER: _ClassVar[int]
     TRAIN_BOXES_FIELD_NUMBER: _ClassVar[int]
@@ -87,6 +127,8 @@ class ExportStats(_message.Message):
     VIDEOS_FIELD_NUMBER: _ClassVar[int]
     TEST_IMAGES_FIELD_NUMBER: _ClassVar[int]
     TEST_BOXES_FIELD_NUMBER: _ClassVar[int]
+    ORIENTED_FIELD_NUMBER: _ClassVar[int]
+    AUGMENTED_IMAGES_FIELD_NUMBER: _ClassVar[int]
     train_images: int
     val_images: int
     train_boxes: int
@@ -101,7 +143,9 @@ class ExportStats(_message.Message):
     videos: _containers.RepeatedCompositeFieldContainer[ExportVideoStats]
     test_images: int
     test_boxes: int
-    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ..., test_images: _Optional[int] = ..., test_boxes: _Optional[int] = ...) -> None: ...
+    oriented: bool
+    augmented_images: int
+    def __init__(self, train_images: _Optional[int] = ..., val_images: _Optional[int] = ..., train_boxes: _Optional[int] = ..., val_boxes: _Optional[int] = ..., negative_images: _Optional[int] = ..., unlabeled_frames: _Optional[int] = ..., incomplete_frames: _Optional[int] = ..., unverified_frames: _Optional[int] = ..., stride_skipped: _Optional[int] = ..., duplicate_skipped: _Optional[int] = ..., classes: _Optional[_Iterable[_Union[ExportClassStats, _Mapping]]] = ..., videos: _Optional[_Iterable[_Union[ExportVideoStats, _Mapping]]] = ..., test_images: _Optional[int] = ..., test_boxes: _Optional[int] = ..., oriented: _Optional[bool] = ..., augmented_images: _Optional[int] = ...) -> None: ...
 
 class Export(_message.Message):
     __slots__ = ("id", "name", "status", "error", "progress", "options", "stats", "size_bytes", "download_url", "created_at", "finished_at")

@@ -20,7 +20,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/worker.proto.
  */
 export const file_krill_v1_worker: GenFile = /*@__PURE__*/
-  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCK4AgoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIABIkCgV0cmFpbhgKIAEoCzITLmtyaWxsLnYxLlRyYWluVGFza0gAEioKCHByZWxhYmVsGAsgASgLMhYua3JpbGwudjEuUHJlbGFiZWxUYXNrSAASKAoHcHJldmlldxgMIAEoCzIVLmtyaWxsLnYxLlByZXZpZXdUYXNrSAASKAoHaW5zcGVjdBgNIAEoCzIVLmtyaWxsLnYxLkluc3BlY3RUYXNrSABCBgoEdGFzayI7CglUYXNrRnJhbWUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEhUKDWVtYmVkZGluZ191cmwYAyABKAkinwEKCVRyYWNrVGFzaxIKCgJpZBgBIAEoAxIjCgZmcmFtZXMYAiADKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSIAoFcG9pbnQYAyABKAsyDy5rcmlsbC52MS5Qb2ludEgAEhwKA2JveBgEIAEoCzINLmtyaWxsLnYxLkJveEgAEhcKD2VtYmVkZGluZ19tb2RlbBgFIAEoCUIICgZwcm9tcHQiPQoJRW1iZWRUYXNrEgoKAmlkGAEgASgDEiQKBmZyYW1lcxgCIAMoCzIULmtyaWxsLnYxLkVtYmVkRnJhbWUiOQoKRW1iZWRGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSEgoKdXBsb2FkX3VybBgDIAEoCSJaCgxFeGVtcGxhclRhc2sSCgoCaWQYASABKAMSIgoFZnJhbWUYAiABKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94IjoKClRyYWNrZWRCb3gSEAoIZnJhbWVfaWQYASABKAMSGgoDYm94GAIgASgLMg0ua3JpbGwudjEuQm94ImcKElJlcG9ydFRyYWNrUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEiMKBWJveGVzGAMgAygLMhQua3JpbGwudjEuVHJhY2tlZEJveBIMCgRkb25lGAQgASgIIhUKE1JlcG9ydFRyYWNrUmVzcG9uc2UiVgoWUmVwb3J0RXhlbXBsYXJzUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJEhwKBWJveGVzGAMgAygLMg0ua3JpbGwudjEuQm94IhkKF1JlcG9ydEV4ZW1wbGFyc1Jlc3BvbnNlIjQKElJlcG9ydEVtYmVkUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBW1vZGVsGAIgASgJIhUKE1JlcG9ydEVtYmVkUmVzcG9uc2UiMQoPRmFpbFRhc2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFZXJyb3IYAiABKAkiEgoQRmFpbFRhc2tSZXNwb25zZSKDBAoQSGVhcnRiZWF0UmVxdWVzdBITCgtpbnN0YW5jZV9pZBgBIAEoCRIQCghob3N0bmFtZRgCIAEoCRIPCgd2ZXJzaW9uGAMgASgJEg0KBW1vZGVsGAQgASgJEhMKC2FjY2VsZXJhdG9yGAUgASgJEi4KCnN0YXJ0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiEKBGhvc3QYByABKAsyEy5rcmlsbC52MS5Ib3N0U3RhdHMSIAoEZ3B1cxgIIAMoCzISLmtyaWxsLnYxLkdwdVN0YXRzEg8KB3Rhc2tfaWQYCSABKAMSIQoEbG9ncxgUIAMoCzITLmtyaWxsLnYxLkxvZ1JlY29yZBItCgttb2RlbF9zdGF0ZRgeIAEoDjIYLmtyaWxsLnYxLk1vZGVsTG9hZFN0YXRlEhMKC21vZGVsX2Vycm9yGB8gASgJEiQKHG1vZGVsX21lbW9yeV9hbGxvY2F0ZWRfYnl0ZXMYICABKAQSIwobbW9kZWxfbWVtb3J5X3Jlc2VydmVkX2J5dGVzGCEgASgEEhQKDHBpbm5lZF9tb2RlbBgiIAEoCRIVCg1jYWNoZWRfbW9kZWxzGCMgAygJEhIKCmNvbW1hbmRfaWQYJCABKAQSGgoSc3VwcG9ydHNfZXhlbXBsYXJzGCUgASgIImQKEUhlYXJ0YmVhdFJlc3BvbnNlEg0KBW1vZGVsGB4gASgJEigKB2NvbW1hbmQYHyABKAsyFy5rcmlsbC52MS5Xb3JrZXJDb21tYW5kEhYKDmNhbmNlbF90YXNrX2lkGCAgASgDIkMKDVdvcmtlckNvbW1hbmQSCgoCaWQYASABKAQSJgoGYWN0aW9uGAIgASgOMhYua3JpbGwudjEuV29ya2VyQWN0aW9uKqcBCg5Nb2RlbExvYWRTdGF0ZRIgChxNT0RFTF9MT0FEX1NUQVRFX1VOU1BFQ0lGSUVEEAASHQoZTU9ERUxfTE9BRF9TVEFURV9VTkxPQURFRBABEhwKGE1PREVMX0xPQURfU1RBVEVfTE9BRElORxACEhoKFk1PREVMX0xPQURfU1RBVEVfUkVBRFkQAxIaChZNT0RFTF9MT0FEX1NUQVRFX0VSUk9SEAQqYgoMV29ya2VyQWN0aW9uEh0KGVdPUktFUl9BQ1RJT05fVU5TUEVDSUZJRUQQABIZChVXT1JLRVJfQUNUSU9OX1dBUk1fVVAQARIYChRXT1JLRVJfQUNUSU9OX1VOTE9BRBACMtcDCg1Xb3JrZXJTZXJ2aWNlEkMKCE5leHRUYXNrEhkua3JpbGwudjEuTmV4dFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuTmV4dFRhc2tSZXNwb25zZSIAEkwKC1JlcG9ydFRyYWNrEhwua3JpbGwudjEuUmVwb3J0VHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0VHJhY2tSZXNwb25zZSIAElgKD1JlcG9ydEV4ZW1wbGFycxIgLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1JlcXVlc3QaIS5rcmlsbC52MS5SZXBvcnRFeGVtcGxhcnNSZXNwb25zZSIAEkwKC1JlcG9ydEVtYmVkEhwua3JpbGwudjEuUmVwb3J0RW1iZWRSZXF1ZXN0Gh0ua3JpbGwudjEuUmVwb3J0RW1iZWRSZXNwb25zZSIAEkMKCEZhaWxUYXNrEhkua3JpbGwudjEuRmFpbFRhc2tSZXF1ZXN0Ghoua3JpbGwudjEuRmFpbFRhc2tSZXNwb25zZSIAEkYKCUhlYXJ0YmVhdBIaLmtyaWxsLnYxLkhlYXJ0YmVhdFJlcXVlc3QaGy5rcmlsbC52MS5IZWFydGJlYXRSZXNwb25zZSIAQowBCgxjb20ua3JpbGwudjFCC1dvcmtlclByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_log, file_krill_v1_pipeline, file_krill_v1_system]);
+  fileDesc("ChVrcmlsbC92MS93b3JrZXIucHJvdG8SCGtyaWxsLnYxIhEKD05leHRUYXNrUmVxdWVzdCLgAgoQTmV4dFRhc2tSZXNwb25zZRIkCgV0cmFjaxgBIAEoCzITLmtyaWxsLnYxLlRyYWNrVGFza0gAEioKCGV4ZW1wbGFyGAIgASgLMhYua3JpbGwudjEuRXhlbXBsYXJUYXNrSAASJAoFZW1iZWQYAyABKAsyEy5rcmlsbC52MS5FbWJlZFRhc2tIABImCgZvcmllbnQYBCABKAsyFC5rcmlsbC52MS5PcmllbnRUYXNrSAASJAoFdHJhaW4YCiABKAsyEy5rcmlsbC52MS5UcmFpblRhc2tIABIqCghwcmVsYWJlbBgLIAEoCzIWLmtyaWxsLnYxLlByZWxhYmVsVGFza0gAEigKB3ByZXZpZXcYDCABKAsyFS5rcmlsbC52MS5QcmV2aWV3VGFza0gAEigKB2luc3BlY3QYDSABKAsyFS5rcmlsbC52MS5JbnNwZWN0VGFza0gAQgYKBHRhc2siOwoJVGFza0ZyYW1lEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRIVCg1lbWJlZGRpbmdfdXJsGAMgASgJIsgBCglUcmFja1Rhc2sSCgoCaWQYASABKAMSIwoGZnJhbWVzGAIgAygLMhMua3JpbGwudjEuVGFza0ZyYW1lEiAKBXBvaW50GAMgASgLMg8ua3JpbGwudjEuUG9pbnRIABIcCgNib3gYBCABKAsyDS5rcmlsbC52MS5Cb3hIABIXCg9lbWJlZGRpbmdfbW9kZWwYBSABKAkSEAoIb3JpZW50ZWQYBiABKAgSFQoNcmVmZXJlbmNlX3VybBgHIAEoCUIICgZwcm9tcHQiPQoJRW1iZWRUYXNrEgoKAmlkGAEgASgDEiQKBmZyYW1lcxgCIAMoCzIULmtyaWxsLnYxLkVtYmVkRnJhbWUiOQoKRW1iZWRGcmFtZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSEgoKdXBsb2FkX3VybBgDIAEoCSJaCgxFeGVtcGxhclRhc2sSCgoCaWQYASABKAMSIgoFZnJhbWUYAiABKAsyEy5rcmlsbC52MS5UYXNrRnJhbWUSGgoDYm94GAMgASgLMg0ua3JpbGwudjEuQm94IlYKCk9yaWVudFRhc2sSCgoCaWQYASABKAMSJQoGZnJhbWVzGAIgAygLMhUua3JpbGwudjEuT3JpZW50RnJhbWUSFQoNcmVmZXJlbmNlX3VybBgDIAEoCSJVCgtPcmllbnRGcmFtZRIiCgVmcmFtZRgBIAEoCzITLmtyaWxsLnYxLlRhc2tGcmFtZRIiCgVib3hlcxgCIAMoCzITLmtyaWxsLnYxLk9yaWVudEJveCI+CglPcmllbnRCb3gSFQoNYW5ub3RhdGlvbl9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giWAoTUmVwb3J0T3JpZW50UmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEiIKBWJveGVzGAIgAygLMhMua3JpbGwudjEuT3JpZW50Qm94EgwKBGRvbmUYAyABKAgiFgoUUmVwb3J0T3JpZW50UmVzcG9uc2UiOgoKVHJhY2tlZEJveBIQCghmcmFtZV9pZBgBIAEoAxIaCgNib3gYAiABKAsyDS5rcmlsbC52MS5Cb3giZwoSUmVwb3J0VHJhY2tSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSIwoFYm94ZXMYAyADKAsyFC5rcmlsbC52MS5UcmFja2VkQm94EgwKBGRvbmUYBCABKAgiFQoTUmVwb3J0VHJhY2tSZXNwb25zZSJWChZSZXBvcnRFeGVtcGxhcnNSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkSHAoFYm94ZXMYAyADKAsyDS5rcmlsbC52MS5Cb3giGQoXUmVwb3J0RXhlbXBsYXJzUmVzcG9uc2UiNAoSUmVwb3J0RW1iZWRSZXF1ZXN0Eg8KB3Rhc2tfaWQYASABKAMSDQoFbW9kZWwYAiABKAkiFQoTUmVwb3J0RW1iZWRSZXNwb25zZSIxCg9GYWlsVGFza1JlcXVlc3QSDwoHdGFza19pZBgBIAEoAxINCgVlcnJvchgCIAEoCSISChBGYWlsVGFza1Jlc3BvbnNlIoMEChBIZWFydGJlYXRSZXF1ZXN0EhMKC2luc3RhbmNlX2lkGAEgASgJEhAKCGhvc3RuYW1lGAIgASgJEg8KB3ZlcnNpb24YAyABKAkSDQoFbW9kZWwYBCABKAkSEwoLYWNjZWxlcmF0b3IYBSABKAkSLgoKc3RhcnRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASIQoEaG9zdBgHIAEoCzITLmtyaWxsLnYxLkhvc3RTdGF0cxIgCgRncHVzGAggAygLMhIua3JpbGwudjEuR3B1U3RhdHMSDwoHdGFza19pZBgJIAEoAxIhCgRsb2dzGBQgAygLMhMua3JpbGwudjEuTG9nUmVjb3JkEi0KC21vZGVsX3N0YXRlGB4gASgOMhgua3JpbGwudjEuTW9kZWxMb2FkU3RhdGUSEwoLbW9kZWxfZXJyb3IYHyABKAkSJAocbW9kZWxfbWVtb3J5X2FsbG9jYXRlZF9ieXRlcxggIAEoBBIjChttb2RlbF9tZW1vcnlfcmVzZXJ2ZWRfYnl0ZXMYISABKAQSFAoMcGlubmVkX21vZGVsGCIgASgJEhUKDWNhY2hlZF9tb2RlbHMYIyADKAkSEgoKY29tbWFuZF9pZBgkIAEoBBIaChJzdXBwb3J0c19leGVtcGxhcnMYJSABKAgiZAoRSGVhcnRiZWF0UmVzcG9uc2USDQoFbW9kZWwYHiABKAkSKAoHY29tbWFuZBgfIAEoCzIXLmtyaWxsLnYxLldvcmtlckNvbW1hbmQSFgoOY2FuY2VsX3Rhc2tfaWQYICABKAMiQwoNV29ya2VyQ29tbWFuZBIKCgJpZBgBIAEoBBImCgZhY3Rpb24YAiABKA4yFi5rcmlsbC52MS5Xb3JrZXJBY3Rpb24qpwEKDk1vZGVsTG9hZFN0YXRlEiAKHE1PREVMX0xPQURfU1RBVEVfVU5TUEVDSUZJRUQQABIdChlNT0RFTF9MT0FEX1NUQVRFX1VOTE9BREVEEAESHAoYTU9ERUxfTE9BRF9TVEFURV9MT0FESU5HEAISGgoWTU9ERUxfTE9BRF9TVEFURV9SRUFEWRADEhoKFk1PREVMX0xPQURfU1RBVEVfRVJST1IQBCpiCgxXb3JrZXJBY3Rpb24SHQoZV09SS0VSX0FDVElPTl9VTlNQRUNJRklFRBAAEhkKFVdPUktFUl9BQ1RJT05fV0FSTV9VUBABEhgKFFdPUktFUl9BQ1RJT05fVU5MT0FEEAIyqAQKDVdvcmtlclNlcnZpY2USQwoITmV4dFRhc2sSGS5rcmlsbC52MS5OZXh0VGFza1JlcXVlc3QaGi5rcmlsbC52MS5OZXh0VGFza1Jlc3BvbnNlIgASTAoLUmVwb3J0VHJhY2sSHC5rcmlsbC52MS5SZXBvcnRUcmFja1JlcXVlc3QaHS5rcmlsbC52MS5SZXBvcnRUcmFja1Jlc3BvbnNlIgASWAoPUmVwb3J0RXhlbXBsYXJzEiAua3JpbGwudjEuUmVwb3J0RXhlbXBsYXJzUmVxdWVzdBohLmtyaWxsLnYxLlJlcG9ydEV4ZW1wbGFyc1Jlc3BvbnNlIgASTAoLUmVwb3J0RW1iZWQSHC5rcmlsbC52MS5SZXBvcnRFbWJlZFJlcXVlc3QaHS5rcmlsbC52MS5SZXBvcnRFbWJlZFJlc3BvbnNlIgASTwoMUmVwb3J0T3JpZW50Eh0ua3JpbGwudjEuUmVwb3J0T3JpZW50UmVxdWVzdBoeLmtyaWxsLnYxLlJlcG9ydE9yaWVudFJlc3BvbnNlIgASQwoIRmFpbFRhc2sSGS5rcmlsbC52MS5GYWlsVGFza1JlcXVlc3QaGi5rcmlsbC52MS5GYWlsVGFza1Jlc3BvbnNlIgASRgoJSGVhcnRiZWF0Ehoua3JpbGwudjEuSGVhcnRiZWF0UmVxdWVzdBobLmtyaWxsLnYxLkhlYXJ0YmVhdFJlc3BvbnNlIgBCjAEKDGNvbS5rcmlsbC52MUILV29ya2VyUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_krill_v1_annotation, file_krill_v1_log, file_krill_v1_pipeline, file_krill_v1_system]);
 
 /**
  * @generated from message krill.v1.NextTaskRequest
@@ -60,6 +60,12 @@ export type NextTaskResponse = Message<"krill.v1.NextTaskResponse"> & {
      */
     value: EmbedTask;
     case: "embed";
+  } | {
+    /**
+     * @generated from field: krill.v1.OrientTask orient = 4;
+     */
+    value: OrientTask;
+    case: "orient";
   } | {
     /**
      * @generated from field: krill.v1.TrainTask train = 10;
@@ -166,6 +172,21 @@ export type TrackTask = Message<"krill.v1.TrackTask"> & {
    * @generated from field: string embedding_model = 5;
    */
   embeddingModel: string;
+
+  /**
+   * Report rotated boxes, for oriented label types.
+   *
+   * @generated from field: bool oriented = 6;
+   */
+  oriented: boolean;
+
+  /**
+   * Presigned URL of the label type's reference design, which rotated boxes
+   * are fit to when set.
+   *
+   * @generated from field: string reference_url = 7;
+   */
+  referenceUrl: string;
 };
 
 /**
@@ -260,6 +281,125 @@ export const ExemplarTaskSchema: GenMessage<ExemplarTask> = /*@__PURE__*/
   messageDesc(file_krill_v1_worker, 6);
 
 /**
+ * OrientTask fits a rotated box to each axis-aligned box of one oriented
+ * label type.
+ *
+ * @generated from message krill.v1.OrientTask
+ */
+export type OrientTask = Message<"krill.v1.OrientTask"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: repeated krill.v1.OrientFrame frames = 2;
+   */
+  frames: OrientFrame[];
+
+  /**
+   * Presigned URL of the label type's reference design. When empty, boxes
+   * are fit to the object's SAM mask.
+   *
+   * @generated from field: string reference_url = 3;
+   */
+  referenceUrl: string;
+};
+
+/**
+ * Describes the message krill.v1.OrientTask.
+ * Use `create(OrientTaskSchema)` to create a new message.
+ */
+export const OrientTaskSchema: GenMessage<OrientTask> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 7);
+
+/**
+ * @generated from message krill.v1.OrientFrame
+ */
+export type OrientFrame = Message<"krill.v1.OrientFrame"> & {
+  /**
+   * @generated from field: krill.v1.TaskFrame frame = 1;
+   */
+  frame?: TaskFrame | undefined;
+
+  /**
+   * @generated from field: repeated krill.v1.OrientBox boxes = 2;
+   */
+  boxes: OrientBox[];
+};
+
+/**
+ * Describes the message krill.v1.OrientFrame.
+ * Use `create(OrientFrameSchema)` to create a new message.
+ */
+export const OrientFrameSchema: GenMessage<OrientFrame> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 8);
+
+/**
+ * @generated from message krill.v1.OrientBox
+ */
+export type OrientBox = Message<"krill.v1.OrientBox"> & {
+  /**
+   * @generated from field: int64 annotation_id = 1;
+   */
+  annotationId: bigint;
+
+  /**
+   * @generated from field: krill.v1.Box box = 2;
+   */
+  box?: Box | undefined;
+};
+
+/**
+ * Describes the message krill.v1.OrientBox.
+ * Use `create(OrientBoxSchema)` to create a new message.
+ */
+export const OrientBoxSchema: GenMessage<OrientBox> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 9);
+
+/**
+ * @generated from message krill.v1.ReportOrientRequest
+ */
+export type ReportOrientRequest = Message<"krill.v1.ReportOrientRequest"> & {
+  /**
+   * @generated from field: int64 task_id = 1;
+   */
+  taskId: bigint;
+
+  /**
+   * Boxes with corners. Boxes the worker couldn't fit are left out.
+   *
+   * @generated from field: repeated krill.v1.OrientBox boxes = 2;
+   */
+  boxes: OrientBox[];
+
+  /**
+   * @generated from field: bool done = 3;
+   */
+  done: boolean;
+};
+
+/**
+ * Describes the message krill.v1.ReportOrientRequest.
+ * Use `create(ReportOrientRequestSchema)` to create a new message.
+ */
+export const ReportOrientRequestSchema: GenMessage<ReportOrientRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 10);
+
+/**
+ * @generated from message krill.v1.ReportOrientResponse
+ */
+export type ReportOrientResponse = Message<"krill.v1.ReportOrientResponse"> & {
+};
+
+/**
+ * Describes the message krill.v1.ReportOrientResponse.
+ * Use `create(ReportOrientResponseSchema)` to create a new message.
+ */
+export const ReportOrientResponseSchema: GenMessage<ReportOrientResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_worker, 11);
+
+/**
  * @generated from message krill.v1.TrackedBox
  */
 export type TrackedBox = Message<"krill.v1.TrackedBox"> & {
@@ -279,7 +419,7 @@ export type TrackedBox = Message<"krill.v1.TrackedBox"> & {
  * Use `create(TrackedBoxSchema)` to create a new message.
  */
 export const TrackedBoxSchema: GenMessage<TrackedBox> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 7);
+  messageDesc(file_krill_v1_worker, 12);
 
 /**
  * @generated from message krill.v1.ReportTrackRequest
@@ -313,7 +453,7 @@ export type ReportTrackRequest = Message<"krill.v1.ReportTrackRequest"> & {
  * Use `create(ReportTrackRequestSchema)` to create a new message.
  */
 export const ReportTrackRequestSchema: GenMessage<ReportTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 8);
+  messageDesc(file_krill_v1_worker, 13);
 
 /**
  * @generated from message krill.v1.ReportTrackResponse
@@ -326,7 +466,7 @@ export type ReportTrackResponse = Message<"krill.v1.ReportTrackResponse"> & {
  * Use `create(ReportTrackResponseSchema)` to create a new message.
  */
 export const ReportTrackResponseSchema: GenMessage<ReportTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 9);
+  messageDesc(file_krill_v1_worker, 14);
 
 /**
  * @generated from message krill.v1.ReportExemplarsRequest
@@ -355,7 +495,7 @@ export type ReportExemplarsRequest = Message<"krill.v1.ReportExemplarsRequest"> 
  * Use `create(ReportExemplarsRequestSchema)` to create a new message.
  */
 export const ReportExemplarsRequestSchema: GenMessage<ReportExemplarsRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 10);
+  messageDesc(file_krill_v1_worker, 15);
 
 /**
  * @generated from message krill.v1.ReportExemplarsResponse
@@ -368,7 +508,7 @@ export type ReportExemplarsResponse = Message<"krill.v1.ReportExemplarsResponse"
  * Use `create(ReportExemplarsResponseSchema)` to create a new message.
  */
 export const ReportExemplarsResponseSchema: GenMessage<ReportExemplarsResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 11);
+  messageDesc(file_krill_v1_worker, 16);
 
 /**
  * @generated from message krill.v1.ReportEmbedRequest
@@ -390,7 +530,7 @@ export type ReportEmbedRequest = Message<"krill.v1.ReportEmbedRequest"> & {
  * Use `create(ReportEmbedRequestSchema)` to create a new message.
  */
 export const ReportEmbedRequestSchema: GenMessage<ReportEmbedRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 12);
+  messageDesc(file_krill_v1_worker, 17);
 
 /**
  * @generated from message krill.v1.ReportEmbedResponse
@@ -403,7 +543,7 @@ export type ReportEmbedResponse = Message<"krill.v1.ReportEmbedResponse"> & {
  * Use `create(ReportEmbedResponseSchema)` to create a new message.
  */
 export const ReportEmbedResponseSchema: GenMessage<ReportEmbedResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 13);
+  messageDesc(file_krill_v1_worker, 18);
 
 /**
  * @generated from message krill.v1.FailTaskRequest
@@ -425,7 +565,7 @@ export type FailTaskRequest = Message<"krill.v1.FailTaskRequest"> & {
  * Use `create(FailTaskRequestSchema)` to create a new message.
  */
 export const FailTaskRequestSchema: GenMessage<FailTaskRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 14);
+  messageDesc(file_krill_v1_worker, 19);
 
 /**
  * @generated from message krill.v1.FailTaskResponse
@@ -438,7 +578,7 @@ export type FailTaskResponse = Message<"krill.v1.FailTaskResponse"> & {
  * Use `create(FailTaskResponseSchema)` to create a new message.
  */
 export const FailTaskResponseSchema: GenMessage<FailTaskResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 15);
+  messageDesc(file_krill_v1_worker, 20);
 
 /**
  * @generated from message krill.v1.HeartbeatRequest
@@ -560,7 +700,7 @@ export type HeartbeatRequest = Message<"krill.v1.HeartbeatRequest"> & {
  * Use `create(HeartbeatRequestSchema)` to create a new message.
  */
 export const HeartbeatRequestSchema: GenMessage<HeartbeatRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 16);
+  messageDesc(file_krill_v1_worker, 21);
 
 /**
  * @generated from message krill.v1.HeartbeatResponse
@@ -595,7 +735,7 @@ export type HeartbeatResponse = Message<"krill.v1.HeartbeatResponse"> & {
  * Use `create(HeartbeatResponseSchema)` to create a new message.
  */
 export const HeartbeatResponseSchema: GenMessage<HeartbeatResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 17);
+  messageDesc(file_krill_v1_worker, 22);
 
 /**
  * @generated from message krill.v1.WorkerCommand
@@ -617,7 +757,7 @@ export type WorkerCommand = Message<"krill.v1.WorkerCommand"> & {
  * Use `create(WorkerCommandSchema)` to create a new message.
  */
 export const WorkerCommandSchema: GenMessage<WorkerCommand> = /*@__PURE__*/
-  messageDesc(file_krill_v1_worker, 18);
+  messageDesc(file_krill_v1_worker, 23);
 
 /**
  * @generated from enum krill.v1.ModelLoadState
@@ -746,6 +886,17 @@ export const WorkerService: GenService<{
     methodKind: "unary";
     input: typeof ReportEmbedRequestSchema;
     output: typeof ReportEmbedResponseSchema;
+  },
+  /**
+   * ReportOrient saves rotated boxes for an orient task in batches, with done
+   * set on the last one.
+   *
+   * @generated from rpc krill.v1.WorkerService.ReportOrient
+   */
+  reportOrient: {
+    methodKind: "unary";
+    input: typeof ReportOrientRequestSchema;
+    output: typeof ReportOrientResponseSchema;
   },
   /**
    * @generated from rpc krill.v1.WorkerService.FailTask

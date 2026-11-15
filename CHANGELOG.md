@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-15
+
+### Added
+
+- Oriented label types, for objects like printed signs that sit at an angle. Their boxes are rotated rectangles, rotated with the handle above a selected box. When any type is oriented, exports and training use YOLO-OBB, and boxes of other types are written unrotated.
+- SAM tracking fits a rotated box to the object on each frame for oriented types. An oriented type can have a reference design, the file its prints are made from, and boxes are then fit to the design's corners.
+- Fit rotations, in an oriented type's settings, fits rotated boxes to the boxes it already had.
+- YOLO-OBB weights can be uploaded, pinned, and trialed like detection weights, and their pre-labels and trial boxes are rotated.
+- Augmentation settings when starting a training run, shown on the run's page. Besides Ultralytics' rotation, shift, zoom, shear, perspective, color, mosaic, and flips, Krill can stretch images, tint them blue-green like water, add patches of light and shadow, and add sensor noise. Val and test images are never changed.
+- Exports can write augmented copies of each train image, with the same augmentation as training except mosaic, so models trained outside Krill get it too.
+- A distractors augmentation that cuts the labeled objects out and pastes them at random spots on a random distractor image, each resized, rotated, stretched, and recolored on its own, while training and in exported copies. Admins upload distractor images under Pipeline in the admin panel, and the upload tray shows their progress. Each is turned upright and shrunk to 2048 pixels on its long side, so full-size camera photos don't fill storage. Ones that fail to process can be retried, and many can be selected and deleted at once.
+
+### Changed
+
+- Training no longer mirrors images by default, since a mirrored arrow or printed sign means something else, and it rotates images up to 10° either way. Krill's own stretch, tint, light and shadow, and noise are on by default, and so are distractors once any are uploaded.
+- A run can only be fine-tuned from a model that finds the same kind of box, rotated or not. A scheduled run isn't compared against a pinned model of the other kind, so the first OBB model after making a type oriented has to be pinned by hand.
+
 ## [0.7.0] - 2026-11-13
 
 ### Added
@@ -184,7 +201,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.5.0...v0.6.0

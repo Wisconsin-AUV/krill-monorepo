@@ -65,6 +65,8 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.LabelServiceCreateLabelExampleUploadProcedure: manageLabelTypes,
 	krillv1connect.LabelServiceAddLabelExampleProcedure:          manageLabelTypes,
 	krillv1connect.LabelServiceDeleteLabelExampleProcedure:       manageLabelTypes,
+	krillv1connect.LabelServiceSetLabelReferenceProcedure:        manageLabelTypes,
+	krillv1connect.LabelServiceFitRotationsProcedure:             manageLabelTypes,
 	krillv1connect.LabelServicePreviewMergeLabelTypesProcedure:   manageLabelTypes,
 	krillv1connect.LabelServiceMergeLabelTypesProcedure:          manageLabelTypes,
 
@@ -84,6 +86,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.WorkerServiceReportTrackProcedure:     worker,
 	krillv1connect.WorkerServiceReportExemplarsProcedure: worker,
 	krillv1connect.WorkerServiceReportEmbedProcedure:     worker,
+	krillv1connect.WorkerServiceReportOrientProcedure:    worker,
 	krillv1connect.WorkerServiceFailTaskProcedure:        worker,
 	krillv1connect.WorkerServiceHeartbeatProcedure:       worker,
 
@@ -214,6 +217,11 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.PipelineServiceListModelTrialErrorsProcedure: label,
 	krillv1connect.PipelineServiceCreateModelUploadProcedure:    manageSystem,
 	krillv1connect.PipelineServiceAddModelProcedure:             manageSystem,
+
+	krillv1connect.DistractorServiceListDistractorsProcedure:   manageSystem,
+	krillv1connect.DistractorServiceCreateDistractorProcedure:  manageSystem,
+	krillv1connect.DistractorServiceProcessDistractorProcedure: manageSystem,
+	krillv1connect.DistractorServiceDeleteDistractorsProcedure: manageSystem,
 
 	krillv1connect.PipelineWorkerServiceRegisterPrelabelersProcedure: worker,
 	krillv1connect.PipelineWorkerServiceCheckInProcedure:             worker,

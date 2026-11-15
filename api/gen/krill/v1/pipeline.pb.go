@@ -421,8 +421,10 @@ type TrainConfig struct {
 	Batch     int32 `protobuf:"varint,4,opt,name=batch,proto3" json:"batch,omitempty"`
 	// Fine-tunes this run's model instead of starting from COCO weights. The
 	// size then comes from that run.
-	BaseRunId     int64          `protobuf:"varint,5,opt,name=base_run_id,json=baseRunId,proto3" json:"base_run_id,omitempty"`
-	Dataset       *ExportOptions `protobuf:"bytes,6,opt,name=dataset,proto3" json:"dataset,omitempty"`
+	BaseRunId int64          `protobuf:"varint,5,opt,name=base_run_id,json=baseRunId,proto3" json:"base_run_id,omitempty"`
+	Dataset   *ExportOptions `protobuf:"bytes,6,opt,name=dataset,proto3" json:"dataset,omitempty"`
+	// Unset uses the defaults.
+	Augmentation  *Augmentation `protobuf:"bytes,7,opt,name=augmentation,proto3" json:"augmentation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -495,6 +497,13 @@ func (x *TrainConfig) GetBaseRunId() int64 {
 func (x *TrainConfig) GetDataset() *ExportOptions {
 	if x != nil {
 		return x.Dataset
+	}
+	return nil
+}
+
+func (x *TrainConfig) GetAugmentation() *Augmentation {
+	if x != nil {
+		return x.Augmentation
 	}
 	return nil
 }
@@ -775,7 +784,9 @@ type TrainingRun struct {
 	Filename string `protobuf:"bytes,24,opt,name=filename,proto3" json:"filename,omitempty"`
 	// The model's class names in class order, for uploaded runs. Only
 	// GetTrainingRun sets it.
-	Classes       []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
+	Classes []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
+	// The model finds rotated boxes (YOLO-OBB).
+	Oriented      bool `protobuf:"varint,26,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -985,6 +996,13 @@ func (x *TrainingRun) GetClasses() []*ModelClass {
 	return nil
 }
 
+func (x *TrainingRun) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
+}
+
 // ModelClass is one class of an uploaded model.
 type ModelClass struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1168,7 +1186,8 @@ type ListTrainingRunsResponse struct {
 	// Newest first.
 	Runs        []*TrainingRun `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
 	PinnedRunId int64          `protobuf:"varint,2,opt,name=pinned_run_id,json=pinnedRunId,proto3" json:"pinned_run_id,omitempty"`
-	// The config a run started now gets for fields left unset.
+	// The config a run started now gets for fields left unset, including the
+	// default augmentation.
 	Defaults      *TrainConfig     `protobuf:"bytes,3,opt,name=defaults,proto3" json:"defaults,omitempty"`
 	Schedule      *RetrainSchedule `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4246,8 +4265,14 @@ type TrainTask struct {
 	// Presigned PUT for the best epoch's weights.
 	WeightsUploadUrl string `protobuf:"bytes,11,opt,name=weights_upload_url,json=weightsUploadUrl,proto3" json:"weights_upload_url,omitempty"`
 	HasTest          bool   `protobuf:"varint,12,opt,name=has_test,json=hasTest,proto3" json:"has_test,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// The dataset's labels are YOLO-OBB corners, so train an OBB model.
+	Oriented     bool          `protobuf:"varint,13,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	Augmentation *Augmentation `protobuf:"bytes,14,opt,name=augmentation,proto3" json:"augmentation,omitempty"`
+	// Presigned URLs of the distractor images, when the augmentation pastes
+	// objects onto them.
+	DistractorUrls []string `protobuf:"bytes,15,rep,name=distractor_urls,json=distractorUrls,proto3" json:"distractor_urls,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TrainTask) Reset() {
@@ -4362,6 +4387,27 @@ func (x *TrainTask) GetHasTest() bool {
 		return x.HasTest
 	}
 	return false
+}
+
+func (x *TrainTask) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
+}
+
+func (x *TrainTask) GetAugmentation() *Augmentation {
+	if x != nil {
+		return x.Augmentation
+	}
+	return nil
+}
+
+func (x *TrainTask) GetDistractorUrls() []string {
+	if x != nil {
+		return x.DistractorUrls
+	}
+	return nil
 }
 
 // InspectTask loads uploaded weights and reports their classes.
@@ -4756,7 +4802,7 @@ var File_krill_v1_pipeline_proto protoreflect.FileDescriptor
 
 const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\n" +
-	"\x17krill/v1/pipeline.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x15krill/v1/export.proto\"\xd6\x01\n" +
+	"\x17krill/v1/pipeline.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x15krill/v1/export.proto\"\x92\x02\n" +
 	"\vTrainConfig\x12'\n" +
 	"\x04size\x18\x01 \x01(\x0e2\x13.krill.v1.ModelSizeR\x04size\x12\x16\n" +
 	"\x06epochs\x18\x02 \x01(\x05R\x06epochs\x12\x1d\n" +
@@ -4764,7 +4810,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"image_size\x18\x03 \x01(\x05R\timageSize\x12\x14\n" +
 	"\x05batch\x18\x04 \x01(\x05R\x05batch\x12\x1e\n" +
 	"\vbase_run_id\x18\x05 \x01(\x03R\tbaseRunId\x121\n" +
-	"\adataset\x18\x06 \x01(\v2\x17.krill.v1.ExportOptionsR\adataset\"\xc1\x01\n" +
+	"\adataset\x18\x06 \x01(\v2\x17.krill.v1.ExportOptionsR\adataset\x12:\n" +
+	"\faugmentation\x18\a \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\"\xc1\x01\n" +
 	"\fEpochMetrics\x12\x14\n" +
 	"\x05epoch\x18\x01 \x01(\x05R\x05epoch\x12\x19\n" +
 	"\bbox_loss\x18\x02 \x01(\x01R\aboxLoss\x12\x19\n" +
@@ -4783,7 +4830,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\bmap50_95\x18\a \x01(\x01R\amap5095\"i\n" +
 	"\vEvalMetrics\x12(\n" +
 	"\x03all\x18\x01 \x01(\v2\x16.krill.v1.ClassMetricsR\x03all\x120\n" +
-	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x81\b\n" +
+	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x9d\b\n" +
 	"\vTrainingRun\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x120\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.krill.v1.TrainingStatusR\x06status\x123\n" +
@@ -4815,7 +4862,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x06device\x18\x16 \x01(\tR\x06device\x12%\n" +
 	"\x0everified_boxes\x18\x17 \x01(\x05R\rverifiedBoxes\x12\x1a\n" +
 	"\bfilename\x18\x18 \x01(\tR\bfilename\x12.\n" +
-	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\"D\n" +
+	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\x12\x1a\n" +
+	"\boriented\x18\x1a \x01(\bR\boriented\"D\n" +
 	"\n" +
 	"ModelClass\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
@@ -5069,7 +5117,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x03run\x18\x01 \x01(\v2\x15.krill.v1.TrainingRunR\x03run\"1\n" +
 	"\rPrelabelFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\"\x88\x03\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\"\x89\x04\n" +
 	"\tTrainTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x15\n" +
 	"\x06run_id\x18\x02 \x01(\x03R\x05runId\x12\x1f\n" +
@@ -5085,7 +5133,10 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x14baseline_weights_url\x18\n" +
 	" \x01(\tR\x12baselineWeightsUrl\x12,\n" +
 	"\x12weights_upload_url\x18\v \x01(\tR\x10weightsUploadUrl\x12\x19\n" +
-	"\bhas_test\x18\f \x01(\bR\ahasTest\">\n" +
+	"\bhas_test\x18\f \x01(\bR\ahasTest\x12\x1a\n" +
+	"\boriented\x18\r \x01(\bR\boriented\x12:\n" +
+	"\faugmentation\x18\x0e \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\x12'\n" +
+	"\x0fdistractor_urls\x18\x0f \x03(\tR\x0edistractorUrls\">\n" +
 	"\vInspectTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
 	"\vweights_url\x18\x02 \x01(\tR\n" +
@@ -5265,127 +5316,130 @@ var file_krill_v1_pipeline_proto_goTypes = []any{
 	nil,                                  // 71: krill.v1.PrelabelerOutput.AttributesEntry
 	nil,                                  // 72: krill.v1.ModelTrialBox.AttributesEntry
 	(*ExportOptions)(nil),                // 73: krill.v1.ExportOptions
-	(*ExportStats)(nil),                  // 74: krill.v1.ExportStats
-	(*timestamppb.Timestamp)(nil),        // 75: google.protobuf.Timestamp
-	(*Box)(nil),                          // 76: krill.v1.Box
-	(*Point)(nil),                        // 77: krill.v1.Point
+	(*Augmentation)(nil),                 // 74: krill.v1.Augmentation
+	(*ExportStats)(nil),                  // 75: krill.v1.ExportStats
+	(*timestamppb.Timestamp)(nil),        // 76: google.protobuf.Timestamp
+	(*Box)(nil),                          // 77: krill.v1.Box
+	(*Point)(nil),                        // 78: krill.v1.Point
 }
 var file_krill_v1_pipeline_proto_depIdxs = []int32{
 	0,  // 0: krill.v1.TrainConfig.size:type_name -> krill.v1.ModelSize
 	73, // 1: krill.v1.TrainConfig.dataset:type_name -> krill.v1.ExportOptions
-	9,  // 2: krill.v1.EvalMetrics.all:type_name -> krill.v1.ClassMetrics
-	9,  // 3: krill.v1.EvalMetrics.classes:type_name -> krill.v1.ClassMetrics
-	1,  // 4: krill.v1.TrainingRun.status:type_name -> krill.v1.TrainingStatus
-	2,  // 5: krill.v1.TrainingRun.trigger:type_name -> krill.v1.TrainingTrigger
-	7,  // 6: krill.v1.TrainingRun.config:type_name -> krill.v1.TrainConfig
-	74, // 7: krill.v1.TrainingRun.dataset:type_name -> krill.v1.ExportStats
-	8,  // 8: krill.v1.TrainingRun.history:type_name -> krill.v1.EpochMetrics
-	10, // 9: krill.v1.TrainingRun.val:type_name -> krill.v1.EvalMetrics
-	10, // 10: krill.v1.TrainingRun.test:type_name -> krill.v1.EvalMetrics
-	10, // 11: krill.v1.TrainingRun.baseline_val:type_name -> krill.v1.EvalMetrics
-	10, // 12: krill.v1.TrainingRun.baseline_test:type_name -> krill.v1.EvalMetrics
-	75, // 13: krill.v1.TrainingRun.created_at:type_name -> google.protobuf.Timestamp
-	75, // 14: krill.v1.TrainingRun.started_at:type_name -> google.protobuf.Timestamp
-	75, // 15: krill.v1.TrainingRun.finished_at:type_name -> google.protobuf.Timestamp
-	12, // 16: krill.v1.TrainingRun.classes:type_name -> krill.v1.ModelClass
-	75, // 17: krill.v1.RetrainSchedule.next_check:type_name -> google.protobuf.Timestamp
-	11, // 18: krill.v1.ListTrainingRunsResponse.runs:type_name -> krill.v1.TrainingRun
-	7,  // 19: krill.v1.ListTrainingRunsResponse.defaults:type_name -> krill.v1.TrainConfig
-	13, // 20: krill.v1.ListTrainingRunsResponse.schedule:type_name -> krill.v1.RetrainSchedule
-	11, // 21: krill.v1.GetTrainingRunResponse.run:type_name -> krill.v1.TrainingRun
-	11, // 22: krill.v1.GetTrainingRunResponse.pinned:type_name -> krill.v1.TrainingRun
-	7,  // 23: krill.v1.StartTrainingRequest.config:type_name -> krill.v1.TrainConfig
-	11, // 24: krill.v1.StartTrainingResponse.run:type_name -> krill.v1.TrainingRun
-	24, // 25: krill.v1.PinModelResponse.prelabel:type_name -> krill.v1.PrelabelRun
-	3,  // 26: krill.v1.PrelabelRun.source:type_name -> krill.v1.PrelabelSource
-	4,  // 27: krill.v1.PrelabelRun.status:type_name -> krill.v1.PrelabelStatus
-	75, // 28: krill.v1.PrelabelRun.created_at:type_name -> google.protobuf.Timestamp
-	75, // 29: krill.v1.PrelabelRun.finished_at:type_name -> google.protobuf.Timestamp
-	24, // 30: krill.v1.ListPrelabelRunsResponse.runs:type_name -> krill.v1.PrelabelRun
-	3,  // 31: krill.v1.StartPrelabelRequest.source:type_name -> krill.v1.PrelabelSource
-	24, // 32: krill.v1.StartPrelabelResponse.run:type_name -> krill.v1.PrelabelRun
-	31, // 33: krill.v1.ParamValue.hsv:type_name -> krill.v1.HsvRange
-	5,  // 34: krill.v1.ParamSpec.kind:type_name -> krill.v1.ParamKind
-	32, // 35: krill.v1.ParamSpec.default_value:type_name -> krill.v1.ParamValue
-	33, // 36: krill.v1.PrelabelerSpec.params:type_name -> krill.v1.ParamSpec
-	71, // 37: krill.v1.PrelabelerOutput.attributes:type_name -> krill.v1.PrelabelerOutput.AttributesEntry
-	34, // 38: krill.v1.Prelabeler.spec:type_name -> krill.v1.PrelabelerSpec
-	32, // 39: krill.v1.Prelabeler.params:type_name -> krill.v1.ParamValue
-	35, // 40: krill.v1.Prelabeler.outputs:type_name -> krill.v1.PrelabelerOutput
-	75, // 41: krill.v1.Prelabeler.updated_at:type_name -> google.protobuf.Timestamp
-	36, // 42: krill.v1.ListPrelabelersResponse.prelabelers:type_name -> krill.v1.Prelabeler
-	32, // 43: krill.v1.UpdatePrelabelerRequest.params:type_name -> krill.v1.ParamValue
-	35, // 44: krill.v1.UpdatePrelabelerRequest.outputs:type_name -> krill.v1.PrelabelerOutput
-	36, // 45: krill.v1.UpdatePrelabelerResponse.prelabeler:type_name -> krill.v1.Prelabeler
-	32, // 46: krill.v1.PreviewPrelabelerRequest.params:type_name -> krill.v1.ParamValue
-	76, // 47: krill.v1.PreviewBox.box:type_name -> krill.v1.Box
-	77, // 48: krill.v1.PreviewBox.corners:type_name -> krill.v1.Point
-	42, // 49: krill.v1.PreviewPrelabelerResponse.boxes:type_name -> krill.v1.PreviewBox
-	72, // 50: krill.v1.ModelTrialBox.attributes:type_name -> krill.v1.ModelTrialBox.AttributesEntry
-	76, // 51: krill.v1.ModelTrialBox.box:type_name -> krill.v1.Box
-	45, // 52: krill.v1.ModelTrialSummary.all:type_name -> krill.v1.ModelTrialClass
-	45, // 53: krill.v1.ModelTrialSummary.classes:type_name -> krill.v1.ModelTrialClass
-	6,  // 54: krill.v1.ModelTrial.status:type_name -> krill.v1.ModelTrialStatus
-	75, // 55: krill.v1.ModelTrial.created_at:type_name -> google.protobuf.Timestamp
-	75, // 56: krill.v1.ModelTrial.finished_at:type_name -> google.protobuf.Timestamp
-	46, // 57: krill.v1.ModelTrial.summary:type_name -> krill.v1.ModelTrialSummary
-	47, // 58: krill.v1.StartModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
-	47, // 59: krill.v1.StartModelTrialResponse.trials:type_name -> krill.v1.ModelTrial
-	47, // 60: krill.v1.GetModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
-	44, // 61: krill.v1.GetModelTrialResponse.boxes:type_name -> krill.v1.ModelTrialBox
-	47, // 62: krill.v1.ListModelTrialsResponse.trials:type_name -> krill.v1.ModelTrial
-	45, // 63: krill.v1.ModelTrialFrame.classes:type_name -> krill.v1.ModelTrialClass
-	56, // 64: krill.v1.ListModelTrialErrorsResponse.frames:type_name -> krill.v1.ModelTrialFrame
-	11, // 65: krill.v1.AddModelResponse.run:type_name -> krill.v1.TrainingRun
-	0,  // 66: krill.v1.TrainTask.size:type_name -> krill.v1.ModelSize
-	32, // 67: krill.v1.PluginConfig.params:type_name -> krill.v1.ParamValue
-	66, // 68: krill.v1.CvPlugins.plugins:type_name -> krill.v1.PluginConfig
-	63, // 69: krill.v1.PrelabelTask.frames:type_name -> krill.v1.PrelabelFrame
-	67, // 70: krill.v1.PrelabelTask.yolo:type_name -> krill.v1.YoloModel
-	68, // 71: krill.v1.PrelabelTask.cv:type_name -> krill.v1.CvPlugins
-	63, // 72: krill.v1.PreviewTask.frame:type_name -> krill.v1.PrelabelFrame
-	66, // 73: krill.v1.PreviewTask.plugin:type_name -> krill.v1.PluginConfig
-	14, // 74: krill.v1.PipelineService.ListTrainingRuns:input_type -> krill.v1.ListTrainingRunsRequest
-	16, // 75: krill.v1.PipelineService.GetTrainingRun:input_type -> krill.v1.GetTrainingRunRequest
-	18, // 76: krill.v1.PipelineService.StartTraining:input_type -> krill.v1.StartTrainingRequest
-	20, // 77: krill.v1.PipelineService.CancelTraining:input_type -> krill.v1.CancelTrainingRequest
-	22, // 78: krill.v1.PipelineService.PinModel:input_type -> krill.v1.PinModelRequest
-	25, // 79: krill.v1.PipelineService.ListPrelabelRuns:input_type -> krill.v1.ListPrelabelRunsRequest
-	27, // 80: krill.v1.PipelineService.StartPrelabel:input_type -> krill.v1.StartPrelabelRequest
-	29, // 81: krill.v1.PipelineService.CancelPrelabel:input_type -> krill.v1.CancelPrelabelRequest
-	37, // 82: krill.v1.PipelineService.ListPrelabelers:input_type -> krill.v1.ListPrelabelersRequest
-	39, // 83: krill.v1.PipelineService.UpdatePrelabeler:input_type -> krill.v1.UpdatePrelabelerRequest
-	41, // 84: krill.v1.PipelineService.PreviewPrelabeler:input_type -> krill.v1.PreviewPrelabelerRequest
-	48, // 85: krill.v1.PipelineService.StartModelTrial:input_type -> krill.v1.StartModelTrialRequest
-	50, // 86: krill.v1.PipelineService.GetModelTrial:input_type -> krill.v1.GetModelTrialRequest
-	52, // 87: krill.v1.PipelineService.ListModelTrials:input_type -> krill.v1.ListModelTrialsRequest
-	54, // 88: krill.v1.PipelineService.CancelModelTrial:input_type -> krill.v1.CancelModelTrialRequest
-	57, // 89: krill.v1.PipelineService.ListModelTrialErrors:input_type -> krill.v1.ListModelTrialErrorsRequest
-	59, // 90: krill.v1.PipelineService.CreateModelUpload:input_type -> krill.v1.CreateModelUploadRequest
-	61, // 91: krill.v1.PipelineService.AddModel:input_type -> krill.v1.AddModelRequest
-	15, // 92: krill.v1.PipelineService.ListTrainingRuns:output_type -> krill.v1.ListTrainingRunsResponse
-	17, // 93: krill.v1.PipelineService.GetTrainingRun:output_type -> krill.v1.GetTrainingRunResponse
-	19, // 94: krill.v1.PipelineService.StartTraining:output_type -> krill.v1.StartTrainingResponse
-	21, // 95: krill.v1.PipelineService.CancelTraining:output_type -> krill.v1.CancelTrainingResponse
-	23, // 96: krill.v1.PipelineService.PinModel:output_type -> krill.v1.PinModelResponse
-	26, // 97: krill.v1.PipelineService.ListPrelabelRuns:output_type -> krill.v1.ListPrelabelRunsResponse
-	28, // 98: krill.v1.PipelineService.StartPrelabel:output_type -> krill.v1.StartPrelabelResponse
-	30, // 99: krill.v1.PipelineService.CancelPrelabel:output_type -> krill.v1.CancelPrelabelResponse
-	38, // 100: krill.v1.PipelineService.ListPrelabelers:output_type -> krill.v1.ListPrelabelersResponse
-	40, // 101: krill.v1.PipelineService.UpdatePrelabeler:output_type -> krill.v1.UpdatePrelabelerResponse
-	43, // 102: krill.v1.PipelineService.PreviewPrelabeler:output_type -> krill.v1.PreviewPrelabelerResponse
-	49, // 103: krill.v1.PipelineService.StartModelTrial:output_type -> krill.v1.StartModelTrialResponse
-	51, // 104: krill.v1.PipelineService.GetModelTrial:output_type -> krill.v1.GetModelTrialResponse
-	53, // 105: krill.v1.PipelineService.ListModelTrials:output_type -> krill.v1.ListModelTrialsResponse
-	55, // 106: krill.v1.PipelineService.CancelModelTrial:output_type -> krill.v1.CancelModelTrialResponse
-	58, // 107: krill.v1.PipelineService.ListModelTrialErrors:output_type -> krill.v1.ListModelTrialErrorsResponse
-	60, // 108: krill.v1.PipelineService.CreateModelUpload:output_type -> krill.v1.CreateModelUploadResponse
-	62, // 109: krill.v1.PipelineService.AddModel:output_type -> krill.v1.AddModelResponse
-	92, // [92:110] is the sub-list for method output_type
-	74, // [74:92] is the sub-list for method input_type
-	74, // [74:74] is the sub-list for extension type_name
-	74, // [74:74] is the sub-list for extension extendee
-	0,  // [0:74] is the sub-list for field type_name
+	74, // 2: krill.v1.TrainConfig.augmentation:type_name -> krill.v1.Augmentation
+	9,  // 3: krill.v1.EvalMetrics.all:type_name -> krill.v1.ClassMetrics
+	9,  // 4: krill.v1.EvalMetrics.classes:type_name -> krill.v1.ClassMetrics
+	1,  // 5: krill.v1.TrainingRun.status:type_name -> krill.v1.TrainingStatus
+	2,  // 6: krill.v1.TrainingRun.trigger:type_name -> krill.v1.TrainingTrigger
+	7,  // 7: krill.v1.TrainingRun.config:type_name -> krill.v1.TrainConfig
+	75, // 8: krill.v1.TrainingRun.dataset:type_name -> krill.v1.ExportStats
+	8,  // 9: krill.v1.TrainingRun.history:type_name -> krill.v1.EpochMetrics
+	10, // 10: krill.v1.TrainingRun.val:type_name -> krill.v1.EvalMetrics
+	10, // 11: krill.v1.TrainingRun.test:type_name -> krill.v1.EvalMetrics
+	10, // 12: krill.v1.TrainingRun.baseline_val:type_name -> krill.v1.EvalMetrics
+	10, // 13: krill.v1.TrainingRun.baseline_test:type_name -> krill.v1.EvalMetrics
+	76, // 14: krill.v1.TrainingRun.created_at:type_name -> google.protobuf.Timestamp
+	76, // 15: krill.v1.TrainingRun.started_at:type_name -> google.protobuf.Timestamp
+	76, // 16: krill.v1.TrainingRun.finished_at:type_name -> google.protobuf.Timestamp
+	12, // 17: krill.v1.TrainingRun.classes:type_name -> krill.v1.ModelClass
+	76, // 18: krill.v1.RetrainSchedule.next_check:type_name -> google.protobuf.Timestamp
+	11, // 19: krill.v1.ListTrainingRunsResponse.runs:type_name -> krill.v1.TrainingRun
+	7,  // 20: krill.v1.ListTrainingRunsResponse.defaults:type_name -> krill.v1.TrainConfig
+	13, // 21: krill.v1.ListTrainingRunsResponse.schedule:type_name -> krill.v1.RetrainSchedule
+	11, // 22: krill.v1.GetTrainingRunResponse.run:type_name -> krill.v1.TrainingRun
+	11, // 23: krill.v1.GetTrainingRunResponse.pinned:type_name -> krill.v1.TrainingRun
+	7,  // 24: krill.v1.StartTrainingRequest.config:type_name -> krill.v1.TrainConfig
+	11, // 25: krill.v1.StartTrainingResponse.run:type_name -> krill.v1.TrainingRun
+	24, // 26: krill.v1.PinModelResponse.prelabel:type_name -> krill.v1.PrelabelRun
+	3,  // 27: krill.v1.PrelabelRun.source:type_name -> krill.v1.PrelabelSource
+	4,  // 28: krill.v1.PrelabelRun.status:type_name -> krill.v1.PrelabelStatus
+	76, // 29: krill.v1.PrelabelRun.created_at:type_name -> google.protobuf.Timestamp
+	76, // 30: krill.v1.PrelabelRun.finished_at:type_name -> google.protobuf.Timestamp
+	24, // 31: krill.v1.ListPrelabelRunsResponse.runs:type_name -> krill.v1.PrelabelRun
+	3,  // 32: krill.v1.StartPrelabelRequest.source:type_name -> krill.v1.PrelabelSource
+	24, // 33: krill.v1.StartPrelabelResponse.run:type_name -> krill.v1.PrelabelRun
+	31, // 34: krill.v1.ParamValue.hsv:type_name -> krill.v1.HsvRange
+	5,  // 35: krill.v1.ParamSpec.kind:type_name -> krill.v1.ParamKind
+	32, // 36: krill.v1.ParamSpec.default_value:type_name -> krill.v1.ParamValue
+	33, // 37: krill.v1.PrelabelerSpec.params:type_name -> krill.v1.ParamSpec
+	71, // 38: krill.v1.PrelabelerOutput.attributes:type_name -> krill.v1.PrelabelerOutput.AttributesEntry
+	34, // 39: krill.v1.Prelabeler.spec:type_name -> krill.v1.PrelabelerSpec
+	32, // 40: krill.v1.Prelabeler.params:type_name -> krill.v1.ParamValue
+	35, // 41: krill.v1.Prelabeler.outputs:type_name -> krill.v1.PrelabelerOutput
+	76, // 42: krill.v1.Prelabeler.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 43: krill.v1.ListPrelabelersResponse.prelabelers:type_name -> krill.v1.Prelabeler
+	32, // 44: krill.v1.UpdatePrelabelerRequest.params:type_name -> krill.v1.ParamValue
+	35, // 45: krill.v1.UpdatePrelabelerRequest.outputs:type_name -> krill.v1.PrelabelerOutput
+	36, // 46: krill.v1.UpdatePrelabelerResponse.prelabeler:type_name -> krill.v1.Prelabeler
+	32, // 47: krill.v1.PreviewPrelabelerRequest.params:type_name -> krill.v1.ParamValue
+	77, // 48: krill.v1.PreviewBox.box:type_name -> krill.v1.Box
+	78, // 49: krill.v1.PreviewBox.corners:type_name -> krill.v1.Point
+	42, // 50: krill.v1.PreviewPrelabelerResponse.boxes:type_name -> krill.v1.PreviewBox
+	72, // 51: krill.v1.ModelTrialBox.attributes:type_name -> krill.v1.ModelTrialBox.AttributesEntry
+	77, // 52: krill.v1.ModelTrialBox.box:type_name -> krill.v1.Box
+	45, // 53: krill.v1.ModelTrialSummary.all:type_name -> krill.v1.ModelTrialClass
+	45, // 54: krill.v1.ModelTrialSummary.classes:type_name -> krill.v1.ModelTrialClass
+	6,  // 55: krill.v1.ModelTrial.status:type_name -> krill.v1.ModelTrialStatus
+	76, // 56: krill.v1.ModelTrial.created_at:type_name -> google.protobuf.Timestamp
+	76, // 57: krill.v1.ModelTrial.finished_at:type_name -> google.protobuf.Timestamp
+	46, // 58: krill.v1.ModelTrial.summary:type_name -> krill.v1.ModelTrialSummary
+	47, // 59: krill.v1.StartModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
+	47, // 60: krill.v1.StartModelTrialResponse.trials:type_name -> krill.v1.ModelTrial
+	47, // 61: krill.v1.GetModelTrialResponse.trial:type_name -> krill.v1.ModelTrial
+	44, // 62: krill.v1.GetModelTrialResponse.boxes:type_name -> krill.v1.ModelTrialBox
+	47, // 63: krill.v1.ListModelTrialsResponse.trials:type_name -> krill.v1.ModelTrial
+	45, // 64: krill.v1.ModelTrialFrame.classes:type_name -> krill.v1.ModelTrialClass
+	56, // 65: krill.v1.ListModelTrialErrorsResponse.frames:type_name -> krill.v1.ModelTrialFrame
+	11, // 66: krill.v1.AddModelResponse.run:type_name -> krill.v1.TrainingRun
+	0,  // 67: krill.v1.TrainTask.size:type_name -> krill.v1.ModelSize
+	74, // 68: krill.v1.TrainTask.augmentation:type_name -> krill.v1.Augmentation
+	32, // 69: krill.v1.PluginConfig.params:type_name -> krill.v1.ParamValue
+	66, // 70: krill.v1.CvPlugins.plugins:type_name -> krill.v1.PluginConfig
+	63, // 71: krill.v1.PrelabelTask.frames:type_name -> krill.v1.PrelabelFrame
+	67, // 72: krill.v1.PrelabelTask.yolo:type_name -> krill.v1.YoloModel
+	68, // 73: krill.v1.PrelabelTask.cv:type_name -> krill.v1.CvPlugins
+	63, // 74: krill.v1.PreviewTask.frame:type_name -> krill.v1.PrelabelFrame
+	66, // 75: krill.v1.PreviewTask.plugin:type_name -> krill.v1.PluginConfig
+	14, // 76: krill.v1.PipelineService.ListTrainingRuns:input_type -> krill.v1.ListTrainingRunsRequest
+	16, // 77: krill.v1.PipelineService.GetTrainingRun:input_type -> krill.v1.GetTrainingRunRequest
+	18, // 78: krill.v1.PipelineService.StartTraining:input_type -> krill.v1.StartTrainingRequest
+	20, // 79: krill.v1.PipelineService.CancelTraining:input_type -> krill.v1.CancelTrainingRequest
+	22, // 80: krill.v1.PipelineService.PinModel:input_type -> krill.v1.PinModelRequest
+	25, // 81: krill.v1.PipelineService.ListPrelabelRuns:input_type -> krill.v1.ListPrelabelRunsRequest
+	27, // 82: krill.v1.PipelineService.StartPrelabel:input_type -> krill.v1.StartPrelabelRequest
+	29, // 83: krill.v1.PipelineService.CancelPrelabel:input_type -> krill.v1.CancelPrelabelRequest
+	37, // 84: krill.v1.PipelineService.ListPrelabelers:input_type -> krill.v1.ListPrelabelersRequest
+	39, // 85: krill.v1.PipelineService.UpdatePrelabeler:input_type -> krill.v1.UpdatePrelabelerRequest
+	41, // 86: krill.v1.PipelineService.PreviewPrelabeler:input_type -> krill.v1.PreviewPrelabelerRequest
+	48, // 87: krill.v1.PipelineService.StartModelTrial:input_type -> krill.v1.StartModelTrialRequest
+	50, // 88: krill.v1.PipelineService.GetModelTrial:input_type -> krill.v1.GetModelTrialRequest
+	52, // 89: krill.v1.PipelineService.ListModelTrials:input_type -> krill.v1.ListModelTrialsRequest
+	54, // 90: krill.v1.PipelineService.CancelModelTrial:input_type -> krill.v1.CancelModelTrialRequest
+	57, // 91: krill.v1.PipelineService.ListModelTrialErrors:input_type -> krill.v1.ListModelTrialErrorsRequest
+	59, // 92: krill.v1.PipelineService.CreateModelUpload:input_type -> krill.v1.CreateModelUploadRequest
+	61, // 93: krill.v1.PipelineService.AddModel:input_type -> krill.v1.AddModelRequest
+	15, // 94: krill.v1.PipelineService.ListTrainingRuns:output_type -> krill.v1.ListTrainingRunsResponse
+	17, // 95: krill.v1.PipelineService.GetTrainingRun:output_type -> krill.v1.GetTrainingRunResponse
+	19, // 96: krill.v1.PipelineService.StartTraining:output_type -> krill.v1.StartTrainingResponse
+	21, // 97: krill.v1.PipelineService.CancelTraining:output_type -> krill.v1.CancelTrainingResponse
+	23, // 98: krill.v1.PipelineService.PinModel:output_type -> krill.v1.PinModelResponse
+	26, // 99: krill.v1.PipelineService.ListPrelabelRuns:output_type -> krill.v1.ListPrelabelRunsResponse
+	28, // 100: krill.v1.PipelineService.StartPrelabel:output_type -> krill.v1.StartPrelabelResponse
+	30, // 101: krill.v1.PipelineService.CancelPrelabel:output_type -> krill.v1.CancelPrelabelResponse
+	38, // 102: krill.v1.PipelineService.ListPrelabelers:output_type -> krill.v1.ListPrelabelersResponse
+	40, // 103: krill.v1.PipelineService.UpdatePrelabeler:output_type -> krill.v1.UpdatePrelabelerResponse
+	43, // 104: krill.v1.PipelineService.PreviewPrelabeler:output_type -> krill.v1.PreviewPrelabelerResponse
+	49, // 105: krill.v1.PipelineService.StartModelTrial:output_type -> krill.v1.StartModelTrialResponse
+	51, // 106: krill.v1.PipelineService.GetModelTrial:output_type -> krill.v1.GetModelTrialResponse
+	53, // 107: krill.v1.PipelineService.ListModelTrials:output_type -> krill.v1.ListModelTrialsResponse
+	55, // 108: krill.v1.PipelineService.CancelModelTrial:output_type -> krill.v1.CancelModelTrialResponse
+	58, // 109: krill.v1.PipelineService.ListModelTrialErrors:output_type -> krill.v1.ListModelTrialErrorsResponse
+	60, // 110: krill.v1.PipelineService.CreateModelUpload:output_type -> krill.v1.CreateModelUploadResponse
+	62, // 111: krill.v1.PipelineService.AddModel:output_type -> krill.v1.AddModelResponse
+	94, // [94:112] is the sub-list for method output_type
+	76, // [76:94] is the sub-list for method input_type
+	76, // [76:76] is the sub-list for extension type_name
+	76, // [76:76] is the sub-list for extension extendee
+	0,  // [0:76] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_pipeline_proto_init() }

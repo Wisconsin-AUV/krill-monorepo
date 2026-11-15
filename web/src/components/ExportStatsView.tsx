@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { Badge } from '@/components/ui/Badge'
 import { Callout } from '@/components/ui/Callout'
 import type { ExportStats } from '@/gen/krill/v1/export_pb'
@@ -39,6 +40,8 @@ function Figure({ label, value, detail }: { label: string; value: number; detail
 export function ExportStatsView({ stats }: { stats: ExportStats }) {
   const used = stats.classes.filter((c) => c.trainBoxes + c.valBoxes + c.testBoxes > 0)
   const hasTest = stats.testImages > 0
+  const augmented = stats.augmentedImages > 0
+  const figures = 4 + Number(hasTest) + Number(augmented)
   const unused = stats.classes.length - used.length
   const warnings = exportWarnings(stats)
   const skipped = [
@@ -51,12 +54,18 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
 
   return (
     <div className="space-y-6">
-      <div className={`grid grid-cols-2 gap-3 ${hasTest ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
+      <div
+        className={clsx(
+          'grid grid-cols-2 gap-3',
+          figures === 4 ? 'sm:grid-cols-4' : figures === 5 ? 'sm:grid-cols-5' : 'sm:grid-cols-3',
+        )}
+      >
         <Figure
           label="Train images"
           value={stats.trainImages}
           detail={plural(stats.trainBoxes, 'box', 'boxes')}
         />
+        {augmented && <Figure label="Augmented images" value={stats.augmentedImages} />}
         <Figure
           label="Val images"
           value={stats.valImages}
@@ -100,7 +109,10 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
 
       {used.length > 0 && (
         <div>
-          <h3 className="text-sm/6 font-medium text-zinc-950 dark:text-white">Classes</h3>
+          <h3 className="flex items-center gap-2 text-sm/6 font-medium text-zinc-950 dark:text-white">
+            Classes
+            {stats.oriented && <Badge>OBB</Badge>}
+          </h3>
           <table className="mt-2 w-full text-left text-sm/6">
             <thead className="text-xs/6 text-zinc-500 dark:text-zinc-400">
               <tr className="border-b border-zinc-950/10 dark:border-white/10">

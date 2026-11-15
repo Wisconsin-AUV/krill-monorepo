@@ -7,6 +7,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
 )
 
@@ -20,11 +21,12 @@ const (
 // Normalize fills defaults and rejects out-of-range options.
 func Normalize(o *krillv1.ExportOptions) (*krillv1.ExportOptions, error) {
 	out := &krillv1.ExportOptions{
-		ValFraction:   o.GetValFraction(),
-		Stride:        o.GetStride(),
-		Dedup:         o.GetDedup(),
-		DedupDistance: o.GetDedupDistance(),
-		VideoIds:      o.GetVideoIds(),
+		ValFraction:     o.GetValFraction(),
+		Stride:          o.GetStride(),
+		Dedup:           o.GetDedup(),
+		DedupDistance:   o.GetDedupDistance(),
+		VideoIds:        o.GetVideoIds(),
+		AugmentedCopies: o.GetAugmentedCopies(),
 	}
 	if out.GetStride() == 0 {
 		out.Stride = 1
@@ -40,6 +42,13 @@ func Normalize(o *krillv1.ExportOptions) (*krillv1.ExportOptions, error) {
 	}
 	if out.GetDedupDistance() < 0 || out.GetDedupDistance() > maxDedupDistance {
 		return nil, fmt.Errorf("dedup_distance must be between 0 and %d", maxDedupDistance)
+	}
+	if out.GetAugmentedCopies() < 0 || out.GetAugmentedCopies() > maxAugmentedCopies {
+		return nil, fmt.Errorf("augmented_copies must be between 0 and %d", maxAugmentedCopies)
+	}
+	var err error
+	if out.Augmentation, err = NormalizeAugmentation(o.GetAugmentation()); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -60,7 +69,7 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 		if err != nil {
 			return Plan{}, fmt.Errorf("label type %d: %w", t.ID, err)
 		}
-		types[i] = LabelType{ID: t.ID, Name: t.Name, Attributes: attrs}
+		types[i] = LabelType{ID: t.ID, Name: t.Name, Attributes: attrs, Oriented: t.Oriented}
 	}
 
 	videoRows, err := q.ListExportVideos(ctx, ids)
@@ -96,15 +105,32 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 			return Plan{}, fmt.Errorf("box on frame %d: %w", b.FrameID, err)
 		}
 		boxes[i] = Box{
-			FrameID: b.FrameID, X: b.X, Y: b.Y, W: b.Width, H: b.Height,
+			FrameID: b.FrameID, X: b.X, Y: b.Y, W: b.Width, H: b.Height, Corners: b.Corners,
 			Status: b.Status, TrackUnconfirmed: b.TrackUnconfirmed, TypeID: b.LabelTypeID, Attributes: values,
 		}
 	}
 
-	return Build(Options{
-		ValFraction:   float64(o.GetValFraction()),
-		Stride:        int(o.GetStride()),
-		Dedup:         o.GetDedup(),
-		DedupDistance: int(o.GetDedupDistance()),
-	}, types, videos, frames, boxes), nil
+	plan := Build(Options{
+		ValFraction:     float64(o.GetValFraction()),
+		Stride:          int(o.GetStride()),
+		Dedup:           o.GetDedup(),
+		DedupDistance:   int(o.GetDedupDistance()),
+		AugmentedCopies: int(o.GetAugmentedCopies()),
+	}, types, videos, frames, boxes)
+	if plan.Copies > 0 {
+		plan.Augmentation = o.GetAugmentation()
+		if plan.Augmentation == nil {
+			plan.Augmentation = DefaultAugmentation()
+		}
+	}
+	if plan.Copies > 0 && plan.Augmentation.GetDistractors() > 0 {
+		ids, err := q.ListReadyDistractorIDs(ctx, maxDistractors)
+		if err != nil {
+			return Plan{}, fmt.Errorf("list distractors: %w", err)
+		}
+		for _, id := range ids {
+			plan.Distractors = append(plan.Distractors, storage.DistractorKey(id))
+		}
+	}
+	return plan, nil
 }

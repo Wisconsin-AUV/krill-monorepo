@@ -36,7 +36,7 @@ type ExemplarOutput struct {
 var errUnknownSearch = connect.NewError(connect.CodeNotFound, errors.New("search not found"))
 
 func (s *Service) SearchExemplar(ctx context.Context, req *krillv1.SearchExemplarRequest) (*krillv1.SearchExemplarResponse, error) {
-	clipID, err := s.sameClip(ctx, req.GetTrackId(), req.GetFrameId())
+	track, err := s.sameClip(ctx, req.GetTrackId(), req.GetFrameId())
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (s *Service) SearchExemplar(ctx context.Context, req *krillv1.SearchExempla
 	if err != nil {
 		return nil, rpc.Internal(err, "queue search")
 	}
-	s.claim(ctx, clipID)
+	s.claim(ctx, track.ClipID)
 	return &krillv1.SearchExemplarResponse{SearchId: res.Job.ID}, nil
 }
 

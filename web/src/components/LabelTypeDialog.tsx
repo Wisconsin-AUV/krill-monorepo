@@ -1,6 +1,6 @@
 import { useMutation } from '@connectrpc/connect-query'
 import * as Headless from '@headlessui/react'
-import { PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { ArrowPathIcon, PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
@@ -9,12 +9,15 @@ import { FormError } from '@/components/ui/Callout'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
+import { Switch } from '@/components/ui/Switch'
 import { Text } from '@/components/ui/Text'
 import { Textarea } from '@/components/ui/Textarea'
 import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
 import { invalidateService } from '@/lib/queryClient'
 import { exportClasses, palette } from '@/lib/labels'
 import { labelClient } from '@/lib/clients'
+import { flash } from '@/lib/flash'
+import { plural } from '@/lib/format'
 import { putFile } from '@/lib/upload'
 
 interface AttributeDraft {
@@ -46,6 +49,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
   const [color, setColor] = useState(type?.color ?? palette[0])
   const [description, setDescription] = useState(type?.description ?? '')
   const [guideline, setGuideline] = useState(type?.guideline ?? '')
+  const [oriented, setOriented] = useState(type?.oriented ?? false)
   const [attributes, setAttributes] = useState<AttributeDraft[]>(() => toDrafts(type))
 
   const onSuccess = async () => {
@@ -63,7 +67,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    const body = { name, title, color, description, guideline, attributes: parsed }
+    const body = { name, title, color, description, guideline, oriented, attributes: parsed }
     if (type) update.mutate({ id: type.id, ...body })
     else create.mutate(body)
   }
@@ -142,6 +146,16 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
               maxLength={4000}
             />
           </Field>
+
+          <Field>
+            <Label>Oriented</Label>
+            <Description>Rotated boxes, exported as YOLO-OBB.</Description>
+            <div data-slot="control">
+              <Switch checked={oriented} onChange={setOriented} />
+            </div>
+          </Field>
+
+          {type?.oriented && <Reference type={type} />}
 
           {type && <Examples type={type} />}
 
@@ -297,6 +311,96 @@ function Examples({ type }: { type: LabelType }) {
           }}
         />
       </div>
+      <FormError error={error} className="mt-3" />
+    </Fieldset>
+  )
+}
+
+function Reference({ type }: { type: LabelType }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+  const input = useRef<HTMLInputElement>(null)
+  const fit = useMutation(LabelService.method.fitRotations, {
+    onSuccess: async (res) => {
+      flash.success(`Fitting ${plural(res.boxCount, 'box', 'boxes')}`)
+      await invalidateService(LabelService)
+    },
+    onError: setError,
+  })
+
+  async function setReference(file: File | null) {
+    setBusy(true)
+    setError(null)
+    try {
+      let key = ''
+      if (file) {
+        const upload = await labelClient.createLabelExampleUpload({ labelTypeId: type.id })
+        await putFile(upload.uploadUrl, file, () => {}, new AbortController().signal)
+        key = upload.key
+      }
+      await labelClient.setLabelReference({ labelTypeId: type.id, key })
+      await invalidateService(LabelService)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Fieldset>
+      <Legend>Reference design</Legend>
+      <div className="mt-3 flex items-start gap-3">
+        {type.referenceUrl && (
+          <div className="group relative w-40 shrink-0">
+            <img
+              src={type.referenceUrl}
+              alt="Reference design"
+              className="aspect-video w-full rounded-md bg-zinc-950 object-contain"
+            />
+            <button
+              type="button"
+              aria-label="Remove reference design"
+              disabled={busy}
+              onClick={() => void setReference(null)}
+              className="absolute top-1 right-1 rounded-full bg-zinc-950/60 p-0.5 text-white opacity-0 group-hover:opacity-100 hover:bg-zinc-950/80 focus:opacity-100"
+            >
+              <XMarkIcon className="size-4" />
+            </button>
+          </div>
+        )}
+        <Button outline disabled={busy} onClick={() => input.current?.click()}>
+          <PhotoIcon data-slot="icon" />
+          {busy ? 'Uploading…' : type.referenceUrl ? 'Replace' : 'Add image'}
+        </Button>
+        <input
+          ref={input}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) void setReference(file)
+          }}
+        />
+      </div>
+      {type.unrotatedBoxCount > 0 && (
+        <div className="mt-4 flex items-center gap-3">
+          <Button
+            outline
+            disabled={fit.isPending}
+            onClick={() => {
+              setError(null)
+              fit.mutate({ labelTypeId: type.id })
+            }}
+          >
+            <ArrowPathIcon data-slot="icon" />
+            Fit rotations
+          </Button>
+          <Text>{plural(type.unrotatedBoxCount, 'unrotated box', 'unrotated boxes')}</Text>
+        </div>
+      )}
       <FormError error={error} className="mt-3" />
     </Fieldset>
   )

@@ -23,12 +23,15 @@ type Options struct {
 	Stride        int
 	Dedup         bool
 	DedupDistance int
+	// AugmentedCopies are written of each train image.
+	AugmentedCopies int
 }
 
 type LabelType struct {
 	ID         int64
 	Name       string
 	Attributes []taxonomy.Attribute
+	Oriented   bool
 }
 
 type Video struct {
@@ -49,7 +52,9 @@ type Frame struct {
 type Box struct {
 	FrameID    int64
 	X, Y, W, H float64
-	Status     string
+	// Corners are x1, y1, ..., x4, y4, or nil for an unrotated box.
+	Corners []float64
+	Status  string
 	// TrackUnconfirmed is set when the last box of the box's track is still a
 	// proposal.
 	TrackUnconfirmed bool
@@ -60,6 +65,8 @@ type Box struct {
 type ItemBox struct {
 	Class      int
 	X, Y, W, H float64
+	// Corners are only kept for boxes of oriented types.
+	Corners []float64
 }
 
 type Item struct {
@@ -72,6 +79,15 @@ type Plan struct {
 	Classes []string
 	Items   []Item
 	Stats   *krillv1.ExportStats
+	// Oriented plans are written as YOLO-OBB.
+	Oriented bool
+	// Copies is how many augmented copies of each train item are written,
+	// with Augmentation.
+	Copies       int
+	Augmentation *krillv1.Augmentation
+	// Distractors are the object keys of distractor images to paste objects
+	// onto.
+	Distractors []string
 }
 
 type videoPlan struct {
@@ -89,6 +105,7 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 	typesByID := map[int64]LabelType{}
 	for _, t := range types {
 		typesByID[t.ID] = t
+		stats.Oriented = stats.Oriented || t.Oriented
 		for _, c := range taxonomy.Classes(t.Name, t.Attributes) {
 			classIDs[c] = len(classes)
 			classes = append(classes, c)
@@ -129,10 +146,14 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 					stats.IncompleteFrames++
 					continue frameLoop
 				}
-				item.Boxes = append(item.Boxes, ItemBox{
+				ib := ItemBox{
 					Class: classIDs[taxonomy.ClassName(t.Name, t.Attributes, b.Attributes)],
 					X:     b.X, Y: b.Y, W: b.W, H: b.H,
-				})
+				}
+				if t.Oriented {
+					ib.Corners = b.Corners
+				}
+				item.Boxes = append(item.Boxes, ib)
 			}
 
 			eligible++
@@ -209,8 +230,10 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 		cs.Videos = int32(len(cover[i].videos)) //nolint:gosec // video counts fit in int32
 	}
 	stats.Classes = classStats
+	copies := max(opts.AugmentedCopies, 0)
+	stats.AugmentedImages = stats.TrainImages * int32(copies) //nolint:gosec // copies are at most maxAugmentedCopies
 
-	return Plan{Classes: classes, Items: items, Stats: stats}
+	return Plan{Classes: classes, Items: items, Stats: stats, Oriented: stats.Oriented, Copies: copies}
 }
 
 // assignSplits keeps pinned videos where they are, then fills val with

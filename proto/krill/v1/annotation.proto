@@ -61,6 +61,10 @@ message Box {
   double y = 2;
   double width = 3;
   double height = 4;
+  // The rotated rectangle's corners, clockwise on screen, for boxes of
+  // oriented label types. x, y, width, and height are then the corners'
+  // bounds clipped to the frame. Corners may lie outside the frame.
+  repeated Point corners = 5;
 }
 
 // Point is normalized to the frame size, with the origin at the top left.

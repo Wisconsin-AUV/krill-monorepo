@@ -2,14 +2,14 @@ import { create } from '@bufbuild/protobuf'
 import { useMutation } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { AugmentationFields, NumberField } from '@/components/AugmentationFields'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
 import { Checkbox, CheckboxField } from '@/components/ui/Checkbox'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
-import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { ExportOptionsSchema } from '@/gen/krill/v1/export_pb'
+import { AugmentationSchema, ExportOptionsSchema } from '@/gen/krill/v1/export_pb'
 import {
   ModelSize,
   PipelineService,
@@ -19,38 +19,7 @@ import {
   type TrainingRun,
 } from '@/gen/krill/v1/pipeline_pb'
 import { invalidateService } from '@/lib/queryClient'
-import { runName, sizeNames } from './pipeline'
-
-function NumberField({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  step,
-}: {
-  label: string
-  value: number
-  onChange: (v: number) => void
-  min: number
-  max: number
-  step?: number | 'any'
-}) {
-  return (
-    <Field>
-      <Label>{label}</Label>
-      <Input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={Number.isNaN(value) ? '' : value}
-        onChange={(e) => onChange(e.target.valueAsNumber)}
-        required
-      />
-    </Field>
-  )
-}
+import { augmentationValues, runName, sizeNames } from './pipeline'
 
 function TrainForm({
   defaults,
@@ -72,6 +41,7 @@ function TrainForm({
   const [stride, setStride] = useState(dataset?.stride ?? 1)
   const [dedup, setDedup] = useState(dataset?.dedup ?? true)
   const [dedupDistance, setDedupDistance] = useState(dataset?.dedupDistance || 4)
+  const [augmentation, setAugmentation] = useState(() => augmentationValues(defaults.augmentation))
   const finished = runs.filter((r) => r.status === TrainingStatus.SUCCEEDED)
 
   const start = useMutation(PipelineService.method.startTraining, {
@@ -99,6 +69,7 @@ function TrainForm({
               dedup,
               dedupDistance: dedup ? dedupDistance : 0,
             }),
+            augmentation: create(AugmentationSchema, augmentation),
           }),
         })
       }}
@@ -181,6 +152,7 @@ function TrainForm({
               )}
             </div>
           </Fieldset>
+          <AugmentationFields value={augmentation} onChange={setAugmentation} />
           <FormError error={start.error} />
         </FieldGroup>
       </DialogBody>

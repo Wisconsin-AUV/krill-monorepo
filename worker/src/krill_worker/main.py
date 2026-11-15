@@ -2,6 +2,7 @@ import gc
 import logging
 import os
 import time
+from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Protocol
@@ -11,14 +12,25 @@ from krill.v1 import annotation_pb2, pipeline_pb2, pipeline_worker_pb2, worker_p
 from krill_worker import __version__
 from krill_worker.api import Api, ApiError
 from krill_worker.frames import decode_frame, fetch, prefetch, upload
+from krill_worker.geometry import to_proto
 from krill_worker.heartbeat import Heartbeat
 from krill_worker.logs import LogBuffer
 from krill_worker.models import ModelLoadError, Models
+from krill_worker.orient import fit, load_reference
 from krill_worker.pipeline import YoloModels, run_inspect, run_prelabel, run_preview
 from krill_worker.prelabelers import Frame
 from krill_worker.prelabelers.plugins import PLUGINS
 from krill_worker.stats import accelerator, gpu_stats
-from krill_worker.track import Box, BoxPrompt, Embedding, PointPrompt, Prompt, drop_cut_off
+from krill_worker.track import (
+    Box,
+    BoxPrompt,
+    CutOff,
+    Embedding,
+    Mask,
+    PointPrompt,
+    Prompt,
+    mask_box,
+)
 from krill_worker.train import run_train
 
 log = logging.getLogger(__name__)
@@ -33,7 +45,9 @@ class Tracker(Protocol):
 
     def track(
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
-    ) -> Iterator[Box | None]: ...
+    ) -> Iterator[Mask | None]: ...
+
+    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]: ...
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
 
@@ -72,18 +86,31 @@ def run_track(
             log.warning("embedding for frame %d unusable, encoding it instead: %s", f.id, e)
             return frame, None
 
-    frames = prefetch(load, task.frames)
+    reference = None
+    if task.oriented and task.reference_url:
+        reference = load_reference(fetch(task.reference_url))
+    # The tracker takes the frames, so the ones it was given wait here for
+    # fitting rotated boxes to them.
+    given: deque[Frame] = deque()
+
+    def feed() -> Iterator[tuple[Frame, Embedding | None]]:
+        for frame, embedding in prefetch(load, task.frames):
+            given.append(frame)
+            yield frame, embedding
+
     ids = [f.id for f in task.frames]
     start = last_report = time.monotonic()
     batch: list[worker_pb2.TrackedBox] = []
     found = 0
-    for frame_id, box in zip(ids, drop_cut_off(tracker.track(frames, prompt)), strict=True):
+    cut_off = CutOff()
+    for frame_id, mask in zip(ids, tracker.track(feed(), prompt), strict=True):
         if cancelled():
             raise TaskCancelledError
-        if box is not None:
-            x, y, w, h = box
-            box_msg = annotation_pb2.Box(x=x, y=y, width=w, height=h)
-            batch.append(worker_pb2.TrackedBox(frame_id=frame_id, box=box_msg))
+        frame = given.popleft()
+        box = None if mask is None else mask_box(mask)
+        if box is not None and not cut_off(box):
+            corners = fit(frame, box, mask, reference) if task.oriented else None
+            batch.append(worker_pb2.TrackedBox(frame_id=frame_id, box=to_proto(box, corners)))
             found += 1
         if time.monotonic() - last_report >= REPORT_EVERY:
             api.report_track(
@@ -99,6 +126,52 @@ def run_track(
     elapsed = time.monotonic() - start
     log.info(
         "tracked task %d: object on %d of %d frames in %.1fs", task.id, found, len(ids), elapsed
+    )
+
+
+def run_orient(
+    api: Api,
+    task: worker_pb2.OrientTask,
+    tracker: Tracker | None = None,
+    cancelled: Callable[[], bool] = never,
+) -> None:
+    reference = load_reference(fetch(task.reference_url)) if task.reference_url else None
+    if reference is None and tracker is None:
+        raise ValueError("fitting rotated boxes without a reference design needs SAM")
+    start = last_report = time.monotonic()
+    batch: list[worker_pb2.OrientBox] = []
+    found = total = 0
+    frames = prefetch(lambda f: decode_frame(fetch(f.frame.url)), task.frames)
+    for f, frame in zip(task.frames, frames, strict=True):
+        if cancelled():
+            raise TaskCancelledError
+        boxes = [(b.box.x, b.box.y, b.box.width, b.box.height) for b in f.boxes]
+        masks: list[Mask | None] = (
+            tracker.segment(frame, boxes)
+            if tracker is not None and reference is None
+            else [None] * len(boxes)
+        )
+        for b, box, mask in zip(f.boxes, boxes, masks, strict=True):
+            total += 1
+            if reference is None and mask is None:
+                continue
+            corners = fit(frame, box, mask, reference)
+            if corners is not None:
+                batch.append(
+                    worker_pb2.OrientBox(annotation_id=b.annotation_id, box=to_proto(box, corners))
+                )
+                found += 1
+        if time.monotonic() - last_report >= REPORT_EVERY:
+            api.report_orient(worker_pb2.ReportOrientRequest(task_id=task.id, boxes=batch))
+            batch = []
+            last_report = time.monotonic()
+    api.report_orient(worker_pb2.ReportOrientRequest(task_id=task.id, boxes=batch, done=True))
+    log.info(
+        "oriented task %d: fit %d of %d boxes in %.1fs",
+        task.id,
+        found,
+        total,
+        time.monotonic() - start,
     )
 
 
@@ -150,6 +223,7 @@ Task = (
     worker_pb2.TrackTask
     | worker_pb2.ExemplarTask
     | worker_pb2.EmbedTask
+    | worker_pb2.OrientTask
     | pipeline_pb2.TrainTask
     | pipeline_pb2.PrelabelTask
     | pipeline_pb2.PreviewTask
@@ -174,6 +248,8 @@ def run_task(
             run_exemplar(api, tracker, res.exemplar)
         elif kind == "embed":
             run_embed(api, tracker, res.embed, cancelled=cancelled)
+        elif kind == "orient":
+            run_orient(api, res.orient, tracker, cancelled)
         else:
             raise ValueError(f"this worker cannot run {kind} tasks")
     except TaskCancelledError:
@@ -218,6 +294,8 @@ def serve(
                 run_preview(api, res.preview)
             elif kind == "inspect":
                 run_inspect(api, res.inspect)
+            elif kind == "orient" and res.orient.reference_url:
+                run_orient(api, res.orient, cancelled=heartbeat.cancelled)
             else:
                 models.run(lambda tracker: run_task(api, tracker, res, heartbeat.cancelled))
         except ModelLoadError as e:

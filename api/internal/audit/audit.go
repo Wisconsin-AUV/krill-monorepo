@@ -72,6 +72,8 @@ const (
 	PrelabelerSave      = "prelabeler.update"
 	ModelTrialStart     = "model_trial.start"
 	ModelTrialCancel    = "model_trial.cancel"
+	DistractorAdd       = "distractor.add"
+	DistractorDelete    = "distractor.delete"
 )
 
 const (
@@ -95,6 +97,7 @@ const (
 	TargetPrelabel      = "prelabel_run"
 	TargetPlugin        = "prelabeler"
 	TargetModelTrial    = "model_trial"
+	TargetDistractor    = "distractor"
 )
 
 type Entry struct {

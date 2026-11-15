@@ -72,6 +72,8 @@ message TrainConfig {
   // size then comes from that run.
   int64 base_run_id = 5;
   ExportOptions dataset = 6;
+  // Unset uses the defaults.
+  Augmentation augmentation = 7;
 }
 
 enum TrainingStatus {
@@ -160,6 +162,8 @@ message TrainingRun {
   // The model's class names in class order, for uploaded runs. Only
   // GetTrainingRun sets it.
   repeated ModelClass classes = 25;
+  // The model finds rotated boxes (YOLO-OBB).
+  bool oriented = 26;
 }
 
 // ModelClass is one class of an uploaded model.
@@ -188,7 +192,8 @@ message ListTrainingRunsResponse {
   // Newest first.
   repeated TrainingRun runs = 1;
   int64 pinned_run_id = 2;
-  // The config a run started now gets for fields left unset.
+  // The config a run started now gets for fields left unset, including the
+  // default augmentation.
   TrainConfig defaults = 3;
   RetrainSchedule schedule = 4;
 }
@@ -591,6 +596,12 @@ message TrainTask {
   // Presigned PUT for the best epoch's weights.
   string weights_upload_url = 11;
   bool has_test = 12;
+  // The dataset's labels are YOLO-OBB corners, so train an OBB model.
+  bool oriented = 13;
+  Augmentation augmentation = 14;
+  // Presigned URLs of the distractor images, when the augmentation pastes
+  // objects onto them.
+  repeated string distractor_urls = 15;
 }
 
 // InspectTask loads uploaded weights and reports their classes.

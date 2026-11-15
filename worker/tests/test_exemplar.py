@@ -5,7 +5,7 @@ from krill.v1 import annotation_pb2, worker_pb2
 from krill_worker.api import Api
 from krill_worker.main import run_task
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, Embedding, Prompt
+from krill_worker.track import Box, Embedding, Mask, Prompt
 
 
 class FakeApi(Api):
@@ -23,13 +23,16 @@ class Sam2Tracker:
 
     def track(
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
-    ) -> Iterator[Box | None]:
+    ) -> Iterator[Mask | None]:
         raise AssertionError("not called")
 
     def embed(self, frame: Frame) -> bytes:
         raise AssertionError("not called")
 
     def load_embedding(self, data: bytes) -> Embedding:
+        raise AssertionError("not called")
+
+    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
         raise AssertionError("not called")
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:

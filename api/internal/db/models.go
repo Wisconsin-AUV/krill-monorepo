@@ -26,6 +26,7 @@ type Annotation struct {
 	UpdatedBy    pgtype.UUID        `json:"updated_by"`
 	Drift        pgtype.Text        `json:"drift"`
 	Confidence   pgtype.Float4      `json:"confidence"`
+	Corners      []float64          `json:"corners"`
 }
 
 type ApprovedEmail struct {
@@ -115,6 +116,18 @@ type Dataset struct {
 	FinishedAt pgtype.Timestamptz `json:"finished_at"`
 }
 
+type Distractor struct {
+	ID        int64              `json:"id"`
+	Filename  string             `json:"filename"`
+	Width     int32              `json:"width"`
+	Height    int32              `json:"height"`
+	SizeBytes int64              `json:"size_bytes"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Status    string             `json:"status"`
+	Error     string             `json:"error"`
+}
+
 type EmailCode struct {
 	UserID    uuid.UUID          `json:"user_id"`
 	Purpose   string             `json:"purpose"`
@@ -185,15 +198,17 @@ type LabelExample struct {
 }
 
 type LabelType struct {
-	ID          int64              `json:"id"`
-	Name        string             `json:"name"`
-	Color       string             `json:"color"`
-	Description string             `json:"description"`
-	Position    int32              `json:"position"`
-	Attributes  []byte             `json:"attributes"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	Title       string             `json:"title"`
-	Guideline   string             `json:"guideline"`
+	ID           int64              `json:"id"`
+	Name         string             `json:"name"`
+	Color        string             `json:"color"`
+	Description  string             `json:"description"`
+	Position     int32              `json:"position"`
+	Attributes   []byte             `json:"attributes"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Title        string             `json:"title"`
+	Guideline    string             `json:"guideline"`
+	Oriented     bool               `json:"oriented"`
+	ReferenceKey pgtype.Text        `json:"reference_key"`
 }
 
 type LiveClip struct {
@@ -217,16 +232,17 @@ type ModelTrial struct {
 }
 
 type ModelTrialBox struct {
-	ID         int64   `json:"id"`
-	TrialID    int64   `json:"trial_id"`
-	FrameID    int64   `json:"frame_id"`
-	Class      int32   `json:"class"`
-	X          float64 `json:"x"`
-	Y          float64 `json:"y"`
-	Width      float64 `json:"width"`
-	Height     float64 `json:"height"`
-	Confidence float32 `json:"confidence"`
-	Track      int32   `json:"track"`
+	ID         int64     `json:"id"`
+	TrialID    int64     `json:"trial_id"`
+	FrameID    int64     `json:"frame_id"`
+	Class      int32     `json:"class"`
+	X          float64   `json:"x"`
+	Y          float64   `json:"y"`
+	Width      float64   `json:"width"`
+	Height     float64   `json:"height"`
+	Confidence float32   `json:"confidence"`
+	Track      int32     `json:"track"`
+	Corners    []float64 `json:"corners"`
 }
 
 type PrelabelRun struct {
@@ -367,6 +383,7 @@ type TrainingRun struct {
 	StartedAt           pgtype.Timestamptz `json:"started_at"`
 	FinishedAt          pgtype.Timestamptz `json:"finished_at"`
 	Filename            string             `json:"filename"`
+	Oriented            bool               `json:"oriented"`
 }
 
 type User struct {

@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package krill.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// DistractorService manages the library of distractor images: scenes with
+// none of the labeled objects in them, which augmentation puts behind
+// objects.
+service DistractorService {
+  rpc ListDistractors(ListDistractorsRequest) returns (ListDistractorsResponse) {}
+  // CreateDistractor adds a distractor waiting for its image, and returns a
+  // presigned URL the browser uploads the image to. Call ProcessDistractor
+  // once it finishes.
+  rpc CreateDistractor(CreateDistractorRequest) returns (CreateDistractorResponse) {}
+  // ProcessDistractor queues turning the upload upright and shrinking it to
+  // at most 2048 pixels on its long side. It also retries a failed one. An
+  // upload that isn't a JPEG, PNG, or WebP image fails it, and the
+  // distractor is deleted.
+  rpc ProcessDistractor(ProcessDistractorRequest) returns (ProcessDistractorResponse) {}
+  rpc DeleteDistractors(DeleteDistractorsRequest) returns (DeleteDistractorsResponse) {}
+}
+
+enum DistractorStatus {
+  DISTRACTOR_STATUS_UNSPECIFIED = 0;
+  DISTRACTOR_STATUS_UPLOADING = 1;
+  DISTRACTOR_STATUS_QUEUED = 2;
+  DISTRACTOR_STATUS_PROCESSING = 3;
+  DISTRACTOR_STATUS_READY = 4;
+  DISTRACTOR_STATUS_FAILED = 5;
+}
+
+message Distractor {
+  int64 id = 1;
+  // Presigned MinIO URLs, set once the distractor is ready.
+  string url = 2;
+  string thumbnail_url = 9;
+  string filename = 3;
+  // The processed image's, so zero until the distractor is ready.
+  int32 width = 4;
+  int32 height = 5;
+  int64 size_bytes = 6;
+  string created_by = 7;
+  google.protobuf.Timestamp created_at = 8;
+  DistractorStatus status = 10;
+  string error = 11;
+}
+
+message ListDistractorsRequest {}
+
+message ListDistractorsResponse {
+  // Newest first.
+  repeated Distractor distractors = 1;
+}
+
+message CreateDistractorRequest {
+  string filename = 1;
+  int64 size = 2;
+}
+
+message CreateDistractorResponse {
+  Distractor distractor = 1;
+  string upload_url = 2;
+}
+
+message ProcessDistractorRequest {
+  int64 id = 1;
+}
+
+message ProcessDistractorResponse {}
+
+message DeleteDistractorsRequest {
+  repeated int64 ids = 1;
+}
+
+message DeleteDistractorsResponse {}

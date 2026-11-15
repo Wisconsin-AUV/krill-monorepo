@@ -135,10 +135,7 @@ func Upload(ctx context.Context, store *storage.Store, key string, plan Plan, ma
 	}()
 
 	counter := &countingWriter{w: pw}
-	open := func(ctx context.Context, f Frame) (io.ReadCloser, error) {
-		return store.Get(ctx, storage.FrameKey(f.VideoID, f.Idx))
-	}
-	writeErr := Write(ctx, counter, plan, manifest, open, onProgress)
+	writeErr := Write(ctx, counter, plan, manifest, store.Get, onProgress)
 	_ = pw.CloseWithError(writeErr)
 	if err := <-upload; err != nil {
 		return 0, errors.Join(writeErr, err)

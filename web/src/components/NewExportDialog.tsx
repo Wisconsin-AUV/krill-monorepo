@@ -2,6 +2,8 @@ import { create } from '@bufbuild/protobuf'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { keepPreviousData } from '@tanstack/react-query'
 import { useState } from 'react'
+import { augmentationValues } from '@/admin/pipeline'
+import { AugmentationFields, NumberField } from '@/components/AugmentationFields'
 import { ExportStatsView } from '@/components/ExportStatsView'
 import { Button } from '@/components/ui/Button'
 import { FormError } from '@/components/ui/Callout'
@@ -11,7 +13,12 @@ import { Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fiel
 import { Input } from '@/components/ui/Input'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Select } from '@/components/ui/Select'
-import { ExportOptionsSchema, ExportService, type ExportOptions } from '@/gen/krill/v1/export_pb'
+import {
+  AugmentationSchema,
+  ExportOptionsSchema,
+  ExportService,
+  type ExportOptions,
+} from '@/gen/krill/v1/export_pb'
 import { VideoService, VideoStatus } from '@/gen/krill/v1/video_pb'
 import { flash } from '@/lib/flash'
 import { plural } from '@/lib/format'
@@ -54,6 +61,8 @@ function NewExportForm({ defaults, onClose }: { defaults: ExportOptions; onClose
   const [dedup, setDedup] = useState(defaults.dedup)
   const [dedupDistance, setDedupDistance] = useState(defaults.dedupDistance || 4)
   const [videoIds, setVideoIds] = useState<bigint[] | null>(null)
+  const [copies, setCopies] = useState(defaults.augmentedCopies)
+  const [augmentation, setAugmentation] = useState(() => augmentationValues(defaults.augmentation))
 
   const { data: videoData } = useQuery(VideoService.method.listVideos, {})
   const ready = (videoData?.videos ?? []).filter((v) => v.status === VideoStatus.READY)
@@ -65,11 +74,21 @@ function NewExportForm({ defaults, onClose }: { defaults: ExportOptions; onClose
     dedup,
     dedupDistance,
     videoIds: videoIds ?? [],
+    augmentedCopies: copies,
+    augmentation: create(AugmentationSchema, augmentation),
   })
+  const valid =
+    Number.isInteger(copies) &&
+    copies >= 0 &&
+    copies <= 10 &&
+    Object.values(augmentation).every(Number.isFinite)
   const preview = useQuery(
     ExportService.method.previewExport,
     { options },
-    { placeholderData: keepPreviousData, enabled: videoIds === null || videoIds.length > 0 },
+    {
+      placeholderData: keepPreviousData,
+      enabled: valid && (videoIds === null || videoIds.length > 0),
+    },
   )
   const createExport = useMutation(ExportService.method.createExport, {
     onSuccess: async () => {
@@ -80,7 +99,9 @@ function NewExportForm({ defaults, onClose }: { defaults: ExportOptions; onClose
   })
 
   const stats = preview.data?.stats
-  const images = stats ? stats.trainImages + stats.valImages + stats.testImages : 0
+  const images = stats
+    ? stats.trainImages + stats.valImages + stats.testImages + stats.augmentedImages
+    : 0
 
   function toggleVideo(id: bigint, on: boolean) {
     const next = on ? [...selected, id] : selected.filter((v) => v !== id)
@@ -149,6 +170,21 @@ function NewExportForm({ defaults, onClose }: { defaults: ExportOptions; onClose
               </Select>
             )}
           </Fieldset>
+          <NumberField
+            label="Augmented copies"
+            value={copies}
+            onChange={setCopies}
+            min={0}
+            max={10}
+          />
+          {copies > 0 && (
+            <AugmentationFields
+              value={augmentation}
+              onChange={setAugmentation}
+              omit={['mosaic']}
+              className="sm:grid-cols-2"
+            />
+          )}
           <Fieldset>
             <Legend>Videos</Legend>
             <div className="mt-3 max-h-56 space-y-3 overflow-y-auto pr-1">

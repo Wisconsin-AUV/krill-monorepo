@@ -184,11 +184,15 @@ func (AnnotationStatus) EnumDescriptor() ([]byte, []int) {
 
 // Box is normalized to the frame size, with the origin at the top left.
 type Box struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	X             float64                `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	Y             float64                `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
-	Width         float64                `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
-	Height        float64                `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	X      float64                `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y      float64                `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	Width  float64                `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
+	Height float64                `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
+	// The rotated rectangle's corners, clockwise on screen, for boxes of
+	// oriented label types. x, y, width, and height are then the corners'
+	// bounds clipped to the frame. Corners may lie outside the frame.
+	Corners       []*Point `protobuf:"bytes,5,rep,name=corners,proto3" json:"corners,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,6 +253,13 @@ func (x *Box) GetHeight() float64 {
 		return x.Height
 	}
 	return 0
+}
+
+func (x *Box) GetCorners() []*Point {
+	if x != nil {
+		return x.Corners
+	}
+	return nil
 }
 
 // Point is normalized to the frame size, with the origin at the top left.
@@ -1784,12 +1795,13 @@ var File_krill_v1_annotation_proto protoreflect.FileDescriptor
 
 const file_krill_v1_annotation_proto_rawDesc = "" +
 	"\n" +
-	"\x19krill/v1/annotation.proto\x12\bkrill.v1\"O\n" +
+	"\x19krill/v1/annotation.proto\x12\bkrill.v1\"z\n" +
 	"\x03Box\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"#\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\x12)\n" +
+	"\acorners\x18\x05 \x03(\v2\x0f.krill.v1.PointR\acorners\"#\n" +
 	"\x05Point\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\"\xd4\x01\n" +
@@ -1997,55 +2009,56 @@ var file_krill_v1_annotation_proto_goTypes = []any{
 	nil,                               // 33: krill.v1.TrackObjectRequest.AttributesEntry
 }
 var file_krill_v1_annotation_proto_depIdxs = []int32{
-	30, // 0: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
-	3,  // 1: krill.v1.Annotation.box:type_name -> krill.v1.Box
-	1,  // 2: krill.v1.Annotation.source:type_name -> krill.v1.AnnotationSource
-	2,  // 3: krill.v1.Annotation.status:type_name -> krill.v1.AnnotationStatus
-	31, // 4: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
-	3,  // 5: krill.v1.CreateTrackRequest.box:type_name -> krill.v1.Box
-	5,  // 6: krill.v1.CreateTrackResponse.track:type_name -> krill.v1.Track
-	6,  // 7: krill.v1.CreateTrackResponse.annotation:type_name -> krill.v1.Annotation
-	32, // 8: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
-	5,  // 9: krill.v1.UpdateTrackResponse.track:type_name -> krill.v1.Track
-	3,  // 10: krill.v1.SetBoxRequest.box:type_name -> krill.v1.Box
-	6,  // 11: krill.v1.SetBoxResponse.annotation:type_name -> krill.v1.Annotation
-	6,  // 12: krill.v1.CopyBoxesResponse.annotations:type_name -> krill.v1.Annotation
-	0,  // 13: krill.v1.SetFrameStatusRequest.status:type_name -> krill.v1.FrameStatus
-	0,  // 14: krill.v1.SetFrameStatusResponse.status:type_name -> krill.v1.FrameStatus
-	33, // 15: krill.v1.TrackObjectRequest.attributes:type_name -> krill.v1.TrackObjectRequest.AttributesEntry
-	4,  // 16: krill.v1.TrackObjectRequest.point:type_name -> krill.v1.Point
-	3,  // 17: krill.v1.TrackObjectRequest.box:type_name -> krill.v1.Box
-	5,  // 18: krill.v1.TrackObjectResponse.track:type_name -> krill.v1.Track
-	5,  // 19: krill.v1.TrackCrop.track:type_name -> krill.v1.Track
-	3,  // 20: krill.v1.TrackCrop.box:type_name -> krill.v1.Box
-	24, // 21: krill.v1.ListTracksByTypeResponse.tracks:type_name -> krill.v1.TrackCrop
-	7,  // 22: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
-	9,  // 23: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
-	11, // 24: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
-	13, // 25: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
-	15, // 26: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
-	17, // 27: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
-	19, // 28: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
-	21, // 29: krill.v1.AnnotationService.TrackObject:input_type -> krill.v1.TrackObjectRequest
-	23, // 30: krill.v1.AnnotationService.ListTracksByType:input_type -> krill.v1.ListTracksByTypeRequest
-	26, // 31: krill.v1.AnnotationService.SearchExemplar:input_type -> krill.v1.SearchExemplarRequest
-	28, // 32: krill.v1.AnnotationService.GetExemplarSearch:input_type -> krill.v1.GetExemplarSearchRequest
-	8,  // 33: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
-	10, // 34: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
-	12, // 35: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
-	14, // 36: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
-	16, // 37: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
-	18, // 38: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
-	20, // 39: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
-	22, // 40: krill.v1.AnnotationService.TrackObject:output_type -> krill.v1.TrackObjectResponse
-	25, // 41: krill.v1.AnnotationService.ListTracksByType:output_type -> krill.v1.ListTracksByTypeResponse
-	27, // 42: krill.v1.AnnotationService.SearchExemplar:output_type -> krill.v1.SearchExemplarResponse
-	29, // 43: krill.v1.AnnotationService.GetExemplarSearch:output_type -> krill.v1.GetExemplarSearchResponse
-	33, // [33:44] is the sub-list for method output_type
-	22, // [22:33] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	4,  // 0: krill.v1.Box.corners:type_name -> krill.v1.Point
+	30, // 1: krill.v1.Track.attributes:type_name -> krill.v1.Track.AttributesEntry
+	3,  // 2: krill.v1.Annotation.box:type_name -> krill.v1.Box
+	1,  // 3: krill.v1.Annotation.source:type_name -> krill.v1.AnnotationSource
+	2,  // 4: krill.v1.Annotation.status:type_name -> krill.v1.AnnotationStatus
+	31, // 5: krill.v1.CreateTrackRequest.attributes:type_name -> krill.v1.CreateTrackRequest.AttributesEntry
+	3,  // 6: krill.v1.CreateTrackRequest.box:type_name -> krill.v1.Box
+	5,  // 7: krill.v1.CreateTrackResponse.track:type_name -> krill.v1.Track
+	6,  // 8: krill.v1.CreateTrackResponse.annotation:type_name -> krill.v1.Annotation
+	32, // 9: krill.v1.UpdateTrackRequest.attributes:type_name -> krill.v1.UpdateTrackRequest.AttributesEntry
+	5,  // 10: krill.v1.UpdateTrackResponse.track:type_name -> krill.v1.Track
+	3,  // 11: krill.v1.SetBoxRequest.box:type_name -> krill.v1.Box
+	6,  // 12: krill.v1.SetBoxResponse.annotation:type_name -> krill.v1.Annotation
+	6,  // 13: krill.v1.CopyBoxesResponse.annotations:type_name -> krill.v1.Annotation
+	0,  // 14: krill.v1.SetFrameStatusRequest.status:type_name -> krill.v1.FrameStatus
+	0,  // 15: krill.v1.SetFrameStatusResponse.status:type_name -> krill.v1.FrameStatus
+	33, // 16: krill.v1.TrackObjectRequest.attributes:type_name -> krill.v1.TrackObjectRequest.AttributesEntry
+	4,  // 17: krill.v1.TrackObjectRequest.point:type_name -> krill.v1.Point
+	3,  // 18: krill.v1.TrackObjectRequest.box:type_name -> krill.v1.Box
+	5,  // 19: krill.v1.TrackObjectResponse.track:type_name -> krill.v1.Track
+	5,  // 20: krill.v1.TrackCrop.track:type_name -> krill.v1.Track
+	3,  // 21: krill.v1.TrackCrop.box:type_name -> krill.v1.Box
+	24, // 22: krill.v1.ListTracksByTypeResponse.tracks:type_name -> krill.v1.TrackCrop
+	7,  // 23: krill.v1.AnnotationService.CreateTrack:input_type -> krill.v1.CreateTrackRequest
+	9,  // 24: krill.v1.AnnotationService.UpdateTrack:input_type -> krill.v1.UpdateTrackRequest
+	11, // 25: krill.v1.AnnotationService.DeleteTrack:input_type -> krill.v1.DeleteTrackRequest
+	13, // 26: krill.v1.AnnotationService.SetBox:input_type -> krill.v1.SetBoxRequest
+	15, // 27: krill.v1.AnnotationService.DeleteBox:input_type -> krill.v1.DeleteBoxRequest
+	17, // 28: krill.v1.AnnotationService.CopyBoxes:input_type -> krill.v1.CopyBoxesRequest
+	19, // 29: krill.v1.AnnotationService.SetFrameStatus:input_type -> krill.v1.SetFrameStatusRequest
+	21, // 30: krill.v1.AnnotationService.TrackObject:input_type -> krill.v1.TrackObjectRequest
+	23, // 31: krill.v1.AnnotationService.ListTracksByType:input_type -> krill.v1.ListTracksByTypeRequest
+	26, // 32: krill.v1.AnnotationService.SearchExemplar:input_type -> krill.v1.SearchExemplarRequest
+	28, // 33: krill.v1.AnnotationService.GetExemplarSearch:input_type -> krill.v1.GetExemplarSearchRequest
+	8,  // 34: krill.v1.AnnotationService.CreateTrack:output_type -> krill.v1.CreateTrackResponse
+	10, // 35: krill.v1.AnnotationService.UpdateTrack:output_type -> krill.v1.UpdateTrackResponse
+	12, // 36: krill.v1.AnnotationService.DeleteTrack:output_type -> krill.v1.DeleteTrackResponse
+	14, // 37: krill.v1.AnnotationService.SetBox:output_type -> krill.v1.SetBoxResponse
+	16, // 38: krill.v1.AnnotationService.DeleteBox:output_type -> krill.v1.DeleteBoxResponse
+	18, // 39: krill.v1.AnnotationService.CopyBoxes:output_type -> krill.v1.CopyBoxesResponse
+	20, // 40: krill.v1.AnnotationService.SetFrameStatus:output_type -> krill.v1.SetFrameStatusResponse
+	22, // 41: krill.v1.AnnotationService.TrackObject:output_type -> krill.v1.TrackObjectResponse
+	25, // 42: krill.v1.AnnotationService.ListTracksByType:output_type -> krill.v1.ListTracksByTypeResponse
+	27, // 43: krill.v1.AnnotationService.SearchExemplar:output_type -> krill.v1.SearchExemplarResponse
+	29, // 44: krill.v1.AnnotationService.GetExemplarSearch:output_type -> krill.v1.GetExemplarSearchResponse
+	34, // [34:45] is the sub-list for method output_type
+	23, // [23:34] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_annotation_proto_init() }

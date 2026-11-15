@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
@@ -77,6 +78,8 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		Ys:           make([]float64, 0, n),
 		Widths:       make([]float64, 0, n),
 		Heights:      make([]float64, 0, n),
+		HasCorners:   make([]bool, 0, n),
+		Corners:      make([]float64, 0, 8*n),
 		Source:       "sam",
 		ModelVersion: req.GetModel(),
 	}
@@ -84,7 +87,7 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		if !t.frames[b.GetFrameId()] {
 			return nil, rpc.Invalid("frame %d is not part of the task", b.GetFrameId())
 		}
-		x, y, w, h, err := annotation.ClampBox(b.GetBox())
+		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), t.msg.GetTrack().GetOriented())
 		if err != nil {
 			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
 		}
@@ -93,6 +96,11 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		p.Ys = append(p.Ys, y)
 		p.Widths = append(p.Widths, w)
 		p.Heights = append(p.Heights, h)
+		p.HasCorners = append(p.HasCorners, corners != nil)
+		if corners == nil {
+			corners = make([]float64, 8)
+		}
+		p.Corners = append(p.Corners, corners...)
 	}
 	if len(p.FrameIds) > 0 {
 		if err := s.saveProposals(ctx, p); err != nil {
@@ -199,6 +207,59 @@ func (s *Service) ReportEmbed(_ context.Context, req *krillv1.ReportEmbedRequest
 	t.model.Store(&model)
 	t.finish(nil)
 	return &krillv1.ReportEmbedResponse{}, nil
+}
+
+func (s *Service) ReportOrient(ctx context.Context, req *krillv1.ReportOrientRequest) (*krillv1.ReportOrientResponse, error) {
+	t, ok := s.dispatcher.get(req.GetTaskId())
+	if !ok {
+		return nil, errUnknownTask
+	}
+	if t.msg.GetOrient() == nil {
+		return nil, rpc.Invalid("task %d is not an orient task", t.id)
+	}
+	n := len(req.GetBoxes())
+	p := db.SetFittedCornersParams{
+		LabelTypeID: t.orient.labelTypeID,
+		Ids:         make([]int64, 0, n),
+		UpdatedAts:  make([]pgtype.Timestamptz, 0, n),
+		Xs:          make([]float64, 0, n),
+		Ys:          make([]float64, 0, n),
+		Widths:      make([]float64, 0, n),
+		Heights:     make([]float64, 0, n),
+		Corners:     make([]float64, 0, 8*n),
+	}
+	for _, b := range req.GetBoxes() {
+		updatedAt, ok := t.orient.updatedAt[b.GetAnnotationId()]
+		if !ok {
+			return nil, rpc.Invalid("box %d is not part of the task", b.GetAnnotationId())
+		}
+		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), true)
+		if err != nil {
+			return nil, rpc.Invalid("box %d: %s", b.GetAnnotationId(), err)
+		}
+		if corners == nil {
+			return nil, rpc.Invalid("box %d has no corners", b.GetAnnotationId())
+		}
+		p.Ids = append(p.Ids, b.GetAnnotationId())
+		p.UpdatedAts = append(p.UpdatedAts, updatedAt)
+		p.Xs = append(p.Xs, x)
+		p.Ys = append(p.Ys, y)
+		p.Widths = append(p.Widths, w)
+		p.Heights = append(p.Heights, h)
+		p.Corners = append(p.Corners, corners...)
+	}
+	if len(p.Ids) > 0 {
+		if _, err := s.q.SetFittedCorners(ctx, p); err != nil {
+			t.finish(err)
+			return nil, rpc.Internal(err, "save boxes")
+		}
+	}
+	if req.GetDone() {
+		t.finish(nil)
+	} else {
+		t.touch()
+	}
+	return &krillv1.ReportOrientResponse{}, nil
 }
 
 func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*krillv1.FailTaskResponse, error) {

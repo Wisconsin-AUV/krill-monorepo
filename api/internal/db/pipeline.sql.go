@@ -201,7 +201,7 @@ func (q *Queries) CreatePrelabelTrack(ctx context.Context, arg CreatePrelabelTra
 const createTrainingRun = `-- name: CreateTrainingRun :one
 INSERT INTO training_runs (trigger, created_by, config, verified_boxes)
 VALUES ($1, $2::uuid, $3, $4)
-RETURNING id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename
+RETURNING id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename, oriented
 `
 
 type CreateTrainingRunParams struct {
@@ -245,19 +245,20 @@ func (q *Queries) CreateTrainingRun(ctx context.Context, arg CreateTrainingRunPa
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.Filename,
+		&i.Oriented,
 	)
 	return i, err
 }
 
 const createUploadedTrainingRun = `-- name: CreateUploadedTrainingRun :one
 INSERT INTO training_runs (
-    status, trigger, created_by, config, classes, filename, weights_bytes, started_at, finished_at
+    status, trigger, created_by, config, classes, filename, weights_bytes, oriented, started_at, finished_at
 )
 VALUES (
-    'succeeded', 'upload', $1::uuid, $2, $3, $4, $5,
+    'succeeded', 'upload', $1::uuid, $2, $3, $4, $5, $6,
     now(), now()
 )
-RETURNING id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename
+RETURNING id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename, oriented
 `
 
 type CreateUploadedTrainingRunParams struct {
@@ -266,6 +267,7 @@ type CreateUploadedTrainingRunParams struct {
 	Classes      []byte      `json:"classes"`
 	Filename     string      `json:"filename"`
 	WeightsBytes int64       `json:"weights_bytes"`
+	Oriented     bool        `json:"oriented"`
 }
 
 func (q *Queries) CreateUploadedTrainingRun(ctx context.Context, arg CreateUploadedTrainingRunParams) (TrainingRun, error) {
@@ -275,6 +277,7 @@ func (q *Queries) CreateUploadedTrainingRun(ctx context.Context, arg CreateUploa
 		arg.Classes,
 		arg.Filename,
 		arg.WeightsBytes,
+		arg.Oriented,
 	)
 	var i TrainingRun
 	err := row.Scan(
@@ -303,6 +306,7 @@ func (q *Queries) CreateUploadedTrainingRun(ctx context.Context, arg CreateUploa
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.Filename,
+		&i.Oriented,
 	)
 	return i, err
 }
@@ -488,7 +492,7 @@ func (q *Queries) FinishTrainingRun(ctx context.Context, arg FinishTrainingRunPa
 }
 
 const getLatestTrainingRun = `-- name: GetLatestTrainingRun :one
-SELECT id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename FROM training_runs WHERE trigger <> 'upload' ORDER BY id DESC LIMIT 1
+SELECT id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename, oriented FROM training_runs WHERE trigger <> 'upload' ORDER BY id DESC LIMIT 1
 `
 
 // Uploads are left out, since they don't train on the labels the schedule
@@ -522,12 +526,13 @@ func (q *Queries) GetLatestTrainingRun(ctx context.Context) (TrainingRun, error)
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.Filename,
+		&i.Oriented,
 	)
 	return i, err
 }
 
 const getPinnedTrainingRun = `-- name: GetPinnedTrainingRun :one
-SELECT id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename FROM training_runs WHERE pinned
+SELECT id, status, trigger, created_by, config, dataset, classes, verified_boxes, epochs, epoch, history, val_metrics, test_metrics, baseline_run_id, baseline_val_metrics, baseline_test_metrics, weights_bytes, device, log, error, pinned, created_at, started_at, finished_at, filename, oriented FROM training_runs WHERE pinned
 `
 
 func (q *Queries) GetPinnedTrainingRun(ctx context.Context) (TrainingRun, error) {
@@ -559,6 +564,7 @@ func (q *Queries) GetPinnedTrainingRun(ctx context.Context) (TrainingRun, error)
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.Filename,
+		&i.Oriented,
 	)
 	return i, err
 }
@@ -607,7 +613,7 @@ func (q *Queries) GetPrelabeler(ctx context.Context, name string) (Prelabeler, e
 }
 
 const getTrainingRun = `-- name: GetTrainingRun :one
-SELECT r.id, r.status, r.trigger, r.created_by, r.config, r.dataset, r.classes, r.verified_boxes, r.epochs, r.epoch, r.history, r.val_metrics, r.test_metrics, r.baseline_run_id, r.baseline_val_metrics, r.baseline_test_metrics, r.weights_bytes, r.device, r.log, r.error, r.pinned, r.created_at, r.started_at, r.finished_at, r.filename, coalesce(u.name, '')::text AS created_by_name
+SELECT r.id, r.status, r.trigger, r.created_by, r.config, r.dataset, r.classes, r.verified_boxes, r.epochs, r.epoch, r.history, r.val_metrics, r.test_metrics, r.baseline_run_id, r.baseline_val_metrics, r.baseline_test_metrics, r.weights_bytes, r.device, r.log, r.error, r.pinned, r.created_at, r.started_at, r.finished_at, r.filename, r.oriented, coalesce(u.name, '')::text AS created_by_name
 FROM training_runs r
 LEFT JOIN users u ON u.id = r.created_by
 WHERE r.id = $1
@@ -647,50 +653,61 @@ func (q *Queries) GetTrainingRun(ctx context.Context, id int64) (GetTrainingRunR
 		&i.TrainingRun.StartedAt,
 		&i.TrainingRun.FinishedAt,
 		&i.TrainingRun.Filename,
+		&i.TrainingRun.Oriented,
 		&i.CreatedByName,
 	)
 	return i, err
 }
 
 const insertPrelabels = `-- name: InsertPrelabels :execrows
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, model_version, confidence)
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version, confidence)
 SELECT
-    unnest($1::bigint[]),
-    unnest($2::bigint[]),
-    unnest($3::float8[]),
-    unnest($4::float8[]),
-    unnest($5::float8[]),
-    unnest($6::float8[]),
-    $7,
+    t.id,
+    ($1::bigint[])[i],
+    ($2::float8[])[i],
+    ($3::float8[])[i],
+    ($4::float8[])[i],
+    ($5::float8[])[i],
+    CASE WHEN lt.oriented AND ($6::bool[])[i] THEN ($7::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    $8,
     'proposed',
-    unnest($8::text[]),
-    unnest($9::real[])
+    ($9::text[])[i],
+    ($10::real[])[i]
+FROM generate_subscripts($11::bigint[], 1) AS i
+JOIN tracks t ON t.id = ($11::bigint[])[i]
+JOIN label_types lt ON lt.id = t.label_type_id
 ON CONFLICT (track_id, frame_id) DO NOTHING
 `
 
 type InsertPrelabelsParams struct {
-	TrackIds      []int64   `json:"track_ids"`
 	FrameIds      []int64   `json:"frame_ids"`
 	Xs            []float64 `json:"xs"`
 	Ys            []float64 `json:"ys"`
 	Widths        []float64 `json:"widths"`
 	Heights       []float64 `json:"heights"`
+	HasCorners    []bool    `json:"has_corners"`
+	Corners       []float64 `json:"corners"`
 	Source        string    `json:"source"`
 	ModelVersions []string  `json:"model_versions"`
 	Confidences   []float32 `json:"confidences"`
+	TrackIds      []int64   `json:"track_ids"`
 }
 
+// @corners holds eight values per box, which are kept only when the box's
+// @has_corners is set and its track's label type is oriented.
 func (q *Queries) InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error) {
 	result, err := q.db.Exec(ctx, insertPrelabels,
-		arg.TrackIds,
 		arg.FrameIds,
 		arg.Xs,
 		arg.Ys,
 		arg.Widths,
 		arg.Heights,
+		arg.HasCorners,
+		arg.Corners,
 		arg.Source,
 		arg.ModelVersions,
 		arg.Confidences,
+		arg.TrackIds,
 	)
 	if err != nil {
 		return 0, err
@@ -968,7 +985,7 @@ func (q *Queries) ListRejectedPrelabels(ctx context.Context, frameIds []int64) (
 }
 
 const listTrainingRuns = `-- name: ListTrainingRuns :many
-SELECT r.id, r.status, r.trigger, r.created_by, r.config, r.dataset, r.classes, r.verified_boxes, r.epochs, r.epoch, r.history, r.val_metrics, r.test_metrics, r.baseline_run_id, r.baseline_val_metrics, r.baseline_test_metrics, r.weights_bytes, r.device, r.log, r.error, r.pinned, r.created_at, r.started_at, r.finished_at, r.filename, coalesce(u.name, '')::text AS created_by_name
+SELECT r.id, r.status, r.trigger, r.created_by, r.config, r.dataset, r.classes, r.verified_boxes, r.epochs, r.epoch, r.history, r.val_metrics, r.test_metrics, r.baseline_run_id, r.baseline_val_metrics, r.baseline_test_metrics, r.weights_bytes, r.device, r.log, r.error, r.pinned, r.created_at, r.started_at, r.finished_at, r.filename, r.oriented, coalesce(u.name, '')::text AS created_by_name
 FROM training_runs r
 LEFT JOIN users u ON u.id = r.created_by
 ORDER BY r.id DESC
@@ -1015,6 +1032,7 @@ func (q *Queries) ListTrainingRuns(ctx context.Context, limit int32) ([]ListTrai
 			&i.TrainingRun.StartedAt,
 			&i.TrainingRun.FinishedAt,
 			&i.TrainingRun.Filename,
+			&i.TrainingRun.Oriented,
 			&i.CreatedByName,
 		); err != nil {
 			return nil, err
@@ -1122,15 +1140,16 @@ func (q *Queries) PinTrainingRun(ctx context.Context, id int64) (int64, error) {
 }
 
 const setTrainingDataset = `-- name: SetTrainingDataset :exec
-UPDATE training_runs SET dataset = $1, classes = $2, epochs = $3
-WHERE id = $4
+UPDATE training_runs SET dataset = $1, classes = $2, epochs = $3, oriented = $4
+WHERE id = $5
 `
 
 type SetTrainingDatasetParams struct {
-	Dataset []byte `json:"dataset"`
-	Classes []byte `json:"classes"`
-	Epochs  int32  `json:"epochs"`
-	ID      int64  `json:"id"`
+	Dataset  []byte `json:"dataset"`
+	Classes  []byte `json:"classes"`
+	Epochs   int32  `json:"epochs"`
+	Oriented bool   `json:"oriented"`
+	ID       int64  `json:"id"`
 }
 
 func (q *Queries) SetTrainingDataset(ctx context.Context, arg SetTrainingDatasetParams) error {
@@ -1138,6 +1157,7 @@ func (q *Queries) SetTrainingDataset(ctx context.Context, arg SetTrainingDataset
 		arg.Dataset,
 		arg.Classes,
 		arg.Epochs,
+		arg.Oriented,
 		arg.ID,
 	)
 	return err

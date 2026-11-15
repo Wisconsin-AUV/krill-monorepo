@@ -70,6 +70,9 @@ class Api:
     def report_embed(self, req: worker_pb2.ReportEmbedRequest) -> None:
         self._call("ReportEmbed", req, worker_pb2.ReportEmbedResponse)
 
+    def report_orient(self, req: worker_pb2.ReportOrientRequest) -> None:
+        self._call("ReportOrient", req, worker_pb2.ReportOrientResponse)
+
     def fail_task(self, task_id: int, error: str) -> None:
         req = worker_pb2.FailTaskRequest(task_id=task_id, error=error)
         self._call("FailTask", req, worker_pb2.FailTaskResponse)

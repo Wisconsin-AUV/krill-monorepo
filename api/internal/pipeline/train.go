@@ -39,6 +39,8 @@ const (
 	trainTimeout   = 36 * time.Hour
 	// maxLog keeps the end of a run's log.
 	maxLog = 32 << 10
+	// maxTrainDistractors are picked at random for a run to download.
+	maxTrainDistractors = 500
 )
 
 var sizes = map[string]krillv1.ModelSize{
@@ -111,9 +113,15 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 		out.Dataset = export.Defaults(cfg)
 	}
 	var err error
+	if out.Augmentation, err = export.NormalizeAugmentation(out.GetAugmentation()); err != nil {
+		return nil, invalidConfig{err}
+	}
 	if out.Dataset, err = export.Normalize(out.GetDataset()); err != nil {
 		return nil, invalidConfig{err}
 	}
+	// Training augments each epoch as it loads images instead.
+	out.Dataset.AugmentedCopies = 0
+	out.Dataset.Augmentation = nil
 	if err := config.CheckTraining(int(out.GetEpochs()), int(out.GetImageSize()), int(out.GetBatch())); err != nil {
 		var fe *config.FieldError
 		if errors.As(err, &fe) {
@@ -129,6 +137,13 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 		if err != nil {
 			return nil, err
 		}
+		types, err := q.ListAllLabelTypes(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list label types: %w", err)
+		}
+		if err := sameOrientation(base.TrainingRun, anyOriented(types)); err != nil {
+			return nil, invalidConfig{err}
+		}
 		baseCfg := &krillv1.TrainConfig{}
 		if err := unmarshal(base.TrainingRun.Config, baseCfg); err != nil {
 			return nil, fmt.Errorf("decode run %d config: %w", base.TrainingRun.ID, err)
@@ -142,6 +157,22 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 		return nil, invalidConfig{errors.New("unknown model size")}
 	}
 	return out, nil
+}
+
+func anyOriented(types []db.LabelType) bool {
+	return slices.ContainsFunc(types, func(t db.LabelType) bool { return t.Oriented })
+}
+
+// sameOrientation fails when a base run's model can't be fine-tuned on a
+// dataset of the given orientation.
+func sameOrientation(base db.TrainingRun, oriented bool) error {
+	switch {
+	case base.Oriented && !oriented:
+		return fmt.Errorf("run %d finds rotated boxes, but no label type is oriented", base.ID)
+	case !base.Oriented && oriented:
+		return fmt.Errorf("run %d finds unrotated boxes, but a label type is oriented", base.ID)
+	}
+	return nil
 }
 
 var trainFields = map[string]string{
@@ -296,7 +327,9 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("encode classes: %w", err)
 	}
-	err = q.SetTrainingDataset(ctx, db.SetTrainingDatasetParams{ID: id, Dataset: statsJSON, Classes: classesJSON, Epochs: cfg.GetEpochs()})
+	err = q.SetTrainingDataset(ctx, db.SetTrainingDatasetParams{
+		ID: id, Dataset: statsJSON, Classes: classesJSON, Epochs: cfg.GetEpochs(), Oriented: plan.Oriented,
+	})
 	if err != nil {
 		return fmt.Errorf("save dataset stats: %w", err)
 	}
@@ -311,14 +344,16 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 
 	tid := p.Dispatcher.NextID()
 	msg := &krillv1.TrainTask{
-		Id:        tid,
-		RunId:     id,
-		Classes:   plan.Classes,
-		Size:      cfg.GetSize(),
-		Epochs:    cfg.GetEpochs(),
-		ImageSize: cfg.GetImageSize(),
-		Batch:     cfg.GetBatch(),
-		HasTest:   stats.GetTestImages() > 0,
+		Id:           tid,
+		RunId:        id,
+		Classes:      plan.Classes,
+		Size:         cfg.GetSize(),
+		Epochs:       cfg.GetEpochs(),
+		ImageSize:    cfg.GetImageSize(),
+		Batch:        cfg.GetBatch(),
+		HasTest:      stats.GetTestImages() > 0,
+		Oriented:     plan.Oriented,
+		Augmentation: cfg.GetAugmentation(),
 	}
 	if msg.DatasetUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingDatasetKey(id), trainURLExpiry); err != nil {
 		return err
@@ -326,7 +361,27 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	if msg.WeightsUploadUrl, err = p.Store.PresignPutInternal(ctx, storage.TrainingWeightsKey(id), trainURLExpiry); err != nil {
 		return err
 	}
+	if cfg.GetAugmentation().GetDistractors() > 0 {
+		ids, err := q.ListReadyDistractorIDs(ctx, maxTrainDistractors)
+		if err != nil {
+			return fmt.Errorf("list distractors: %w", err)
+		}
+		for _, d := range ids {
+			u, err := p.Store.PresignGetInternal(ctx, storage.DistractorKey(d), trainURLExpiry)
+			if err != nil {
+				return err
+			}
+			msg.DistractorUrls = append(msg.DistractorUrls, u)
+		}
+	}
 	if base := cfg.GetBaseRunId(); base != 0 {
+		row, err := q.GetTrainingRun(ctx, base)
+		if err != nil {
+			return fmt.Errorf("load base run: %w", err)
+		}
+		if err := sameOrientation(row.TrainingRun, plan.Oriented); err != nil {
+			return err
+		}
 		if msg.BaseWeightsUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingWeightsKey(base), trainURLExpiry); err != nil {
 			return err
 		}
@@ -337,7 +392,7 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	case errors.Is(err, pgx.ErrNoRows):
 	case err != nil:
 		return fmt.Errorf("load pinned run: %w", err)
-	case sameClasses(pinned.Classes, classesJSON):
+	case sameClasses(pinned.Classes, classesJSON) && pinned.Oriented == plan.Oriented:
 		state.baseline = pinned.ID
 		if msg.BaselineWeightsUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingWeightsKey(pinned.ID), trainURLExpiry); err != nil {
 			return err

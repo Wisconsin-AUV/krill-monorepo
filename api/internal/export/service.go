@@ -60,6 +60,7 @@ func Defaults(cfg config.Config) *krillv1.ExportOptions {
 		Stride:        int32(cfg.ExportStride), //nolint:gosec // validated to at most MaxExportStride
 		Dedup:         cfg.ExportDedup,
 		DedupDistance: int32(cfg.ExportDedupDistance), //nolint:gosec // validated to at most MaxExportDedupDistance
+		Augmentation:  DefaultAugmentation(),
 	}
 }
 

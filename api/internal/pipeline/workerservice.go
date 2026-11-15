@@ -163,7 +163,7 @@ func (s *WorkerService) ReportPrelabels(ctx context.Context, req *krillv1.Report
 		if !col.frames[b.GetFrameId()] {
 			return nil, rpc.Invalid("frame %d is not part of the task", b.GetFrameId())
 		}
-		if _, _, _, _, err := annotation.ClampBox(b.GetBox()); err != nil {
+		if _, _, _, _, _, err := annotation.ClampCorners(b.GetBox(), true); err != nil {
 			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
 		}
 	}

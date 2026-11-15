@@ -44,6 +44,9 @@ const (
 	// WorkerServiceReportEmbedProcedure is the fully-qualified name of the WorkerService's ReportEmbed
 	// RPC.
 	WorkerServiceReportEmbedProcedure = "/krill.v1.WorkerService/ReportEmbed"
+	// WorkerServiceReportOrientProcedure is the fully-qualified name of the WorkerService's
+	// ReportOrient RPC.
+	WorkerServiceReportOrientProcedure = "/krill.v1.WorkerService/ReportOrient"
 	// WorkerServiceFailTaskProcedure is the fully-qualified name of the WorkerService's FailTask RPC.
 	WorkerServiceFailTaskProcedure = "/krill.v1.WorkerService/FailTask"
 	// WorkerServiceHeartbeatProcedure is the fully-qualified name of the WorkerService's Heartbeat RPC.
@@ -63,6 +66,9 @@ type WorkerServiceClient interface {
 	// ReportEmbed finishes an embed task once every frame's embedding is
 	// uploaded.
 	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
+	// ReportOrient saves rotated boxes for an orient task in batches, with done
+	// set on the last one.
+	ReportOrient(context.Context, *v1.ReportOrientRequest) (*v1.ReportOrientResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
 	// Heartbeat reports the worker's state every few seconds for the admin
 	// panel. A worker that stops sending them shows as offline.
@@ -104,6 +110,12 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(workerServiceMethods.ByName("ReportEmbed")),
 			connect.WithClientOptions(opts...),
 		),
+		reportOrient: connect.NewClient[v1.ReportOrientRequest, v1.ReportOrientResponse](
+			httpClient,
+			baseURL+WorkerServiceReportOrientProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("ReportOrient")),
+			connect.WithClientOptions(opts...),
+		),
 		failTask: connect.NewClient[v1.FailTaskRequest, v1.FailTaskResponse](
 			httpClient,
 			baseURL+WorkerServiceFailTaskProcedure,
@@ -125,6 +137,7 @@ type workerServiceClient struct {
 	reportTrack     *connect.Client[v1.ReportTrackRequest, v1.ReportTrackResponse]
 	reportExemplars *connect.Client[v1.ReportExemplarsRequest, v1.ReportExemplarsResponse]
 	reportEmbed     *connect.Client[v1.ReportEmbedRequest, v1.ReportEmbedResponse]
+	reportOrient    *connect.Client[v1.ReportOrientRequest, v1.ReportOrientResponse]
 	failTask        *connect.Client[v1.FailTaskRequest, v1.FailTaskResponse]
 	heartbeat       *connect.Client[v1.HeartbeatRequest, v1.HeartbeatResponse]
 }
@@ -165,6 +178,15 @@ func (c *workerServiceClient) ReportEmbed(ctx context.Context, req *v1.ReportEmb
 	return nil, err
 }
 
+// ReportOrient calls krill.v1.WorkerService.ReportOrient.
+func (c *workerServiceClient) ReportOrient(ctx context.Context, req *v1.ReportOrientRequest) (*v1.ReportOrientResponse, error) {
+	response, err := c.reportOrient.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // FailTask calls krill.v1.WorkerService.FailTask.
 func (c *workerServiceClient) FailTask(ctx context.Context, req *v1.FailTaskRequest) (*v1.FailTaskResponse, error) {
 	response, err := c.failTask.CallUnary(ctx, connect.NewRequest(req))
@@ -196,6 +218,9 @@ type WorkerServiceHandler interface {
 	// ReportEmbed finishes an embed task once every frame's embedding is
 	// uploaded.
 	ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error)
+	// ReportOrient saves rotated boxes for an orient task in batches, with done
+	// set on the last one.
+	ReportOrient(context.Context, *v1.ReportOrientRequest) (*v1.ReportOrientResponse, error)
 	FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error)
 	// Heartbeat reports the worker's state every few seconds for the admin
 	// panel. A worker that stops sending them shows as offline.
@@ -233,6 +258,12 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(workerServiceMethods.ByName("ReportEmbed")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workerServiceReportOrientHandler := connect.NewUnaryHandlerSimple(
+		WorkerServiceReportOrientProcedure,
+		svc.ReportOrient,
+		connect.WithSchema(workerServiceMethods.ByName("ReportOrient")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workerServiceFailTaskHandler := connect.NewUnaryHandlerSimple(
 		WorkerServiceFailTaskProcedure,
 		svc.FailTask,
@@ -255,6 +286,8 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 			workerServiceReportExemplarsHandler.ServeHTTP(w, r)
 		case WorkerServiceReportEmbedProcedure:
 			workerServiceReportEmbedHandler.ServeHTTP(w, r)
+		case WorkerServiceReportOrientProcedure:
+			workerServiceReportOrientHandler.ServeHTTP(w, r)
 		case WorkerServiceFailTaskProcedure:
 			workerServiceFailTaskHandler.ServeHTTP(w, r)
 		case WorkerServiceHeartbeatProcedure:
@@ -282,6 +315,10 @@ func (UnimplementedWorkerServiceHandler) ReportExemplars(context.Context, *v1.Re
 
 func (UnimplementedWorkerServiceHandler) ReportEmbed(context.Context, *v1.ReportEmbedRequest) (*v1.ReportEmbedResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.ReportEmbed is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) ReportOrient(context.Context, *v1.ReportOrientRequest) (*v1.ReportOrientResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.WorkerService.ReportOrient is not implemented"))
 }
 
 func (UnimplementedWorkerServiceHandler) FailTask(context.Context, *v1.FailTaskRequest) (*v1.FailTaskResponse, error) {

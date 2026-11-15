@@ -89,7 +89,12 @@ type ExportOptions struct {
 	// many bits are dropped as near-duplicates.
 	DedupDistance int32 `protobuf:"varint,4,opt,name=dedup_distance,json=dedupDistance,proto3" json:"dedup_distance,omitempty"`
 	// Videos to include. Empty means every ready video.
-	VideoIds      []int64 `protobuf:"varint,5,rep,packed,name=video_ids,json=videoIds,proto3" json:"video_ids,omitempty"`
+	VideoIds []int64 `protobuf:"varint,5,rep,packed,name=video_ids,json=videoIds,proto3" json:"video_ids,omitempty"`
+	// Augmented copies written of each train image, from 0 to 10.
+	AugmentedCopies int32 `protobuf:"varint,6,opt,name=augmented_copies,json=augmentedCopies,proto3" json:"augmented_copies,omitempty"`
+	// Unset uses the defaults. Mosaic is left to whatever trains on the
+	// export.
+	Augmentation  *Augmentation `protobuf:"bytes,7,opt,name=augmentation,proto3" json:"augmentation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -159,6 +164,201 @@ func (x *ExportOptions) GetVideoIds() []int64 {
 	return nil
 }
 
+func (x *ExportOptions) GetAugmentedCopies() int32 {
+	if x != nil {
+		return x.AugmentedCopies
+	}
+	return 0
+}
+
+func (x *ExportOptions) GetAugmentation() *Augmentation {
+	if x != nil {
+		return x.Augmentation
+	}
+	return nil
+}
+
+// Augmentation is how training images are varied, each epoch while training
+// and in the augmented copies an export writes. Val and test images are never
+// changed.
+type Augmentation struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Ultralytics' own, in its units. Rotation in degrees either way.
+	Degrees float32 `protobuf:"fixed32,1,opt,name=degrees,proto3" json:"degrees,omitempty"`
+	// Shift as a share of the image size, either way.
+	Translate float32 `protobuf:"fixed32,2,opt,name=translate,proto3" json:"translate,omitempty"`
+	// Zoom gain either way.
+	Scale float32 `protobuf:"fixed32,3,opt,name=scale,proto3" json:"scale,omitempty"`
+	// Degrees either way.
+	Shear       float32 `protobuf:"fixed32,4,opt,name=shear,proto3" json:"shear,omitempty"`
+	Perspective float32 `protobuf:"fixed32,5,opt,name=perspective,proto3" json:"perspective,omitempty"`
+	// Hue, saturation, and brightness gains either way.
+	HsvH float32 `protobuf:"fixed32,6,opt,name=hsv_h,json=hsvH,proto3" json:"hsv_h,omitempty"`
+	HsvS float32 `protobuf:"fixed32,7,opt,name=hsv_s,json=hsvS,proto3" json:"hsv_s,omitempty"`
+	HsvV float32 `protobuf:"fixed32,8,opt,name=hsv_v,json=hsvV,proto3" json:"hsv_v,omitempty"`
+	// Probabilities. Mirroring is off by default because it changes what
+	// arrows and printed signs mean.
+	Fliplr float32 `protobuf:"fixed32,9,opt,name=fliplr,proto3" json:"fliplr,omitempty"`
+	Flipud float32 `protobuf:"fixed32,10,opt,name=flipud,proto3" json:"flipud,omitempty"`
+	Mosaic float32 `protobuf:"fixed32,11,opt,name=mosaic,proto3" json:"mosaic,omitempty"`
+	// Krill's own, applied to each image before mosaic. The most an image is
+	// stretched wider or taller, as a ratio of at least 1.
+	Aspect float32 `protobuf:"fixed32,12,opt,name=aspect,proto3" json:"aspect,omitempty"`
+	// Probabilities that an image is tinted blue-green like water, gets
+	// patches of light and shadow, or gets sensor noise.
+	Underwater float32 `protobuf:"fixed32,13,opt,name=underwater,proto3" json:"underwater,omitempty"`
+	Shadows    float32 `protobuf:"fixed32,14,opt,name=shadows,proto3" json:"shadows,omitempty"`
+	Noise      float32 `protobuf:"fixed32,15,opt,name=noise,proto3" json:"noise,omitempty"`
+	// Probability that an image's objects are cut out and pasted at random
+	// spots on a random distractor image, each resized, rotated, stretched, and
+	// recolored on its own. Does nothing until distractors are added.
+	Distractors   float32 `protobuf:"fixed32,16,opt,name=distractors,proto3" json:"distractors,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Augmentation) Reset() {
+	*x = Augmentation{}
+	mi := &file_krill_v1_export_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Augmentation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Augmentation) ProtoMessage() {}
+
+func (x *Augmentation) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_export_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Augmentation.ProtoReflect.Descriptor instead.
+func (*Augmentation) Descriptor() ([]byte, []int) {
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Augmentation) GetDegrees() float32 {
+	if x != nil {
+		return x.Degrees
+	}
+	return 0
+}
+
+func (x *Augmentation) GetTranslate() float32 {
+	if x != nil {
+		return x.Translate
+	}
+	return 0
+}
+
+func (x *Augmentation) GetScale() float32 {
+	if x != nil {
+		return x.Scale
+	}
+	return 0
+}
+
+func (x *Augmentation) GetShear() float32 {
+	if x != nil {
+		return x.Shear
+	}
+	return 0
+}
+
+func (x *Augmentation) GetPerspective() float32 {
+	if x != nil {
+		return x.Perspective
+	}
+	return 0
+}
+
+func (x *Augmentation) GetHsvH() float32 {
+	if x != nil {
+		return x.HsvH
+	}
+	return 0
+}
+
+func (x *Augmentation) GetHsvS() float32 {
+	if x != nil {
+		return x.HsvS
+	}
+	return 0
+}
+
+func (x *Augmentation) GetHsvV() float32 {
+	if x != nil {
+		return x.HsvV
+	}
+	return 0
+}
+
+func (x *Augmentation) GetFliplr() float32 {
+	if x != nil {
+		return x.Fliplr
+	}
+	return 0
+}
+
+func (x *Augmentation) GetFlipud() float32 {
+	if x != nil {
+		return x.Flipud
+	}
+	return 0
+}
+
+func (x *Augmentation) GetMosaic() float32 {
+	if x != nil {
+		return x.Mosaic
+	}
+	return 0
+}
+
+func (x *Augmentation) GetAspect() float32 {
+	if x != nil {
+		return x.Aspect
+	}
+	return 0
+}
+
+func (x *Augmentation) GetUnderwater() float32 {
+	if x != nil {
+		return x.Underwater
+	}
+	return 0
+}
+
+func (x *Augmentation) GetShadows() float32 {
+	if x != nil {
+		return x.Shadows
+	}
+	return 0
+}
+
+func (x *Augmentation) GetNoise() float32 {
+	if x != nil {
+		return x.Noise
+	}
+	return 0
+}
+
+func (x *Augmentation) GetDistractors() float32 {
+	if x != nil {
+		return x.Distractors
+	}
+	return 0
+}
+
 type ExportClassStats struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	Id         int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -176,7 +376,7 @@ type ExportClassStats struct {
 
 func (x *ExportClassStats) Reset() {
 	*x = ExportClassStats{}
-	mi := &file_krill_v1_export_proto_msgTypes[1]
+	mi := &file_krill_v1_export_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -188,7 +388,7 @@ func (x *ExportClassStats) String() string {
 func (*ExportClassStats) ProtoMessage() {}
 
 func (x *ExportClassStats) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[1]
+	mi := &file_krill_v1_export_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +401,7 @@ func (x *ExportClassStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportClassStats.ProtoReflect.Descriptor instead.
 func (*ExportClassStats) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{1}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ExportClassStats) GetId() int32 {
@@ -268,7 +468,7 @@ type ExportVideoStats struct {
 
 func (x *ExportVideoStats) Reset() {
 	*x = ExportVideoStats{}
-	mi := &file_krill_v1_export_proto_msgTypes[2]
+	mi := &file_krill_v1_export_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -280,7 +480,7 @@ func (x *ExportVideoStats) String() string {
 func (*ExportVideoStats) ProtoMessage() {}
 
 func (x *ExportVideoStats) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[2]
+	mi := &file_krill_v1_export_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -293,7 +493,7 @@ func (x *ExportVideoStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportVideoStats.ProtoReflect.Descriptor instead.
 func (*ExportVideoStats) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{2}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ExportVideoStats) GetVideoId() int64 {
@@ -359,13 +559,18 @@ type ExportStats struct {
 	Videos           []*ExportVideoStats `protobuf:"bytes,12,rep,name=videos,proto3" json:"videos,omitempty"`
 	TestImages       int32               `protobuf:"varint,13,opt,name=test_images,json=testImages,proto3" json:"test_images,omitempty"`
 	TestBoxes        int32               `protobuf:"varint,14,opt,name=test_boxes,json=testBoxes,proto3" json:"test_boxes,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Labels are written as YOLO-OBB corners because a label type is
+	// oriented. Boxes of other types are written as unrotated corners.
+	Oriented bool `protobuf:"varint,15,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	// Augmented copies of train images, on top of train_images.
+	AugmentedImages int32 `protobuf:"varint,16,opt,name=augmented_images,json=augmentedImages,proto3" json:"augmented_images,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ExportStats) Reset() {
 	*x = ExportStats{}
-	mi := &file_krill_v1_export_proto_msgTypes[3]
+	mi := &file_krill_v1_export_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +582,7 @@ func (x *ExportStats) String() string {
 func (*ExportStats) ProtoMessage() {}
 
 func (x *ExportStats) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[3]
+	mi := &file_krill_v1_export_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +595,7 @@ func (x *ExportStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportStats.ProtoReflect.Descriptor instead.
 func (*ExportStats) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{3}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ExportStats) GetTrainImages() int32 {
@@ -491,6 +696,20 @@ func (x *ExportStats) GetTestBoxes() int32 {
 	return 0
 }
 
+func (x *ExportStats) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
+}
+
+func (x *ExportStats) GetAugmentedImages() int32 {
+	if x != nil {
+		return x.AugmentedImages
+	}
+	return 0
+}
+
 type Export struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -511,7 +730,7 @@ type Export struct {
 
 func (x *Export) Reset() {
 	*x = Export{}
-	mi := &file_krill_v1_export_proto_msgTypes[4]
+	mi := &file_krill_v1_export_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +742,7 @@ func (x *Export) String() string {
 func (*Export) ProtoMessage() {}
 
 func (x *Export) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[4]
+	mi := &file_krill_v1_export_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +755,7 @@ func (x *Export) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Export.ProtoReflect.Descriptor instead.
 func (*Export) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{4}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Export) GetId() int64 {
@@ -625,7 +844,7 @@ type PreviewExportRequest struct {
 
 func (x *PreviewExportRequest) Reset() {
 	*x = PreviewExportRequest{}
-	mi := &file_krill_v1_export_proto_msgTypes[5]
+	mi := &file_krill_v1_export_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +856,7 @@ func (x *PreviewExportRequest) String() string {
 func (*PreviewExportRequest) ProtoMessage() {}
 
 func (x *PreviewExportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[5]
+	mi := &file_krill_v1_export_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +869,7 @@ func (x *PreviewExportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewExportRequest.ProtoReflect.Descriptor instead.
 func (*PreviewExportRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PreviewExportRequest) GetOptions() *ExportOptions {
@@ -669,7 +888,7 @@ type PreviewExportResponse struct {
 
 func (x *PreviewExportResponse) Reset() {
 	*x = PreviewExportResponse{}
-	mi := &file_krill_v1_export_proto_msgTypes[6]
+	mi := &file_krill_v1_export_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -681,7 +900,7 @@ func (x *PreviewExportResponse) String() string {
 func (*PreviewExportResponse) ProtoMessage() {}
 
 func (x *PreviewExportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[6]
+	mi := &file_krill_v1_export_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -694,7 +913,7 @@ func (x *PreviewExportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewExportResponse.ProtoReflect.Descriptor instead.
 func (*PreviewExportResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PreviewExportResponse) GetStats() *ExportStats {
@@ -714,7 +933,7 @@ type CreateExportRequest struct {
 
 func (x *CreateExportRequest) Reset() {
 	*x = CreateExportRequest{}
-	mi := &file_krill_v1_export_proto_msgTypes[7]
+	mi := &file_krill_v1_export_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -726,7 +945,7 @@ func (x *CreateExportRequest) String() string {
 func (*CreateExportRequest) ProtoMessage() {}
 
 func (x *CreateExportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[7]
+	mi := &file_krill_v1_export_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +958,7 @@ func (x *CreateExportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExportRequest.ProtoReflect.Descriptor instead.
 func (*CreateExportRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CreateExportRequest) GetName() string {
@@ -765,7 +984,7 @@ type CreateExportResponse struct {
 
 func (x *CreateExportResponse) Reset() {
 	*x = CreateExportResponse{}
-	mi := &file_krill_v1_export_proto_msgTypes[8]
+	mi := &file_krill_v1_export_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -777,7 +996,7 @@ func (x *CreateExportResponse) String() string {
 func (*CreateExportResponse) ProtoMessage() {}
 
 func (x *CreateExportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[8]
+	mi := &file_krill_v1_export_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +1009,7 @@ func (x *CreateExportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExportResponse.ProtoReflect.Descriptor instead.
 func (*CreateExportResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateExportResponse) GetExport() *Export {
@@ -808,7 +1027,7 @@ type ListExportsRequest struct {
 
 func (x *ListExportsRequest) Reset() {
 	*x = ListExportsRequest{}
-	mi := &file_krill_v1_export_proto_msgTypes[9]
+	mi := &file_krill_v1_export_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -820,7 +1039,7 @@ func (x *ListExportsRequest) String() string {
 func (*ListExportsRequest) ProtoMessage() {}
 
 func (x *ListExportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[9]
+	mi := &file_krill_v1_export_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -833,7 +1052,7 @@ func (x *ListExportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExportsRequest.ProtoReflect.Descriptor instead.
 func (*ListExportsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{9}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{10}
 }
 
 type ListExportsResponse struct {
@@ -845,7 +1064,7 @@ type ListExportsResponse struct {
 
 func (x *ListExportsResponse) Reset() {
 	*x = ListExportsResponse{}
-	mi := &file_krill_v1_export_proto_msgTypes[10]
+	mi := &file_krill_v1_export_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -857,7 +1076,7 @@ func (x *ListExportsResponse) String() string {
 func (*ListExportsResponse) ProtoMessage() {}
 
 func (x *ListExportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[10]
+	mi := &file_krill_v1_export_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -870,7 +1089,7 @@ func (x *ListExportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExportsResponse.ProtoReflect.Descriptor instead.
 func (*ListExportsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{10}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListExportsResponse) GetExports() []*Export {
@@ -889,7 +1108,7 @@ type DeleteExportRequest struct {
 
 func (x *DeleteExportRequest) Reset() {
 	*x = DeleteExportRequest{}
-	mi := &file_krill_v1_export_proto_msgTypes[11]
+	mi := &file_krill_v1_export_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -901,7 +1120,7 @@ func (x *DeleteExportRequest) String() string {
 func (*DeleteExportRequest) ProtoMessage() {}
 
 func (x *DeleteExportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[11]
+	mi := &file_krill_v1_export_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +1133,7 @@ func (x *DeleteExportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExportRequest.ProtoReflect.Descriptor instead.
 func (*DeleteExportRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{11}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteExportRequest) GetId() int64 {
@@ -932,7 +1151,7 @@ type DeleteExportResponse struct {
 
 func (x *DeleteExportResponse) Reset() {
 	*x = DeleteExportResponse{}
-	mi := &file_krill_v1_export_proto_msgTypes[12]
+	mi := &file_krill_v1_export_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -944,7 +1163,7 @@ func (x *DeleteExportResponse) String() string {
 func (*DeleteExportResponse) ProtoMessage() {}
 
 func (x *DeleteExportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[12]
+	mi := &file_krill_v1_export_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -957,7 +1176,7 @@ func (x *DeleteExportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExportResponse.ProtoReflect.Descriptor instead.
 func (*DeleteExportResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{12}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{13}
 }
 
 type GetExportDefaultsRequest struct {
@@ -968,7 +1187,7 @@ type GetExportDefaultsRequest struct {
 
 func (x *GetExportDefaultsRequest) Reset() {
 	*x = GetExportDefaultsRequest{}
-	mi := &file_krill_v1_export_proto_msgTypes[13]
+	mi := &file_krill_v1_export_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +1199,7 @@ func (x *GetExportDefaultsRequest) String() string {
 func (*GetExportDefaultsRequest) ProtoMessage() {}
 
 func (x *GetExportDefaultsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[13]
+	mi := &file_krill_v1_export_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +1212,7 @@ func (x *GetExportDefaultsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExportDefaultsRequest.ProtoReflect.Descriptor instead.
 func (*GetExportDefaultsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{13}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{14}
 }
 
 type GetExportDefaultsResponse struct {
@@ -1005,7 +1224,7 @@ type GetExportDefaultsResponse struct {
 
 func (x *GetExportDefaultsResponse) Reset() {
 	*x = GetExportDefaultsResponse{}
-	mi := &file_krill_v1_export_proto_msgTypes[14]
+	mi := &file_krill_v1_export_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1236,7 @@ func (x *GetExportDefaultsResponse) String() string {
 func (*GetExportDefaultsResponse) ProtoMessage() {}
 
 func (x *GetExportDefaultsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_export_proto_msgTypes[14]
+	mi := &file_krill_v1_export_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1249,7 @@ func (x *GetExportDefaultsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExportDefaultsResponse.ProtoReflect.Descriptor instead.
 func (*GetExportDefaultsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_export_proto_rawDescGZIP(), []int{14}
+	return file_krill_v1_export_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetExportDefaultsResponse) GetOptions() *ExportOptions {
@@ -1044,13 +1263,35 @@ var File_krill_v1_export_proto protoreflect.FileDescriptor
 
 const file_krill_v1_export_proto_rawDesc = "" +
 	"\n" +
-	"\x15krill/v1/export.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x01\n" +
+	"\x15krill/v1/export.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x02\n" +
 	"\rExportOptions\x12!\n" +
 	"\fval_fraction\x18\x01 \x01(\x02R\vvalFraction\x12\x16\n" +
 	"\x06stride\x18\x02 \x01(\x05R\x06stride\x12\x14\n" +
 	"\x05dedup\x18\x03 \x01(\bR\x05dedup\x12%\n" +
 	"\x0ededup_distance\x18\x04 \x01(\x05R\rdedupDistance\x12\x1b\n" +
-	"\tvideo_ids\x18\x05 \x03(\x03R\bvideoIds\"\xc1\x01\n" +
+	"\tvideo_ids\x18\x05 \x03(\x03R\bvideoIds\x12)\n" +
+	"\x10augmented_copies\x18\x06 \x01(\x05R\x0faugmentedCopies\x12:\n" +
+	"\faugmentation\x18\a \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\"\xa5\x03\n" +
+	"\fAugmentation\x12\x18\n" +
+	"\adegrees\x18\x01 \x01(\x02R\adegrees\x12\x1c\n" +
+	"\ttranslate\x18\x02 \x01(\x02R\ttranslate\x12\x14\n" +
+	"\x05scale\x18\x03 \x01(\x02R\x05scale\x12\x14\n" +
+	"\x05shear\x18\x04 \x01(\x02R\x05shear\x12 \n" +
+	"\vperspective\x18\x05 \x01(\x02R\vperspective\x12\x13\n" +
+	"\x05hsv_h\x18\x06 \x01(\x02R\x04hsvH\x12\x13\n" +
+	"\x05hsv_s\x18\a \x01(\x02R\x04hsvS\x12\x13\n" +
+	"\x05hsv_v\x18\b \x01(\x02R\x04hsvV\x12\x16\n" +
+	"\x06fliplr\x18\t \x01(\x02R\x06fliplr\x12\x16\n" +
+	"\x06flipud\x18\n" +
+	" \x01(\x02R\x06flipud\x12\x16\n" +
+	"\x06mosaic\x18\v \x01(\x02R\x06mosaic\x12\x16\n" +
+	"\x06aspect\x18\f \x01(\x02R\x06aspect\x12\x1e\n" +
+	"\n" +
+	"underwater\x18\r \x01(\x02R\n" +
+	"underwater\x12\x18\n" +
+	"\ashadows\x18\x0e \x01(\x02R\ashadows\x12\x14\n" +
+	"\x05noise\x18\x0f \x01(\x02R\x05noise\x12 \n" +
+	"\vdistractors\x18\x10 \x01(\x02R\vdistractors\"\xc1\x01\n" +
 	"\x10ExportClassStats\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
@@ -1067,7 +1308,7 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n" +
 	"\x06pinned\x18\x04 \x01(\bR\x06pinned\x12\x16\n" +
 	"\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n" +
-	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\xb9\x04\n" +
+	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\x80\x05\n" +
 	"\vExportStats\x12!\n" +
 	"\ftrain_images\x18\x01 \x01(\x05R\vtrainImages\x12\x1d\n" +
 	"\n" +
@@ -1087,7 +1328,9 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\vtest_images\x18\r \x01(\x05R\n" +
 	"testImages\x12\x1d\n" +
 	"\n" +
-	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\"\xa8\x03\n" +
+	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\x12\x1a\n" +
+	"\boriented\x18\x0f \x01(\bR\boriented\x12)\n" +
+	"\x10augmented_images\x18\x10 \x01(\x05R\x0faugmentedImages\"\xa8\x03\n" +
 	"\x06Export\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
@@ -1149,55 +1392,57 @@ func file_krill_v1_export_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_export_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_krill_v1_export_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_krill_v1_export_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_krill_v1_export_proto_goTypes = []any{
 	(ExportStatus)(0),                 // 0: krill.v1.ExportStatus
 	(*ExportOptions)(nil),             // 1: krill.v1.ExportOptions
-	(*ExportClassStats)(nil),          // 2: krill.v1.ExportClassStats
-	(*ExportVideoStats)(nil),          // 3: krill.v1.ExportVideoStats
-	(*ExportStats)(nil),               // 4: krill.v1.ExportStats
-	(*Export)(nil),                    // 5: krill.v1.Export
-	(*PreviewExportRequest)(nil),      // 6: krill.v1.PreviewExportRequest
-	(*PreviewExportResponse)(nil),     // 7: krill.v1.PreviewExportResponse
-	(*CreateExportRequest)(nil),       // 8: krill.v1.CreateExportRequest
-	(*CreateExportResponse)(nil),      // 9: krill.v1.CreateExportResponse
-	(*ListExportsRequest)(nil),        // 10: krill.v1.ListExportsRequest
-	(*ListExportsResponse)(nil),       // 11: krill.v1.ListExportsResponse
-	(*DeleteExportRequest)(nil),       // 12: krill.v1.DeleteExportRequest
-	(*DeleteExportResponse)(nil),      // 13: krill.v1.DeleteExportResponse
-	(*GetExportDefaultsRequest)(nil),  // 14: krill.v1.GetExportDefaultsRequest
-	(*GetExportDefaultsResponse)(nil), // 15: krill.v1.GetExportDefaultsResponse
-	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
+	(*Augmentation)(nil),              // 2: krill.v1.Augmentation
+	(*ExportClassStats)(nil),          // 3: krill.v1.ExportClassStats
+	(*ExportVideoStats)(nil),          // 4: krill.v1.ExportVideoStats
+	(*ExportStats)(nil),               // 5: krill.v1.ExportStats
+	(*Export)(nil),                    // 6: krill.v1.Export
+	(*PreviewExportRequest)(nil),      // 7: krill.v1.PreviewExportRequest
+	(*PreviewExportResponse)(nil),     // 8: krill.v1.PreviewExportResponse
+	(*CreateExportRequest)(nil),       // 9: krill.v1.CreateExportRequest
+	(*CreateExportResponse)(nil),      // 10: krill.v1.CreateExportResponse
+	(*ListExportsRequest)(nil),        // 11: krill.v1.ListExportsRequest
+	(*ListExportsResponse)(nil),       // 12: krill.v1.ListExportsResponse
+	(*DeleteExportRequest)(nil),       // 13: krill.v1.DeleteExportRequest
+	(*DeleteExportResponse)(nil),      // 14: krill.v1.DeleteExportResponse
+	(*GetExportDefaultsRequest)(nil),  // 15: krill.v1.GetExportDefaultsRequest
+	(*GetExportDefaultsResponse)(nil), // 16: krill.v1.GetExportDefaultsResponse
+	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
 }
 var file_krill_v1_export_proto_depIdxs = []int32{
-	2,  // 0: krill.v1.ExportStats.classes:type_name -> krill.v1.ExportClassStats
-	3,  // 1: krill.v1.ExportStats.videos:type_name -> krill.v1.ExportVideoStats
-	0,  // 2: krill.v1.Export.status:type_name -> krill.v1.ExportStatus
-	1,  // 3: krill.v1.Export.options:type_name -> krill.v1.ExportOptions
-	4,  // 4: krill.v1.Export.stats:type_name -> krill.v1.ExportStats
-	16, // 5: krill.v1.Export.created_at:type_name -> google.protobuf.Timestamp
-	16, // 6: krill.v1.Export.finished_at:type_name -> google.protobuf.Timestamp
-	1,  // 7: krill.v1.PreviewExportRequest.options:type_name -> krill.v1.ExportOptions
-	4,  // 8: krill.v1.PreviewExportResponse.stats:type_name -> krill.v1.ExportStats
-	1,  // 9: krill.v1.CreateExportRequest.options:type_name -> krill.v1.ExportOptions
-	5,  // 10: krill.v1.CreateExportResponse.export:type_name -> krill.v1.Export
-	5,  // 11: krill.v1.ListExportsResponse.exports:type_name -> krill.v1.Export
-	1,  // 12: krill.v1.GetExportDefaultsResponse.options:type_name -> krill.v1.ExportOptions
-	6,  // 13: krill.v1.ExportService.PreviewExport:input_type -> krill.v1.PreviewExportRequest
-	8,  // 14: krill.v1.ExportService.CreateExport:input_type -> krill.v1.CreateExportRequest
-	10, // 15: krill.v1.ExportService.ListExports:input_type -> krill.v1.ListExportsRequest
-	12, // 16: krill.v1.ExportService.DeleteExport:input_type -> krill.v1.DeleteExportRequest
-	14, // 17: krill.v1.ExportService.GetExportDefaults:input_type -> krill.v1.GetExportDefaultsRequest
-	7,  // 18: krill.v1.ExportService.PreviewExport:output_type -> krill.v1.PreviewExportResponse
-	9,  // 19: krill.v1.ExportService.CreateExport:output_type -> krill.v1.CreateExportResponse
-	11, // 20: krill.v1.ExportService.ListExports:output_type -> krill.v1.ListExportsResponse
-	13, // 21: krill.v1.ExportService.DeleteExport:output_type -> krill.v1.DeleteExportResponse
-	15, // 22: krill.v1.ExportService.GetExportDefaults:output_type -> krill.v1.GetExportDefaultsResponse
-	18, // [18:23] is the sub-list for method output_type
-	13, // [13:18] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	2,  // 0: krill.v1.ExportOptions.augmentation:type_name -> krill.v1.Augmentation
+	3,  // 1: krill.v1.ExportStats.classes:type_name -> krill.v1.ExportClassStats
+	4,  // 2: krill.v1.ExportStats.videos:type_name -> krill.v1.ExportVideoStats
+	0,  // 3: krill.v1.Export.status:type_name -> krill.v1.ExportStatus
+	1,  // 4: krill.v1.Export.options:type_name -> krill.v1.ExportOptions
+	5,  // 5: krill.v1.Export.stats:type_name -> krill.v1.ExportStats
+	17, // 6: krill.v1.Export.created_at:type_name -> google.protobuf.Timestamp
+	17, // 7: krill.v1.Export.finished_at:type_name -> google.protobuf.Timestamp
+	1,  // 8: krill.v1.PreviewExportRequest.options:type_name -> krill.v1.ExportOptions
+	5,  // 9: krill.v1.PreviewExportResponse.stats:type_name -> krill.v1.ExportStats
+	1,  // 10: krill.v1.CreateExportRequest.options:type_name -> krill.v1.ExportOptions
+	6,  // 11: krill.v1.CreateExportResponse.export:type_name -> krill.v1.Export
+	6,  // 12: krill.v1.ListExportsResponse.exports:type_name -> krill.v1.Export
+	1,  // 13: krill.v1.GetExportDefaultsResponse.options:type_name -> krill.v1.ExportOptions
+	7,  // 14: krill.v1.ExportService.PreviewExport:input_type -> krill.v1.PreviewExportRequest
+	9,  // 15: krill.v1.ExportService.CreateExport:input_type -> krill.v1.CreateExportRequest
+	11, // 16: krill.v1.ExportService.ListExports:input_type -> krill.v1.ListExportsRequest
+	13, // 17: krill.v1.ExportService.DeleteExport:input_type -> krill.v1.DeleteExportRequest
+	15, // 18: krill.v1.ExportService.GetExportDefaults:input_type -> krill.v1.GetExportDefaultsRequest
+	8,  // 19: krill.v1.ExportService.PreviewExport:output_type -> krill.v1.PreviewExportResponse
+	10, // 20: krill.v1.ExportService.CreateExport:output_type -> krill.v1.CreateExportResponse
+	12, // 21: krill.v1.ExportService.ListExports:output_type -> krill.v1.ListExportsResponse
+	14, // 22: krill.v1.ExportService.DeleteExport:output_type -> krill.v1.DeleteExportResponse
+	16, // 23: krill.v1.ExportService.GetExportDefaults:output_type -> krill.v1.GetExportDefaultsResponse
+	19, // [19:24] is the sub-list for method output_type
+	14, // [14:19] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_export_proto_init() }
@@ -1211,7 +1456,7 @@ func file_krill_v1_export_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_export_proto_rawDesc), len(file_krill_v1_export_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

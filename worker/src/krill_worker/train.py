@@ -15,6 +15,7 @@ from typing import Any
 
 from krill.v1 import pipeline_pb2, pipeline_worker_pb2, worker_pb2
 
+from krill_worker import augment
 from krill_worker.api import Api, ApiError
 from krill_worker.frames import upload
 from krill_worker.pipeline import cache_dir, download
@@ -116,7 +117,8 @@ def data_yaml(root: Path, classes: Sequence[str], has_test: bool) -> Path:
 
 
 def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
-    """Convert Ultralytics' DetMetrics, with one row per class in the split."""
+    """Convert Ultralytics' DetMetrics or OBBMetrics, with one row per class in
+    the split."""
     box = m.box
     per_class = getattr(m, "nt_per_class", None)
     per_image = getattr(m, "nt_per_image", None)
@@ -144,6 +146,22 @@ def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
             )
         )
     return out
+
+
+def download_distractors(urls: Sequence[str], to: Path) -> list[Path]:
+    """Download what it can: a missing distractor only means fewer
+    backgrounds to choose from."""
+    if not urls:
+        return []
+    to.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for i, url in enumerate(urls):
+        try:
+            paths.append(download(url, to / f"{i}.img"))
+        except OSError as e:
+            log.warning("distractor %d failed to download: %s", i, e)
+    log.info("downloaded %d of %d distractors", len(paths), len(urls))
+    return paths
 
 
 def run_train(
@@ -228,8 +246,9 @@ def run_train(
             if task.base_weights_url:
                 base = download(task.base_weights_url, root / "base.pt")
             else:
-                # Ultralytics downloads its COCO weights to this path.
-                base = cache_dir() / f"yolo11{SIZES[task.size]}.pt"
+                # Ultralytics downloads its pretrained weights to this path.
+                obb = "-obb" if task.oriented else ""
+                base = cache_dir() / f"yolo11{SIZES[task.size]}{obb}.pt"
             progress()
             check_in()
 
@@ -237,7 +256,16 @@ def run_train(
             model.add_callback("on_train_batch_end", check_in)
             model.add_callback("on_val_batch_end", check_in)
             model.add_callback("on_fit_epoch_end", on_epoch)
+            aug: dict[str, Any] = {}
+            if task.HasField("augmentation"):
+                base_trainer = model.task_map[model.task]["trainer"]
+                distractors = download_distractors(task.distractor_urls, root / "distractors")
+                aug = {
+                    **augment.ultralytics_args(task.augmentation),
+                    "trainer": augment.trainer(base_trainer, task.augmentation, distractors),
+                }
             model.train(
+                **aug,
                 data=str(data),
                 epochs=task.epochs,
                 imgsz=task.image_size,

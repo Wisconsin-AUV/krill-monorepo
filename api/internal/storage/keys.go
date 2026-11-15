@@ -69,3 +69,24 @@ const ModelUploadsPrefix = "model-uploads/"
 func PrelabelerPreviewKey(name string) string {
 	return fmt.Sprintf("prelabelers/%s/preview.png", name)
 }
+
+// DistractorsPrefix holds the distractor library's images.
+const DistractorsPrefix = "distractors/"
+
+func DistractorPrefix(id int64) string {
+	return fmt.Sprintf("%s%d/", DistractorsPrefix, id)
+}
+
+// DistractorUploadKey is the image as the browser uploaded it, kept until
+// processing succeeds so a failed one can be retried.
+func DistractorUploadKey(id int64) string {
+	return DistractorPrefix(id) + "upload"
+}
+
+func DistractorKey(id int64) string {
+	return DistractorPrefix(id) + "image.jpg"
+}
+
+func DistractorThumbnailKey(id int64) string {
+	return DistractorPrefix(id) + "thumb.jpg"
+}

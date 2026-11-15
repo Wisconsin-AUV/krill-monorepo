@@ -22,14 +22,17 @@ func (q *Queries) ClearEmptyFrame(ctx context.Context, id int64) error {
 }
 
 const copyAnnotations = `-- name: CopyAnnotations :many
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
-SELECT a.track_id, $1, a.x, a.y, a.width, a.height, 'human', 'verified', $2::uuid, $2::uuid
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, created_by, updated_by)
+SELECT a.track_id, $1, a.x, a.y, a.width, a.height, CASE WHEN lt.oriented THEN a.corners END,
+    'human', 'verified', $2::uuid, $2::uuid
 FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN label_types lt ON lt.id = t.label_type_id
 WHERE a.frame_id = $3
     AND a.status <> 'rejected'
     AND (cardinality($4::bigint[]) = 0 OR a.track_id = ANY($4::bigint[]))
 ON CONFLICT (track_id, frame_id) DO NOTHING
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence, corners
 `
 
 type CopyAnnotationsParams struct {
@@ -70,6 +73,7 @@ func (q *Queries) CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams
 			&i.UpdatedBy,
 			&i.Drift,
 			&i.Confidence,
+			&i.Corners,
 		); err != nil {
 			return nil, err
 		}
@@ -211,39 +215,47 @@ func (q *Queries) GetTrack(ctx context.Context, id int64) (Track, error) {
 }
 
 const listClipAnnotations = `-- name: ListClipAnnotations :many
-SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift, a.confidence
+SELECT a.id, a.track_id, a.frame_id, a.x, a.y, a.width, a.height, a.source, a.status, a.model_version, a.created_at, a.updated_at, a.created_by, a.updated_by, a.drift, a.confidence, a.corners, lt.oriented
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN label_types lt ON lt.id = t.label_type_id
 WHERE t.clip_id = $1
 ORDER BY a.frame_id, a.track_id
 `
 
-func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]Annotation, error) {
+type ListClipAnnotationsRow struct {
+	Annotation Annotation `json:"annotation"`
+	Oriented   bool       `json:"oriented"`
+}
+
+func (q *Queries) ListClipAnnotations(ctx context.Context, clipID int64) ([]ListClipAnnotationsRow, error) {
 	rows, err := q.db.Query(ctx, listClipAnnotations, clipID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Annotation
+	var items []ListClipAnnotationsRow
 	for rows.Next() {
-		var i Annotation
+		var i ListClipAnnotationsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.TrackID,
-			&i.FrameID,
-			&i.X,
-			&i.Y,
-			&i.Width,
-			&i.Height,
-			&i.Source,
-			&i.Status,
-			&i.ModelVersion,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.CreatedBy,
-			&i.UpdatedBy,
-			&i.Drift,
-			&i.Confidence,
+			&i.Annotation.ID,
+			&i.Annotation.TrackID,
+			&i.Annotation.FrameID,
+			&i.Annotation.X,
+			&i.Annotation.Y,
+			&i.Annotation.Width,
+			&i.Annotation.Height,
+			&i.Annotation.Source,
+			&i.Annotation.Status,
+			&i.Annotation.ModelVersion,
+			&i.Annotation.CreatedAt,
+			&i.Annotation.UpdatedAt,
+			&i.Annotation.CreatedBy,
+			&i.Annotation.UpdatedBy,
+			&i.Annotation.Drift,
+			&i.Annotation.Confidence,
+			&i.Annotation.Corners,
+			&i.Oriented,
 		); err != nil {
 			return nil, err
 		}
@@ -289,15 +301,16 @@ func (q *Queries) ListClipTracks(ctx context.Context, clipID int64) ([]Track, er
 
 const listTypeTracks = `-- name: ListTypeTracks :many
 SELECT t.id, t.clip_id, t.label_type_id, t.attributes, c.video_id,
-    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height
+    b.frame_id, b.idx AS frame_idx, b.x, b.y, b.width, b.height,
+    (CASE WHEN lt.oriented THEN b.corners END)::float8[] AS corners
 FROM tracks t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
 JOIN label_types lt ON lt.id = t.label_type_id
 JOIN LATERAL (
-    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height
+    SELECT r.frame_id, r.idx, r.x, r.y, r.width, r.height, r.corners
     FROM (
-        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.status,
+        SELECT a.frame_id, f.idx, a.x, a.y, a.width, a.height, a.corners, a.status,
             row_number() OVER (ORDER BY f.idx) AS n,
             count(*) OVER () AS total
         FROM annotations a
@@ -331,17 +344,18 @@ type ListTypeTracksParams struct {
 }
 
 type ListTypeTracksRow struct {
-	ID          int64   `json:"id"`
-	ClipID      int64   `json:"clip_id"`
-	LabelTypeID int64   `json:"label_type_id"`
-	Attributes  []byte  `json:"attributes"`
-	VideoID     int64   `json:"video_id"`
-	FrameID     int64   `json:"frame_id"`
-	FrameIdx    int32   `json:"frame_idx"`
-	X           float64 `json:"x"`
-	Y           float64 `json:"y"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
+	ID          int64     `json:"id"`
+	ClipID      int64     `json:"clip_id"`
+	LabelTypeID int64     `json:"label_type_id"`
+	Attributes  []byte    `json:"attributes"`
+	VideoID     int64     `json:"video_id"`
+	FrameID     int64     `json:"frame_id"`
+	FrameIdx    int32     `json:"frame_idx"`
+	X           float64   `json:"x"`
+	Y           float64   `json:"y"`
+	Width       float64   `json:"width"`
+	Height      float64   `json:"height"`
+	Corners     []float64 `json:"corners"`
 }
 
 // Each track comes with its first verified box, or its middle box when none
@@ -373,6 +387,7 @@ func (q *Queries) ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) 
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Corners,
 		); err != nil {
 			return nil, err
 		}
@@ -455,13 +470,14 @@ func (q *Queries) UpdateTrack(ctx context.Context, arg UpdateTrackParams) (Track
 }
 
 const upsertAnnotation = `-- name: UpsertAnnotation :one
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, source, status, created_by, updated_by)
-VALUES ($1, $2, $3, $4, $5, $6, 'human', 'verified', $7::uuid, $7::uuid)
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, created_by, updated_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, 'human', 'verified', $8::uuid, $8::uuid)
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
     y = excluded.y,
     width = excluded.width,
     height = excluded.height,
+    corners = excluded.corners,
     source = 'human',
     status = 'verified',
     model_version = '',
@@ -469,7 +485,7 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     drift = CASE WHEN annotations.drift = 'flagged' THEN 'reviewed' ELSE annotations.drift END,
     updated_by = excluded.updated_by,
     updated_at = now()
-RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence
+RETURNING id, track_id, frame_id, x, y, width, height, source, status, model_version, created_at, updated_at, created_by, updated_by, drift, confidence, corners
 `
 
 type UpsertAnnotationParams struct {
@@ -479,6 +495,7 @@ type UpsertAnnotationParams struct {
 	Y       float64   `json:"y"`
 	Width   float64   `json:"width"`
 	Height  float64   `json:"height"`
+	Corners []float64 `json:"corners"`
 	UserID  uuid.UUID `json:"user_id"`
 }
 
@@ -490,6 +507,7 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		arg.Y,
 		arg.Width,
 		arg.Height,
+		arg.Corners,
 		arg.UserID,
 	)
 	var i Annotation
@@ -510,6 +528,7 @@ func (q *Queries) UpsertAnnotation(ctx context.Context, arg UpsertAnnotationPara
 		&i.UpdatedBy,
 		&i.Drift,
 		&i.Confidence,
+		&i.Corners,
 	)
 	return i, err
 }

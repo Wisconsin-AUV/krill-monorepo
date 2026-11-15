@@ -727,7 +727,9 @@ type FinishInspectRequest struct {
 	// Class names in class id order.
 	Classes []string `protobuf:"bytes,2,rep,name=classes,proto3" json:"classes,omitempty"`
 	// The image size the model trained at, or 0 when the weights don't say.
-	ImageSize     int32 `protobuf:"varint,3,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
+	ImageSize int32 `protobuf:"varint,3,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
+	// An OBB model rather than a detection model.
+	Oriented      bool `protobuf:"varint,4,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -781,6 +783,13 @@ func (x *FinishInspectRequest) GetImageSize() int32 {
 		return x.ImageSize
 	}
 	return 0
+}
+
+func (x *FinishInspectRequest) GetOriented() bool {
+	if x != nil {
+		return x.Oriented
+	}
+	return false
 }
 
 type FinishInspectResponse struct {
@@ -869,12 +878,13 @@ const file_krill_v1_pipeline_worker_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12*\n" +
 	"\x05boxes\x18\x02 \x03(\v2\x14.krill.v1.PreviewBoxR\x05boxes\x12\x17\n" +
 	"\atook_ms\x18\x03 \x01(\x05R\x06tookMs\"\x17\n" +
-	"\x15ReportPreviewResponse\"h\n" +
+	"\x15ReportPreviewResponse\"\x84\x01\n" +
 	"\x14FinishInspectRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x18\n" +
 	"\aclasses\x18\x02 \x03(\tR\aclasses\x12\x1d\n" +
 	"\n" +
-	"image_size\x18\x03 \x01(\x05R\timageSize\"\x17\n" +
+	"image_size\x18\x03 \x01(\x05R\timageSize\x12\x1a\n" +
+	"\boriented\x18\x04 \x01(\bR\boriented\"\x17\n" +
 	"\x15FinishInspectResponse2\xf5\x04\n" +
 	"\x15PipelineWorkerService\x12d\n" +
 	"\x13RegisterPrelabelers\x12$.krill.v1.RegisterPrelabelersRequest\x1a%.krill.v1.RegisterPrelabelersResponse\"\x00\x12@\n" +

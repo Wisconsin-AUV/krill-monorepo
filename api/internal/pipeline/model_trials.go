@@ -192,7 +192,7 @@ func (p *Pipeline) saveTrialBoxes(ctx context.Context, id int64, l *labeler, box
 		if !ok {
 			continue
 		}
-		x, y, w, h, err := annotation.ClampBox(b.GetBox())
+		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), true)
 		if err != nil {
 			continue
 		}
@@ -202,6 +202,11 @@ func (p *Pipeline) saveTrialBoxes(ctx context.Context, id int64, l *labeler, box
 		ins.Ys = append(ins.Ys, y)
 		ins.Widths = append(ins.Widths, w)
 		ins.Heights = append(ins.Heights, h)
+		ins.HasCorners = append(ins.HasCorners, corners != nil)
+		if corners == nil {
+			corners = make([]float64, 8)
+		}
+		ins.Corners = append(ins.Corners, corners...)
 		ins.Confidences = append(ins.Confidences, min(max(b.GetConfidence(), 0), 1))
 	}
 	if len(ins.FrameIds) == 0 {
@@ -627,7 +632,7 @@ func (s *Service) GetModelTrial(ctx context.Context, req *krillv1.GetModelTrialR
 			FrameId:     b.FrameID,
 			LabelTypeId: c.LabelTypeID,
 			Attributes:  c.Attributes,
-			Box:         &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height},
+			Box:         &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Corners: annotation.Corners(b.Corners)},
 			Confidence:  b.Confidence,
 			Track:       b.Track,
 		})

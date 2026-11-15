@@ -330,7 +330,7 @@ func (p *Pipeline) prelabelClip(ctx context.Context, runID int64, l *labeler, c 
 		if !ok {
 			continue
 		}
-		x, y, w, h, err := annotation.ClampBox(b.GetBox())
+		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), true)
 		if err != nil {
 			continue
 		}
@@ -342,6 +342,7 @@ func (p *Pipeline) prelabelClip(ctx context.Context, runID int64, l *labeler, c 
 			frameID:  b.GetFrameId(),
 			frameIdx: idx[b.GetFrameId()],
 			box:      annotation.Box{X: x, Y: y, Width: w, Height: h},
+			corners:  corners,
 			conf:     min(max(b.GetConfidence(), 0), 1),
 			target:   tg.index,
 			model:    model,
@@ -454,6 +455,12 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 			ins.Ys = append(ins.Ys, d.box.Y)
 			ins.Widths = append(ins.Widths, d.box.Width)
 			ins.Heights = append(ins.Heights, d.box.Height)
+			ins.HasCorners = append(ins.HasCorners, d.corners != nil)
+			corners := d.corners
+			if corners == nil {
+				corners = make([]float64, 8)
+			}
+			ins.Corners = append(ins.Corners, corners...)
 			ins.ModelVersions = append(ins.ModelVersions, d.model)
 			ins.Confidences = append(ins.Confidences, d.conf)
 		}

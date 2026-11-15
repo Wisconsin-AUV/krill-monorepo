@@ -4,7 +4,7 @@ import {
   type Annotation,
   type Track,
 } from '@/gen/krill/v1/annotation_pb'
-import type { BoxRect } from './useLabelStore'
+import type { BoxRect, BoxShape } from './useLabelStore'
 
 export const MATCH_IOU = 0.5
 export const TIGHT_IOU = 0.75
@@ -12,14 +12,14 @@ export const TIGHT_IOU = 0.75
 export interface ModelBox {
   labelTypeId: bigint
   attributes: Record<string, string>
-  box?: BoxRect
+  box?: BoxShape
   confidence: number
 }
 
 export interface VerifiedBox {
   labelTypeId: bigint
   attributes: Record<string, string>
-  box: BoxRect
+  box: BoxShape
 }
 
 export interface Pair {
