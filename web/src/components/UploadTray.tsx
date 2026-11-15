@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { Meter } from '@/components/Meter'
 import { formatBytes } from '@/lib/format'
-import { useUploadStore, type Upload } from '@/store/useUploadStore'
+import { active, useUploadStore, type Upload } from '@/store/useUploadStore'
 
 function UploadRow({ upload }: { upload: Upload }) {
   const cancel = useUploadStore((s) => s.cancel)
@@ -13,7 +13,7 @@ function UploadRow({ upload }: { upload: Upload }) {
   return (
     <li className="px-4 py-3">
       <div className="flex items-center gap-2">
-        {upload.state === 'queued' && (
+        {upload.state === 'done' && (
           <CheckCircleIcon className="size-4 shrink-0 text-green-500" aria-hidden="true" />
         )}
         {(upload.state === 'error' || upload.state === 'canceled') && (
@@ -24,11 +24,9 @@ function UploadRow({ upload }: { upload: Upload }) {
         </span>
         <button
           type="button"
-          onClick={() => (upload.state === 'uploading' ? cancel(upload.id) : dismiss(upload.id))}
+          onClick={() => (active(upload) ? cancel(upload.id) : dismiss(upload.id))}
           className="rounded p-0.5 text-zinc-400 hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-sky-500 dark:hover:text-zinc-200"
-          aria-label={
-            upload.state === 'uploading' ? `Cancel ${upload.name}` : `Dismiss ${upload.name}`
-          }
+          aria-label={active(upload) ? `Cancel ${upload.name}` : `Dismiss ${upload.name}`}
         >
           <XMarkIcon className="size-4" />
         </button>
@@ -41,15 +39,20 @@ function UploadRow({ upload }: { upload: Upload }) {
           </p>
         </>
       )}
-      {upload.state === 'queued' && (
+      {upload.state === 'waiting' && (
+        <p className="text-xs/5 text-zinc-500 dark:text-zinc-400">Waiting</p>
+      )}
+      {upload.state === 'done' && (
         <p className="text-xs/5 text-zinc-500 dark:text-zinc-400">
           Uploaded.{' '}
-          <Link
-            to={`/videos/${upload.videoId}`}
-            className="font-medium text-sky-600 hover:text-sky-500 dark:text-sky-400"
-          >
-            View video
-          </Link>
+          {upload.link && (
+            <Link
+              to={upload.link.to}
+              className="font-medium text-sky-600 hover:text-sky-500 dark:text-sky-400"
+            >
+              {upload.link.label}
+            </Link>
+          )}
         </p>
       )}
       {upload.state === 'canceled' && (
@@ -65,14 +68,14 @@ function UploadRow({ upload }: { upload: Upload }) {
 export function UploadTray() {
   const uploads = useUploadStore((s) => s.uploads)
   const clearFinished = useUploadStore((s) => s.clearFinished)
-  const active = uploads.filter((u) => u.state === 'uploading').length
+  const running = uploads.filter(active).length
 
   useEffect(() => {
-    if (active === 0) return
+    if (running === 0) return
     const warn = (e: BeforeUnloadEvent) => e.preventDefault()
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [active])
+  }, [running])
 
   if (uploads.length === 0) return null
 
@@ -83,9 +86,9 @@ export function UploadTray() {
     >
       <header className="flex items-center justify-between border-b border-zinc-950/5 px-4 py-2.5 dark:border-white/5">
         <h2 className="text-sm/6 font-semibold text-zinc-950 dark:text-white">
-          {active > 0 ? `Uploading ${active} of ${uploads.length}` : 'Uploads'}
+          {running > 0 ? `Uploading ${running} of ${uploads.length}` : 'Uploads'}
         </h2>
-        {active < uploads.length && (
+        {running < uploads.length && (
           <button
             type="button"
             onClick={clearFinished}

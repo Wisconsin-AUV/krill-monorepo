@@ -4,27 +4,26 @@ package distractor
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"image"
+	"io"
 	"log/slog"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	// The formats a distractor may be.
+	// The formats a distractor may be uploaded as.
 	_ "image/jpeg"
 	_ "image/png"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 	_ "golang.org/x/image/webp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -42,31 +41,31 @@ const (
 	urlExpiry    = 12 * time.Hour
 	maxFilename  = 255
 	maxBytes     = 50 << 20
-	// maxPixels keeps decoding a distractor during an export within reason.
+	// maxPixels keeps decoding an upload within reason, and lets a 33
+	// megapixel camera's photos through.
 	maxPixels = 40_000_000
 )
 
-var keyName = regexp.MustCompile(`^[0-9a-f]{32}$`)
-
 var formats = map[string]bool{"jpeg": true, "png": true, "webp": true}
+
+var statuses = map[string]krillv1.DistractorStatus{
+	"uploading":  krillv1.DistractorStatus_DISTRACTOR_STATUS_UPLOADING,
+	"queued":     krillv1.DistractorStatus_DISTRACTOR_STATUS_QUEUED,
+	"processing": krillv1.DistractorStatus_DISTRACTOR_STATUS_PROCESSING,
+	"ready":      krillv1.DistractorStatus_DISTRACTOR_STATUS_READY,
+	"failed":     krillv1.DistractorStatus_DISTRACTOR_STATUS_FAILED,
+}
 
 type Service struct {
 	krillv1connect.UnimplementedDistractorServiceHandler
 	pool  *pgxpool.Pool
 	q     *db.Queries
 	store *storage.Store
+	jobs  *river.Client[pgx.Tx]
 }
 
-func NewService(pool *pgxpool.Pool, store *storage.Store) *Service {
-	return &Service{pool: pool, q: db.New(pool), store: store}
-}
-
-// ValidKey reports whether key is one CreateDistractorUpload could have
-// issued. Any other key would let AddDistractor list, and hand out read URLs
-// for, an arbitrary object such as a backup.
-func ValidKey(key string) bool {
-	name, ok := strings.CutPrefix(key, storage.DistractorsPrefix)
-	return ok && keyName.MatchString(name)
+func NewService(pool *pgxpool.Pool, store *storage.Store, jobs *river.Client[pgx.Tx]) *Service {
+	return &Service{pool: pool, q: db.New(pool), store: store, jobs: jobs}
 }
 
 func (s *Service) ListDistractors(ctx context.Context, _ *krillv1.ListDistractorsRequest) (*krillv1.ListDistractorsResponse, error) {
@@ -77,31 +76,14 @@ func (s *Service) ListDistractors(ctx context.Context, _ *krillv1.ListDistractor
 	out := make([]*krillv1.Distractor, len(rows))
 	for i, r := range rows {
 		out[i] = s.toProto(ctx, db.Distractor{
-			ID: r.ID, ObjectKey: r.ObjectKey, Filename: r.Filename, Width: r.Width, Height: r.Height,
-			SizeBytes: r.SizeBytes, CreatedBy: r.CreatedBy, CreatedAt: r.CreatedAt,
+			ID: r.ID, Filename: r.Filename, Width: r.Width, Height: r.Height, SizeBytes: r.SizeBytes,
+			CreatedBy: r.CreatedBy, CreatedAt: r.CreatedAt, Status: r.Status, Error: r.Error,
 		}, r.CreatedByName.String)
 	}
 	return &krillv1.ListDistractorsResponse{Distractors: out}, nil
 }
 
-func (s *Service) CreateDistractorUpload(ctx context.Context, _ *krillv1.CreateDistractorUploadRequest) (*krillv1.CreateDistractorUploadResponse, error) {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		return nil, rpc.Internal(err, "generate key")
-	}
-	key := storage.DistractorsPrefix + hex.EncodeToString(b)
-	url, err := s.store.PresignPut(ctx, key, uploadExpiry)
-	if err != nil {
-		return nil, rpc.Internal(err, "presign upload")
-	}
-	return &krillv1.CreateDistractorUploadResponse{Key: key, UploadUrl: url}, nil
-}
-
-func (s *Service) AddDistractor(ctx context.Context, req *krillv1.AddDistractorRequest) (*krillv1.AddDistractorResponse, error) {
-	key := req.GetKey()
-	if !ValidKey(key) {
-		return nil, rpc.Invalid("key was not issued for a distractor upload")
-	}
+func (s *Service) CreateDistractor(ctx context.Context, req *krillv1.CreateDistractorRequest) (*krillv1.CreateDistractorResponse, error) {
 	filename := strings.TrimSpace(path.Base(strings.ReplaceAll(req.GetFilename(), `\`, "/")))
 	if filename == "." || filename == "/" {
 		filename = ""
@@ -109,6 +91,35 @@ func (s *Service) AddDistractor(ctx context.Context, req *krillv1.AddDistractorR
 	if len(filename) > maxFilename {
 		return nil, rpc.Invalid("filename must be at most %d bytes", maxFilename)
 	}
+	if size := req.GetSize(); size <= 0 || size > maxBytes {
+		return nil, rpc.Invalid("the image must be at most %d MB", maxBytes>>20)
+	}
+	id := auth.CallerID(ctx)
+	d, err := s.q.CreateDistractor(ctx, db.CreateDistractorParams{
+		Filename:  filename,
+		CreatedBy: pgtype.UUID{Bytes: id, Valid: id != uuid.Nil},
+	})
+	if err != nil {
+		return nil, rpc.Internal(err, "create distractor")
+	}
+	url, err := s.store.PresignPut(ctx, storage.DistractorUploadKey(d.ID), uploadExpiry)
+	if err != nil {
+		return nil, rpc.Internal(err, "presign upload")
+	}
+	sess, _ := auth.SessionFrom(ctx)
+	return &krillv1.CreateDistractorResponse{Distractor: s.toProto(ctx, d, sess.User.Name), UploadUrl: url}, nil
+}
+
+func (s *Service) ProcessDistractor(ctx context.Context, req *krillv1.ProcessDistractorRequest) (*krillv1.ProcessDistractorResponse, error) {
+	id := req.GetId()
+	d, err := s.q.GetDistractor(ctx, id)
+	if err != nil {
+		return nil, rpc.DBError(err, "distractor")
+	}
+	if d.Status != "uploading" && d.Status != "failed" {
+		return nil, failed("the distractor is not waiting to be processed")
+	}
+	key := storage.DistractorUploadKey(id)
 	obj, ok, err := s.store.Stat(ctx, key)
 	if err != nil {
 		return nil, rpc.Internal(err, "check upload")
@@ -116,12 +127,13 @@ func (s *Service) AddDistractor(ctx context.Context, req *krillv1.AddDistractorR
 	if !ok || obj.Size == 0 {
 		return nil, failed("the image has not been uploaded")
 	}
-	cfg, err := s.check(ctx, key, obj.Size)
-	if err != nil {
-		if rerr := s.store.Remove(ctx, key); rerr != nil {
-			slog.WarnContext(ctx, "remove rejected distractor", "key", key, "err", rerr)
-		}
+	if reject, err := s.check(ctx, key, obj.Size); err != nil {
 		return nil, err
+	} else if reject != nil {
+		if err := s.delete(ctx, []int64{id}); err != nil {
+			slog.WarnContext(ctx, "delete rejected distractor", "id", id, "err", err)
+		}
+		return nil, connect.NewError(connect.CodeFailedPrecondition, reject)
 	}
 
 	tx, err := s.pool.Begin(ctx)
@@ -130,103 +142,130 @@ func (s *Service) AddDistractor(ctx context.Context, req *krillv1.AddDistractorR
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
-	id := auth.CallerID(ctx)
-	d, err := q.CreateDistractor(ctx, db.CreateDistractorParams{
-		ObjectKey: key,
-		Filename:  filename,
-		Width:     int32(cfg.Width),  //nolint:gosec // bounded by maxPixels
-		Height:    int32(cfg.Height), //nolint:gosec // bounded by maxPixels
-		SizeBytes: obj.Size,
-		CreatedBy: pgtype.UUID{Bytes: id, Valid: id != uuid.Nil},
-	})
-	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("distractor was already added"))
-		}
-		return nil, rpc.Internal(err, "add distractor")
+	if _, err := q.QueueDistractor(ctx, id); errors.Is(err, pgx.ErrNoRows) {
+		return nil, failed("the distractor is not waiting to be processed")
+	} else if err != nil {
+		return nil, rpc.DBError(err, "distractor")
 	}
-	err = audit.Record(ctx, q, audit.Entry{
-		Action:     audit.DistractorAdd,
-		TargetType: audit.TargetDistractor,
-		TargetID:   strconv.FormatInt(d.ID, 10),
-		TargetName: filename,
-		Details:    map[string]any{"width": cfg.Width, "height": cfg.Height, "bytes": obj.Size},
-	})
-	if err != nil {
-		return nil, rpc.Internal(err, "record audit entry")
+	if _, err := s.jobs.InsertTx(ctx, tx, Args{DistractorID: id}, nil); err != nil {
+		return nil, rpc.Internal(err, "queue processing")
+	}
+	if d.Status == "uploading" {
+		err = audit.Record(ctx, q, audit.Entry{
+			Action:     audit.DistractorAdd,
+			TargetType: audit.TargetDistractor,
+			TargetID:   strconv.FormatInt(id, 10),
+			TargetName: d.Filename,
+			Details:    map[string]any{"bytes": obj.Size},
+		})
+		if err != nil {
+			return nil, rpc.Internal(err, "record audit entry")
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, rpc.Internal(err, "commit")
 	}
-	sess, _ := auth.SessionFrom(ctx)
-	return &krillv1.AddDistractorResponse{Distractor: s.toProto(ctx, d, sess.User.Name)}, nil
+	return &krillv1.ProcessDistractorResponse{}, nil
 }
 
-// check reads the uploaded image's header.
-func (s *Service) check(ctx context.Context, key string, size int64) (image.Config, error) {
+// check reads the uploaded image's header. reject says why it isn't an image
+// Krill can use, which no retry would change.
+func (s *Service) check(ctx context.Context, key string, size int64) (reject, err error) {
 	if size > maxBytes {
-		return image.Config{}, failed("the image is larger than %d MB", maxBytes>>20)
+		return fmt.Errorf("the image is larger than %d MB", maxBytes>>20), nil
 	}
 	rc, err := s.store.Get(ctx, key)
 	if err != nil {
-		return image.Config{}, rpc.Internal(err, "read upload")
+		return nil, rpc.Internal(err, "read upload")
 	}
 	defer func() { _ = rc.Close() }()
-	cfg, format, err := image.DecodeConfig(rc)
+	_, reject = checkImage(rc)
+	return reject, nil
+}
+
+func checkImage(r io.Reader) (image.Config, error) {
+	cfg, format, err := image.DecodeConfig(r)
 	if err != nil || !formats[format] {
-		return image.Config{}, failed("the image must be a JPEG, PNG, or WebP")
+		return image.Config{}, errors.New("the image must be a JPEG, PNG, or WebP")
 	}
 	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > maxPixels {
-		return image.Config{}, failed("the image must be at most %d megapixels", maxPixels/1_000_000)
+		return image.Config{}, fmt.Errorf("the image must be at most %d megapixels", maxPixels/1_000_000)
 	}
 	return cfg, nil
 }
 
-func (s *Service) DeleteDistractor(ctx context.Context, req *krillv1.DeleteDistractorRequest) (*krillv1.DeleteDistractorResponse, error) {
+func (s *Service) DeleteDistractors(ctx context.Context, req *krillv1.DeleteDistractorsRequest) (*krillv1.DeleteDistractorsResponse, error) {
+	if err := s.delete(ctx, req.GetIds()); err != nil {
+		return nil, err
+	}
+	return &krillv1.DeleteDistractorsResponse{}, nil
+}
+
+// delete skips IDs that are already gone, so a canceled upload and a delete
+// from the page don't fail each other.
+func (s *Service) delete(ctx context.Context, ids []int64) error {
+	if len(ids) == 0 {
+		return nil
+	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return nil, rpc.Internal(err, "begin")
+		return rpc.Internal(err, "begin")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := s.q.WithTx(tx)
-	d, err := q.DeleteDistractor(ctx, req.GetId())
+	rows, err := q.DeleteDistractors(ctx, ids)
 	if err != nil {
-		return nil, rpc.DBError(err, "distractor")
+		return rpc.Internal(err, "delete distractors")
 	}
-	err = audit.Record(ctx, q, audit.Entry{
-		Action:     audit.DistractorDelete,
-		TargetType: audit.TargetDistractor,
-		TargetID:   strconv.FormatInt(d.ID, 10),
-		TargetName: d.Filename,
-	})
-	if err != nil {
-		return nil, rpc.Internal(err, "record audit entry")
+	for _, d := range rows {
+		// Nothing was audited for an upload that never finished.
+		if d.Status == "uploading" {
+			continue
+		}
+		err = audit.Record(ctx, q, audit.Entry{
+			Action:     audit.DistractorDelete,
+			TargetType: audit.TargetDistractor,
+			TargetID:   strconv.FormatInt(d.ID, 10),
+			TargetName: d.Filename,
+		})
+		if err != nil {
+			return rpc.Internal(err, "record audit entry")
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return nil, rpc.Internal(err, "commit")
+		return rpc.Internal(err, "commit")
 	}
-	if err := s.store.Remove(ctx, d.ObjectKey); err != nil {
-		slog.WarnContext(ctx, "remove distractor", "id", d.ID, "err", err)
+	for _, d := range rows {
+		if err := s.store.RemovePrefix(ctx, storage.DistractorPrefix(d.ID)); err != nil {
+			slog.WarnContext(ctx, "remove distractor", "id", d.ID, "err", err)
+		}
 	}
-	return &krillv1.DeleteDistractorResponse{}, nil
+	return nil
 }
 
 func (s *Service) toProto(ctx context.Context, d db.Distractor, by string) *krillv1.Distractor {
-	url, err := s.store.PresignGet(ctx, d.ObjectKey, urlExpiry, "")
-	if err != nil {
-		slog.WarnContext(ctx, "presign distractor", "id", d.ID, "err", err)
-	}
-	return &krillv1.Distractor{
+	out := &krillv1.Distractor{
 		Id:        d.ID,
-		Url:       url,
 		Filename:  d.Filename,
 		Width:     d.Width,
 		Height:    d.Height,
 		SizeBytes: d.SizeBytes,
 		CreatedBy: by,
 		CreatedAt: timestamppb.New(d.CreatedAt.Time),
+		Status:    statuses[d.Status],
+		Error:     d.Error,
 	}
+	if d.Status != "ready" {
+		return out
+	}
+	var err error
+	if out.Url, err = s.store.PresignGet(ctx, storage.DistractorKey(d.ID), urlExpiry, ""); err != nil {
+		slog.WarnContext(ctx, "presign distractor", "id", d.ID, "err", err)
+	}
+	if out.ThumbnailUrl, err = s.store.PresignGet(ctx, storage.DistractorThumbnailKey(d.ID), urlExpiry, ""); err != nil {
+		slog.WarnContext(ctx, "presign distractor thumbnail", "id", d.ID, "err", err)
+	}
+	return out
 }
 
 func failed(format string, args ...any) error {

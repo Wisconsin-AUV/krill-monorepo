@@ -47,6 +47,7 @@ const fullDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeS
 
 const jobKinds: Record<string, string> = {
   ingest: 'Ingest',
+  distractor: 'Distractor',
   embed: 'Embedding',
   track: 'Tracking',
   exemplar: 'Similar objects',

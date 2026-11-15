@@ -12,80 +12,60 @@ import (
 )
 
 const createDistractor = `-- name: CreateDistractor :one
-INSERT INTO distractors (object_key, filename, width, height, size_bytes, created_by)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, object_key, filename, width, height, size_bytes, created_by, created_at
+INSERT INTO distractors (filename, created_by)
+VALUES ($1, $2)
+RETURNING id, filename, width, height, size_bytes, created_by, created_at, status, error
 `
 
 type CreateDistractorParams struct {
-	ObjectKey string      `json:"object_key"`
 	Filename  string      `json:"filename"`
-	Width     int32       `json:"width"`
-	Height    int32       `json:"height"`
-	SizeBytes int64       `json:"size_bytes"`
 	CreatedBy pgtype.UUID `json:"created_by"`
 }
 
 func (q *Queries) CreateDistractor(ctx context.Context, arg CreateDistractorParams) (Distractor, error) {
-	row := q.db.QueryRow(ctx, createDistractor,
-		arg.ObjectKey,
-		arg.Filename,
-		arg.Width,
-		arg.Height,
-		arg.SizeBytes,
-		arg.CreatedBy,
-	)
+	row := q.db.QueryRow(ctx, createDistractor, arg.Filename, arg.CreatedBy)
 	var i Distractor
 	err := row.Scan(
 		&i.ID,
-		&i.ObjectKey,
 		&i.Filename,
 		&i.Width,
 		&i.Height,
 		&i.SizeBytes,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Error,
 	)
 	return i, err
 }
 
-const deleteDistractor = `-- name: DeleteDistractor :one
-DELETE FROM distractors WHERE id = $1 RETURNING id, object_key, filename, width, height, size_bytes, created_by, created_at
+const deleteDistractors = `-- name: DeleteDistractors :many
+DELETE FROM distractors WHERE id = ANY($1::bigint[]) RETURNING id, filename, width, height, size_bytes, created_by, created_at, status, error
 `
 
-func (q *Queries) DeleteDistractor(ctx context.Context, id int64) (Distractor, error) {
-	row := q.db.QueryRow(ctx, deleteDistractor, id)
-	var i Distractor
-	err := row.Scan(
-		&i.ID,
-		&i.ObjectKey,
-		&i.Filename,
-		&i.Width,
-		&i.Height,
-		&i.SizeBytes,
-		&i.CreatedBy,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const listDistractorKeys = `-- name: ListDistractorKeys :many
-SELECT object_key FROM distractors ORDER BY random() LIMIT $1
-`
-
-func (q *Queries) ListDistractorKeys(ctx context.Context, limit int32) ([]string, error) {
-	rows, err := q.db.Query(ctx, listDistractorKeys, limit)
+func (q *Queries) DeleteDistractors(ctx context.Context, ids []int64) ([]Distractor, error) {
+	rows, err := q.db.Query(ctx, deleteDistractors, ids)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Distractor
 	for rows.Next() {
-		var object_key string
-		if err := rows.Scan(&object_key); err != nil {
+		var i Distractor
+		if err := rows.Scan(
+			&i.ID,
+			&i.Filename,
+			&i.Width,
+			&i.Height,
+			&i.SizeBytes,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.Status,
+			&i.Error,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, object_key)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -93,8 +73,68 @@ func (q *Queries) ListDistractorKeys(ctx context.Context, limit int32) ([]string
 	return items, nil
 }
 
+const failDistractor = `-- name: FailDistractor :exec
+UPDATE distractors SET status = 'failed', error = $2 WHERE id = $1 AND status = 'processing'
+`
+
+type FailDistractorParams struct {
+	ID    int64  `json:"id"`
+	Error string `json:"error"`
+}
+
+func (q *Queries) FailDistractor(ctx context.Context, arg FailDistractorParams) error {
+	_, err := q.db.Exec(ctx, failDistractor, arg.ID, arg.Error)
+	return err
+}
+
+const finishDistractor = `-- name: FinishDistractor :execrows
+UPDATE distractors SET status = 'ready', width = $2, height = $3, size_bytes = $4
+WHERE id = $1 AND status = 'processing'
+`
+
+type FinishDistractorParams struct {
+	ID        int64 `json:"id"`
+	Width     int32 `json:"width"`
+	Height    int32 `json:"height"`
+	SizeBytes int64 `json:"size_bytes"`
+}
+
+func (q *Queries) FinishDistractor(ctx context.Context, arg FinishDistractorParams) (int64, error) {
+	result, err := q.db.Exec(ctx, finishDistractor,
+		arg.ID,
+		arg.Width,
+		arg.Height,
+		arg.SizeBytes,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const getDistractor = `-- name: GetDistractor :one
+SELECT id, filename, width, height, size_bytes, created_by, created_at, status, error FROM distractors WHERE id = $1
+`
+
+func (q *Queries) GetDistractor(ctx context.Context, id int64) (Distractor, error) {
+	row := q.db.QueryRow(ctx, getDistractor, id)
+	var i Distractor
+	err := row.Scan(
+		&i.ID,
+		&i.Filename,
+		&i.Width,
+		&i.Height,
+		&i.SizeBytes,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.Status,
+		&i.Error,
+	)
+	return i, err
+}
+
 const listDistractors = `-- name: ListDistractors :many
-SELECT d.id, d.object_key, d.filename, d.width, d.height, d.size_bytes, d.created_by, d.created_at, u.name AS created_by_name
+SELECT d.id, d.filename, d.width, d.height, d.size_bytes, d.created_by, d.created_at, d.status, d.error, u.name AS created_by_name
 FROM distractors d
 LEFT JOIN users u ON u.id = d.created_by
 ORDER BY d.created_at DESC, d.id DESC
@@ -102,13 +142,14 @@ ORDER BY d.created_at DESC, d.id DESC
 
 type ListDistractorsRow struct {
 	ID            int64              `json:"id"`
-	ObjectKey     string             `json:"object_key"`
 	Filename      string             `json:"filename"`
 	Width         int32              `json:"width"`
 	Height        int32              `json:"height"`
 	SizeBytes     int64              `json:"size_bytes"`
 	CreatedBy     pgtype.UUID        `json:"created_by"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Status        string             `json:"status"`
+	Error         string             `json:"error"`
 	CreatedByName pgtype.Text        `json:"created_by_name"`
 }
 
@@ -123,13 +164,14 @@ func (q *Queries) ListDistractors(ctx context.Context) ([]ListDistractorsRow, er
 		var i ListDistractorsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.ObjectKey,
 			&i.Filename,
 			&i.Width,
 			&i.Height,
 			&i.SizeBytes,
 			&i.CreatedBy,
 			&i.CreatedAt,
+			&i.Status,
+			&i.Error,
 			&i.CreatedByName,
 		); err != nil {
 			return nil, err
@@ -140,4 +182,63 @@ func (q *Queries) ListDistractors(ctx context.Context) ([]ListDistractorsRow, er
 		return nil, err
 	}
 	return items, nil
+}
+
+const listReadyDistractorIDs = `-- name: ListReadyDistractorIDs :many
+SELECT id FROM distractors WHERE status = 'ready' ORDER BY random() LIMIT $1
+`
+
+func (q *Queries) ListReadyDistractorIDs(ctx context.Context, limit int32) ([]int64, error) {
+	rows, err := q.db.Query(ctx, listReadyDistractorIDs, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const queueDistractor = `-- name: QueueDistractor :one
+UPDATE distractors SET status = 'queued', error = ''
+WHERE id = $1 AND status IN ('uploading', 'failed')
+RETURNING id, filename, width, height, size_bytes, created_by, created_at, status, error
+`
+
+func (q *Queries) QueueDistractor(ctx context.Context, id int64) (Distractor, error) {
+	row := q.db.QueryRow(ctx, queueDistractor, id)
+	var i Distractor
+	err := row.Scan(
+		&i.ID,
+		&i.Filename,
+		&i.Width,
+		&i.Height,
+		&i.SizeBytes,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.Status,
+		&i.Error,
+	)
+	return i, err
+}
+
+const startDistractor = `-- name: StartDistractor :execrows
+UPDATE distractors SET status = 'processing' WHERE id = $1 AND status = 'queued'
+`
+
+func (q *Queries) StartDistractor(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, startDistractor, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

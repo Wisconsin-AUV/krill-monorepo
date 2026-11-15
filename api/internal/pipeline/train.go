@@ -362,12 +362,12 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 		return err
 	}
 	if cfg.GetAugmentation().GetDistractors() > 0 {
-		keys, err := q.ListDistractorKeys(ctx, maxTrainDistractors)
+		ids, err := q.ListReadyDistractorIDs(ctx, maxTrainDistractors)
 		if err != nil {
 			return fmt.Errorf("list distractors: %w", err)
 		}
-		for _, k := range keys {
-			u, err := p.Store.PresignGetInternal(ctx, k, trainURLExpiry)
+		for _, d := range ids {
+			u, err := p.Store.PresignGetInternal(ctx, storage.DistractorKey(d), trainURLExpiry)
 			if err != nil {
 				return err
 			}

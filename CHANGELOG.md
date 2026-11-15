@@ -15,7 +15,7 @@ All notable changes to this project are documented here. The format follows
 - Augmentation settings when starting a training run, shown on the run's page. Besides Ultralytics' rotation, shift, zoom, shear, perspective, color, mosaic, and flips, Krill can stretch images, tint them blue-green like water, add patches of light and shadow, and add sensor noise. Val and test images are never changed.
 
 - Exports can write augmented copies of each train image, with the same augmentation as training except mosaic, so models trained outside Krill get it too.
-- A distractors augmentation that cuts the labeled objects out and pastes them at random spots on a random distractor image, each resized, rotated, stretched, and recolored on its own, while training and in exported copies. Admins manage the distractor images under Pipeline in the admin panel.
+- A distractors augmentation that cuts the labeled objects out and pastes them at random spots on a random distractor image, each resized, rotated, stretched, and recolored on its own, while training and in exported copies. Admins upload distractor images under Pipeline in the admin panel, and the upload tray shows their progress. Each is turned upright and shrunk to 2048 pixels on its long side, so full-size camera photos don't fill storage.
 
 ### Changed
 

@@ -7,6 +7,7 @@ import (
 	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/config"
 	"github.com/wauv/krill/api/internal/db"
+	"github.com/wauv/krill/api/internal/storage"
 	"github.com/wauv/krill/api/internal/taxonomy"
 )
 
@@ -123,8 +124,12 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 		}
 	}
 	if plan.Copies > 0 && plan.Augmentation.GetDistractors() > 0 {
-		if plan.Distractors, err = q.ListDistractorKeys(ctx, maxDistractors); err != nil {
+		ids, err := q.ListReadyDistractorIDs(ctx, maxDistractors)
+		if err != nil {
 			return Plan{}, fmt.Errorf("list distractors: %w", err)
+		}
+		for _, id := range ids {
+			plan.Distractors = append(plan.Distractors, storage.DistractorKey(id))
 		}
 	}
 	return plan, nil

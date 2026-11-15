@@ -213,6 +213,7 @@ func run(logHub *logs.Hub) error {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, ingest.NewWorker(pool, store, embedAtIngest))
 	river.AddWorker(workers, export.NewWorker(pool, store, version))
+	river.AddWorker(workers, distractor.NewWorker(pool, store))
 	river.AddWorker(workers, tracker.NewWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewExemplarWorker(pool, store, dispatcher))
 	river.AddWorker(workers, tracker.NewEmbedWorker(pool, store, dispatcher))
@@ -236,6 +237,7 @@ func run(logHub *logs.Hub) error {
 	queues := map[string]river.QueueConfig{
 		river.QueueDefault:    {MaxWorkers: 2},
 		ingest.Queue:          {MaxWorkers: 1},
+		distractor.Queue:      {MaxWorkers: 1},
 		annotation.TrackQueue: {MaxWorkers: 1},
 		ingest.EmbedQueue:     {MaxWorkers: 1},
 		taxonomy.OrientQueue:  {MaxWorkers: 1},
@@ -323,7 +325,7 @@ func run(logHub *logs.Hub) error {
 	mux.Handle(krillv1connect.NewContentServiceHandler(content.NewService(pool, store, jobs, nodes, trashRetention), rpcOpts))
 	mux.Handle(krillv1connect.NewPipelineServiceHandler(pipeline.NewService(pipe), rpcOpts))
 	mux.Handle(krillv1connect.NewPipelineWorkerServiceHandler(pipeline.NewWorkerService(pipe), rpcOpts))
-	mux.Handle(krillv1connect.NewDistractorServiceHandler(distractor.NewService(pool, store), rpcOpts))
+	mux.Handle(krillv1connect.NewDistractorServiceHandler(distractor.NewService(pool, store, jobs), rpcOpts))
 	if cfg.WebDir != "" {
 		// No method in the pattern: "GET /" would conflict with the RPC routes.
 		mux.Handle("/", web.Handler(cfg.WebDir))

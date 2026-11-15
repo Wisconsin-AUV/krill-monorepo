@@ -1,6 +1,6 @@
 -- name: CreateDistractor :one
-INSERT INTO distractors (object_key, filename, width, height, size_bytes, created_by)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO distractors (filename, created_by)
+VALUES ($1, $2)
 RETURNING *;
 
 -- name: ListDistractors :many
@@ -9,8 +9,26 @@ FROM distractors d
 LEFT JOIN users u ON u.id = d.created_by
 ORDER BY d.created_at DESC, d.id DESC;
 
--- name: ListDistractorKeys :many
-SELECT object_key FROM distractors ORDER BY random() LIMIT $1;
+-- name: ListReadyDistractorIDs :many
+SELECT id FROM distractors WHERE status = 'ready' ORDER BY random() LIMIT $1;
 
--- name: DeleteDistractor :one
-DELETE FROM distractors WHERE id = $1 RETURNING *;
+-- name: GetDistractor :one
+SELECT * FROM distractors WHERE id = $1;
+
+-- name: QueueDistractor :one
+UPDATE distractors SET status = 'queued', error = ''
+WHERE id = $1 AND status IN ('uploading', 'failed')
+RETURNING *;
+
+-- name: StartDistractor :execrows
+UPDATE distractors SET status = 'processing' WHERE id = $1 AND status = 'queued';
+
+-- name: FinishDistractor :execrows
+UPDATE distractors SET status = 'ready', width = $2, height = $3, size_bytes = $4
+WHERE id = $1 AND status = 'processing';
+
+-- name: FailDistractor :exec
+UPDATE distractors SET status = 'failed', error = $2 WHERE id = $1 AND status = 'processing';
+
+-- name: DeleteDistractors :many
+DELETE FROM distractors WHERE id = ANY(@ids::bigint[]) RETURNING *;
