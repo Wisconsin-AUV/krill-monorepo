@@ -151,8 +151,9 @@ func TestScanAndCleanUp(t *testing.T) {
 	example := storage.LabelExamplesPrefix(labelType) + "kept"
 	exec(t, ctx, tx, `INSERT INTO label_examples (label_type_id, object_key) VALUES ($1, $2) RETURNING id`, labelType, example)
 	abandoned := storage.LabelExamplesPrefix(labelType) + "abandoned"
-	distractor := storage.DistractorsPrefix + "0123456789abcdef0123456789abcdef"
-	exec(t, ctx, tx, `INSERT INTO distractors (object_key, width, height, size_bytes) VALUES ($1, 1, 1, 7) RETURNING id`, distractor)
+	distractorID := exec(t, ctx, tx, `INSERT INTO distractors (status) VALUES ('ready') RETURNING id`)
+	distractor := storage.DistractorKey(distractorID)
+	strayDistractor := storage.DistractorsPrefix + "0123456789abcdef0123456789abcdef"
 	run := func(status string) int64 {
 		return exec(t, ctx, tx, `INSERT INTO training_runs (status, trigger, config) VALUES ($1, 'manual', '{}') RETURNING id`, status)
 	}
@@ -177,6 +178,8 @@ func TestScanAndCleanUp(t *testing.T) {
 	store.put(example, 5, old)
 	store.put(abandoned, 6, old)
 	store.put(distractor, 7, old)
+	store.put(storage.DistractorUploadKey(distractorID), 8, old)
+	store.put(strayDistractor, 9, old)
 	store.put(storage.BackupKey("stray.dump"), 700, old)
 	store.put("misc/readme.txt", 1, old)
 	store.put(storage.TrainingWeightsKey(trained), 800, old)
@@ -207,6 +210,8 @@ func TestScanAndCleanUp(t *testing.T) {
 		storage.FrameKey(deleted, 0),
 		storage.VideoSourceKey(deleted),
 		storage.TrainingWeightsKey(goneRun),
+		storage.DistractorUploadKey(distractorID),
+		strayDistractor,
 	}
 	slices.Sort(want)
 	if got := orphanKeys(r); !slices.Equal(got, want) {
@@ -245,7 +250,7 @@ func TestScanAndCleanUp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.skipped != 2 || res.deleted != 7 || res.bytes != 2000+20+600+100+700+50+1100 {
+	if res.skipped != 2 || res.deleted != 9 || res.bytes != 2000+20+600+100+700+50+1100+8+9 {
 		t.Errorf("cleanup = %+v", res)
 	}
 	for _, k := range []string{abandoned, storage.FrameKey(ready, 2), storage.FrameKey(processing, 0), example, distractor, storage.VideoSourceKey(ready)} {
@@ -272,6 +277,8 @@ func TestParseKey(t *testing.T) {
 		{"datasets/3/dataset.zip", parsedKey{kind: KindExport, dataset: 3}},
 		{"label-types/4/examples/ab12", parsedKey{kind: KindLabelExample}},
 		{"distractors/ab12", parsedKey{kind: KindLabelExample}},
+		{"distractors/5/image.jpg", parsedKey{kind: KindLabelExample, distractor: 5}},
+		{"distractors/05/image.jpg", parsedKey{kind: KindLabelExample}},
 		{"backups/krill.dump", parsedKey{kind: KindBackup}},
 		{"videos", parsedKey{kind: KindOther}},
 	}

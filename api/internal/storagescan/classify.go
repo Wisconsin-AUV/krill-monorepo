@@ -48,6 +48,9 @@ type parsedKey struct {
 	dataset int64
 	// The training run of a model.
 	run int64
+	// The distractor an image belongs to, or 0 when the key isn't one Krill
+	// writes under DistractorsPrefix.
+	distractor int64
 }
 
 func parseKey(key string) parsedKey {
@@ -92,8 +95,15 @@ func parseKey(key string) parsedKey {
 		return parsedKey{kind: KindLabelExample}
 	// Distractors are reference images like label examples, and are counted
 	// with them.
-	case len(parts) == 2 && key == storage.DistractorsPrefix+parts[1]:
-		return parsedKey{kind: KindLabelExample}
+	case strings.HasPrefix(key, storage.DistractorsPrefix):
+		p := parsedKey{kind: KindLabelExample}
+		if len(parts) == 3 {
+			id, err := strconv.ParseInt(parts[1], 10, 64)
+			if err == nil && id > 0 && storage.DistractorPrefix(id)+parts[2] == key {
+				p.distractor = id
+			}
+		}
+		return p
 	case strings.HasPrefix(key, storage.BackupsPrefix):
 		return parsedKey{kind: KindBackup}
 	}
@@ -140,20 +150,22 @@ type state struct {
 	videos   map[int64]*video
 	datasets map[int64]*row
 	// runs is seen once a run's weights are listed.
-	runs     map[int64]*row
-	examples map[string]*row
-	backups  map[string]*row
+	runs        map[int64]*row
+	examples    map[string]*row
+	backups     map[string]*row
+	distractors map[int64]string
 }
 
 func load(ctx context.Context, q *db.Queries, now time.Time) (*state, error) {
 	s := &state{
-		q:        q,
-		now:      now,
-		videos:   map[int64]*video{},
-		datasets: map[int64]*row{},
-		runs:     map[int64]*row{},
-		examples: map[string]*row{},
-		backups:  map[string]*row{},
+		q:           q,
+		now:         now,
+		videos:      map[int64]*video{},
+		datasets:    map[int64]*row{},
+		runs:        map[int64]*row{},
+		examples:    map[string]*row{},
+		backups:     map[string]*row{},
+		distractors: map[int64]string{},
 	}
 	videos, err := q.ScanVideos(ctx)
 	if err != nil {
@@ -182,6 +194,13 @@ func load(ctx context.Context, q *db.Queries, now time.Time) (*state, error) {
 	}
 	for _, k := range examples {
 		s.examples[k] = &row{}
+	}
+	distractors, err := q.ScanDistractors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list distractors: %w", err)
+	}
+	for _, d := range distractors {
+		s.distractors[d.ID] = d.Status
 	}
 	backups, err := q.ScanBackups(ctx)
 	if err != nil {
@@ -247,6 +266,11 @@ func (s *state) orphan(ctx context.Context, p parsedKey, key string, modified ti
 		_, ok := s.runs[p.run]
 		return !ok, nil
 	case KindLabelExample:
+		if strings.HasPrefix(key, storage.DistractorsPrefix) {
+			status, ok := s.distractors[p.distractor]
+			// Processing removes the upload once it succeeds.
+			return !ok || (status == "ready" && key == storage.DistractorUploadKey(p.distractor)), nil
+		}
 		_, ok := s.examples[key]
 		return !ok, nil
 	case KindBackup:

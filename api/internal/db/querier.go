@@ -72,7 +72,7 @@ type Querier interface {
 	DeleteClip(ctx context.Context, id int64) (DeleteClipRow, error)
 	DeleteClips(ctx context.Context, videoID int64) error
 	DeleteDataset(ctx context.Context, id int64) (int64, error)
-	DeleteDistractor(ctx context.Context, id int64) (Distractor, error)
+	DeleteDistractors(ctx context.Context, ids []int64) ([]Distractor, error)
 	DeleteEmailCode(ctx context.Context, arg DeleteEmailCodeParams) error
 	DeleteEmptyTracks(ctx context.Context, ids []int64) error
 	DeleteExpiredSessions(ctx context.Context) error
@@ -106,6 +106,7 @@ type Querier interface {
 	EnqueueReview(ctx context.Context, arg EnqueueReviewParams) error
 	FailBackup(ctx context.Context, arg FailBackupParams) error
 	FailDataset(ctx context.Context, arg FailDatasetParams) error
+	FailDistractor(ctx context.Context, arg FailDistractorParams) error
 	FailIngest(ctx context.Context, arg FailIngestParams) error
 	FailInterruptedBackups(ctx context.Context) (int64, error)
 	FailInterruptedDatasets(ctx context.Context) (int64, error)
@@ -121,6 +122,7 @@ type Querier interface {
 	FailTrainingRun(ctx context.Context, arg FailTrainingRunParams) error
 	FinishBackup(ctx context.Context, arg FinishBackupParams) error
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
+	FinishDistractor(ctx context.Context, arg FinishDistractorParams) (int64, error)
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
 	FinishModelTrial(ctx context.Context, id int64) (int64, error)
 	FinishPrelabelRun(ctx context.Context, id int64) error
@@ -133,6 +135,7 @@ type Querier interface {
 	GetClipAuditName(ctx context.Context, id int64) (GetClipAuditNameRow, error)
 	GetClipLabelStats(ctx context.Context, clipID int64) (GetClipLabelStatsRow, error)
 	GetDataset(ctx context.Context, id int64) (Dataset, error)
+	GetDistractor(ctx context.Context, id int64) (Distractor, error)
 	GetFrame(ctx context.Context, id int64) (Frame, error)
 	GetFrameAuditName(ctx context.Context, id int64) (GetFrameAuditNameRow, error)
 	GetGoldAttempt(ctx context.Context, arg GetGoldAttemptParams) (GetGoldAttemptRow, error)
@@ -231,7 +234,6 @@ type Querier interface {
 	ListContentJobs(ctx context.Context, since pgtype.Timestamptz) ([]ListContentJobsRow, error)
 	ListContentVideos(ctx context.Context, model string) ([]ListContentVideosRow, error)
 	ListDatasets(ctx context.Context) ([]Dataset, error)
-	ListDistractorKeys(ctx context.Context, limit int32) ([]string, error)
 	ListDistractors(ctx context.Context) ([]ListDistractorsRow, error)
 	ListDoneClipFrames(ctx context.Context, clipID int64) ([]int64, error)
 	// The boxes a summary scores: those at or above the threshold on frames
@@ -278,6 +280,7 @@ type Querier interface {
 	ListPrelabelClips(ctx context.Context) ([]ListPrelabelClipsRow, error)
 	ListPrelabelRuns(ctx context.Context, limit int32) ([]ListPrelabelRunsRow, error)
 	ListPrelabelers(ctx context.Context) ([]ListPrelabelersRow, error)
+	ListReadyDistractorIDs(ctx context.Context, limit int32) ([]int64, error)
 	// What re-extracting each video throws away. Ingest replaces every clip,
 	// including the ones in the trash.
 	ListReextractStats(ctx context.Context, ids []int64) ([]ListReextractStatsRow, error)
@@ -357,6 +360,7 @@ type Querier interface {
 	// at negative indexes first avoids that.
 	ParkClips(ctx context.Context, videoID int64) error
 	PinTrainingRun(ctx context.Context, id int64) (int64, error)
+	QueueDistractor(ctx context.Context, id int64) (Distractor, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	// Returns no row when the trial exists and is not failed or cancelled.
 	QueueModelTrial(ctx context.Context, arg QueueModelTrialParams) (int64, error)
@@ -390,6 +394,7 @@ type Querier interface {
 	RunModelTrial(ctx context.Context, arg RunModelTrialParams) (int64, error)
 	ScanBackups(ctx context.Context) ([]ScanBackupsRow, error)
 	ScanDatasets(ctx context.Context) ([]ScanDatasetsRow, error)
+	ScanDistractors(ctx context.Context) ([]ScanDistractorsRow, error)
 	ScanLabelExampleKeys(ctx context.Context) ([]string, error)
 	ScanTrainingRuns(ctx context.Context) ([]ScanTrainingRunsRow, error)
 	ScanVideoFrames(ctx context.Context, videoID int64) ([]ScanVideoFramesRow, error)
@@ -421,6 +426,7 @@ type Querier interface {
 	SetVideoProbe(ctx context.Context, arg SetVideoProbeParams) error
 	StartBackup(ctx context.Context, id int64) (int64, error)
 	StartDataset(ctx context.Context, id int64) (int64, error)
+	StartDistractor(ctx context.Context, id int64) (int64, error)
 	StartPrelabelRun(ctx context.Context, arg StartPrelabelRunParams) (int64, error)
 	StartProcessing(ctx context.Context, id int64) (int64, error)
 	StartStorageCleanup(ctx context.Context, id int64) (int64, error)
