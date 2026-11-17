@@ -2,10 +2,15 @@ import type Konva from 'konva'
 import { useMemo, useState, type ReactNode } from 'react'
 import type { Annotation } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { hasKeypoints, padKeypoints, promptQuad } from '@/lib/keypoints'
 import { useUIStore } from '@/store/useUIStore'
+import { correctFrame } from '@/workspace/correctedFrames'
 import { FrameCanvas } from '@/workspace/FrameCanvas'
+import { loadFrame } from '@/workspace/imageCache'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import { AnnotationLayer, type TrackInfo } from './AnnotationLayer'
+import { activeKeypoint, placeKeypoint } from './keypointEdit'
+import { Loupe } from './Loupe'
 import type { TrackReview } from './review'
 import { TrackingShimmer } from './TrackingShimmer'
 import { idKey, useLabelStore, type BoxRect } from './useLabelStore'
@@ -42,6 +47,7 @@ export function LabelCanvas({
   const index = useWorkspaceStore((s) => s.index)
   const view = useWorkspaceStore((s) => s.view)
   const imageSize = useWorkspaceStore((s) => s.imageSize)
+  const stageSize = useWorkspaceStore((s) => s.stageSize)
   const boxes = useLabelStore((s) => s.boxes)
   const selectedTrackId = useLabelStore((s) => s.selectedTrackId)
   const activeTypeId = useLabelStore((s) => s.activeTypeId)
@@ -50,14 +56,22 @@ export function LabelCanvas({
   const select = useLabelStore((s) => s.select)
   const tracking = useLabelStore((s) => s.tracking)
   const trackRuns = useLabelStore((s) => s.trackRuns)
+  const hideBoxes = useLabelStore((s) => s.hideBoxes)
+  const keypointFocus = useLabelStore((s) => s.keypointFocus)
   const corrected = useUIStore((s) => s.displayCorrection)
   const searching = useLabelStore((s) =>
     s.exemplarSearches.some((x) => x.frameId === frames[index]?.id),
   )
   const [draft, setDraft] = useState<BoxRect | null>(null)
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null)
+  const [keypointDrag, setKeypointDrag] = useState<{ x: number; y: number } | null>(null)
 
   const frame = frames[index]
+  const frameEntry = useMemo(() => (frame ? loadFrame(frame.id, frame.url) : undefined), [frame])
+  const fixedEntry = useMemo(
+    () => (frame && frameEntry && corrected ? correctFrame(frame.id, frameEntry.ready) : undefined),
+    [frame, frameEntry, corrected],
+  )
   const toImage = (p: { x: number; y: number }) => ({
     x: (p.x - view.x) / view.scale,
     y: (p.y - view.y) / view.scale,
@@ -80,6 +94,47 @@ export function LabelCanvas({
     }
     return undefined
   }, [boxes, frame, frames, index, selectedTrackId])
+
+  const selectedInfo = selectedTrackId !== null ? tracks.get(idKey(selectedTrackId)) : undefined
+  const selectedHere =
+    frame && selectedTrackId !== null ? boxes[idKey(frame.id)]?.[idKey(selectedTrackId)] : undefined
+  const poseType =
+    selectedHere && !hideBoxes && hasKeypoints(selectedInfo?.type) ? selectedInfo.type : undefined
+  const poseKeypoints = poseType
+    ? padKeypoints(selectedHere?.box?.keypoints ?? [], poseType.keypoints.length)
+    : []
+  const active =
+    poseType && frame && selectedTrackId !== null
+      ? activeKeypoint(keypointFocus, poseKeypoints, poseType, selectedTrackId, frame.id)
+      : null
+
+  const toNorm = (p: { x: number; y: number }) => ({
+    x: p.x / imageSize.width,
+    y: p.y / imageSize.height,
+  })
+
+  // p is in image pixels.
+  function place(p: { x: number; y: number }, hidden: boolean): boolean {
+    if (!poseType || !frame || selectedTrackId === null) return false
+    return placeKeypoint(poseType, selectedTrackId, frame.id, toNorm(p), hidden)
+  }
+
+  function onSelectedClick(p: { x: number; y: number }, evt: MouseEvent) {
+    if (!frame || selectedTrackId === null || evt.altKey) return
+    if (!evt.shiftKey) {
+      place(p, false)
+      return
+    }
+    const type = selectedInfo?.type
+    if (!canTrack || !type || type.quads.length === 0) return
+    const kps = padKeypoints(selectedHere?.box?.keypoints ?? [], type.keypoints.length)
+    const point = toNorm(p)
+    void trackObject(
+      frame.id,
+      { quad: { quad: promptQuad(type, kps, active, point), point } },
+      selectedTrackId,
+    )
+  }
 
   const continuing =
     selectedTrackId !== null && frame && !boxes[idKey(frame.id)]?.[idKey(selectedTrackId)]
@@ -112,7 +167,7 @@ export function LabelCanvas({
           const point = { x: start.x / imageSize.width, y: start.y / imageSize.height }
           if (point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1)
             void trackObject(frameId, { point })
-        } else {
+        } else if (!place(start, false)) {
           select(null)
         }
         return
@@ -127,7 +182,6 @@ export function LabelCanvas({
     window.addEventListener('mouseup', onUp)
   }
 
-  const selectedInfo = selectedTrackId !== null ? tracks.get(idKey(selectedTrackId)) : undefined
   const newType = types.find((t) => t.id === activeTypeId)
   const hint = !drawType
     ? 'Pick a label type to draw'
@@ -136,6 +190,8 @@ export function LabelCanvas({
       : `Drag to draw a new ${drawType.name}`
   const trackHint = canTrack && newType ? ` · Shift+click to track a new ${newType.name}` : ''
   const insideHint = drawType ? ' · Hold ⌘/Ctrl to draw inside a box' : ''
+  const loupeAt = keypointDrag ?? (active !== null && !draft ? pointer : null)
+  const loupeImage = corrected ? fixedEntry?.image : frameEntry?.loaded ? frameEntry.img : undefined
   const runsHere = frame
     ? trackRuns.filter(
         (r) => r.frameId === frame.id && (r.trackId === undefined || tracking[idKey(r.trackId)]),
@@ -147,6 +203,7 @@ export function LabelCanvas({
       <FrameCanvas
         onStageMouseDown={onStageMouseDown}
         onPointerMove={(p) => setPointer(p ? toImage(p) : null)}
+        onAltClick={(p) => place(toImage(p), true)}
         cursor={drawType ? 'crosshair' : 'default'}
         corrected={corrected}
       >
@@ -161,6 +218,9 @@ export function LabelCanvas({
             draft={draft}
             draftColor={drawType?.color ?? '#a1a1aa'}
             pointer={drawType ? pointer : null}
+            activeKeypoint={active}
+            onKeypointDrag={setKeypointDrag}
+            onSelectedClick={onSelectedClick}
           />
         )}
         {overlay}
@@ -176,6 +236,20 @@ export function LabelCanvas({
           imageSize={imageSize}
         />
       ))}
+      {loupeAt && loupeImage && (
+        <Loupe image={loupeImage} at={loupeAt} view={view} stageSize={stageSize} />
+      )}
+      {poseType && active !== null && pointer && !draft && !keypointDrag && (
+        <div
+          className="pointer-events-none absolute rounded-sm bg-zinc-900/80 px-1 text-xs/5 text-zinc-100"
+          style={{
+            left: view.x + pointer.x * view.scale + 12,
+            top: view.y + pointer.y * view.scale + 12,
+          }}
+        >
+          {active + 1} {poseType.keypoints[active]?.name}
+        </div>
+      )}
       {searching && (
         <TrackingShimmer
           prompt={{ box: { x: 0, y: 0, width: 1, height: 1 } }}

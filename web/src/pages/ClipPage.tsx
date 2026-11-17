@@ -61,6 +61,7 @@ import { takenByOther, useClaimNextClip } from '@/lib/queue'
 import { useUIStore } from '@/store/useUIStore'
 import { reasons, resolutions } from '@/lib/reviews'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
+import { keypointKeys } from '@/labeling/keypointEdit'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { TrackPanel } from '@/labeling/TrackPanel'
 import { TrialLayer } from '@/labeling/TrialLayer'
@@ -526,6 +527,11 @@ export function ClipPage() {
           n: nextFromQueue,
           '?': () => setShowHelp(true),
           ...typeKeys,
+          ...keypointKeys(
+            selectedTrackId === null ? undefined : tracks.get(idKey(selectedTrackId))?.type,
+            selectedTrackId,
+            frame?.id,
+          ),
           Escape: () => labels().select(null),
           Tab: () => cycleSelection(1),
           'shift+Tab': () => cycleSelection(-1),

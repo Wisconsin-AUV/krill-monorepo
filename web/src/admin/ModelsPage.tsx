@@ -24,6 +24,7 @@ import {
   PrelabelSource,
   TrainingStatus,
   TrainingTrigger,
+  type ClassMetrics,
   type PrelabelRun,
   type RetrainSchedule,
   type TrainingRun,
@@ -78,6 +79,7 @@ export function RunStatus({ run }: { run: TrainingRun }) {
         </span>
       )}
       {run.oriented && <Badge>OBB</Badge>}
+      {run.keypoints > 0 && <Badge>Pose · {run.keypoints} kpts</Badge>}
       {run.pinned && <Badge color="sky">Pinned</Badge>}
     </span>
   )
@@ -102,7 +104,8 @@ function PinnedCard({ run }: { run: TrainingRun | undefined }) {
         <TextLink to={`/admin/models/${run.id}`}>{runName(run.id)}</TextLink>
       </p>
       <p className="mt-1">
-        {s && `${percent(s.map5095)} mAP50-95 on ${run.test ? 'test' : 'val'} · `}
+        {s &&
+          `${percent(s.map5095)} mAP50-95${run.keypoints > 0 ? ` · ${percent(s.poseMap5095)} pose` : ''} on ${run.test ? 'test' : 'val'} · `}
         {modelName(run)}
         {run.finishedAt && ` · ${formatRelative(timestampDate(run.finishedAt))}`}
       </p>
@@ -200,6 +203,20 @@ function PrelabelCard({
   )
 }
 
+function Score({ run, metrics }: { run: TrainingRun; metrics: ClassMetrics | undefined }) {
+  return (
+    <>
+      {percent(metrics?.map5095)}
+      {run.keypoints > 0 && metrics && (
+        <span className="text-zinc-500 dark:text-zinc-400" title="Pose mAP50-95">
+          {' '}
+          · {percent(metrics.poseMap5095)}
+        </span>
+      )}
+    </>
+  )
+}
+
 function RunsTable({ runs, now }: { runs: TrainingRun[]; now: number }) {
   return (
     <Table className="mt-4 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
@@ -239,10 +256,10 @@ function RunsTable({ runs, now }: { runs: TrainingRun[]; now: number }) {
                   : '—'}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {percent(r.val?.all?.map5095)}
+                <Score run={r} metrics={r.val?.all} />
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {percent(r.test?.all?.map5095)}
+                <Score run={r} metrics={r.test?.all} />
               </TableCell>
               <TableCell className="text-zinc-500 dark:text-zinc-400">
                 {r.createdAt && formatRelative(timestampDate(r.createdAt))}

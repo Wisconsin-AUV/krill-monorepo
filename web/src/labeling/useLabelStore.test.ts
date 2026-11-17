@@ -4,11 +4,16 @@ import {
   AnnotationSchema,
   AnnotationStatus,
   FrameStatus,
+  SetBoxResponseSchema,
+  type SetBoxResponse,
   type SetFrameStatusResponse,
 } from '@/gen/krill/v1/annotation_pb'
 import { FrameSchema, GetClipResponseSchema } from '@/gen/krill/v1/clip_pb'
+import { LabelTypeSchema } from '@/gen/krill/v1/label_pb'
+import { isLabeled } from '@/lib/keypoints'
+import { placeKeypoint } from './keypointEdit'
 import { localBackend } from './localBackend'
-import { useLabelStore } from './useLabelStore'
+import { useLabelStore, type AnnotationBackend } from './useLabelStore'
 
 const { PROPOSED, VERIFIED } = AnnotationStatus
 
@@ -63,5 +68,44 @@ describe('setFrameStatus', () => {
     expect(boxStatus('1')).toBe(PROPOSED)
     expect(boxStatus('2')).toBe(VERIFIED)
     expect(useLabelStore.getState().undoStack).toHaveLength(0)
+  })
+})
+
+describe('setKeypoints', () => {
+  it('keeps a keypoint placed while an earlier save is answered', async () => {
+    const answers: (() => void)[] = []
+    const setBox: AnnotationBackend['setBox'] = (req) =>
+      new Promise<SetBoxResponse>((resolve) =>
+        answers.push(() =>
+          resolve(
+            create(SetBoxResponseSchema, {
+              annotation: { trackId: req.trackId, frameId: req.frameId, box: req.box },
+            }),
+          ),
+        ),
+      )
+    const clip = create(GetClipResponseSchema, {
+      frames: [create(FrameSchema, { id: 1n })],
+      annotations: [{ trackId: 1n, frameId: 1n, box: { width: 0.5, height: 0.5 } }],
+    })
+    useLabelStore.getState().load(clip, { ...localBackend(), setBox })
+    const type = create(LabelTypeSchema, {
+      keypoints: ['a', 'b', 'c'].map((name) => ({ name })),
+    })
+    const place = () => placeKeypoint(type, 1n, 1n, { x: 0.2, y: 0.2 }, false)
+
+    place()
+    place()
+    await vi.waitFor(() => expect(answers).toHaveLength(1))
+    answers[0]()
+    await vi.waitFor(() => expect(answers).toHaveLength(2))
+    place()
+    answers[1]()
+    await vi.waitFor(() => expect(answers).toHaveLength(3))
+    answers[2]()
+    await vi.waitFor(() => expect(useLabelStore.getState().pending).toBe(0))
+
+    const kps = useLabelStore.getState().boxes['1']['1'].box?.keypoints ?? []
+    expect(kps.map(isLabeled)).toEqual([true, true, true])
   })
 })

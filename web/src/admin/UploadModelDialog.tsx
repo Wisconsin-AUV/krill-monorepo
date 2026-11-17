@@ -103,7 +103,7 @@ function UploadForm({ onClose }: { onClose: () => void }) {
                 Drop weights here or <span className="text-sky-600 dark:text-sky-400">browse</span>
               </span>
               <span className="text-xs/5 text-zinc-500 dark:text-zinc-400">
-                Ultralytics YOLO detection or OBB .pt
+                Ultralytics YOLO detection, OBB, or pose .pt
               </span>
             </>
           )}

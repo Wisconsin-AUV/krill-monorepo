@@ -11,14 +11,30 @@ import {
 import type { GetClipResponse } from '@/gen/krill/v1/clip_pb'
 import { annotationClient } from '@/lib/clients'
 import { flash } from '@/lib/flash'
+import type { KeypointValue } from '@/lib/keypoints'
 
 export type BoxRect = Pick<Box, 'x' | 'y' | 'width' | 'height'>
 
-// Corners are set only for rotated boxes of oriented label types.
-export type BoxShape = BoxRect & { corners?: { x: number; y: number }[] }
+// Corners are set only for rotated boxes of oriented label types, keypoints
+// only for label types with keypoints.
+export type BoxShape = BoxRect & {
+  corners?: { x: number; y: number }[]
+  keypoints?: KeypointValue[]
+}
 
-// Normalized to the frame, like BoxRect.
-export type TrackPrompt = { point: { x: number; y: number } } | { box: BoxRect }
+// Normalized to the frame, like BoxRect. quad indexes the track type's quads.
+export type TrackPrompt =
+  | { point: { x: number; y: number } }
+  | { box: BoxShape }
+  | { quad: { quad: number; point: { x: number; y: number } } }
+
+// The keypoint a click places on the selected track's box. null once every
+// keypoint is labeled.
+export interface KeypointFocus {
+  trackId: bigint
+  frameId: bigint
+  index: number | null
+}
 
 // trackId is unset until the server accepts the request.
 export interface TrackRun {
@@ -68,6 +84,10 @@ interface LabelState {
   selectedTrackId: bigint | null
   activeTypeId: bigint | null
   hideBoxes: boolean
+  // Unset until the labeler places or picks a keypoint on the frame, when the
+  // first unlabeled one is active.
+  keypointFocus: KeypointFocus | null
+  lastKeypoint: KeypointFocus | null
   pending: number
   undoStack: UndoEntry[]
   backend: AnnotationBackend
@@ -77,9 +97,11 @@ interface LabelState {
   select: (trackId: bigint | null) => void
   setActiveType: (id: bigint | null) => void
   toggleHidden: () => void
+  focusKeypoint: (focus: KeypointFocus | null, last?: KeypointFocus) => void
 
   drawBox: (frameId: bigint, box: BoxRect) => Promise<void>
   moveBox: (trackId: bigint, frameId: bigint, box: BoxShape) => Promise<void>
+  setKeypoints: (trackId: bigint, frameId: bigint, keypoints: KeypointValue[]) => Promise<void>
   deleteBox: (trackId: bigint, frameId: bigint) => Promise<void>
   deleteTrack: (trackId: bigint) => Promise<void>
   updateTrack: (
@@ -123,8 +145,15 @@ function rect(box: Box | undefined): BoxShape {
     width: box?.width ?? 0,
     height: box?.height ?? 0,
     corners: box?.corners.map((p) => ({ x: p.x, y: p.y })) ?? [],
+    keypoints: box?.keypoints.map((k) => ({ x: k.x, y: k.y, visibility: k.visibility })) ?? [],
   }
 }
+
+// Each box's latest local edit. An older save's answer would put back the
+// box as it was before the newer edit, and the next keypoint placed would be
+// added to that and drop the newer one.
+let edits = 0
+const latestEdit = new Map<string, number>()
 
 function trackingSet(clip: GetClipResponse): Record<Key, true> {
   return Object.fromEntries(clip.trackingTrackIds.map((id) => [key(id), true as const]))
@@ -242,6 +271,53 @@ export const useLabelStore = create<LabelState>((set, get) => {
     return newTrack.id
   }
 
+  async function saveBox(trackIdIn: bigint, frameId: bigint, box: BoxShape, label: string) {
+    const trackId = resolve(trackIdIn)
+    const prev = get().boxes[key(frameId)]?.[key(trackId)]
+    const optimistic = {
+      ...(prev ?? { id: 0n, trackId, frameId }),
+      box: { ...prev?.box, ...box, corners: box.corners ?? [], keypoints: box.keypoints ?? [] },
+    } as Annotation
+    putBox(optimistic)
+    const edit = ++edits
+    const boxKey = `${key(trackId)}:${key(frameId)}`
+    latestEdit.set(boxKey, edit)
+    const latest = () => latestEdit.get(boxKey) === edit
+    await withPending('Could not save box', async () => {
+      try {
+        const res = await get().backend.setBox({ trackId, frameId, box })
+        if (res.annotation && latest()) putBox(res.annotation)
+        clearEmpty(frameId)
+      } catch (err) {
+        if (latest()) {
+          if (prev) putBox(prev)
+          else removeBox(trackId, frameId)
+        }
+        throw err
+      }
+      pushUndo({
+        label: prev ? label : 'Undo new box',
+        run: () =>
+          enqueue(async () => {
+            const id = resolve(trackId)
+            latestEdit.delete(`${key(id)}:${key(frameId)}`)
+            if (prev) {
+              const res = await get().backend.setBox({
+                trackId: id,
+                frameId,
+                box: rect(prev.box),
+              })
+              if (res.annotation) putBox(res.annotation)
+            } else {
+              const res = await get().backend.deleteBox({ trackId: id, frameId })
+              if (res.trackDeleted) removeTrack(id)
+              else removeBox(id, frameId)
+            }
+          }),
+      })
+    })
+  }
+
   return {
     clipId: null,
     tracks: {},
@@ -253,6 +329,8 @@ export const useLabelStore = create<LabelState>((set, get) => {
     selectedTrackId: null,
     activeTypeId: null,
     hideBoxes: false,
+    keypointFocus: null,
+    lastKeypoint: null,
     pending: 0,
     undoStack: [],
     backend: annotationClient,
@@ -277,6 +355,8 @@ export const useLabelStore = create<LabelState>((set, get) => {
         trackRuns: [],
         exemplarSearches: [],
         selectedTrackId: null,
+        keypointFocus: null,
+        lastKeypoint: null,
         undoStack: [],
         backend,
       })
@@ -318,11 +398,18 @@ export const useLabelStore = create<LabelState>((set, get) => {
       })
     },
 
-    select: (trackId) => set({ selectedTrackId: trackId }),
+    select: (trackId) =>
+      set((s) =>
+        s.selectedTrackId === trackId
+          ? {}
+          : { selectedTrackId: trackId, keypointFocus: null, lastKeypoint: null },
+      ),
     // Picking a type means the next box is a new object, so drop the
     // selection rather than continuing whatever track was selected.
     setActiveType: (id) => set({ activeTypeId: id, selectedTrackId: null }),
     toggleHidden: () => set((s) => ({ hideBoxes: !s.hideBoxes })),
+    focusKeypoint: (focus, last) =>
+      set((s) => ({ keypointFocus: focus, lastKeypoint: last ?? s.lastKeypoint })),
 
     drawBox: async (frameId, box) => {
       const { selectedTrackId, boxes, activeTypeId, clipId } = get()
@@ -359,44 +446,12 @@ export const useLabelStore = create<LabelState>((set, get) => {
       })
     },
 
-    moveBox: async (trackIdIn, frameId, box) => {
-      const trackId = resolve(trackIdIn)
-      const prev = get().boxes[key(frameId)]?.[key(trackId)]
-      const optimistic = {
-        ...(prev ?? { id: 0n, trackId, frameId }),
-        box: { ...prev?.box, ...box, corners: box.corners ?? [] },
-      } as Annotation
-      putBox(optimistic)
-      await withPending('Could not save box', async () => {
-        try {
-          const res = await get().backend.setBox({ trackId, frameId, box })
-          if (res.annotation) putBox(res.annotation)
-          clearEmpty(frameId)
-        } catch (err) {
-          if (prev) putBox(prev)
-          else removeBox(trackId, frameId)
-          throw err
-        }
-        pushUndo({
-          label: prev ? 'Undo move' : 'Undo new box',
-          run: () =>
-            enqueue(async () => {
-              const id = resolve(trackId)
-              if (prev) {
-                const res = await get().backend.setBox({
-                  trackId: id,
-                  frameId,
-                  box: rect(prev.box),
-                })
-                if (res.annotation) putBox(res.annotation)
-              } else {
-                const res = await get().backend.deleteBox({ trackId: id, frameId })
-                if (res.trackDeleted) removeTrack(id)
-                else removeBox(id, frameId)
-              }
-            }),
-        })
-      })
+    moveBox: (trackId, frameId, box) => saveBox(trackId, frameId, box, 'Undo move'),
+
+    setKeypoints: async (trackIdIn, frameId, keypoints) => {
+      const prev = get().boxes[key(frameId)]?.[key(resolve(trackIdIn))]
+      if (!prev) return
+      await saveBox(trackIdIn, frameId, { ...rect(prev.box), keypoints }, 'Undo keypoint')
     },
 
     deleteBox: async (trackIdIn, frameId) => {
@@ -556,7 +611,9 @@ export const useLabelStore = create<LabelState>((set, get) => {
           prompt:
             'point' in prompt
               ? { case: 'point', value: prompt.point }
-              : { case: 'box', value: prompt.box },
+              : 'quad' in prompt
+                ? { case: 'quad', value: prompt.quad }
+                : { case: 'box', value: prompt.box },
         })
         const track = res.track
         if (!track) return
@@ -574,7 +631,7 @@ export const useLabelStore = create<LabelState>((set, get) => {
               trackId: track.id,
               frameId,
             }),
-            box: prompt.box,
+            box: { corners: [], keypoints: [], ...prompt.box },
             status: AnnotationStatus.VERIFIED,
           } as Annotation)
           clearEmpty(frameId)

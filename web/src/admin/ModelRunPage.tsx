@@ -79,8 +79,10 @@ function MetricsTable({
   metrics,
   baseline,
   baselineLabel,
+  pose,
 }: {
   metrics: EvalMetrics
+  pose: boolean
   baseline: EvalMetrics | undefined
   baselineLabel: string | null
 }) {
@@ -104,6 +106,8 @@ function MetricsTable({
           <TableHeader className="text-right">Recall</TableHeader>
           <TableHeader className="text-right">mAP50</TableHeader>
           <TableHeader className="text-right">mAP50-95</TableHeader>
+          {pose && <TableHeader className="text-right">Pose mAP50</TableHeader>}
+          {pose && <TableHeader className="text-right">Pose mAP50-95</TableHeader>}
           {baselineLabel && <TableHeader className="text-right">vs {baselineLabel}</TableHeader>}
         </TableRow>
       </TableHead>
@@ -119,6 +123,12 @@ function MetricsTable({
             <TableCell className="text-right tabular-nums">{percent(c.recall)}</TableCell>
             <TableCell className="text-right tabular-nums">{percent(c.map50)}</TableCell>
             <TableCell className="text-right tabular-nums">{percent(c.map5095)}</TableCell>
+            {pose && (
+              <TableCell className="text-right tabular-nums">{percent(c.poseMap50)}</TableCell>
+            )}
+            {pose && (
+              <TableCell className="text-right tabular-nums">{percent(c.poseMap5095)}</TableCell>
+            )}
             {baselineLabel && (
               <TableCell className="text-right">
                 <Delta value={c.map5095} baseline={b?.map5095} />
@@ -156,6 +166,7 @@ function Metrics({ run, pinned }: { run: TrainingRun; pinned: TrainingRun | unde
       {metrics && (
         <MetricsTable
           metrics={metrics}
+          pose={run.keypoints > 0}
           baseline={baseline}
           baselineLabel={baseline && baselineId ? `${runName(baselineId)}${same ? '' : '*'}` : null}
         />

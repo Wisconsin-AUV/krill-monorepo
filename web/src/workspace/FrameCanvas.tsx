@@ -9,17 +9,21 @@ import { useWorkspaceStore } from './useWorkspaceStore'
 const PRELOAD_AHEAD = 12
 const PRELOAD_BEHIND = 4
 const CORRECT_AHEAD = 3
+const CLICK_SLOP_PX = 4
 
 export function FrameCanvas({
   children,
   onStageMouseDown,
   onPointerMove,
+  onAltClick,
   cursor,
   corrected = false,
 }: {
   children?: ReactNode
   onStageMouseDown?: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onPointerMove?: (point: { x: number; y: number } | null) => void
+  // Alt+drag pans, so an Alt+click is told apart only once the button is up.
+  onAltClick?: (point: { x: number; y: number }) => void
   cursor?: string
   corrected?: boolean
 }) {
@@ -35,6 +39,7 @@ export function FrameCanvas({
   const setDrawnFrameId = useWorkspaceStore((s) => s.setDrawnFrameId)
   const [shown, setShown] = useState<CanvasImageSource | null>(null)
   const pan = useRef<{ x: number; y: number } | null>(null)
+  const altDown = useRef<{ x: number; y: number } | null>(null)
 
   const frame = frames[index]
   const entry = useMemo(() => (frame ? loadFrame(frame.id, frame.url) : undefined), [frame])
@@ -104,6 +109,7 @@ export function FrameCanvas({
     if (e.evt.button === 1 || e.evt.button === 2 || (e.evt.button === 0 && e.evt.altKey)) {
       e.evt.preventDefault()
       pan.current = { x: e.evt.clientX, y: e.evt.clientY }
+      altDown.current = e.evt.button === 0 ? pan.current : null
       return
     }
     onStageMouseDown?.(e)
@@ -137,9 +143,22 @@ export function FrameCanvas({
           onWheel={onWheel}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
-          onMouseUp={() => (pan.current = null)}
+          onMouseUp={(e) => {
+            pan.current = null
+            const down = altDown.current
+            altDown.current = null
+            if (
+              down &&
+              Math.abs(e.evt.clientX - down.x) <= CLICK_SLOP_PX &&
+              Math.abs(e.evt.clientY - down.y) <= CLICK_SLOP_PX
+            ) {
+              const p = e.target.getStage()?.getPointerPosition()
+              if (p) onAltClick?.(p)
+            }
+          }}
           onMouseLeave={() => {
             pan.current = null
+            altDown.current = null
             onPointerMove?.(null)
           }}
         >

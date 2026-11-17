@@ -2,9 +2,11 @@ import { Fragment, useMemo } from 'react'
 import { Group, Label, Rect, Tag, Text } from 'react-konva'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
 import type { ModelTrialBox } from '@/gen/krill/v1/pipeline_pb'
+import { hasKeypoints } from '@/lib/keypoints'
 import { konvaBox } from '@/lib/obb'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import { outcomeColors } from './goldResult'
+import { KeypointMarks } from './KeypointMarks'
 import { above, isDone, matchFrame, verifiedBoxes } from './trialMatch'
 import { idKey, useLabelStore, type BoxShape } from './useLabelStore'
 import { useTrialStore } from './useTrialStore'
@@ -13,7 +15,7 @@ const FALLBACK_COLOR = '#a1a1aa'
 
 interface Mark {
   box: BoxShape
-  oriented: boolean
+  type?: LabelType
   color: string
   caption: string
   dashed: boolean
@@ -40,7 +42,6 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
   const marks = useMemo((): Mark[] => {
     const byId = new Map(types.map((t) => [t.id, t]))
     const name = (id: bigint) => byId.get(id)?.name ?? 'unknown'
-    const oriented = (id: bigint) => !!byId.get(id)?.oriented
     const model = above(found, threshold)
     const compare = mode === 'compare' && isDone(status) && !!trial && index < trial.framesDone
     if (!compare) {
@@ -51,7 +52,7 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
         return [
           {
             box: b.box,
-            oriented: !!type?.oriented,
+            type,
             color: type?.color ?? FALLBACK_COLOR,
             caption: `${[type?.name ?? 'unknown', ...attrs].join(' ')} · ${pct(b)}`,
             dashed: true,
@@ -67,7 +68,7 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
       const why = p.correct ? '' : p.wrong ? ` · wrong ${p.wrong}` : ` · IoU ${p.iou.toFixed(2)}`
       out.push({
         box: b.box!,
-        oriented: oriented(b.labelTypeId),
+        type: byId.get(b.labelTypeId),
         color: outcomeColors[p.correct ? 'correct' : 'off'],
         caption: `${name(b.labelTypeId)}${why} · ${pct(b)}`,
         dashed: true,
@@ -77,7 +78,7 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
       const v = verified[j]
       out.push({
         box: v.box,
-        oriented: oriented(v.labelTypeId),
+        type: byId.get(v.labelTypeId),
         color: outcomeColors.missed,
         caption: `${name(v.labelTypeId)} · missed`,
         dashed: false,
@@ -88,7 +89,7 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
       if (!b.box) continue
       out.push({
         box: b.box,
-        oriented: oriented(b.labelTypeId),
+        type: byId.get(b.labelTypeId),
         color: outcomeColors.extra,
         caption: `${name(b.labelTypeId)} · extra · ${pct(b)}`,
         dashed: true,
@@ -107,12 +108,22 @@ export function TrialLayer({ types }: { types: LabelType[] }) {
         return (
           <Fragment key={i}>
             <Rect
-              {...konvaBox(k.box, k.oriented, imageSize)}
+              {...konvaBox(k.box, !!k.type?.oriented, imageSize)}
               stroke={k.color}
               strokeWidth={2}
               dash={k.dashed ? [6, 4] : undefined}
               strokeScaleEnabled={false}
             />
+            {hasKeypoints(k.type) && k.box.keypoints && (
+              <KeypointMarks
+                keypoints={k.box.keypoints}
+                type={k.type}
+                color={k.color}
+                imageSize={imageSize}
+                scale={scale}
+                dashed={k.dashed}
+              />
+            )}
             {/* Below the box, so it never covers the caption of a real box. */}
             <Label x={x} y={y + height} scaleX={1 / scale} scaleY={1 / scale}>
               <Tag fill={k.color} cornerRadius={3} />
