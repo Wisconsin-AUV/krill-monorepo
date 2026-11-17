@@ -434,3 +434,42 @@ func TestPrelabelsKeepCornersOnlyForOrientedTypes(t *testing.T) {
 		t.Errorf("corners = %v, want %v", got, want)
 	}
 }
+
+func TestPrelabelsFitKeypointsToTheirType(t *testing.T) {
+	f := newReviewFixture(t, 2)
+	if _, err := f.pool.Exec(f.ctx, `UPDATE label_types SET keypoints = '[{"name": "top"}, {"name": "bottom"}]' WHERE id = $1`, f.buoy); err != nil {
+		t.Fatal(err)
+	}
+	posed := func(d detection, kps ...float64) detection {
+		for k := range slices.Chunk(kps, 3) {
+			d.keypoints = append(d.keypoints, &krillv1.Keypoint{X: k[0], Y: k[1], Visibility: krillv1.KeypointVisibility(k[2])})
+		}
+		return d
+	}
+	f.run(t,
+		// A model with three keypoints per box, one more than the type has.
+		posed(f.det(0, buoyClass, 0.1), 0.15, 0.25, 2, 0.15, 0.35, 2, 0.2, 0.3, 2),
+		// Only the keypoint past the type's is found.
+		posed(f.det(0, buoyClass, 0.5), 0, 0, 0, 0, 0, 0, 0.6, 0.3, 2),
+		posed(f.det(1, gateClass, 0.1), 0.15, 0.25, 2, 0.15, 0.35, 2, 0.2, 0.3, 2),
+	)
+	rows, err := f.pool.Query(f.ctx, `
+		SELECT a.keypoints FROM annotations a JOIN tracks tr ON tr.id = a.track_id
+		WHERE tr.clip_id = $1 ORDER BY a.frame_id, a.x`, f.clip.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	var got [][]float64
+	for rows.Next() {
+		var kps []float64
+		if err := rows.Scan(&kps); err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, kps)
+	}
+	want := [][]float64{{0.15, 0.25, 2, 0.15, 0.35, 2}, nil, nil}
+	if !slices.EqualFunc(got, want, slices.Equal) {
+		t.Errorf("keypoints = %v, want %v", got, want)
+	}
+}

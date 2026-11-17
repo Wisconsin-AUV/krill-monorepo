@@ -101,8 +101,9 @@ class CheckIn:
         self.last = self.clock()
 
 
-def data_yaml(root: Path, classes: Sequence[str], has_test: bool) -> Path:
-    """Point Ultralytics at the extracted dataset. JSON is valid YAML."""
+def data_yaml(root: Path, classes: Sequence[str], has_test: bool, export: dict[str, Any]) -> Path:
+    """Point Ultralytics at the extracted dataset, with the keypoint layout of
+    the export's own data.yaml. JSON is valid YAML."""
     data: dict[str, Any] = {
         "path": str(root.resolve()),
         "train": "images/train",
@@ -111,15 +112,19 @@ def data_yaml(root: Path, classes: Sequence[str], has_test: bool) -> Path:
     }
     if has_test:
         data["test"] = "images/test"
+    for key in ("kpt_shape", "flip_idx"):
+        if key in export:
+            data[key] = export[key]
     path = root / "krill.yaml"
     path.write_text(json.dumps(data))
     return path
 
 
 def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
-    """Convert Ultralytics' DetMetrics or OBBMetrics, with one row per class in
-    the split."""
+    """Convert Ultralytics' DetMetrics, OBBMetrics, or PoseMetrics, with one
+    row per class in the split."""
     box = m.box
+    pose = getattr(m, "pose", None)
     per_class = getattr(m, "nt_per_class", None)
     per_image = getattr(m, "nt_per_image", None)
     out = pipeline_pb2.EvalMetrics(
@@ -130,10 +135,13 @@ def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
             recall=float(box.mr),
             map50=float(box.map50),
             map50_95=float(box.map),
+            pose_map50=float(pose.map50) if pose is not None else 0,
+            pose_map50_95=float(pose.map) if pose is not None else 0,
         )
     )
     for i, c in enumerate(box.ap_class_index):
         p, r, ap50, ap = box.class_result(i)
+        _, _, pose50, pose_ap = pose.class_result(i) if pose is not None else (0, 0, 0, 0)
         out.classes.append(
             pipeline_pb2.ClassMetrics(
                 name=str(m.names[int(c)]),
@@ -143,6 +151,8 @@ def eval_metrics(m: Any) -> pipeline_pb2.EvalMetrics:
                 recall=float(r),
                 map50=float(ap50),
                 map50_95=float(ap),
+                pose_map50=float(pose50),
+                pose_map50_95=float(pose_ap),
             )
         )
     return out
@@ -172,7 +182,7 @@ def run_train(
     # Imported here so the worker runs without torch installed.
     import torch
     from ultralytics import YOLO
-    from ultralytics.utils import LOGGER
+    from ultralytics.utils import LOGGER, YAML
 
     tail = LogTail()
     LOGGER.addHandler(tail)
@@ -220,6 +230,10 @@ def run_train(
                 recall=float(m.get("metrics/recall(B)", 0)),
                 map50=float(m.get("metrics/mAP50(B)", 0)),
                 map50_95=float(m.get("metrics/mAP50-95(B)", 0)),
+                pose_loss=float(loss.get("train/pose_loss", 0)),
+                kobj_loss=float(loss.get("train/kobj_loss", 0)),
+                pose_map50=float(m.get("metrics/mAP50(P)", 0)),
+                pose_map50_95=float(m.get("metrics/mAP50-95(P)", 0)),
             )
         )
 
@@ -242,13 +256,14 @@ def run_train(
             log.info("training run %d on %s", task.run_id, device_name)
             with zipfile.ZipFile(download(task.dataset_url, root / "dataset.zip")) as z:
                 z.extractall(root / "data")
-            data = data_yaml(root / "data", task.classes, task.has_test)
+            export = YAML.load(root / "data" / "data.yaml")
+            data = data_yaml(root / "data", task.classes, task.has_test, export)
             if task.base_weights_url:
                 base = download(task.base_weights_url, root / "base.pt")
             else:
                 # Ultralytics downloads its pretrained weights to this path.
-                obb = "-obb" if task.oriented else ""
-                base = cache_dir() / f"yolo11{SIZES[task.size]}{obb}.pt"
+                kind = "-pose" if task.keypoints else "-obb" if task.oriented else ""
+                base = cache_dir() / f"yolo11{SIZES[task.size]}{kind}.pt"
             progress()
             check_in()
 

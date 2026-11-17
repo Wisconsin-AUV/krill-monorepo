@@ -55,12 +55,16 @@ def iou(a: Box, b: Box) -> float:
     return inter / (aw * ah + bw * bh - inter)
 
 
-def to_proto(box: Box, corners: Corners | None = None) -> annotation_pb2.Box:
+def to_proto(
+    box: Box,
+    corners: Corners | None = None,
+    keypoints: Sequence[annotation_pb2.Keypoint] = (),
+) -> annotation_pb2.Box:
     """A box message, rotated when corners are given, with its axis-aligned
     box then their bounds."""
     if corners is None:
         x, y, w, h = box
-        return annotation_pb2.Box(x=x, y=y, width=w, height=h)
+        return annotation_pb2.Box(x=x, y=y, width=w, height=h, keypoints=keypoints)
     x, y, w, h = bounds(corners)
     points = [annotation_pb2.Point(x=px, y=py) for px, py in corners]
-    return annotation_pb2.Box(x=x, y=y, width=w, height=h, corners=points)
+    return annotation_pb2.Box(x=x, y=y, width=w, height=h, corners=points, keypoints=keypoints)

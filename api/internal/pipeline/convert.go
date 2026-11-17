@@ -96,6 +96,7 @@ func trainingRun(r db.TrainingRun, createdBy string, withLog bool) (*krillv1.Tra
 		VerifiedBoxes: r.VerifiedBoxes,
 		Filename:      r.Filename,
 		Oriented:      r.Oriented,
+		Keypoints:     r.Keypoints,
 	}
 	if withLog {
 		out.Log = r.Log

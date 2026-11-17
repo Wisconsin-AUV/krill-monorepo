@@ -73,9 +73,9 @@ message Augmentation {
   float underwater = 13;
   float shadows = 14;
   float noise = 15;
-  // Probability that an image's objects are cut out and pasted at random
-  // spots on a random distractor image, each resized, rotated, stretched, and
-  // recolored on its own. Does nothing until distractors are added.
+  // Probability that an image's objects are cut out and pasted, unchanged, at
+  // random spots on a random distractor image. Does nothing until distractors
+  // are added.
   float distractors = 16;
 }
 
@@ -126,6 +126,10 @@ message ExportStats {
   bool oriented = 15;
   // Augmented copies of train images, on top of train_images.
   int32 augmented_images = 16;
+  // Labels are written as YOLO-pose with this many keypoints, the most any
+  // exported type has, because a type has keypoints. Other boxes get
+  // unlabeled ones.
+  int32 keypoints = 17;
 }
 
 message Export {

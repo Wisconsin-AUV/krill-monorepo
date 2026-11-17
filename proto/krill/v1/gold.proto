@@ -39,8 +39,11 @@ message GoldMatch {
   int32 reference = 1;
   int32 answer = 2;
   double iou = 3;
-  // The box is tight enough and every attribute matches.
+  // The box is tight enough, its keypoints are close enough, and every
+  // attribute matches.
   bool correct = 4;
+  // Object keypoint similarity, from 0 to 1, for types with keypoints.
+  optional double oks = 5;
 }
 
 message GoldResult {

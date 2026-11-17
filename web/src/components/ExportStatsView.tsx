@@ -112,6 +112,7 @@ export function ExportStatsView({ stats }: { stats: ExportStats }) {
           <h3 className="flex items-center gap-2 text-sm/6 font-medium text-zinc-950 dark:text-white">
             Classes
             {stats.oriented && <Badge>OBB</Badge>}
+            {stats.keypoints > 0 && <Badge>Pose · {stats.keypoints} kpts</Badge>}
           </h3>
           <table className="mt-2 w-full text-left text-sm/6">
             <thead className="text-xs/6 text-zinc-500 dark:text-zinc-400">

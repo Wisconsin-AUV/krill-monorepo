@@ -12,14 +12,13 @@ import (
 const maxAugmentedCopies = 10
 
 // DefaultAugmentation keeps Ultralytics' defaults except for mirroring, and
-// rotates a little since the sub rolls and signs lie at any angle.
+// varies saturation less so classes told apart by color stay apart.
 func DefaultAugmentation() *krillv1.Augmentation {
 	return &krillv1.Augmentation{
-		Degrees:     10,
 		Translate:   0.1,
 		Scale:       0.5,
 		HsvH:        0.015,
-		HsvS:        0.7,
+		HsvS:        0.4,
 		HsvV:        0.4,
 		Mosaic:      1,
 		Aspect:      1.2,

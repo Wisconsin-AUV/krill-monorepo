@@ -32,13 +32,22 @@ type Box struct {
 	Height float64 `json:"height"`
 }
 
+// Fill fills one of the label type's quads from a point on its surface.
+type Fill struct {
+	Quad  int32 `json:"quad"`
+	Point Point `json:"point"`
+}
+
 // TrackArgs tracks a track's object from FrameID to the end of its clip.
-// Exactly one of Point and Box is set.
+// Exactly one of Point and Box is set. Keypoints, as x, y, visibility
+// triples, and Fill only come with Box.
 type TrackArgs struct {
-	TrackID int64  `json:"track_id"`
-	FrameID int64  `json:"frame_id"`
-	Point   *Point `json:"point,omitempty"`
-	Box     *Box   `json:"box,omitempty"`
+	TrackID   int64     `json:"track_id"`
+	FrameID   int64     `json:"frame_id"`
+	Point     *Point    `json:"point,omitempty"`
+	Box       *Box      `json:"box,omitempty"`
+	Keypoints []float64 `json:"keypoints,omitempty"`
+	Fill      *Fill     `json:"fill,omitempty"`
 }
 
 func (TrackArgs) Kind() string { return "track" }
@@ -88,8 +97,17 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 		if p.Box == nil {
 			return nil, rpc.Invalid("box is required")
 		}
+	case *krillv1.TrackObjectRequest_Quad:
+		x, y := p.Quad.GetPoint().GetX(), p.Quad.GetPoint().GetY()
+		if p.Quad.GetPoint() == nil || !(x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+			return nil, rpc.Invalid("point is outside the frame")
+		}
+		if req.GetTrackId() == 0 {
+			return nil, rpc.Invalid("filling a quad needs a track")
+		}
+		args.Fill = &Fill{Quad: p.Quad.GetQuad(), Point: Point{X: x, Y: y}}
 	default:
-		return nil, rpc.Invalid("a point or box is required")
+		return nil, rpc.Invalid("a point, box, or quad is required")
 	}
 
 	frame, err := s.q.GetFrame(ctx, req.GetFrameId())
@@ -104,17 +122,28 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 		}
 		labelTypeID = track.LabelTypeID
 	}
+	sh, err := s.shape(ctx, labelTypeID)
+	if err != nil {
+		return nil, err
+	}
 	var corners []float64
 	if p, ok := req.GetPrompt().(*krillv1.TrackObjectRequest_Box); ok {
-		oriented, err := s.oriented(ctx, labelTypeID)
-		if err != nil {
-			return nil, err
-		}
-		x, y, w, h, c, err := ClampCorners(p.Box, oriented)
+		x, y, w, h, c, kps, err := sh.clamp(p.Box)
 		if err != nil {
 			return nil, rpc.Invalid("%s", err)
 		}
-		args.Box, corners = &Box{X: x, Y: y, Width: w, Height: h}, c
+		args.Box, args.Keypoints, corners = &Box{X: x, Y: y, Width: w, Height: h}, kps, c
+	}
+	if f := args.Fill; f != nil {
+		if f.Quad < 0 || int(f.Quad) >= len(sh.pose.Quads) {
+			return nil, rpc.Invalid("label type has no quad %d", f.Quad)
+		}
+		b, err := s.q.GetTrackBox(ctx, db.GetTrackBoxParams{TrackID: req.GetTrackId(), FrameID: frame.ID})
+		if err != nil {
+			return nil, rpc.DBError(err, "box")
+		}
+		args.Box = &Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height}
+		args.Keypoints = PadKeypoints(b.Keypoints, sh.pose.Count())
 	}
 	var attrs []byte
 	if req.GetTrackId() == 0 {
@@ -144,14 +173,14 @@ func (s *Service) TrackObject(ctx context.Context, req *krillv1.TrackObjectReque
 			return nil, errWrongClip
 		}
 	}
-	if b := args.Box; b != nil {
+	if b := args.Box; b != nil && args.Fill == nil {
 		err := recordBoxEvents(ctx, q, auth.CallerID(ctx), track.ID, &frame.ID, opSet, rect{b.X, b.Y, b.Width, b.Height})
 		if err != nil {
 			return nil, rpc.Internal(err, "save box")
 		}
 		_, err = q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 			TrackID: track.ID, FrameID: frame.ID, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Corners: corners,
-			UserID: auth.CallerID(ctx),
+			Keypoints: args.Keypoints, UserID: auth.CallerID(ctx),
 		})
 		if err != nil {
 			return nil, rpc.Internal(err, "save box")

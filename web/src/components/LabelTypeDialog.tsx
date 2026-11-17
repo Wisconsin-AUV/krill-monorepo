@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/Input'
 import { Switch } from '@/components/ui/Switch'
 import { Text } from '@/components/ui/Text'
 import { Textarea } from '@/components/ui/Textarea'
+import { KeypointsEditor } from '@/components/KeypointsEditor'
+import { keypointsBody, keypointsComplete, toKeypointsDraft } from '@/components/keypointsDraft'
 import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
 import { invalidateService } from '@/lib/queryClient'
 import { exportClasses, palette } from '@/lib/labels'
@@ -50,6 +52,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
   const [description, setDescription] = useState(type?.description ?? '')
   const [guideline, setGuideline] = useState(type?.guideline ?? '')
   const [oriented, setOriented] = useState(type?.oriented ?? false)
+  const [keypoints, setKeypoints] = useState(() => toKeypointsDraft(type))
   const [attributes, setAttributes] = useState<AttributeDraft[]>(() => toDrafts(type))
 
   const onSuccess = async () => {
@@ -67,7 +70,16 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    const body = { name, title, color, description, guideline, oriented, attributes: parsed }
+    const body = {
+      name,
+      title,
+      color,
+      description,
+      guideline,
+      oriented,
+      attributes: parsed,
+      ...keypointsBody(keypoints),
+    }
     if (type) update.mutate({ id: type.id, ...body })
     else create.mutate(body)
   }
@@ -151,11 +163,17 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
             <Label>Oriented</Label>
             <Description>Rotated boxes, exported as YOLO-OBB.</Description>
             <div data-slot="control">
-              <Switch checked={oriented} onChange={setOriented} />
+              <Switch
+                checked={oriented}
+                onChange={setOriented}
+                disabled={keypoints.keypoints.length > 0}
+              />
             </div>
           </Field>
 
-          {type?.oriented && <Reference type={type} />}
+          {!oriented && <KeypointsEditor draft={keypoints} onChange={setKeypoints} />}
+
+          {type && (type.oriented || hasReferenceQuad(type)) && <Reference type={type} />}
 
           {type && <Examples type={type} />}
 
@@ -220,7 +238,11 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
         <Button plain onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" color="sky" disabled={busy || !name.trim()}>
+        <Button
+          type="submit"
+          color="sky"
+          disabled={busy || !name.trim() || !keypointsComplete(keypoints)}
+        >
           {type ? 'Save' : 'Create'}
         </Button>
       </DialogActions>
@@ -316,17 +338,23 @@ function Examples({ type }: { type: LabelType }) {
   )
 }
 
+function hasReferenceQuad(type: LabelType) {
+  return type.quads.some((q) => q.reference)
+}
+
 function Reference({ type }: { type: LabelType }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const input = useRef<HTMLInputElement>(null)
-  const fit = useMutation(LabelService.method.fitRotations, {
-    onSuccess: async (res) => {
+  const fitted = {
+    onSuccess: async (res: { boxCount: number }) => {
       flash.success(`Fitting ${plural(res.boxCount, 'box', 'boxes')}`)
       await invalidateService(LabelService)
     },
     onError: setError,
-  })
+  }
+  const fit = useMutation(LabelService.method.fitRotations, fitted)
+  const fitKeypoints = useMutation(LabelService.method.fitKeypoints, fitted)
 
   async function setReference(file: File | null) {
     setBusy(true)
@@ -385,7 +413,7 @@ function Reference({ type }: { type: LabelType }) {
           }}
         />
       </div>
-      {type.unrotatedBoxCount > 0 && (
+      {type.oriented && type.unrotatedBoxCount > 0 && (
         <div className="mt-4 flex items-center gap-3">
           <Button
             outline
@@ -399,6 +427,24 @@ function Reference({ type }: { type: LabelType }) {
             Fit rotations
           </Button>
           <Text>{plural(type.unrotatedBoxCount, 'unrotated box', 'unrotated boxes')}</Text>
+        </div>
+      )}
+      {hasReferenceQuad(type) && type.referenceUrl && type.unposedBoxCount > 0 && (
+        <div className="mt-4 flex items-center gap-3">
+          <Button
+            outline
+            disabled={fitKeypoints.isPending}
+            onClick={() => {
+              setError(null)
+              fitKeypoints.mutate({ labelTypeId: type.id })
+            }}
+          >
+            <ArrowPathIcon data-slot="icon" />
+            Fit keypoints
+          </Button>
+          <Text>
+            {plural(type.unposedBoxCount, 'box without keypoints', 'boxes without keypoints')}
+          </Text>
         </div>
       )}
       <FormError error={error} className="mt-3" />

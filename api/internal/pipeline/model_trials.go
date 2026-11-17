@@ -23,6 +23,7 @@ import (
 	"github.com/wauv/krill/api/internal/gold"
 	"github.com/wauv/krill/api/internal/rpc"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/tracker"
 	"github.com/wauv/krill/api/internal/video"
 )
@@ -207,6 +208,10 @@ func (p *Pipeline) saveTrialBoxes(ctx context.Context, id int64, l *labeler, box
 			corners = make([]float64, 8)
 		}
 		ins.Corners = append(ins.Corners, corners...)
+		kps := b.GetBox().GetKeypoints()
+		modelKeypoints, _ := annotation.ClampKeypoints(kps, taxonomy.Pose{Keypoints: make([]taxonomy.Keypoint, len(kps))})
+		ins.Keypoints = append(ins.Keypoints, modelKeypoints...)
+		ins.KeypointEnds = append(ins.KeypointEnds, int32(len(ins.Keypoints))) //nolint:gosec // a chunk's keypoints fit in int32
 		ins.Confidences = append(ins.Confidences, min(max(b.GetConfidence(), 0), 1))
 	}
 	if len(ins.FrameIds) == 0 {
@@ -322,13 +327,21 @@ func (r *trialReader) trial(ctx context.Context, row db.GetModelTrialRow) (*kril
 	return out, err
 }
 
-type tally struct{ matched, correct, missed, extra int }
+type tally struct {
+	matched, correct, missed, extra int
+	// posed matches had keypoints labeled on the verified box, with oksSum
+	// their keypoint similarity.
+	posed  int
+	oksSum float64
+}
 
 func (t *tally) add(o tally) {
 	t.matched += o.matched
 	t.correct += o.correct
 	t.missed += o.missed
 	t.extra += o.extra
+	t.posed += o.posed
+	t.oksSum += o.oksSum
 }
 
 func (t tally) class(labelTypeID int64, name string) *krillv1.ModelTrialClass {
@@ -338,7 +351,7 @@ func (t tally) class(labelTypeID int64, name string) *krillv1.ModelTrialClass {
 		}
 		return float64(a) / float64(b)
 	}
-	return &krillv1.ModelTrialClass{
+	out := &krillv1.ModelTrialClass{
 		LabelTypeId: labelTypeID,
 		Name:        name,
 		Matched:     int32(t.matched), //nolint:gosec // box counts fit in int32
@@ -348,6 +361,11 @@ func (t tally) class(labelTypeID int64, name string) *krillv1.ModelTrialClass {
 		Precision:   ratio(t.matched, t.matched+t.extra),
 		Recall:      ratio(t.matched, t.matched+t.missed),
 	}
+	if t.posed > 0 {
+		oks := t.oksSum / float64(t.posed)
+		out.Oks = &oks
+	}
+	return out
 }
 
 func (t tally) wrong() int { return t.matched - t.correct }
@@ -365,8 +383,8 @@ func (m tallies) get(id int64) *tally {
 
 // score adds one frame's model boxes, scored against its verified ones, to
 // the counts of each box's label type.
-func (m tallies) score(ref, ans []gold.Box) {
-	res := gold.ScoreSetAttributes(ref, ans)
+func (m tallies) score(ref, ans []gold.Box, frame gold.Frame) {
+	res := gold.ScoreSetAttributes(ref, ans, frame)
 	matchedRef := make([]bool, len(ref))
 	matchedAns := make([]bool, len(ans))
 	for _, mt := range res.Matches {
@@ -375,6 +393,10 @@ func (m tallies) score(ref, ans []gold.Box) {
 		tl.matched++
 		if mt.Correct {
 			tl.correct++
+		}
+		if mt.OKS != nil {
+			tl.posed++
+			tl.oksSum += *mt.OKS
 		}
 	}
 	for i, b := range ref {
@@ -390,20 +412,23 @@ func (m tallies) score(ref, ans []gold.Box) {
 }
 
 // frameBoxes groups verified and model boxes by frame, keeping only
-// labelType's when it is set.
-func frameBoxes(refRows []db.ListDoneVerifiedBoxesRow, ansRows []db.ListDoneTrialBoxesRow, classes []classTarget, labelType int64) (refs, answers map[int64][]gold.Box, err error) {
-	refs, answers = map[int64][]gold.Box{}, map[int64][]gold.Box{}
+// labelType's when it is set, and returns the size of each frame with
+// verified boxes.
+func frameBoxes(refRows []db.ListDoneVerifiedBoxesRow, ansRows []db.ListDoneTrialBoxesRow, classes []classTarget, labelType int64) (refs, answers map[int64][]gold.Box, sizes map[int64]gold.Frame, err error) {
+	refs, answers, sizes = map[int64][]gold.Box{}, map[int64][]gold.Box{}, map[int64]gold.Frame{}
 	for _, b := range refRows {
 		if labelType != 0 && b.LabelTypeID != labelType {
 			continue
 		}
 		var attrs map[string]string
 		if err := json.Unmarshal(b.Attributes, &attrs); err != nil {
-			return nil, nil, fmt.Errorf("decode attributes: %w", err)
+			return nil, nil, nil, fmt.Errorf("decode attributes: %w", err)
 		}
 		refs[b.FrameID] = append(refs[b.FrameID], gold.Box{
 			LabelTypeID: b.LabelTypeID, Attributes: attrs, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
+			Keypoints: b.Keypoints,
 		})
+		sizes[b.FrameID] = gold.Frame{Width: float64(b.FrameWidth), Height: float64(b.FrameHeight)}
 	}
 	for _, b := range ansRows {
 		if int(b.Class) >= len(classes) || b.Class < 0 {
@@ -415,9 +440,10 @@ func frameBoxes(refRows []db.ListDoneVerifiedBoxesRow, ansRows []db.ListDoneTria
 		}
 		answers[b.FrameID] = append(answers[b.FrameID], gold.Box{
 			LabelTypeID: c.LabelTypeID, Attributes: c.Attributes, X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
+			Keypoints: b.Keypoints,
 		})
 	}
-	return refs, answers, nil
+	return refs, answers, sizes, nil
 }
 
 // summary scores the trial's boxes at the live pre-label threshold against
@@ -440,13 +466,13 @@ func (r *trialReader) summary(ctx context.Context, t db.ModelTrial, classes []cl
 	if err != nil {
 		return nil, fmt.Errorf("list trial boxes: %w", err)
 	}
-	refs, answers, err := frameBoxes(refRows, ansRows, classes, 0)
+	refs, answers, sizes, err := frameBoxes(refRows, ansRows, classes, 0)
 	if err != nil {
 		return nil, err
 	}
 	byType := tallies{}
 	for _, f := range done {
-		byType.score(refs[f], answers[f])
+		byType.score(refs[f], answers[f], sizes[f])
 	}
 	out := &krillv1.ModelTrialSummary{MinConfidence: minConf, LabeledFrames: int32(len(done))} //nolint:gosec // frame counts fit in int32
 	var all tally
@@ -632,9 +658,12 @@ func (s *Service) GetModelTrial(ctx context.Context, req *krillv1.GetModelTrialR
 			FrameId:     b.FrameID,
 			LabelTypeId: c.LabelTypeID,
 			Attributes:  c.Attributes,
-			Box:         &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Corners: annotation.Corners(b.Corners)},
-			Confidence:  b.Confidence,
-			Track:       b.Track,
+			Box: &krillv1.Box{
+				X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Corners: annotation.Corners(b.Corners),
+				Keypoints: annotation.Keypoints(b.Keypoints),
+			},
+			Confidence: b.Confidence,
+			Track:      b.Track,
 		})
 	}
 	return out, nil
@@ -737,7 +766,7 @@ func (s *Service) listTrialErrors(ctx context.Context, req *krillv1.ListModelTri
 	for i, b := range ansRows {
 		answers[i] = db.ListDoneTrialBoxesRow(b)
 	}
-	refBoxes, ansBoxes, err := frameBoxes(refs, answers, classes, req.GetLabelTypeId())
+	refBoxes, ansBoxes, sizes, err := frameBoxes(refs, answers, classes, req.GetLabelTypeId())
 	if err != nil {
 		return nil, rpc.Internal(err, "list trial errors")
 	}
@@ -750,7 +779,7 @@ func (s *Service) listTrialErrors(ctx context.Context, req *krillv1.ListModelTri
 	var bad []scored
 	for _, f := range frames {
 		byType := tallies{}
-		byType.score(refBoxes[f.FrameID], ansBoxes[f.FrameID])
+		byType.score(refBoxes[f.FrameID], ansBoxes[f.FrameID], sizes[f.FrameID])
 		var all tally
 		for _, tl := range byType {
 			all.add(*tl)

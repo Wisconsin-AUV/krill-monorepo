@@ -69,7 +69,11 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 		if err != nil {
 			return Plan{}, fmt.Errorf("label type %d: %w", t.ID, err)
 		}
-		types[i] = LabelType{ID: t.ID, Name: t.Name, Attributes: attrs, Oriented: t.Oriented}
+		pose, err := taxonomy.ParsePose(t)
+		if err != nil {
+			return Plan{}, err
+		}
+		types[i] = LabelType{ID: t.ID, Name: t.Name, Attributes: attrs, Oriented: t.Oriented, Pose: pose}
 	}
 
 	videoRows, err := q.ListExportVideos(ctx, ids)
@@ -105,7 +109,7 @@ func Load(ctx context.Context, q *db.Queries, o *krillv1.ExportOptions) (Plan, e
 			return Plan{}, fmt.Errorf("box on frame %d: %w", b.FrameID, err)
 		}
 		boxes[i] = Box{
-			FrameID: b.FrameID, X: b.X, Y: b.Y, W: b.Width, H: b.Height, Corners: b.Corners,
+			FrameID: b.FrameID, X: b.X, Y: b.Y, W: b.Width, H: b.Height, Corners: b.Corners, Keypoints: b.Keypoints,
 			Status: b.Status, TrackUnconfirmed: b.TrackUnconfirmed, TypeID: b.LabelTypeID, Attributes: values,
 		}
 	}

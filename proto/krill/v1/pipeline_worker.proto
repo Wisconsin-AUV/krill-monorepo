@@ -104,6 +104,8 @@ message FinishInspectRequest {
   int32 image_size = 3;
   // An OBB model rather than a detection model.
   bool oriented = 4;
+  // Keypoints per object, for pose models.
+  int32 keypoints = 5;
 }
 
 message FinishInspectResponse {}

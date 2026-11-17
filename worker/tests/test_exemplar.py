@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 
 from krill.v1 import annotation_pb2, worker_pb2
 
@@ -32,7 +32,7 @@ class Sam2Tracker:
     def load_embedding(self, data: bytes) -> Embedding:
         raise AssertionError("not called")
 
-    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
+    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
         raise AssertionError("not called")
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:

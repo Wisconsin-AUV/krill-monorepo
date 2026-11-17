@@ -10,7 +10,8 @@ const WAVE_SPREAD_S = 0.8
 function screenRect(prompt: TrackPrompt, box: BoxRect | undefined, view: View, image: Size) {
   const rect = box ?? ('box' in prompt ? prompt.box : undefined)
   if (!rect) {
-    const { x, y } = 'point' in prompt ? prompt.point : { x: 0, y: 0 }
+    const { x, y } =
+      'point' in prompt ? prompt.point : 'quad' in prompt ? prompt.quad.point : { x: 0, y: 0 }
     return {
       left: view.x + x * image.width * view.scale - POINT_SIZE_PX / 2,
       top: view.y + y * image.height * view.scale - POINT_SIZE_PX / 2,

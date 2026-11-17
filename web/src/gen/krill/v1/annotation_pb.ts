@@ -10,7 +10,7 @@ import type { Message, UnknownEnum } from "@bufbuild/protobuf";
  * Describes the file krill/v1/annotation.proto.
  */
 export const file_krill_v1_annotation: GenFile = /*@__PURE__*/
-  fileDesc("ChlrcmlsbC92MS9hbm5vdGF0aW9uLnByb3RvEghrcmlsbC52MSJcCgNCb3gSCQoBeBgBIAEoARIJCgF5GAIgASgBEg0KBXdpZHRoGAMgASgBEg4KBmhlaWdodBgEIAEoARIgCgdjb3JuZXJzGAUgAygLMg8ua3JpbGwudjEuUG9pbnQiHQoFUG9pbnQSCQoBeBgBIAEoARIJCgF5GAIgASgBIqMBCgVUcmFjaxIKCgJpZBgBIAEoAxIPCgdjbGlwX2lkGAIgASgDEhUKDWxhYmVsX3R5cGVfaWQYAyABKAMSMwoKYXR0cmlidXRlcxgEIAMoCzIfLmtyaWxsLnYxLlRyYWNrLkF0dHJpYnV0ZXNFbnRyeRoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLnAQoKQW5ub3RhdGlvbhIKCgJpZBgBIAEoAxIQCgh0cmFja19pZBgCIAEoAxIQCghmcmFtZV9pZBgDIAEoAxIaCgNib3gYBCABKAsyDS5rcmlsbC52MS5Cb3gSKgoGc291cmNlGAUgASgOMhoua3JpbGwudjEuQW5ub3RhdGlvblNvdXJjZRIqCgZzdGF0dXMYBiABKA4yGi5rcmlsbC52MS5Bbm5vdGF0aW9uU3RhdHVzEg0KBWRyaWZ0GAcgASgIEhcKCmNvbmZpZGVuY2UYKCABKAJIAIgBAUINCgtfY29uZmlkZW5jZSLfAQoSQ3JlYXRlVHJhY2tSZXF1ZXN0Eg8KB2NsaXBfaWQYASABKAMSFQoNbGFiZWxfdHlwZV9pZBgCIAEoAxJACgphdHRyaWJ1dGVzGAMgAygLMiwua3JpbGwudjEuQ3JlYXRlVHJhY2tSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIQCghmcmFtZV9pZBgEIAEoAxIaCgNib3gYBSABKAsyDS5rcmlsbC52MS5Cb3gaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiXwoTQ3JlYXRlVHJhY2tSZXNwb25zZRIeCgV0cmFjaxgBIAEoCzIPLmtyaWxsLnYxLlRyYWNrEigKCmFubm90YXRpb24YAiABKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uItsBChJVcGRhdGVUcmFja1JlcXVlc3QSCgoCaWQYASABKAMSGgoNbGFiZWxfdHlwZV9pZBgCIAEoA0gAiAEBEkAKCmF0dHJpYnV0ZXMYAyADKAsyLC5rcmlsbC52MS5VcGRhdGVUcmFja1JlcXVlc3QuQXR0cmlidXRlc0VudHJ5EhYKDnNldF9hdHRyaWJ1dGVzGAQgASgIGjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQhAKDl9sYWJlbF90eXBlX2lkIjUKE1VwZGF0ZVRyYWNrUmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjayIgChJEZWxldGVUcmFja1JlcXVlc3QSCgoCaWQYASABKAMiFQoTRGVsZXRlVHJhY2tSZXNwb25zZSJPCg1TZXRCb3hSZXF1ZXN0EhAKCHRyYWNrX2lkGAEgASgDEhAKCGZyYW1lX2lkGAIgASgDEhoKA2JveBgDIAEoCzINLmtyaWxsLnYxLkJveCI6Cg5TZXRCb3hSZXNwb25zZRIoCgphbm5vdGF0aW9uGAEgASgLMhQua3JpbGwudjEuQW5ub3RhdGlvbiI2ChBEZWxldGVCb3hSZXF1ZXN0EhAKCHRyYWNrX2lkGAEgASgDEhAKCGZyYW1lX2lkGAIgASgDIioKEURlbGV0ZUJveFJlc3BvbnNlEhUKDXRyYWNrX2RlbGV0ZWQYASABKAgiUQoQQ29weUJveGVzUmVxdWVzdBIVCg1mcm9tX2ZyYW1lX2lkGAEgASgDEhMKC3RvX2ZyYW1lX2lkGAIgASgDEhEKCXRyYWNrX2lkcxgDIAMoAyI+ChFDb3B5Qm94ZXNSZXNwb25zZRIpCgthbm5vdGF0aW9ucxgBIAMoCzIULmtyaWxsLnYxLkFubm90YXRpb24iUAoVU2V0RnJhbWVTdGF0dXNSZXF1ZXN0EhAKCGZyYW1lX2lkGAEgASgDEiUKBnN0YXR1cxgCIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzIj8KFlNldEZyYW1lU3RhdHVzUmVzcG9uc2USJQoGc3RhdHVzGAEgASgOMhUua3JpbGwudjEuRnJhbWVTdGF0dXMijgIKElRyYWNrT2JqZWN0UmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIQCgh0cmFja19pZBgCIAEoAxIVCg1sYWJlbF90eXBlX2lkGAMgASgDEkAKCmF0dHJpYnV0ZXMYBCADKAsyLC5rcmlsbC52MS5UcmFja09iamVjdFJlcXVlc3QuQXR0cmlidXRlc0VudHJ5EiAKBXBvaW50GAUgASgLMg8ua3JpbGwudjEuUG9pbnRIABIcCgNib3gYBiABKAsyDS5rcmlsbC52MS5Cb3hIABoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZwcm9tcHQiNQoTVHJhY2tPYmplY3RSZXNwb25zZRIeCgV0cmFjaxgBIAEoCzIPLmtyaWxsLnYxLlRyYWNrIoUBChdMaXN0VHJhY2tzQnlUeXBlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEhAKCHZpZGVvX2lkGAIgASgDEhoKEm1pc3NpbmdfYXR0cmlidXRlcxgDIAEoCBIRCglwYWdlX3NpemUYBCABKAUSEgoKcGFnZV90b2tlbhgFIAEoCSKTAQoJVHJhY2tDcm9wEh4KBXRyYWNrGAEgASgLMg8ua3JpbGwudjEuVHJhY2sSEAoIdmlkZW9faWQYAiABKAMSEAoIZnJhbWVfaWQYAyABKAMSEwoLZnJhbWVfaW5kZXgYBCABKAUSGgoDYm94GAUgASgLMg0ua3JpbGwudjEuQm94EhEKCWZyYW1lX3VybBgGIAEoCSJYChhMaXN0VHJhY2tzQnlUeXBlUmVzcG9uc2USIwoGdHJhY2tzGAEgAygLMhMua3JpbGwudjEuVHJhY2tDcm9wEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSI7ChVTZWFyY2hFeGVtcGxhclJlcXVlc3QSEAoIdHJhY2tfaWQYASABKAMSEAoIZnJhbWVfaWQYAiABKAMiKwoWU2VhcmNoRXhlbXBsYXJSZXNwb25zZRIRCglzZWFyY2hfaWQYASABKAMiJgoYR2V0RXhlbXBsYXJTZWFyY2hSZXF1ZXN0EgoKAmlkGAEgASgDIksKGUdldEV4ZW1wbGFyU2VhcmNoUmVzcG9uc2USDAoEZG9uZRgBIAEoCBINCgVlcnJvchgCIAEoCRIRCgl0cmFja19pZHMYAyADKAMqeQoLRnJhbWVTdGF0dXMSHAoYRlJBTUVfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWRlJBTUVfU1RBVFVTX1VOTEFCRUxFRBABEhgKFEZSQU1FX1NUQVRVU19MQUJFTEVEEAISFgoSRlJBTUVfU1RBVFVTX0VNUFRZEAMqowEKEEFubm90YXRpb25Tb3VyY2USIQodQU5OT1RBVElPTl9TT1VSQ0VfVU5TUEVDSUZJRUQQABIbChdBTk5PVEFUSU9OX1NPVVJDRV9IVU1BThABEhkKFUFOTk9UQVRJT05fU09VUkNFX1NBTRACEhoKFkFOTk9UQVRJT05fU09VUkNFX1lPTE8QAxIYChRBTk5PVEFUSU9OX1NPVVJDRV9DVhAEKpUBChBBbm5vdGF0aW9uU3RhdHVzEiEKHUFOTk9UQVRJT05fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaQU5OT1RBVElPTl9TVEFUVVNfUFJPUE9TRUQQARIeChpBTk5PVEFUSU9OX1NUQVRVU19WRVJJRklFRBACEh4KGkFOTk9UQVRJT05fU1RBVFVTX1JFSkVDVEVEEAMyhQcKEUFubm90YXRpb25TZXJ2aWNlEkwKC0NyZWF0ZVRyYWNrEhwua3JpbGwudjEuQ3JlYXRlVHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuQ3JlYXRlVHJhY2tSZXNwb25zZSIAEkwKC1VwZGF0ZVRyYWNrEhwua3JpbGwudjEuVXBkYXRlVHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuVXBkYXRlVHJhY2tSZXNwb25zZSIAEkwKC0RlbGV0ZVRyYWNrEhwua3JpbGwudjEuRGVsZXRlVHJhY2tSZXF1ZXN0Gh0ua3JpbGwudjEuRGVsZXRlVHJhY2tSZXNwb25zZSIAEj0KBlNldEJveBIXLmtyaWxsLnYxLlNldEJveFJlcXVlc3QaGC5rcmlsbC52MS5TZXRCb3hSZXNwb25zZSIAEkYKCURlbGV0ZUJveBIaLmtyaWxsLnYxLkRlbGV0ZUJveFJlcXVlc3QaGy5rcmlsbC52MS5EZWxldGVCb3hSZXNwb25zZSIAEkYKCUNvcHlCb3hlcxIaLmtyaWxsLnYxLkNvcHlCb3hlc1JlcXVlc3QaGy5rcmlsbC52MS5Db3B5Qm94ZXNSZXNwb25zZSIAElUKDlNldEZyYW1lU3RhdHVzEh8ua3JpbGwudjEuU2V0RnJhbWVTdGF0dXNSZXF1ZXN0GiAua3JpbGwudjEuU2V0RnJhbWVTdGF0dXNSZXNwb25zZSIAEkwKC1RyYWNrT2JqZWN0Ehwua3JpbGwudjEuVHJhY2tPYmplY3RSZXF1ZXN0Gh0ua3JpbGwudjEuVHJhY2tPYmplY3RSZXNwb25zZSIAElsKEExpc3RUcmFja3NCeVR5cGUSIS5rcmlsbC52MS5MaXN0VHJhY2tzQnlUeXBlUmVxdWVzdBoiLmtyaWxsLnYxLkxpc3RUcmFja3NCeVR5cGVSZXNwb25zZSIAElUKDlNlYXJjaEV4ZW1wbGFyEh8ua3JpbGwudjEuU2VhcmNoRXhlbXBsYXJSZXF1ZXN0GiAua3JpbGwudjEuU2VhcmNoRXhlbXBsYXJSZXNwb25zZSIAEl4KEUdldEV4ZW1wbGFyU2VhcmNoEiIua3JpbGwudjEuR2V0RXhlbXBsYXJTZWFyY2hSZXF1ZXN0GiMua3JpbGwudjEuR2V0RXhlbXBsYXJTZWFyY2hSZXNwb25zZSIAQpABCgxjb20ua3JpbGwudjFCD0Fubm90YXRpb25Qcm90b1ABWi5naXRodWIuY29tL3dhdXYva3JpbGwvYXBpL2dlbi9rcmlsbC92MTtrcmlsbHYxogIDS1hYqgIIS3JpbGwuVjHKAghLcmlsbFxWMeICFEtyaWxsXFYxXEdQQk1ldGFkYXRh6gIJS3JpbGw6OlYxYgZwcm90bzM");
+  fileDesc("ChlrcmlsbC92MS9hbm5vdGF0aW9uLnByb3RvEghrcmlsbC52MSKDAQoDQm94EgkKAXgYASABKAESCQoBeRgCIAEoARINCgV3aWR0aBgDIAEoARIOCgZoZWlnaHQYBCABKAESIAoHY29ybmVycxgFIAMoCzIPLmtyaWxsLnYxLlBvaW50EiUKCWtleXBvaW50cxgGIAMoCzISLmtyaWxsLnYxLktleXBvaW50IlIKCEtleXBvaW50EgkKAXgYASABKAESCQoBeRgCIAEoARIwCgp2aXNpYmlsaXR5GAMgASgOMhwua3JpbGwudjEuS2V5cG9pbnRWaXNpYmlsaXR5Ih0KBVBvaW50EgkKAXgYASABKAESCQoBeRgCIAEoASKjAQoFVHJhY2sSCgoCaWQYASABKAMSDwoHY2xpcF9pZBgCIAEoAxIVCg1sYWJlbF90eXBlX2lkGAMgASgDEjMKCmF0dHJpYnV0ZXMYBCADKAsyHy5rcmlsbC52MS5UcmFjay5BdHRyaWJ1dGVzRW50cnkaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi5wEKCkFubm90YXRpb24SCgoCaWQYASABKAMSEAoIdHJhY2tfaWQYAiABKAMSEAoIZnJhbWVfaWQYAyABKAMSGgoDYm94GAQgASgLMg0ua3JpbGwudjEuQm94EioKBnNvdXJjZRgFIAEoDjIaLmtyaWxsLnYxLkFubm90YXRpb25Tb3VyY2USKgoGc3RhdHVzGAYgASgOMhoua3JpbGwudjEuQW5ub3RhdGlvblN0YXR1cxINCgVkcmlmdBgHIAEoCBIXCgpjb25maWRlbmNlGCggASgCSACIAQFCDQoLX2NvbmZpZGVuY2Ui3wEKEkNyZWF0ZVRyYWNrUmVxdWVzdBIPCgdjbGlwX2lkGAEgASgDEhUKDWxhYmVsX3R5cGVfaWQYAiABKAMSQAoKYXR0cmlidXRlcxgDIAMoCzIsLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdC5BdHRyaWJ1dGVzRW50cnkSEAoIZnJhbWVfaWQYBCABKAMSGgoDYm94GAUgASgLMg0ua3JpbGwudjEuQm94GjEKD0F0dHJpYnV0ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIl8KE0NyZWF0ZVRyYWNrUmVzcG9uc2USHgoFdHJhY2sYASABKAsyDy5rcmlsbC52MS5UcmFjaxIoCgphbm5vdGF0aW9uGAIgASgLMhQua3JpbGwudjEuQW5ub3RhdGlvbiLbAQoSVXBkYXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDEhoKDWxhYmVsX3R5cGVfaWQYAiABKANIAIgBARJACgphdHRyaWJ1dGVzGAMgAygLMiwua3JpbGwudjEuVXBkYXRlVHJhY2tSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIWCg5zZXRfYXR0cmlidXRlcxgEIAEoCBoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIQCg5fbGFiZWxfdHlwZV9pZCI1ChNVcGRhdGVUcmFja1Jlc3BvbnNlEh4KBXRyYWNrGAEgASgLMg8ua3JpbGwudjEuVHJhY2siIAoSRGVsZXRlVHJhY2tSZXF1ZXN0EgoKAmlkGAEgASgDIhUKE0RlbGV0ZVRyYWNrUmVzcG9uc2UiTwoNU2V0Qm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAxIaCgNib3gYAyABKAsyDS5rcmlsbC52MS5Cb3giOgoOU2V0Qm94UmVzcG9uc2USKAoKYW5ub3RhdGlvbhgBIAEoCzIULmtyaWxsLnYxLkFubm90YXRpb24iNgoQRGVsZXRlQm94UmVxdWVzdBIQCgh0cmFja19pZBgBIAEoAxIQCghmcmFtZV9pZBgCIAEoAyIqChFEZWxldGVCb3hSZXNwb25zZRIVCg10cmFja19kZWxldGVkGAEgASgIIlEKEENvcHlCb3hlc1JlcXVlc3QSFQoNZnJvbV9mcmFtZV9pZBgBIAEoAxITCgt0b19mcmFtZV9pZBgCIAEoAxIRCgl0cmFja19pZHMYAyADKAMiPgoRQ29weUJveGVzUmVzcG9uc2USKQoLYW5ub3RhdGlvbnMYASADKAsyFC5rcmlsbC52MS5Bbm5vdGF0aW9uIlAKFVNldEZyYW1lU3RhdHVzUmVxdWVzdBIQCghmcmFtZV9pZBgBIAEoAxIlCgZzdGF0dXMYAiABKA4yFS5rcmlsbC52MS5GcmFtZVN0YXR1cyI/ChZTZXRGcmFtZVN0YXR1c1Jlc3BvbnNlEiUKBnN0YXR1cxgBIAEoDjIVLmtyaWxsLnYxLkZyYW1lU3RhdHVzIrQCChJUcmFja09iamVjdFJlcXVlc3QSEAoIZnJhbWVfaWQYASABKAMSEAoIdHJhY2tfaWQYAiABKAMSFQoNbGFiZWxfdHlwZV9pZBgDIAEoAxJACgphdHRyaWJ1dGVzGAQgAygLMiwua3JpbGwudjEuVHJhY2tPYmplY3RSZXF1ZXN0LkF0dHJpYnV0ZXNFbnRyeRIgCgVwb2ludBgFIAEoCzIPLmtyaWxsLnYxLlBvaW50SAASHAoDYm94GAYgASgLMg0ua3JpbGwudjEuQm94SAASJAoEcXVhZBgHIAEoCzIULmtyaWxsLnYxLlF1YWRQcm9tcHRIABoxCg9BdHRyaWJ1dGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZwcm9tcHQiOgoKUXVhZFByb21wdBIMCgRxdWFkGAEgASgFEh4KBXBvaW50GAIgASgLMg8ua3JpbGwudjEuUG9pbnQiNQoTVHJhY2tPYmplY3RSZXNwb25zZRIeCgV0cmFjaxgBIAEoCzIPLmtyaWxsLnYxLlRyYWNrIoUBChdMaXN0VHJhY2tzQnlUeXBlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEhAKCHZpZGVvX2lkGAIgASgDEhoKEm1pc3NpbmdfYXR0cmlidXRlcxgDIAEoCBIRCglwYWdlX3NpemUYBCABKAUSEgoKcGFnZV90b2tlbhgFIAEoCSKTAQoJVHJhY2tDcm9wEh4KBXRyYWNrGAEgASgLMg8ua3JpbGwudjEuVHJhY2sSEAoIdmlkZW9faWQYAiABKAMSEAoIZnJhbWVfaWQYAyABKAMSEwoLZnJhbWVfaW5kZXgYBCABKAUSGgoDYm94GAUgASgLMg0ua3JpbGwudjEuQm94EhEKCWZyYW1lX3VybBgGIAEoCSJYChhMaXN0VHJhY2tzQnlUeXBlUmVzcG9uc2USIwoGdHJhY2tzGAEgAygLMhMua3JpbGwudjEuVHJhY2tDcm9wEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSI7ChVTZWFyY2hFeGVtcGxhclJlcXVlc3QSEAoIdHJhY2tfaWQYASABKAMSEAoIZnJhbWVfaWQYAiABKAMiKwoWU2VhcmNoRXhlbXBsYXJSZXNwb25zZRIRCglzZWFyY2hfaWQYASABKAMiJgoYR2V0RXhlbXBsYXJTZWFyY2hSZXF1ZXN0EgoKAmlkGAEgASgDIksKGUdldEV4ZW1wbGFyU2VhcmNoUmVzcG9uc2USDAoEZG9uZRgBIAEoCBINCgVlcnJvchgCIAEoCRIRCgl0cmFja19pZHMYAyADKAMqeQoLRnJhbWVTdGF0dXMSHAoYRlJBTUVfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWRlJBTUVfU1RBVFVTX1VOTEFCRUxFRBABEhgKFEZSQU1FX1NUQVRVU19MQUJFTEVEEAISFgoSRlJBTUVfU1RBVFVTX0VNUFRZEAMqowEKEEFubm90YXRpb25Tb3VyY2USIQodQU5OT1RBVElPTl9TT1VSQ0VfVU5TUEVDSUZJRUQQABIbChdBTk5PVEFUSU9OX1NPVVJDRV9IVU1BThABEhkKFUFOTk9UQVRJT05fU09VUkNFX1NBTRACEhoKFkFOTk9UQVRJT05fU09VUkNFX1lPTE8QAxIYChRBTk5PVEFUSU9OX1NPVVJDRV9DVhAEKpUBChBBbm5vdGF0aW9uU3RhdHVzEiEKHUFOTk9UQVRJT05fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaQU5OT1RBVElPTl9TVEFUVVNfUFJPUE9TRUQQARIeChpBTk5PVEFUSU9OX1NUQVRVU19WRVJJRklFRBACEh4KGkFOTk9UQVRJT05fU1RBVFVTX1JFSkVDVEVEEAMqegoSS2V5cG9pbnRWaXNpYmlsaXR5EiMKH0tFWVBPSU5UX1ZJU0lCSUxJVFlfVU5TUEVDSUZJRUQQABIeChpLRVlQT0lOVF9WSVNJQklMSVRZX0hJRERFThABEh8KG0tFWVBPSU5UX1ZJU0lCSUxJVFlfVklTSUJMRRACMoUHChFBbm5vdGF0aW9uU2VydmljZRJMCgtDcmVhdGVUcmFjaxIcLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLkNyZWF0ZVRyYWNrUmVzcG9uc2UiABJMCgtVcGRhdGVUcmFjaxIcLmtyaWxsLnYxLlVwZGF0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLlVwZGF0ZVRyYWNrUmVzcG9uc2UiABJMCgtEZWxldGVUcmFjaxIcLmtyaWxsLnYxLkRlbGV0ZVRyYWNrUmVxdWVzdBodLmtyaWxsLnYxLkRlbGV0ZVRyYWNrUmVzcG9uc2UiABI9CgZTZXRCb3gSFy5rcmlsbC52MS5TZXRCb3hSZXF1ZXN0Ghgua3JpbGwudjEuU2V0Qm94UmVzcG9uc2UiABJGCglEZWxldGVCb3gSGi5rcmlsbC52MS5EZWxldGVCb3hSZXF1ZXN0Ghsua3JpbGwudjEuRGVsZXRlQm94UmVzcG9uc2UiABJGCglDb3B5Qm94ZXMSGi5rcmlsbC52MS5Db3B5Qm94ZXNSZXF1ZXN0Ghsua3JpbGwudjEuQ29weUJveGVzUmVzcG9uc2UiABJVCg5TZXRGcmFtZVN0YXR1cxIfLmtyaWxsLnYxLlNldEZyYW1lU3RhdHVzUmVxdWVzdBogLmtyaWxsLnYxLlNldEZyYW1lU3RhdHVzUmVzcG9uc2UiABJMCgtUcmFja09iamVjdBIcLmtyaWxsLnYxLlRyYWNrT2JqZWN0UmVxdWVzdBodLmtyaWxsLnYxLlRyYWNrT2JqZWN0UmVzcG9uc2UiABJbChBMaXN0VHJhY2tzQnlUeXBlEiEua3JpbGwudjEuTGlzdFRyYWNrc0J5VHlwZVJlcXVlc3QaIi5rcmlsbC52MS5MaXN0VHJhY2tzQnlUeXBlUmVzcG9uc2UiABJVCg5TZWFyY2hFeGVtcGxhchIfLmtyaWxsLnYxLlNlYXJjaEV4ZW1wbGFyUmVxdWVzdBogLmtyaWxsLnYxLlNlYXJjaEV4ZW1wbGFyUmVzcG9uc2UiABJeChFHZXRFeGVtcGxhclNlYXJjaBIiLmtyaWxsLnYxLkdldEV4ZW1wbGFyU2VhcmNoUmVxdWVzdBojLmtyaWxsLnYxLkdldEV4ZW1wbGFyU2VhcmNoUmVzcG9uc2UiAEKQAQoMY29tLmtyaWxsLnYxQg9Bbm5vdGF0aW9uUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z");
 
 /**
  * Box is normalized to the frame size, with the origin at the top left.
@@ -46,6 +46,15 @@ export type Box = Message<"krill.v1.Box"> & {
    * @generated from field: repeated krill.v1.Point corners = 5;
    */
   corners: Point[];
+
+  /**
+   * One per keypoint of the label type, in its order, for types with
+   * keypoints. Empty when none is labeled yet. Keypoints may lie outside the
+   * box and the frame.
+   *
+   * @generated from field: repeated krill.v1.Keypoint keypoints = 6;
+   */
+  keypoints: Keypoint[];
 };
 
 /**
@@ -54,6 +63,35 @@ export type Box = Message<"krill.v1.Box"> & {
  */
 export const BoxSchema: GenMessage<Box> = /*@__PURE__*/
   messageDesc(file_krill_v1_annotation, 0);
+
+/**
+ * Keypoint is normalized to the frame size, with the origin at the top left.
+ *
+ * @generated from message krill.v1.Keypoint
+ */
+export type Keypoint = Message<"krill.v1.Keypoint"> & {
+  /**
+   * @generated from field: double x = 1;
+   */
+  x: number;
+
+  /**
+   * @generated from field: double y = 2;
+   */
+  y: number;
+
+  /**
+   * @generated from field: krill.v1.KeypointVisibility visibility = 3;
+   */
+  visibility: KeypointVisibility;
+};
+
+/**
+ * Describes the message krill.v1.Keypoint.
+ * Use `create(KeypointSchema)` to create a new message.
+ */
+export const KeypointSchema: GenMessage<Keypoint> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 1);
 
 /**
  * Point is normalized to the frame size, with the origin at the top left.
@@ -77,7 +115,7 @@ export type Point = Message<"krill.v1.Point"> & {
  * Use `create(PointSchema)` to create a new message.
  */
 export const PointSchema: GenMessage<Point> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 1);
+  messageDesc(file_krill_v1_annotation, 2);
 
 /**
  * @generated from message krill.v1.Track
@@ -111,7 +149,7 @@ export type Track = Message<"krill.v1.Track"> & {
  * Use `create(TrackSchema)` to create a new message.
  */
 export const TrackSchema: GenMessage<Track> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 2);
+  messageDesc(file_krill_v1_annotation, 3);
 
 /**
  * @generated from message krill.v1.Annotation
@@ -168,7 +206,7 @@ export type Annotation = Message<"krill.v1.Annotation"> & {
  * Use `create(AnnotationSchema)` to create a new message.
  */
 export const AnnotationSchema: GenMessage<Annotation> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 3);
+  messageDesc(file_krill_v1_annotation, 4);
 
 /**
  * @generated from message krill.v1.CreateTrackRequest
@@ -205,7 +243,7 @@ export type CreateTrackRequest = Message<"krill.v1.CreateTrackRequest"> & {
  * Use `create(CreateTrackRequestSchema)` to create a new message.
  */
 export const CreateTrackRequestSchema: GenMessage<CreateTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 4);
+  messageDesc(file_krill_v1_annotation, 5);
 
 /**
  * @generated from message krill.v1.CreateTrackResponse
@@ -227,7 +265,7 @@ export type CreateTrackResponse = Message<"krill.v1.CreateTrackResponse"> & {
  * Use `create(CreateTrackResponseSchema)` to create a new message.
  */
 export const CreateTrackResponseSchema: GenMessage<CreateTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 5);
+  messageDesc(file_krill_v1_annotation, 6);
 
 /**
  * @generated from message krill.v1.UpdateTrackRequest
@@ -263,7 +301,7 @@ export type UpdateTrackRequest = Message<"krill.v1.UpdateTrackRequest"> & {
  * Use `create(UpdateTrackRequestSchema)` to create a new message.
  */
 export const UpdateTrackRequestSchema: GenMessage<UpdateTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 6);
+  messageDesc(file_krill_v1_annotation, 7);
 
 /**
  * @generated from message krill.v1.UpdateTrackResponse
@@ -280,7 +318,7 @@ export type UpdateTrackResponse = Message<"krill.v1.UpdateTrackResponse"> & {
  * Use `create(UpdateTrackResponseSchema)` to create a new message.
  */
 export const UpdateTrackResponseSchema: GenMessage<UpdateTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 7);
+  messageDesc(file_krill_v1_annotation, 8);
 
 /**
  * @generated from message krill.v1.DeleteTrackRequest
@@ -297,7 +335,7 @@ export type DeleteTrackRequest = Message<"krill.v1.DeleteTrackRequest"> & {
  * Use `create(DeleteTrackRequestSchema)` to create a new message.
  */
 export const DeleteTrackRequestSchema: GenMessage<DeleteTrackRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 8);
+  messageDesc(file_krill_v1_annotation, 9);
 
 /**
  * @generated from message krill.v1.DeleteTrackResponse
@@ -310,7 +348,7 @@ export type DeleteTrackResponse = Message<"krill.v1.DeleteTrackResponse"> & {
  * Use `create(DeleteTrackResponseSchema)` to create a new message.
  */
 export const DeleteTrackResponseSchema: GenMessage<DeleteTrackResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 9);
+  messageDesc(file_krill_v1_annotation, 10);
 
 /**
  * @generated from message krill.v1.SetBoxRequest
@@ -337,7 +375,7 @@ export type SetBoxRequest = Message<"krill.v1.SetBoxRequest"> & {
  * Use `create(SetBoxRequestSchema)` to create a new message.
  */
 export const SetBoxRequestSchema: GenMessage<SetBoxRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 10);
+  messageDesc(file_krill_v1_annotation, 11);
 
 /**
  * @generated from message krill.v1.SetBoxResponse
@@ -354,7 +392,7 @@ export type SetBoxResponse = Message<"krill.v1.SetBoxResponse"> & {
  * Use `create(SetBoxResponseSchema)` to create a new message.
  */
 export const SetBoxResponseSchema: GenMessage<SetBoxResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 11);
+  messageDesc(file_krill_v1_annotation, 12);
 
 /**
  * @generated from message krill.v1.DeleteBoxRequest
@@ -376,7 +414,7 @@ export type DeleteBoxRequest = Message<"krill.v1.DeleteBoxRequest"> & {
  * Use `create(DeleteBoxRequestSchema)` to create a new message.
  */
 export const DeleteBoxRequestSchema: GenMessage<DeleteBoxRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 12);
+  messageDesc(file_krill_v1_annotation, 13);
 
 /**
  * @generated from message krill.v1.DeleteBoxResponse
@@ -393,7 +431,7 @@ export type DeleteBoxResponse = Message<"krill.v1.DeleteBoxResponse"> & {
  * Use `create(DeleteBoxResponseSchema)` to create a new message.
  */
 export const DeleteBoxResponseSchema: GenMessage<DeleteBoxResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 13);
+  messageDesc(file_krill_v1_annotation, 14);
 
 /**
  * @generated from message krill.v1.CopyBoxesRequest
@@ -422,7 +460,7 @@ export type CopyBoxesRequest = Message<"krill.v1.CopyBoxesRequest"> & {
  * Use `create(CopyBoxesRequestSchema)` to create a new message.
  */
 export const CopyBoxesRequestSchema: GenMessage<CopyBoxesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 14);
+  messageDesc(file_krill_v1_annotation, 15);
 
 /**
  * @generated from message krill.v1.CopyBoxesResponse
@@ -439,7 +477,7 @@ export type CopyBoxesResponse = Message<"krill.v1.CopyBoxesResponse"> & {
  * Use `create(CopyBoxesResponseSchema)` to create a new message.
  */
 export const CopyBoxesResponseSchema: GenMessage<CopyBoxesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 15);
+  messageDesc(file_krill_v1_annotation, 16);
 
 /**
  * @generated from message krill.v1.SetFrameStatusRequest
@@ -461,7 +499,7 @@ export type SetFrameStatusRequest = Message<"krill.v1.SetFrameStatusRequest"> & 
  * Use `create(SetFrameStatusRequestSchema)` to create a new message.
  */
 export const SetFrameStatusRequestSchema: GenMessage<SetFrameStatusRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 16);
+  messageDesc(file_krill_v1_annotation, 17);
 
 /**
  * @generated from message krill.v1.SetFrameStatusResponse
@@ -478,7 +516,7 @@ export type SetFrameStatusResponse = Message<"krill.v1.SetFrameStatusResponse"> 
  * Use `create(SetFrameStatusResponseSchema)` to create a new message.
  */
 export const SetFrameStatusResponseSchema: GenMessage<SetFrameStatusResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 17);
+  messageDesc(file_krill_v1_annotation, 18);
 
 /**
  * @generated from message krill.v1.TrackObjectRequest
@@ -518,12 +556,22 @@ export type TrackObjectRequest = Message<"krill.v1.TrackObjectRequest"> & {
     case: "point";
   } | {
     /**
-     * Saved as the track's box on this frame before tracking.
+     * Saved as the track's box on this frame before tracking, keypoints
+     * included.
      *
      * @generated from field: krill.v1.Box box = 6;
      */
     value: Box;
     case: "box";
+  } | {
+    /**
+     * Fills one of the track's quads from a point on its surface, then
+     * retracks the track from its box on this frame.
+     *
+     * @generated from field: krill.v1.QuadPrompt quad = 7;
+     */
+    value: QuadPrompt;
+    case: "quad";
   } | { case: undefined; value?: undefined };
 };
 
@@ -532,7 +580,31 @@ export type TrackObjectRequest = Message<"krill.v1.TrackObjectRequest"> & {
  * Use `create(TrackObjectRequestSchema)` to create a new message.
  */
 export const TrackObjectRequestSchema: GenMessage<TrackObjectRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 18);
+  messageDesc(file_krill_v1_annotation, 19);
+
+/**
+ * @generated from message krill.v1.QuadPrompt
+ */
+export type QuadPrompt = Message<"krill.v1.QuadPrompt"> & {
+  /**
+   * Index into the label type's quads.
+   *
+   * @generated from field: int32 quad = 1;
+   */
+  quad: number;
+
+  /**
+   * @generated from field: krill.v1.Point point = 2;
+   */
+  point?: Point | undefined;
+};
+
+/**
+ * Describes the message krill.v1.QuadPrompt.
+ * Use `create(QuadPromptSchema)` to create a new message.
+ */
+export const QuadPromptSchema: GenMessage<QuadPrompt> = /*@__PURE__*/
+  messageDesc(file_krill_v1_annotation, 20);
 
 /**
  * @generated from message krill.v1.TrackObjectResponse
@@ -549,7 +621,7 @@ export type TrackObjectResponse = Message<"krill.v1.TrackObjectResponse"> & {
  * Use `create(TrackObjectResponseSchema)` to create a new message.
  */
 export const TrackObjectResponseSchema: GenMessage<TrackObjectResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 19);
+  messageDesc(file_krill_v1_annotation, 21);
 
 /**
  * @generated from message krill.v1.ListTracksByTypeRequest
@@ -592,7 +664,7 @@ export type ListTracksByTypeRequest = Message<"krill.v1.ListTracksByTypeRequest"
  * Use `create(ListTracksByTypeRequestSchema)` to create a new message.
  */
 export const ListTracksByTypeRequestSchema: GenMessage<ListTracksByTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 20);
+  messageDesc(file_krill_v1_annotation, 22);
 
 /**
  * @generated from message krill.v1.TrackCrop
@@ -638,7 +710,7 @@ export type TrackCrop = Message<"krill.v1.TrackCrop"> & {
  * Use `create(TrackCropSchema)` to create a new message.
  */
 export const TrackCropSchema: GenMessage<TrackCrop> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 21);
+  messageDesc(file_krill_v1_annotation, 23);
 
 /**
  * @generated from message krill.v1.ListTracksByTypeResponse
@@ -662,7 +734,7 @@ export type ListTracksByTypeResponse = Message<"krill.v1.ListTracksByTypeRespons
  * Use `create(ListTracksByTypeResponseSchema)` to create a new message.
  */
 export const ListTracksByTypeResponseSchema: GenMessage<ListTracksByTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 22);
+  messageDesc(file_krill_v1_annotation, 24);
 
 /**
  * @generated from message krill.v1.SearchExemplarRequest
@@ -684,7 +756,7 @@ export type SearchExemplarRequest = Message<"krill.v1.SearchExemplarRequest"> & 
  * Use `create(SearchExemplarRequestSchema)` to create a new message.
  */
 export const SearchExemplarRequestSchema: GenMessage<SearchExemplarRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 23);
+  messageDesc(file_krill_v1_annotation, 25);
 
 /**
  * @generated from message krill.v1.SearchExemplarResponse
@@ -701,7 +773,7 @@ export type SearchExemplarResponse = Message<"krill.v1.SearchExemplarResponse"> 
  * Use `create(SearchExemplarResponseSchema)` to create a new message.
  */
 export const SearchExemplarResponseSchema: GenMessage<SearchExemplarResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 24);
+  messageDesc(file_krill_v1_annotation, 26);
 
 /**
  * @generated from message krill.v1.GetExemplarSearchRequest
@@ -718,7 +790,7 @@ export type GetExemplarSearchRequest = Message<"krill.v1.GetExemplarSearchReques
  * Use `create(GetExemplarSearchRequestSchema)` to create a new message.
  */
 export const GetExemplarSearchRequestSchema: GenMessage<GetExemplarSearchRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 25);
+  messageDesc(file_krill_v1_annotation, 27);
 
 /**
  * @generated from message krill.v1.GetExemplarSearchResponse
@@ -749,7 +821,7 @@ export type GetExemplarSearchResponse = Message<"krill.v1.GetExemplarSearchRespo
  * Use `create(GetExemplarSearchResponseSchema)` to create a new message.
  */
 export const GetExemplarSearchResponseSchema: GenMessage<GetExemplarSearchResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_annotation, 26);
+  messageDesc(file_krill_v1_annotation, 28);
 
 /**
  * @generated from enum krill.v1.FrameStatus
@@ -867,6 +939,45 @@ export type AnnotationStatus = (typeof AnnotationStatus)[keyof typeof Annotation
  */
 export const AnnotationStatusSchema: GenEnum<AnnotationStatus> = /*@__PURE__*/
   enumDesc(file_krill_v1_annotation, 2);
+
+/**
+ * The values match YOLO-pose's visibility flags.
+ *
+ * @generated from enum krill.v1.KeypointVisibility
+ */
+export const KeypointVisibility = {
+  /**
+   * Not labeled. Its position is ignored.
+   *
+   * @generated from enum value: KEYPOINT_VISIBILITY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * Hidden behind something or outside the frame, at where it would be.
+   *
+   * @generated from enum value: KEYPOINT_VISIBILITY_HIDDEN = 1;
+   */
+  HIDDEN: 1,
+
+  /**
+   * @generated from enum value: KEYPOINT_VISIBILITY_VISIBLE = 2;
+   */
+  VISIBLE: 2,
+} as const;
+
+/**
+ * The values match YOLO-pose's visibility flags.
+ *
+ * @generated from enum krill.v1.KeypointVisibility
+ */
+export type KeypointVisibility = (typeof KeypointVisibility)[keyof typeof KeypointVisibility] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.KeypointVisibility.
+ */
+export const KeypointVisibilitySchema: GenEnum<KeypointVisibility> = /*@__PURE__*/
+  enumDesc(file_krill_v1_annotation, 3);
 
 /**
  * @generated from service krill.v1.AnnotationService

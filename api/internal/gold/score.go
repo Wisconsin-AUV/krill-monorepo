@@ -4,6 +4,8 @@ import (
 	"maps"
 	"math"
 	"sort"
+
+	"github.com/wauv/krill/api/internal/annotation"
 )
 
 const (
@@ -25,13 +27,23 @@ type Box struct {
 	Y           float64           `json:"y"`
 	Width       float64           `json:"width"`
 	Height      float64           `json:"height"`
+	// Keypoints are x, y, visibility triples, or nil when none is labeled.
+	Keypoints []float64 `json:"keypoints,omitempty"`
+}
+
+// Frame is the frame's size in pixels, which keypoint distances are measured
+// in.
+type Frame struct {
+	Width, Height float64
 }
 
 type Match struct {
 	Reference int
 	Answer    int
 	IoU       float64
-	Correct   bool
+	// OKS is set when the reference has keypoints labeled.
+	OKS     *float64
+	Correct bool
 }
 
 type Result struct {
@@ -53,15 +65,15 @@ func iou(a, b Box) float64 {
 }
 
 // Score pairs boxes greedily, highest IoU first.
-func Score(reference, answer []Box) Result {
-	return score(reference, answer, maps.Equal[map[string]string])
+func Score(reference, answer []Box, frame Frame) Result {
+	return score(reference, answer, frame, maps.Equal[map[string]string])
 }
 
 // ScoreSetAttributes is Score for answers that always carry every attribute,
 // like a model's: a match only has to agree on the attributes the reference
 // sets.
-func ScoreSetAttributes(reference, answer []Box) Result {
-	return score(reference, answer, func(ref, ans map[string]string) bool {
+func ScoreSetAttributes(reference, answer []Box, frame Frame) Result {
+	return score(reference, answer, frame, func(ref, ans map[string]string) bool {
 		for k, v := range ref {
 			if v != "" && ans[k] != v {
 				return false
@@ -71,7 +83,7 @@ func ScoreSetAttributes(reference, answer []Box) Result {
 	})
 }
 
-func score(reference, answer []Box, sameAttributes func(ref, ans map[string]string) bool) Result {
+func score(reference, answer []Box, frame Frame, sameAttributes func(ref, ans map[string]string) bool) Result {
 	var pairs []Match
 	for i, r := range reference {
 		for j, a := range answer {
@@ -93,7 +105,13 @@ func score(reference, answer []Box, sameAttributes func(ref, ans map[string]stri
 			continue
 		}
 		usedRef[p.Reference], usedAns[p.Answer] = true, true
-		p.Correct = p.IoU >= correctIoU && sameAttributes(reference[p.Reference].Attributes, answer[p.Answer].Attributes)
+		ref, ans := reference[p.Reference], answer[p.Answer]
+		p.Correct = p.IoU >= correctIoU && sameAttributes(ref.Attributes, ans.Attributes)
+		refBox := annotation.Rect{X: ref.X, Y: ref.Y, W: ref.Width, H: ref.Height}
+		if oks, ok := annotation.OKS(ref.Keypoints, ans.Keypoints, refBox, frame.Width, frame.Height); ok {
+			p.OKS = &oks
+			p.Correct = p.Correct && oks >= annotation.MinCorrectOKS
+		}
 		if p.Correct {
 			out.Correct++
 		}

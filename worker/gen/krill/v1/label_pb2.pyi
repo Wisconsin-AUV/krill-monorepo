@@ -15,7 +15,7 @@ class LabelAttribute(_message.Message):
     def __init__(self, name: _Optional[str] = ..., options: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class LabelType(_message.Message):
-    __slots__ = ("id", "name", "color", "description", "position", "attributes", "track_count", "box_count", "title", "guideline", "examples", "oriented", "reference_url", "unrotated_box_count")
+    __slots__ = ("id", "name", "color", "description", "position", "attributes", "track_count", "box_count", "title", "guideline", "examples", "oriented", "reference_url", "unrotated_box_count", "keypoints", "quads", "edges", "unposed_box_count")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     COLOR_FIELD_NUMBER: _ClassVar[int]
@@ -30,6 +30,10 @@ class LabelType(_message.Message):
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
     REFERENCE_URL_FIELD_NUMBER: _ClassVar[int]
     UNROTATED_BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
+    QUADS_FIELD_NUMBER: _ClassVar[int]
+    EDGES_FIELD_NUMBER: _ClassVar[int]
+    UNPOSED_BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
     id: int
     name: str
     color: str
@@ -44,7 +48,36 @@ class LabelType(_message.Message):
     oriented: bool
     reference_url: str
     unrotated_box_count: int
-    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., position: _Optional[int] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., track_count: _Optional[int] = ..., box_count: _Optional[int] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., examples: _Optional[_Iterable[_Union[LabelExample, _Mapping]]] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ..., unrotated_box_count: _Optional[int] = ...) -> None: ...
+    keypoints: _containers.RepeatedCompositeFieldContainer[KeypointDef]
+    quads: _containers.RepeatedCompositeFieldContainer[KeypointQuad]
+    edges: _containers.RepeatedCompositeFieldContainer[KeypointEdge]
+    unposed_box_count: int
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., position: _Optional[int] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., track_count: _Optional[int] = ..., box_count: _Optional[int] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., examples: _Optional[_Iterable[_Union[LabelExample, _Mapping]]] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ..., unrotated_box_count: _Optional[int] = ..., keypoints: _Optional[_Iterable[_Union[KeypointDef, _Mapping]]] = ..., quads: _Optional[_Iterable[_Union[KeypointQuad, _Mapping]]] = ..., edges: _Optional[_Iterable[_Union[KeypointEdge, _Mapping]]] = ..., unposed_box_count: _Optional[int] = ...) -> None: ...
+
+class KeypointDef(_message.Message):
+    __slots__ = ("name", "mirror")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    MIRROR_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    mirror: int
+    def __init__(self, name: _Optional[str] = ..., mirror: _Optional[int] = ...) -> None: ...
+
+class KeypointQuad(_message.Message):
+    __slots__ = ("corners", "reference", "center")
+    CORNERS_FIELD_NUMBER: _ClassVar[int]
+    REFERENCE_FIELD_NUMBER: _ClassVar[int]
+    CENTER_FIELD_NUMBER: _ClassVar[int]
+    corners: _containers.RepeatedScalarFieldContainer[int]
+    reference: bool
+    center: int
+    def __init__(self, corners: _Optional[_Iterable[int]] = ..., reference: _Optional[bool] = ..., center: _Optional[int] = ...) -> None: ...
+
+class KeypointEdge(_message.Message):
+    __slots__ = ("to",)
+    FROM_FIELD_NUMBER: _ClassVar[int]
+    TO_FIELD_NUMBER: _ClassVar[int]
+    to: int
+    def __init__(self, to: _Optional[int] = ..., **kwargs) -> None: ...
 
 class LabelExample(_message.Message):
     __slots__ = ("id", "url", "caption")
@@ -67,7 +100,7 @@ class ListLabelTypesResponse(_message.Message):
     def __init__(self, label_types: _Optional[_Iterable[_Union[LabelType, _Mapping]]] = ...) -> None: ...
 
 class CreateLabelTypeRequest(_message.Message):
-    __slots__ = ("name", "color", "description", "attributes", "title", "guideline", "oriented")
+    __slots__ = ("name", "color", "description", "attributes", "title", "guideline", "oriented", "keypoints", "quads", "edges")
     NAME_FIELD_NUMBER: _ClassVar[int]
     COLOR_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
@@ -75,6 +108,9 @@ class CreateLabelTypeRequest(_message.Message):
     TITLE_FIELD_NUMBER: _ClassVar[int]
     GUIDELINE_FIELD_NUMBER: _ClassVar[int]
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
+    QUADS_FIELD_NUMBER: _ClassVar[int]
+    EDGES_FIELD_NUMBER: _ClassVar[int]
     name: str
     color: str
     description: str
@@ -82,7 +118,10 @@ class CreateLabelTypeRequest(_message.Message):
     title: str
     guideline: str
     oriented: bool
-    def __init__(self, name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., oriented: _Optional[bool] = ...) -> None: ...
+    keypoints: _containers.RepeatedCompositeFieldContainer[KeypointDef]
+    quads: _containers.RepeatedCompositeFieldContainer[KeypointQuad]
+    edges: _containers.RepeatedCompositeFieldContainer[KeypointEdge]
+    def __init__(self, name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., oriented: _Optional[bool] = ..., keypoints: _Optional[_Iterable[_Union[KeypointDef, _Mapping]]] = ..., quads: _Optional[_Iterable[_Union[KeypointQuad, _Mapping]]] = ..., edges: _Optional[_Iterable[_Union[KeypointEdge, _Mapping]]] = ...) -> None: ...
 
 class CreateLabelTypeResponse(_message.Message):
     __slots__ = ("label_type",)
@@ -91,7 +130,7 @@ class CreateLabelTypeResponse(_message.Message):
     def __init__(self, label_type: _Optional[_Union[LabelType, _Mapping]] = ...) -> None: ...
 
 class UpdateLabelTypeRequest(_message.Message):
-    __slots__ = ("id", "name", "color", "description", "attributes", "title", "guideline", "oriented")
+    __slots__ = ("id", "name", "color", "description", "attributes", "title", "guideline", "oriented", "keypoints", "quads", "edges")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     COLOR_FIELD_NUMBER: _ClassVar[int]
@@ -100,6 +139,9 @@ class UpdateLabelTypeRequest(_message.Message):
     TITLE_FIELD_NUMBER: _ClassVar[int]
     GUIDELINE_FIELD_NUMBER: _ClassVar[int]
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
+    QUADS_FIELD_NUMBER: _ClassVar[int]
+    EDGES_FIELD_NUMBER: _ClassVar[int]
     id: int
     name: str
     color: str
@@ -108,7 +150,10 @@ class UpdateLabelTypeRequest(_message.Message):
     title: str
     guideline: str
     oriented: bool
-    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., oriented: _Optional[bool] = ...) -> None: ...
+    keypoints: _containers.RepeatedCompositeFieldContainer[KeypointDef]
+    quads: _containers.RepeatedCompositeFieldContainer[KeypointQuad]
+    edges: _containers.RepeatedCompositeFieldContainer[KeypointEdge]
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., color: _Optional[str] = ..., description: _Optional[str] = ..., attributes: _Optional[_Iterable[_Union[LabelAttribute, _Mapping]]] = ..., title: _Optional[str] = ..., guideline: _Optional[str] = ..., oriented: _Optional[bool] = ..., keypoints: _Optional[_Iterable[_Union[KeypointDef, _Mapping]]] = ..., quads: _Optional[_Iterable[_Union[KeypointQuad, _Mapping]]] = ..., edges: _Optional[_Iterable[_Union[KeypointEdge, _Mapping]]] = ...) -> None: ...
 
 class UpdateLabelTypeResponse(_message.Message):
     __slots__ = ("label_type",)
@@ -199,6 +244,18 @@ class FitRotationsRequest(_message.Message):
     def __init__(self, label_type_id: _Optional[int] = ...) -> None: ...
 
 class FitRotationsResponse(_message.Message):
+    __slots__ = ("box_count",)
+    BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
+    box_count: int
+    def __init__(self, box_count: _Optional[int] = ...) -> None: ...
+
+class FitKeypointsRequest(_message.Message):
+    __slots__ = ("label_type_id",)
+    LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    label_type_id: int
+    def __init__(self, label_type_id: _Optional[int] = ...) -> None: ...
+
+class FitKeypointsResponse(_message.Message):
     __slots__ = ("box_count",)
     BOX_COUNT_FIELD_NUMBER: _ClassVar[int]
     box_count: int

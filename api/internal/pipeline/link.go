@@ -5,6 +5,7 @@ import (
 	"math"
 	"slices"
 
+	krillv1 "github.com/wauv/krill/api/gen/krill/v1"
 	"github.com/wauv/krill/api/internal/annotation"
 )
 
@@ -26,7 +27,9 @@ type detection struct {
 	box      annotation.Box
 	// corners are dropped on save unless the target's label type is oriented.
 	corners []float64
-	conf    float32
+	// keypoints are fit to the target's label type on save.
+	keypoints []*krillv1.Keypoint
+	conf      float32
 	// target groups detections that may share a track: one class, or one
 	// plugin output.
 	target int

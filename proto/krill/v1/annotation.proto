@@ -65,6 +65,26 @@ message Box {
   // oriented label types. x, y, width, and height are then the corners'
   // bounds clipped to the frame. Corners may lie outside the frame.
   repeated Point corners = 5;
+  // One per keypoint of the label type, in its order, for types with
+  // keypoints. Empty when none is labeled yet. Keypoints may lie outside the
+  // box and the frame.
+  repeated Keypoint keypoints = 6;
+}
+
+// The values match YOLO-pose's visibility flags.
+enum KeypointVisibility {
+  // Not labeled. Its position is ignored.
+  KEYPOINT_VISIBILITY_UNSPECIFIED = 0;
+  // Hidden behind something or outside the frame, at where it would be.
+  KEYPOINT_VISIBILITY_HIDDEN = 1;
+  KEYPOINT_VISIBILITY_VISIBLE = 2;
+}
+
+// Keypoint is normalized to the frame size, with the origin at the top left.
+message Keypoint {
+  double x = 1;
+  double y = 2;
+  KeypointVisibility visibility = 3;
 }
 
 // Point is normalized to the frame size, with the origin at the top left.
@@ -175,9 +195,19 @@ message TrackObjectRequest {
   map<string, string> attributes = 4;
   oneof prompt {
     Point point = 5;
-    // Saved as the track's box on this frame before tracking.
+    // Saved as the track's box on this frame before tracking, keypoints
+    // included.
     Box box = 6;
+    // Fills one of the track's quads from a point on its surface, then
+    // retracks the track from its box on this frame.
+    QuadPrompt quad = 7;
   }
+}
+
+message QuadPrompt {
+  // Index into the label type's quads.
+  int32 quad = 1;
+  Point point = 2;
 }
 
 message TrackObjectResponse {

@@ -8,9 +8,13 @@ import {
   type Track,
 } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
+import { hasKeypoints } from '@/lib/keypoints'
 import { missingAttributes, withAlpha } from '@/lib/labels'
 import { bounds, fromTopLeft, isRotated, konvaBox, toCorners } from '@/lib/obb'
 import type { Size } from '@/workspace/useWorkspaceStore'
+import { moveKeypoint } from './keypointEdit'
+import { KeypointMarks } from './KeypointMarks'
+import { ReferenceOverlay } from './ReferenceOverlay'
 import { idKey, useLabelStore, type BoxRect, type BoxShape } from './useLabelStore'
 
 const sourceNames: Partial<Record<AnnotationSource, string>> = {
@@ -97,6 +101,9 @@ export function AnnotationLayer({
   draft,
   draftColor,
   pointer,
+  activeKeypoint,
+  onKeypointDrag,
+  onSelectedClick,
 }: {
   frameId: bigint
   ghost?: Annotation
@@ -107,15 +114,21 @@ export function AnnotationLayer({
   draft: BoxRect | null
   draftColor: string
   pointer: { x: number; y: number } | null
+  activeKeypoint: number | null
+  onKeypointDrag: (point: { x: number; y: number } | null) => void
+  // A click, not a drag, on the box of the track that was already selected.
+  onSelectedClick: (point: { x: number; y: number }, evt: MouseEvent) => void
 }) {
   const byTrack = useLabelStore((s) => s.boxes[idKey(frameId)])
   const selectedTrackId = useLabelStore((s) => s.selectedTrackId)
   const hidden = useLabelStore((s) => s.hideBoxes)
   const select = useLabelStore((s) => s.select)
   const moveBox = useLabelStore((s) => s.moveBox)
+  const focusKeypoint = useLabelStore((s) => s.focusKeypoint)
   const transformer = useRef<Konva.Transformer>(null)
   const selectedRect = useRef<Konva.Rect>(null)
   const drawThrough = useModHeld()
+  const downOnSelected = useRef(false)
 
   const boxes = useMemo(() => Object.values(byTrack ?? {}), [byTrack])
   const selectedBox = boxes.find((b) => b.trackId === selectedTrackId)
@@ -136,14 +149,15 @@ export function AnnotationLayer({
   const selectedType = selectedBox ? tracks.get(idKey(selectedBox.trackId))?.type : undefined
 
   const commit = (a: Annotation, node: Konva.Node, oriented: boolean) => {
+    const keypoints = a.box?.keypoints ?? []
     if (!oriented) {
-      const box = toNormalized(node, imageSize)
+      const box = { ...toNormalized(node, imageSize), keypoints }
       node.scaleX(1)
       node.scaleY(1)
       void moveBox(a.trackId, a.frameId, box)
       return
     }
-    const box = toOriented(node, (a.box?.corners.length ?? 0) > 0, imageSize)
+    const box = { ...toOriented(node, (a.box?.corners.length ?? 0) > 0, imageSize), keypoints }
     // The rect is redrawn from what was saved, which can match the props it
     // had before the edit and so not be reapplied.
     node.setAttrs({ ...konvaBox(box, true, imageSize), scaleX: 1, scaleY: 1 })
@@ -204,7 +218,13 @@ export function AnnotationLayer({
                 onMouseDown={(e) => {
                   if (e.evt.button !== 0 || e.evt.altKey) return
                   e.cancelBubble = true
+                  downOnSelected.current = selected
                   select(a.trackId)
+                }}
+                onClick={(e) => {
+                  if (!selected || !downOnSelected.current || e.evt.button !== 0) return
+                  const at = e.target.getParent()?.getRelativePointerPosition()
+                  if (at) onSelectedClick(at, e.evt)
                 }}
                 onMouseEnter={(e) => {
                   const c = e.target.getStage()?.container()
@@ -232,6 +252,24 @@ export function AnnotationLayer({
           )
         })}
 
+      {!hidden &&
+        boxes.map((a) => {
+          const type = tracks.get(idKey(a.trackId))?.type
+          if (a.trackId === selectedTrackId || !hasKeypoints(type) || !a.box?.keypoints.length)
+            return null
+          return (
+            <KeypointMarks
+              key={idKey(a.trackId)}
+              keypoints={a.box.keypoints}
+              type={type}
+              color={type.color}
+              imageSize={imageSize}
+              scale={scale}
+              dashed={a.status === AnnotationStatus.PROPOSED}
+            />
+          )
+        })}
+
       {draft && (
         <Rect
           {...toPixels(draft, imageSize)}
@@ -246,6 +284,9 @@ export function AnnotationLayer({
       <Transformer
         ref={transformer}
         rotateEnabled={!!selectedType?.oriented}
+        // Keypoints often sit on the box's corners, as a crate's rim does,
+        // where the resize handles would take the click.
+        resizeEnabled={activeKeypoint === null}
         rotationSnaps={[0, 90, 180, 270]}
         flipEnabled={false}
         keepRatio={false}
@@ -259,6 +300,39 @@ export function AnnotationLayer({
           newBox.width < MIN_SIDE_PX || newBox.height < MIN_SIDE_PX ? oldBox : newBox
         }
       />
+
+      {!hidden && selectedBox && hasKeypoints(selectedType) && (
+        <>
+          {selectedType.referenceUrl && (
+            <ReferenceOverlay
+              type={selectedType}
+              keypoints={selectedBox.box?.keypoints ?? []}
+              imageSize={imageSize}
+            />
+          )}
+          <KeypointMarks
+            keypoints={selectedBox.box?.keypoints ?? []}
+            type={selectedType}
+            color={selectedType.color}
+            imageSize={imageSize}
+            scale={scale}
+            dashed={selectedBox.status === AnnotationStatus.PROPOSED}
+            showIndex
+            editing={{
+              active: activeKeypoint,
+              onPick: (index) => focusKeypoint({ trackId: selectedBox.trackId, frameId, index }),
+              onDragMove: onKeypointDrag,
+              onDragEnd: (index, p) => {
+                onKeypointDrag(null)
+                moveKeypoint(selectedType, selectedBox.trackId, frameId, index, {
+                  x: p.x / imageSize.width,
+                  y: p.y / imageSize.height,
+                })
+              },
+            }}
+          />
+        </>
+      )}
     </>
   )
 }

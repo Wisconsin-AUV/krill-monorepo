@@ -511,13 +511,18 @@ func (x *TrainConfig) GetAugmentation() *Augmentation {
 type EpochMetrics struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// From 1.
-	Epoch         int32   `protobuf:"varint,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	BoxLoss       float64 `protobuf:"fixed64,2,opt,name=box_loss,json=boxLoss,proto3" json:"box_loss,omitempty"`
-	ClsLoss       float64 `protobuf:"fixed64,3,opt,name=cls_loss,json=clsLoss,proto3" json:"cls_loss,omitempty"`
-	Precision     float64 `protobuf:"fixed64,4,opt,name=precision,proto3" json:"precision,omitempty"`
-	Recall        float64 `protobuf:"fixed64,5,opt,name=recall,proto3" json:"recall,omitempty"`
-	Map50         float64 `protobuf:"fixed64,6,opt,name=map50,proto3" json:"map50,omitempty"`
-	Map50_95      float64 `protobuf:"fixed64,7,opt,name=map50_95,json=map5095,proto3" json:"map50_95,omitempty"`
+	Epoch     int32   `protobuf:"varint,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	BoxLoss   float64 `protobuf:"fixed64,2,opt,name=box_loss,json=boxLoss,proto3" json:"box_loss,omitempty"`
+	ClsLoss   float64 `protobuf:"fixed64,3,opt,name=cls_loss,json=clsLoss,proto3" json:"cls_loss,omitempty"`
+	Precision float64 `protobuf:"fixed64,4,opt,name=precision,proto3" json:"precision,omitempty"`
+	Recall    float64 `protobuf:"fixed64,5,opt,name=recall,proto3" json:"recall,omitempty"`
+	Map50     float64 `protobuf:"fixed64,6,opt,name=map50,proto3" json:"map50,omitempty"`
+	Map50_95  float64 `protobuf:"fixed64,7,opt,name=map50_95,json=map5095,proto3" json:"map50_95,omitempty"`
+	// Pose models only.
+	PoseLoss      float64 `protobuf:"fixed64,8,opt,name=pose_loss,json=poseLoss,proto3" json:"pose_loss,omitempty"`
+	KobjLoss      float64 `protobuf:"fixed64,9,opt,name=kobj_loss,json=kobjLoss,proto3" json:"kobj_loss,omitempty"`
+	PoseMap50     float64 `protobuf:"fixed64,10,opt,name=pose_map50,json=poseMap50,proto3" json:"pose_map50,omitempty"`
+	PoseMap50_95  float64 `protobuf:"fixed64,11,opt,name=pose_map50_95,json=poseMap5095,proto3" json:"pose_map50_95,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -601,15 +606,46 @@ func (x *EpochMetrics) GetMap50_95() float64 {
 	return 0
 }
 
+func (x *EpochMetrics) GetPoseLoss() float64 {
+	if x != nil {
+		return x.PoseLoss
+	}
+	return 0
+}
+
+func (x *EpochMetrics) GetKobjLoss() float64 {
+	if x != nil {
+		return x.KobjLoss
+	}
+	return 0
+}
+
+func (x *EpochMetrics) GetPoseMap50() float64 {
+	if x != nil {
+		return x.PoseMap50
+	}
+	return 0
+}
+
+func (x *EpochMetrics) GetPoseMap50_95() float64 {
+	if x != nil {
+		return x.PoseMap50_95
+	}
+	return 0
+}
+
 type ClassMetrics struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Images        int32                  `protobuf:"varint,2,opt,name=images,proto3" json:"images,omitempty"`
-	Instances     int32                  `protobuf:"varint,3,opt,name=instances,proto3" json:"instances,omitempty"`
-	Precision     float64                `protobuf:"fixed64,4,opt,name=precision,proto3" json:"precision,omitempty"`
-	Recall        float64                `protobuf:"fixed64,5,opt,name=recall,proto3" json:"recall,omitempty"`
-	Map50         float64                `protobuf:"fixed64,6,opt,name=map50,proto3" json:"map50,omitempty"`
-	Map50_95      float64                `protobuf:"fixed64,7,opt,name=map50_95,json=map5095,proto3" json:"map50_95,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Name      string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Images    int32                  `protobuf:"varint,2,opt,name=images,proto3" json:"images,omitempty"`
+	Instances int32                  `protobuf:"varint,3,opt,name=instances,proto3" json:"instances,omitempty"`
+	Precision float64                `protobuf:"fixed64,4,opt,name=precision,proto3" json:"precision,omitempty"`
+	Recall    float64                `protobuf:"fixed64,5,opt,name=recall,proto3" json:"recall,omitempty"`
+	Map50     float64                `protobuf:"fixed64,6,opt,name=map50,proto3" json:"map50,omitempty"`
+	Map50_95  float64                `protobuf:"fixed64,7,opt,name=map50_95,json=map5095,proto3" json:"map50_95,omitempty"`
+	// Of keypoints, for pose models.
+	PoseMap50     float64 `protobuf:"fixed64,8,opt,name=pose_map50,json=poseMap50,proto3" json:"pose_map50,omitempty"`
+	PoseMap50_95  float64 `protobuf:"fixed64,9,opt,name=pose_map50_95,json=poseMap5095,proto3" json:"pose_map50_95,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -689,6 +725,20 @@ func (x *ClassMetrics) GetMap50() float64 {
 func (x *ClassMetrics) GetMap50_95() float64 {
 	if x != nil {
 		return x.Map50_95
+	}
+	return 0
+}
+
+func (x *ClassMetrics) GetPoseMap50() float64 {
+	if x != nil {
+		return x.PoseMap50
+	}
+	return 0
+}
+
+func (x *ClassMetrics) GetPoseMap50_95() float64 {
+	if x != nil {
+		return x.PoseMap50_95
 	}
 	return 0
 }
@@ -786,7 +836,10 @@ type TrainingRun struct {
 	// GetTrainingRun sets it.
 	Classes []*ModelClass `protobuf:"bytes,25,rep,name=classes,proto3" json:"classes,omitempty"`
 	// The model finds rotated boxes (YOLO-OBB).
-	Oriented      bool `protobuf:"varint,26,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	Oriented bool `protobuf:"varint,26,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	// Keypoints the model finds on each object (YOLO-pose). 0 for models
+	// without keypoints.
+	Keypoints     int32 `protobuf:"varint,27,opt,name=keypoints,proto3" json:"keypoints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1001,6 +1054,13 @@ func (x *TrainingRun) GetOriented() bool {
 		return x.Oriented
 	}
 	return false
+}
+
+func (x *TrainingRun) GetKeypoints() int32 {
+	if x != nil {
+		return x.Keypoints
+	}
+	return 0
 }
 
 // ModelClass is one class of an uploaded model.
@@ -3013,7 +3073,10 @@ type ModelTrialClass struct {
 	// matched over matched plus extra.
 	Precision float64 `protobuf:"fixed64,7,opt,name=precision,proto3" json:"precision,omitempty"`
 	// matched over matched plus missed.
-	Recall        float64 `protobuf:"fixed64,8,opt,name=recall,proto3" json:"recall,omitempty"`
+	Recall float64 `protobuf:"fixed64,8,opt,name=recall,proto3" json:"recall,omitempty"`
+	// Mean object keypoint similarity of matched boxes with keypoints, from 0
+	// to 1. Unset when none has keypoints.
+	Oks           *float64 `protobuf:"fixed64,9,opt,name=oks,proto3,oneof" json:"oks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3100,6 +3163,13 @@ func (x *ModelTrialClass) GetPrecision() float64 {
 func (x *ModelTrialClass) GetRecall() float64 {
 	if x != nil {
 		return x.Recall
+	}
+	return 0
+}
+
+func (x *ModelTrialClass) GetOks() float64 {
+	if x != nil && x.Oks != nil {
+		return *x.Oks
 	}
 	return 0
 }
@@ -4271,8 +4341,10 @@ type TrainTask struct {
 	// Presigned URLs of the distractor images, when the augmentation pastes
 	// objects onto them.
 	DistractorUrls []string `protobuf:"bytes,15,rep,name=distractor_urls,json=distractorUrls,proto3" json:"distractor_urls,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The dataset's labels have this many keypoints, so train a pose model.
+	Keypoints     int32 `protobuf:"varint,16,opt,name=keypoints,proto3" json:"keypoints,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TrainTask) Reset() {
@@ -4408,6 +4480,13 @@ func (x *TrainTask) GetDistractorUrls() []string {
 		return x.DistractorUrls
 	}
 	return nil
+}
+
+func (x *TrainTask) GetKeypoints() int32 {
+	if x != nil {
+		return x.Keypoints
+	}
+	return 0
 }
 
 // InspectTask loads uploaded weights and reports their classes.
@@ -4811,7 +4890,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x05batch\x18\x04 \x01(\x05R\x05batch\x12\x1e\n" +
 	"\vbase_run_id\x18\x05 \x01(\x03R\tbaseRunId\x121\n" +
 	"\adataset\x18\x06 \x01(\v2\x17.krill.v1.ExportOptionsR\adataset\x12:\n" +
-	"\faugmentation\x18\a \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\"\xc1\x01\n" +
+	"\faugmentation\x18\a \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\"\xbe\x02\n" +
 	"\fEpochMetrics\x12\x14\n" +
 	"\x05epoch\x18\x01 \x01(\x05R\x05epoch\x12\x19\n" +
 	"\bbox_loss\x18\x02 \x01(\x01R\aboxLoss\x12\x19\n" +
@@ -4819,7 +4898,13 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\tprecision\x18\x04 \x01(\x01R\tprecision\x12\x16\n" +
 	"\x06recall\x18\x05 \x01(\x01R\x06recall\x12\x14\n" +
 	"\x05map50\x18\x06 \x01(\x01R\x05map50\x12\x19\n" +
-	"\bmap50_95\x18\a \x01(\x01R\amap5095\"\xbf\x01\n" +
+	"\bmap50_95\x18\a \x01(\x01R\amap5095\x12\x1b\n" +
+	"\tpose_loss\x18\b \x01(\x01R\bposeLoss\x12\x1b\n" +
+	"\tkobj_loss\x18\t \x01(\x01R\bkobjLoss\x12\x1d\n" +
+	"\n" +
+	"pose_map50\x18\n" +
+	" \x01(\x01R\tposeMap50\x12\"\n" +
+	"\rpose_map50_95\x18\v \x01(\x01R\vposeMap5095\"\x82\x02\n" +
 	"\fClassMetrics\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06images\x18\x02 \x01(\x05R\x06images\x12\x1c\n" +
@@ -4827,10 +4912,13 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\tprecision\x18\x04 \x01(\x01R\tprecision\x12\x16\n" +
 	"\x06recall\x18\x05 \x01(\x01R\x06recall\x12\x14\n" +
 	"\x05map50\x18\x06 \x01(\x01R\x05map50\x12\x19\n" +
-	"\bmap50_95\x18\a \x01(\x01R\amap5095\"i\n" +
+	"\bmap50_95\x18\a \x01(\x01R\amap5095\x12\x1d\n" +
+	"\n" +
+	"pose_map50\x18\b \x01(\x01R\tposeMap50\x12\"\n" +
+	"\rpose_map50_95\x18\t \x01(\x01R\vposeMap5095\"i\n" +
 	"\vEvalMetrics\x12(\n" +
 	"\x03all\x18\x01 \x01(\v2\x16.krill.v1.ClassMetricsR\x03all\x120\n" +
-	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\x9d\b\n" +
+	"\aclasses\x18\x02 \x03(\v2\x16.krill.v1.ClassMetricsR\aclasses\"\xbb\b\n" +
 	"\vTrainingRun\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x120\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.krill.v1.TrainingStatusR\x06status\x123\n" +
@@ -4863,7 +4951,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x0everified_boxes\x18\x17 \x01(\x05R\rverifiedBoxes\x12\x1a\n" +
 	"\bfilename\x18\x18 \x01(\tR\bfilename\x12.\n" +
 	"\aclasses\x18\x19 \x03(\v2\x14.krill.v1.ModelClassR\aclasses\x12\x1a\n" +
-	"\boriented\x18\x1a \x01(\bR\boriented\"D\n" +
+	"\boriented\x18\x1a \x01(\bR\boriented\x12\x1c\n" +
+	"\tkeypoints\x18\x1b \x01(\x05R\tkeypoints\"D\n" +
 	"\n" +
 	"ModelClass\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\"\n" +
@@ -5019,7 +5108,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x05track\x18\x06 \x01(\x05R\x05track\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe1\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x80\x02\n" +
 	"\x0fModelTrialClass\x12\"\n" +
 	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -5028,7 +5117,9 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x06missed\x18\x05 \x01(\x05R\x06missed\x12\x14\n" +
 	"\x05extra\x18\x06 \x01(\x05R\x05extra\x12\x1c\n" +
 	"\tprecision\x18\a \x01(\x01R\tprecision\x12\x16\n" +
-	"\x06recall\x18\b \x01(\x01R\x06recall\"\xc3\x01\n" +
+	"\x06recall\x18\b \x01(\x01R\x06recall\x12\x15\n" +
+	"\x03oks\x18\t \x01(\x01H\x00R\x03oks\x88\x01\x01B\x06\n" +
+	"\x04_oks\"\xc3\x01\n" +
 	"\x11ModelTrialSummary\x12%\n" +
 	"\x0emin_confidence\x18\x01 \x01(\x02R\rminConfidence\x12%\n" +
 	"\x0elabeled_frames\x18\x02 \x01(\x05R\rlabeledFrames\x12+\n" +
@@ -5117,7 +5208,7 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\x03run\x18\x01 \x01(\v2\x15.krill.v1.TrainingRunR\x03run\"1\n" +
 	"\rPrelabelFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\"\x89\x04\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\"\xa7\x04\n" +
 	"\tTrainTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x15\n" +
 	"\x06run_id\x18\x02 \x01(\x03R\x05runId\x12\x1f\n" +
@@ -5136,7 +5227,8 @@ const file_krill_v1_pipeline_proto_rawDesc = "" +
 	"\bhas_test\x18\f \x01(\bR\ahasTest\x12\x1a\n" +
 	"\boriented\x18\r \x01(\bR\boriented\x12:\n" +
 	"\faugmentation\x18\x0e \x01(\v2\x16.krill.v1.AugmentationR\faugmentation\x12'\n" +
-	"\x0fdistractor_urls\x18\x0f \x03(\tR\x0edistractorUrls\">\n" +
+	"\x0fdistractor_urls\x18\x0f \x03(\tR\x0edistractorUrls\x12\x1c\n" +
+	"\tkeypoints\x18\x10 \x01(\x05R\tkeypoints\">\n" +
 	"\vInspectTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
 	"\vweights_url\x18\x02 \x01(\tR\n" +
@@ -5454,6 +5546,7 @@ func file_krill_v1_pipeline_proto_init() {
 		(*ParamValue_Flag)(nil),
 		(*ParamValue_Hsv)(nil),
 	}
+	file_krill_v1_pipeline_proto_msgTypes[38].OneofWrappers = []any{}
 	file_krill_v1_pipeline_proto_msgTypes[62].OneofWrappers = []any{
 		(*PrelabelTask_Yolo)(nil),
 		(*PrelabelTask_Cv)(nil),

@@ -3,10 +3,12 @@ import logging
 import os
 import time
 from collections import deque
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Protocol
 
+import cv2
+import numpy as np
 from krill.v1 import annotation_pb2, pipeline_pb2, pipeline_worker_pb2, worker_pb2
 
 from krill_worker import __version__
@@ -14,6 +16,16 @@ from krill_worker.api import Api, ApiError
 from krill_worker.frames import decode_frame, fetch, prefetch, upload
 from krill_worker.geometry import to_proto
 from krill_worker.heartbeat import Heartbeat
+from krill_worker.keypoints import (
+    KeypointTracker,
+    Schema,
+    find_print,
+    from_proto,
+    load_design,
+    place_centers,
+    print_visibility,
+)
+from krill_worker.keypoints import to_proto as keypoints_proto
 from krill_worker.logs import LogBuffer
 from krill_worker.models import ModelLoadError, Models
 from krill_worker.orient import fit, load_reference
@@ -47,7 +59,7 @@ class Tracker(Protocol):
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
     ) -> Iterator[Mask | None]: ...
 
-    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]: ...
+    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]: ...
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
 
@@ -89,8 +101,10 @@ def run_track(
     reference = None
     if task.oriented and task.reference_url:
         reference = load_reference(fetch(task.reference_url))
+    schema = Schema.of(task.keypoint_count, task.quads)
+    keypoints: KeypointTracker | None = None
     # The tracker takes the frames, so the ones it was given wait here for
-    # fitting rotated boxes to them.
+    # fitting rotated boxes and keypoints to them.
     given: deque[Frame] = deque()
 
     def feed() -> Iterator[tuple[Frame, Embedding | None]]:
@@ -98,19 +112,30 @@ def run_track(
             given.append(frame)
             yield frame, embedding
 
-    ids = [f.id for f in task.frames]
     start = last_report = time.monotonic()
     batch: list[worker_pb2.TrackedBox] = []
     found = 0
     cut_off = CutOff()
-    for frame_id, mask in zip(ids, tracker.track(feed(), prompt), strict=True):
+    for f, mask in zip(task.frames, tracker.track(feed(), prompt), strict=True):
         if cancelled():
             raise TaskCancelledError
+        frame_id = f.id
         frame = given.popleft()
+        if schema.count and keypoints is None:
+            keypoints = start_keypoints(tracker, task, schema, frame, mask)
+        points = None
+        if keypoints is not None:
+            # Stepped on every frame, so keypoints follow the object through
+            # frames where its box is dropped.
+            points = keypoints.step(frame, mask)
+            if f.keypoints:
+                keypoints.anchor(from_proto(f.keypoints, schema.count, frame.shape))
+                points = keypoints.points.copy()
         box = None if mask is None else mask_box(mask)
         if box is not None and not cut_off(box):
             corners = fit(frame, box, mask, reference) if task.oriented else None
-            batch.append(worker_pb2.TrackedBox(frame_id=frame_id, box=to_proto(box, corners)))
+            kps = [] if points is None else keypoints_proto(points, frame.shape)
+            batch.append(worker_pb2.TrackedBox(frame_id=frame_id, box=to_proto(box, corners, kps)))
             found += 1
         if time.monotonic() - last_report >= REPORT_EVERY:
             api.report_track(
@@ -125,8 +150,44 @@ def run_track(
     )
     elapsed = time.monotonic() - start
     log.info(
-        "tracked task %d: object on %d of %d frames in %.1fs", task.id, found, len(ids), elapsed
+        "tracked task %d: object on %d of %d frames in %.1fs",
+        task.id,
+        found,
+        len(task.frames),
+        elapsed,
     )
+
+
+def start_keypoints(
+    tracker: Tracker,
+    task: worker_pb2.TrackTask,
+    schema: Schema,
+    frame: Frame,
+    mask: Mask | None,
+) -> KeypointTracker:
+    """Keypoints on the prompt frame: the ones the labeler placed, plus the
+    quad they pointed at.
+
+    A printed quad is found inside the object's mask rather than SAM's mask
+    of the point, since a click on a print lands on its design more often
+    than on bare paper, and SAM then segments only the design.
+    """
+    design = None
+    if task.reference_url and schema.reference is not None:
+        design = load_design(fetch(task.reference_url))
+    if task.HasField("box"):
+        start = from_proto(task.box.keypoints, schema.count, frame.shape)
+    else:
+        start = np.zeros((schema.count, 3))
+    keypoints = KeypointTracker(schema, design, start)
+    if task.HasField("fill") and 0 <= task.fill.quad < len(schema.quads):
+        surface = mask
+        if not (schema.quads[task.fill.quad].reference and design is not None):
+            point = PointPrompt(task.fill.point.x, task.fill.point.y)
+            surface = tracker.segment(frame, [point])[0]
+        if surface is not None and surface.any():
+            keypoints.fill(frame, task.fill.quad, surface)
+    return keypoints
 
 
 def run_orient(
@@ -135,6 +196,11 @@ def run_orient(
     tracker: Tracker | None = None,
     cancelled: Callable[[], bool] = never,
 ) -> None:
+    if task.keypoint_count:
+        if tracker is None:
+            raise ValueError("fitting keypoints needs SAM")
+        run_fit_keypoints(api, task, tracker, cancelled)
+        return
     reference = load_reference(fetch(task.reference_url)) if task.reference_url else None
     if reference is None and tracker is None:
         raise ValueError("fitting rotated boxes without a reference design needs SAM")
@@ -147,7 +213,7 @@ def run_orient(
             raise TaskCancelledError
         boxes = [(b.box.x, b.box.y, b.box.width, b.box.height) for b in f.boxes]
         masks: list[Mask | None] = (
-            tracker.segment(frame, boxes)
+            tracker.segment(frame, [BoxPrompt(b) for b in boxes])
             if tracker is not None and reference is None
             else [None] * len(boxes)
         )
@@ -168,6 +234,66 @@ def run_orient(
     api.report_orient(worker_pb2.ReportOrientRequest(task_id=task.id, boxes=batch, done=True))
     log.info(
         "oriented task %d: fit %d of %d boxes in %.1fs",
+        task.id,
+        found,
+        total,
+        time.monotonic() - start,
+    )
+
+
+def run_fit_keypoints(
+    api: Api,
+    task: worker_pb2.OrientTask,
+    tracker: Tracker,
+    cancelled: Callable[[], bool] = never,
+) -> None:
+    """Find the reference design's quad in each box.
+
+    The print is looked for inside SAM's mask of the object, not the whole
+    box, since bright floor in a box's corners can join the paper and turn
+    the design the wrong way.
+    """
+    schema = Schema.of(task.keypoint_count, task.quads)
+    q = schema.reference
+    if q is None or not task.reference_url:
+        raise ValueError("fitting keypoints needs a reference quad and its design")
+    design = load_design(fetch(task.reference_url))
+    start = last_report = time.monotonic()
+    batch: list[worker_pb2.OrientBox] = []
+    found = total = 0
+    frames = prefetch(lambda f: decode_frame(fetch(f.frame.url)), task.frames)
+    for f, frame in zip(task.frames, frames, strict=True):
+        if cancelled():
+            raise TaskCancelledError
+        gray = np.asarray(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY), np.uint8)
+        boxes = [(b.box.x, b.box.y, b.box.width, b.box.height) for b in f.boxes]
+        masks = tracker.segment(frame, [BoxPrompt(b) for b in boxes])
+        for b, box, mask in zip(f.boxes, boxes, masks, strict=True):
+            total += 1
+            if mask is None or not mask.any():
+                continue
+            fit_print = find_print(frame, gray, mask, design, None)
+            if fit_print is None:
+                continue
+            corners, paper = fit_print
+            points = np.zeros((schema.count, 3))
+            for i, c, v in zip(q.corners, corners, print_visibility(corners, paper), strict=True):
+                points[i] = (c[0], c[1], v)
+            place_centers(points, schema)
+            batch.append(
+                worker_pb2.OrientBox(
+                    annotation_id=b.annotation_id,
+                    box=to_proto(box, keypoints=keypoints_proto(points, frame.shape)),
+                )
+            )
+            found += 1
+        if time.monotonic() - last_report >= REPORT_EVERY:
+            api.report_orient(worker_pb2.ReportOrientRequest(task_id=task.id, boxes=batch))
+            batch = []
+            last_report = time.monotonic()
+    api.report_orient(worker_pb2.ReportOrientRequest(task_id=task.id, boxes=batch, done=True))
+    log.info(
+        "fit keypoints task %d: %d of %d boxes in %.1fs",
         task.id,
         found,
         total,
@@ -294,7 +420,7 @@ def serve(
                 run_preview(api, res.preview)
             elif kind == "inspect":
                 run_inspect(api, res.inspect)
-            elif kind == "orient" and res.orient.reference_url:
+            elif kind == "orient" and res.orient.reference_url and not res.orient.keypoint_count:
                 run_orient(api, res.orient, cancelled=heartbeat.cancelled)
             else:
                 models.run(lambda tracker: run_task(api, tracker, res, heartbeat.cancelled))

@@ -5,6 +5,7 @@ import (
 	"image/draw"
 	"math"
 	"math/rand/v2"
+	"slices"
 
 	xdraw "golang.org/x/image/draw"
 
@@ -29,10 +30,6 @@ const (
 	// feather is how many pixels around each pasted object blend into the
 	// distractor, so its cut edge doesn't stand out as a hard line.
 	feather = 4
-	// Pasted objects keep at least minPasteSide pixels across, unless they
-	// were smaller to begin with, and at most maxPasteShare of the frame.
-	minPasteSide  = 12
-	maxPasteShare = 0.9
 	// A pasted object may overlap one already pasted by up to maxPasteIoU,
 	// and cover up to maxPasteCover of either, so both stay recognizable.
 	maxPasteIoU   = 0.1
@@ -59,12 +56,24 @@ type corners [8]float64
 type augBox struct {
 	class int
 	c     corners
+	// kps are x, y, visibility triples normalized to the frame.
+	kps []float64
+}
+
+// moveKeypoints moves each labeled keypoint with f.
+func (b *augBox) moveKeypoints(f func(x, y float64) (float64, float64)) {
+	for k := 0; k+2 < len(b.kps); k += 3 {
+		if b.kps[k+2] != 0 {
+			b.kps[k], b.kps[k+1] = f(b.kps[k], b.kps[k+1])
+		}
+	}
 }
 
 func toAugBoxes(boxes []ItemBox, oriented bool) []augBox {
 	out := make([]augBox, len(boxes))
 	for i, b := range boxes {
 		out[i].class = b.Class
+		out[i].kps = slices.Clone(b.Keypoints)
 		if oriented && len(b.Corners) == 8 {
 			copy(out[i].c[:], b.Corners)
 			continue
@@ -116,7 +125,7 @@ func fromAugBoxes(bs []augBox, oriented bool) []ItemBox {
 	for i, b := range bs {
 		x1, y1, x2, y2 := b.c.bounds()
 		x1, y1, x2, y2 = clamp01(x1), clamp01(y1), clamp01(x2), clamp01(y2)
-		out[i] = ItemBox{Class: b.class, X: x1, Y: y1, W: x2 - x1, H: y2 - y1}
+		out[i] = ItemBox{Class: b.class, X: x1, Y: y1, W: x2 - x1, H: y2 - y1, Keypoints: b.kps}
 		if oriented {
 			out[i].Corners = append([]float64(nil), b.c[:]...)
 		}
@@ -127,16 +136,18 @@ func fromAugBoxes(bs []augBox, oriented bool) []ItemBox {
 // Augment varies a frame and its boxes the way training would: Krill's own
 // effects as the worker applies them on load, then Ultralytics' warp, color
 // jitter, and flips. Boxes the warp pushes out of the frame, or that find no
-// free spot on a distractor, are dropped.
+// free spot on a distractor, are dropped. Keypoints move with their boxes,
+// become unlabeled when the warp pushes them out of the frame, and swap by
+// flipIdx when the image is mirrored left to right.
 // distractor returns an image to paste the objects onto, or nil when there
 // are none.
-func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augmentation, r *rand.Rand,
+func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, flipIdx []int, a *krillv1.Augmentation, r *rand.Rand,
 	distractor func(*rand.Rand) *image.RGBA,
 ) (*image.RGBA, []ItemBox) {
 	bs := toAugBoxes(boxes, oriented)
 	if distractor != nil && r.Float64() < float64(a.GetDistractors()) {
 		if d := distractor(r); d != nil {
-			img, bs = pasteObjects(img, bs, d, a, r, oriented)
+			img, bs = pasteObjects(img, bs, d, r, oriented)
 		}
 	}
 	if a.GetAspect() > 1 {
@@ -160,7 +171,7 @@ func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augment
 		flipUD(img, bs)
 	}
 	if r.Float64() < float64(a.GetFliplr()) {
-		flipLR(img, bs)
+		flipLR(img, bs, flipIdx)
 	}
 	return img, fromAugBoxes(bs, oriented)
 }
@@ -222,10 +233,12 @@ func cover(src *image.RGBA, w, h int, r *rand.Rand) *image.RGBA {
 	return scaled.SubImage(image.Rect(x, y, x+w, y+h)).(*image.RGBA)
 }
 
-// pasteObjects cuts each box out of img and pastes it, resized, rotated,
-// stretched, and recolored on its own, at a random free spot on the
-// distractor. Objects that find no free spot are left out.
-func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krillv1.Augmentation, r *rand.Rand, oriented bool) (*image.RGBA, []augBox) {
+// pasteObjects cuts each box out of img and pastes it, unchanged, at a random
+// free spot on the distractor. Objects that find no free spot are left out.
+// The warp and color jitter after it apply to the whole frame, so resizing,
+// rotating, or recoloring objects here as well would compound them, and the
+// zoom twice over shrinks small objects to a few pixels.
+func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, r *rand.Rand, oriented bool) (*image.RGBA, []augBox) {
 	w, h := img.Rect.Dx(), img.Rect.Dy()
 	fw, fh := float64(w), float64(h)
 	back := cover(distractor, w, h, r)
@@ -241,45 +254,22 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 			continue
 		}
 		x1, y1, x2, y2 := p.bounds()
-		cx, cy := (p[0]+p[2]+p[4]+p[6])/4, (p[1]+p[3]+p[5]+p[7])/4
+		x1, y1 = max(x1, 0), max(y1, 0)
+		x2, y2 = min(x2, fw), min(y2, fh)
+		bw, bh := x2-x1, y2-y1
+		if bw <= 0 || bh <= 0 {
+			continue
+		}
 
-		gain := uniform(r, 1-float64(a.GetScale()), 1+float64(a.GetScale()))
-		sx, sy := gain, gain
-		if a.GetAspect() > 1 {
-			if ratio := uniform(r, 1, float64(a.GetAspect())); r.Float64() < 0.5 {
-				sx /= ratio
-			} else {
-				sy /= ratio
-			}
-		}
-		deg := float64(a.GetDegrees())
-		rad := uniform(r, -deg, deg) * math.Pi / 180
-		cos, sin := math.Cos(rad), math.Sin(rad)
-		m := [4]float64{cos * sx, -sin * sy, sin * sx, cos * sy}
-
-		var q corners
-		for k := range 4 {
-			dx, dy := p[2*k]-cx, p[2*k+1]-cy
-			q[2*k], q[2*k+1] = m[0]*dx+m[1]*dy, m[2]*dx+m[3]*dy
-		}
-		qx1, qy1, qx2, qy2 := q.bounds()
-		qw, qh := qx2-qx1, qy2-qy1
-		k := 1.0
-		if floor := min(minPasteSide, x2-x1, y2-y1); min(qw, qh) < floor {
-			k = floor / min(qw, qh)
-		}
-		k = min(k, maxPasteShare*fw/qw, maxPasteShare*fh/qh)
-		for j := range q {
-			q[j] *= k
-		}
-		m = [4]float64{m[0] * k, m[1] * k, m[2] * k, m[3] * k}
-		qx1, qy1, qw, qh = qx1*k, qy1*k, qw*k, qh*k
-
+		// Moving by whole pixels copies the object's pixels exactly, so a
+		// spot keeps the box's fraction of a pixel.
+		fx, fy := x1-math.Floor(x1), y1-math.Floor(y1)
 		var spot rect
 		found := false
 		for range placeTries {
-			x, y := uniform(r, 0, fw-qw), uniform(r, 0, fh-qh)
-			spot = rect{x, y, x + qw, y + qh}
+			x := float64(r.IntN(int(fw-bw-fx)+1)) + fx
+			y := float64(r.IntN(int(fh-bh-fy)+1)) + fy
+			spot = rect{x, y, x + bw, y + bh}
 			if !overlapsAny(spot, placed) {
 				found = true
 				break
@@ -289,17 +279,13 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 			continue
 		}
 		placed = append(placed, spot)
-		dcx, dcy := spot.x1-qx1, spot.y1-qy1
+		dx, dy := spot.x1-x1, spot.y1-y1
+		q := p
 		for j := range 4 {
-			q[2*j] += dcx
-			q[2*j+1] += dcy
+			q[2*j] += dx
+			q[2*j+1] += dy
 		}
-
-		det := m[0]*m[3] - m[1]*m[2]
-		inv := [4]float64{m[3] / det, -m[1] / det, -m[2] / det, m[0] / det}
-		vg := 1 + uniform(r, -1, 1)*float64(a.GetHsvV())
-		sg := 1 + uniform(r, -1, 1)*float64(a.GetHsvS())
-		paste(out, img, q, inv, [4]float64{cx, cy, dcx, dcy}, vg, sg)
+		paste(out, img, q, dx, dy)
 
 		if !oriented {
 			x1, y1, x2, y2 := q.bounds()
@@ -307,17 +293,18 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, a *krill
 		}
 		q = q.scaled(1/fw, 1/fh)
 		q.clockwise()
-		kept = append(kept, augBox{class: b.class, c: q})
+		moved := augBox{class: b.class, c: q, kps: slices.Clone(b.kps)}
+		moved.moveKeypoints(func(x, y float64) (float64, float64) { return x + dx/fw, y + dy/fh })
+		kept = append(kept, moved)
 	}
 	return out, kept
 }
 
-// paste blends the source under the destination quad q into dst, opaque
-// inside q and fading over feather pixels outside it. inv maps a point,
-// relative to the destination center, back to the source relative to the
-// source center; at holds the source center, then the destination center.
-func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) {
+// paste blends src, moved by whole pixels dx and dy, into dst: opaque inside
+// q, where it lands, and fading over feather pixels outside it.
+func paste(dst, src *image.RGBA, q corners, dx, dy float64) {
 	w, h := src.Rect.Dx(), src.Rect.Dy()
+	ox, oy := int(dx), int(dy)
 	x1, y1, x2, y2 := q.bounds()
 	area := image.Rect(int(math.Floor(x1))-feather, int(math.Floor(y1))-feather, int(math.Ceil(x2))+feather, int(math.Ceil(y2))+feather).Intersect(dst.Rect)
 
@@ -342,7 +329,9 @@ func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) 
 
 	for y := area.Min.Y; y < area.Max.Y; y++ {
 		py := float64(y) + 0.5
+		sy := min(max(y-oy, 0), h-1)
 		row := dst.Pix[y*dst.Stride:]
+		srow := src.Pix[sy*src.Stride:]
 		for x := area.Min.X; x < area.Max.X; x++ {
 			px := float64(x) + 0.5
 			d := math.Inf(-1)
@@ -356,24 +345,10 @@ func paste(dst, src *image.RGBA, q corners, inv, at [4]float64, vg, sg float64) 
 			if d > 0 {
 				alpha = 1 - d/feather
 			}
-			rx, ry := px-at[2], py-at[3]
-			sx := at[0] + inv[0]*rx + inv[1]*ry - 0.5
-			sy := at[1] + inv[2]*rx + inv[3]*ry - 0.5
-			sx, sy = min(max(sx, 0), float64(w-1)), min(max(sy, 0), float64(h-1))
-			x0, y0 := int(sx), int(sy)
-			xa, ya := min(x0+1, w-1), min(y0+1, h-1)
-			fx, fy := sx-float64(x0), sy-float64(y0)
-			var c [3]float64
+			sx := min(max(x-ox, 0), w-1)
+			i, si := x*4, sx*4
 			for ch := range 3 {
-				top := float64(src.Pix[y0*src.Stride+x0*4+ch])*(1-fx) + float64(src.Pix[y0*src.Stride+xa*4+ch])*fx
-				bot := float64(src.Pix[ya*src.Stride+x0*4+ch])*(1-fx) + float64(src.Pix[ya*src.Stride+xa*4+ch])*fx
-				c[ch] = top*(1-fy) + bot*fy
-			}
-			gray := 0.299*c[0] + 0.587*c[1] + 0.114*c[2]
-			i := x * 4
-			for ch := range 3 {
-				v := (gray + (c[ch]-gray)*sg) * vg
-				row[i+ch] = clampByte(v*alpha + float64(row[i+ch])*(1-alpha) + 0.5)
+				row[i+ch] = clampByte(float64(srow[si+ch])*alpha + float64(row[i+ch])*(1-alpha) + 0.5)
 			}
 		}
 	}
@@ -467,6 +442,11 @@ func shadows(img *image.RGBA, r *rand.Rand) {
 		for i, p := range patch {
 			gain[i] += p * g
 		}
+	}
+	// Overlapping patches add up, and could otherwise black out a labeled
+	// object or blow it out to white.
+	for i, g := range gain {
+		gain[i] = min(max(g, 1-maxPatchGain), 1+maxPatchGain)
 	}
 
 	row := make([]float32, mw)
@@ -632,9 +612,30 @@ func transform(img *image.RGBA, bs []augBox, m mat3, s float64, oriented bool) (
 		}
 		p = p.scaled(1/fw, 1/fh)
 		p.clockwise()
-		out = append(out, augBox{class: b.class, c: p})
+		out = append(out, augBox{class: b.class, c: p, kps: warpKeypoints(b.kps, m, fw, fh)})
 	}
 	return warp(img, m), out
+}
+
+// warpKeypoints moves keypoints through m, as transform does corners, and
+// unlabels those that leave the frame.
+func warpKeypoints(kps []float64, m mat3, fw, fh float64) []float64 {
+	out := slices.Clone(kps)
+	for k := 0; k+2 < len(out); k += 3 {
+		if out[k+2] == 0 {
+			continue
+		}
+		x, y := out[k]*fw, out[k+1]*fh
+		d := m[2][0]*x + m[2][1]*y + m[2][2]
+		px := (m[0][0]*x + m[0][1]*y + m[0][2]) / d / fw
+		py := (m[1][0]*x + m[1][1]*y + m[1][2]) / d / fh
+		if d <= 0 || px < 0 || px > 1 || py < 0 || py > 1 {
+			out[k], out[k+1], out[k+2] = 0, 0, 0
+			continue
+		}
+		out[k], out[k+1] = px, py
+	}
+	return out
 }
 
 // warp maps each output pixel back through m and samples bilinearly, with
@@ -778,8 +779,9 @@ func hsvToRGB(h, s, v uint8) (r, g, b uint8) {
 }
 
 // flipLR mirrors the image and boxes. Mirroring reverses the corners'
-// winding, so they're put back in clockwise order.
-func flipLR(img *image.RGBA, bs []augBox) {
+// winding, so they're put back in clockwise order, and swaps left and right
+// keypoints, so slot i takes the keypoint from slot flipIdx[i].
+func flipLR(img *image.RGBA, bs []augBox, flipIdx []int) {
 	w, h := img.Rect.Dx(), img.Rect.Dy()
 	for y := range h {
 		row := img.Pix[y*img.Stride : y*img.Stride+w*4]
@@ -793,6 +795,14 @@ func flipLR(img *image.RGBA, bs []augBox) {
 			bs[i].c[j] = 1 - bs[i].c[j]
 		}
 		bs[i].c.clockwise()
+		bs[i].moveKeypoints(func(x, y float64) (float64, float64) { return 1 - x, y })
+		if len(bs[i].kps) == 3*len(flipIdx) {
+			swapped := make([]float64, len(bs[i].kps))
+			for k, from := range flipIdx {
+				copy(swapped[3*k:3*k+3], bs[i].kps[3*from:3*from+3])
+			}
+			bs[i].kps = swapped
+		}
 	}
 }
 
@@ -811,5 +821,6 @@ func flipUD(img *image.RGBA, bs []augBox) {
 			bs[i].c[j] = 1 - bs[i].c[j]
 		}
 		bs[i].c.clockwise()
+		bs[i].moveKeypoints(func(x, y float64) (float64, float64) { return x, 1 - y })
 	}
 }

@@ -65,7 +65,7 @@ func (q *Queries) DeleteTrackProposalsFrom(ctx context.Context, arg DeleteTrackP
 }
 
 const getTrackBox = `-- name: GetTrackBox :one
-SELECT x, y, width, height FROM annotations
+SELECT x, y, width, height, keypoints FROM annotations
 WHERE track_id = $1 AND frame_id = $2 AND status <> 'rejected'
 `
 
@@ -75,10 +75,11 @@ type GetTrackBoxParams struct {
 }
 
 type GetTrackBoxRow struct {
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	Width  float64 `json:"width"`
-	Height float64 `json:"height"`
+	X         float64   `json:"x"`
+	Y         float64   `json:"y"`
+	Width     float64   `json:"width"`
+	Height    float64   `json:"height"`
+	Keypoints []float64 `json:"keypoints"`
 }
 
 func (q *Queries) GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error) {
@@ -89,6 +90,7 @@ func (q *Queries) GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTr
 		&i.Y,
 		&i.Width,
 		&i.Height,
+		&i.Keypoints,
 	)
 	return i, err
 }
@@ -169,21 +171,25 @@ func (q *Queries) ListFramesFrom(ctx context.Context, arg ListFramesFromParams) 
 }
 
 const listTrackBoxes = `-- name: ListTrackBoxes :many
-SELECT a.id, a.x, a.y, a.width, a.height, a.status, a.drift
+SELECT a.id, a.x, a.y, a.width, a.height, a.keypoints, a.status, a.drift, v.width AS frame_width, v.height AS frame_height
 FROM annotations a
 JOIN frames f ON f.id = a.frame_id
+JOIN videos v ON v.id = f.video_id
 WHERE a.track_id = $1
 ORDER BY f.idx
 `
 
 type ListTrackBoxesRow struct {
-	ID     int64       `json:"id"`
-	X      float64     `json:"x"`
-	Y      float64     `json:"y"`
-	Width  float64     `json:"width"`
-	Height float64     `json:"height"`
-	Status string      `json:"status"`
-	Drift  pgtype.Text `json:"drift"`
+	ID          int64       `json:"id"`
+	X           float64     `json:"x"`
+	Y           float64     `json:"y"`
+	Width       float64     `json:"width"`
+	Height      float64     `json:"height"`
+	Keypoints   []float64   `json:"keypoints"`
+	Status      string      `json:"status"`
+	Drift       pgtype.Text `json:"drift"`
+	FrameWidth  int32       `json:"frame_width"`
+	FrameHeight int32       `json:"frame_height"`
 }
 
 func (q *Queries) ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrackBoxesRow, error) {
@@ -201,8 +207,11 @@ func (q *Queries) ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrac
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
 			&i.Status,
 			&i.Drift,
+			&i.FrameWidth,
+			&i.FrameHeight,
 		); err != nil {
 			return nil, err
 		}
@@ -212,6 +221,82 @@ func (q *Queries) ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrac
 		return nil, err
 	}
 	return items, nil
+}
+
+const listVerifiedKeypoints = `-- name: ListVerifiedKeypoints :many
+SELECT frame_id, keypoints FROM annotations
+WHERE track_id = $1 AND status = 'verified' AND keypoints IS NOT NULL
+`
+
+type ListVerifiedKeypointsRow struct {
+	FrameID   int64     `json:"frame_id"`
+	Keypoints []float64 `json:"keypoints"`
+}
+
+func (q *Queries) ListVerifiedKeypoints(ctx context.Context, trackID int64) ([]ListVerifiedKeypointsRow, error) {
+	rows, err := q.db.Query(ctx, listVerifiedKeypoints, trackID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListVerifiedKeypointsRow
+	for rows.Next() {
+		var i ListVerifiedKeypointsRow
+		if err := rows.Scan(&i.FrameID, &i.Keypoints); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockTrackAnnotation = `-- name: LockTrackAnnotation :one
+SELECT id, keypoints, status FROM annotations
+WHERE track_id = $1 AND frame_id = $2
+FOR UPDATE
+`
+
+type LockTrackAnnotationParams struct {
+	TrackID int64 `json:"track_id"`
+	FrameID int64 `json:"frame_id"`
+}
+
+type LockTrackAnnotationRow struct {
+	ID        int64     `json:"id"`
+	Keypoints []float64 `json:"keypoints"`
+	Status    string    `json:"status"`
+}
+
+func (q *Queries) LockTrackAnnotation(ctx context.Context, arg LockTrackAnnotationParams) (LockTrackAnnotationRow, error) {
+	row := q.db.QueryRow(ctx, lockTrackAnnotation, arg.TrackID, arg.FrameID)
+	var i LockTrackAnnotationRow
+	err := row.Scan(&i.ID, &i.Keypoints, &i.Status)
+	return i, err
+}
+
+const proposeKeypoints = `-- name: ProposeKeypoints :exec
+UPDATE annotations SET
+    keypoints = $1,
+    status = 'proposed',
+    source = 'sam',
+    model_version = $2,
+    updated_at = now()
+WHERE id = $3
+`
+
+type ProposeKeypointsParams struct {
+	Keypoints    []float64 `json:"keypoints"`
+	ModelVersion string    `json:"model_version"`
+	ID           int64     `json:"id"`
+}
+
+// The box stays where it is, but someone has to check its keypoints.
+func (q *Queries) ProposeKeypoints(ctx context.Context, arg ProposeKeypointsParams) error {
+	_, err := q.db.Exec(ctx, proposeKeypoints, arg.Keypoints, arg.ModelVersion, arg.ID)
+	return err
 }
 
 const setDrift = `-- name: SetDrift :exec
@@ -276,8 +361,47 @@ func (q *Queries) SetFittedCorners(ctx context.Context, arg SetFittedCornersPara
 	return result.RowsAffected(), nil
 }
 
+const setFittedKeypoints = `-- name: SetFittedKeypoints :execrows
+UPDATE annotations a SET
+    keypoints = ($1::float8[])[coalesce(($2::int[])[i - 1], 0) + 1:($2::int[])[i]],
+    status = 'proposed',
+    updated_at = now()
+FROM generate_subscripts($3::bigint[], 1) AS i, tracks t, label_types lt
+WHERE a.id = ($3::bigint[])[i]
+    AND a.updated_at = ($4::timestamptz[])[i]
+    AND a.keypoints IS NULL
+    AND a.status <> 'rejected'
+    AND t.id = a.track_id AND lt.id = t.label_type_id
+    AND lt.id = $5 AND lt.keypoints <> '[]'
+`
+
+type SetFittedKeypointsParams struct {
+	Keypoints    []float64            `json:"keypoints"`
+	KeypointEnds []int32              `json:"keypoint_ends"`
+	Ids          []int64              `json:"ids"`
+	UpdatedAts   []pgtype.Timestamptz `json:"updated_ats"`
+	LabelTypeID  int64                `json:"label_type_id"`
+}
+
+// Like SetFittedCorners, and also leaves boxes someone labeled keypoints on.
+// @keypoints holds each box's keypoints one after another, with box i's
+// ending at @keypoint_ends[i].
+func (q *Queries) SetFittedKeypoints(ctx context.Context, arg SetFittedKeypointsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setFittedKeypoints,
+		arg.Keypoints,
+		arg.KeypointEnds,
+		arg.Ids,
+		arg.UpdatedAts,
+		arg.LabelTypeID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertProposals = `-- name: UpsertProposals :execrows
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version)
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, keypoints, source, status, model_version)
 SELECT
     $1,
     ($2::bigint[])[i],
@@ -286,9 +410,12 @@ SELECT
     ($5::float8[])[i],
     ($6::float8[])[i],
     CASE WHEN ($7::bool[])[i] THEN ($8::float8[])[(i - 1) * 8 + 1:i * 8] END,
-    $9,
+    CASE WHEN ($9::int[])[i] > coalesce(($9::int[])[i - 1], 0)
+        THEN ($10::float8[])[coalesce(($9::int[])[i - 1], 0) + 1:($9::int[])[i]]
+    END,
+    $11,
     'proposed',
-    $10
+    $12
 FROM generate_subscripts($2::bigint[], 1) AS i
 ON CONFLICT (track_id, frame_id) DO UPDATE SET
     x = excluded.x,
@@ -296,6 +423,7 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     width = excluded.width,
     height = excluded.height,
     corners = excluded.corners,
+    keypoints = excluded.keypoints,
     source = excluded.source,
     model_version = excluded.model_version,
     updated_at = now()
@@ -311,13 +439,17 @@ type UpsertProposalsParams struct {
 	Heights      []float64 `json:"heights"`
 	HasCorners   []bool    `json:"has_corners"`
 	Corners      []float64 `json:"corners"`
+	KeypointEnds []int32   `json:"keypoint_ends"`
+	Keypoints    []float64 `json:"keypoints"`
 	Source       string    `json:"source"`
 	ModelVersion string    `json:"model_version"`
 }
 
 // Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 // @corners holds eight values per box, which are ignored unless the box's
-// @has_corners is set.
+// @has_corners is set. @keypoints holds each box's keypoints one after
+// another, with box i's ending at @keypoint_ends[i], and a box with none
+// gets NULL.
 func (q *Queries) UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error) {
 	result, err := q.db.Exec(ctx, upsertProposals,
 		arg.TrackID,
@@ -328,6 +460,8 @@ func (q *Queries) UpsertProposals(ctx context.Context, arg UpsertProposalsParams
 		arg.Heights,
 		arg.HasCorners,
 		arg.Corners,
+		arg.KeypointEnds,
+		arg.Keypoints,
 		arg.Source,
 		arg.ModelVersion,
 	)

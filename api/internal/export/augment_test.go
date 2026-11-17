@@ -129,7 +129,7 @@ func TestAugmentFlipLR(t *testing.T) {
 	fill(img, image.Rect(10, 20, 30, 40), white)
 	boxes := []ItemBox{{Class: 0, X: 0.1, Y: 0.2, W: 0.2, H: 0.2, Corners: []float64{0.1, 0.2, 0.3, 0.2, 0.3, 0.4, 0.1, 0.4}}}
 	a := &krillv1.Augmentation{Fliplr: 1, Aspect: 1}
-	out, got := Augment(img, boxes, true, a, testRand(), nil)
+	out, got := Augment(img, boxes, true, nil, a, testRand(), nil)
 	if len(got) != 1 {
 		t.Fatalf("%d boxes, want 1", len(got))
 	}
@@ -168,8 +168,8 @@ func toward(c []float64, w, h, k int, share float64) image.Point {
 
 // pasteBoxes pastes like Augment, without the whole-frame edits that the same
 // settings would also turn on.
-func pasteBoxes(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augmentation, r *rand.Rand, distractor *image.RGBA) (*image.RGBA, []ItemBox) {
-	out, bs := pasteObjects(img, toAugBoxes(boxes, oriented), distractor, a, r, oriented)
+func pasteBoxes(img *image.RGBA, boxes []ItemBox, oriented bool, r *rand.Rand, distractor *image.RGBA) (*image.RGBA, []ItemBox) {
+	out, bs := pasteObjects(img, toAugBoxes(boxes, oriented), distractor, r, oriented)
 	return out, fromAugBoxes(bs, oriented)
 }
 
@@ -190,16 +190,22 @@ func TestPastesOrientedObjects(t *testing.T) {
 		}
 	}
 	green := color.RGBA{0, 200, 0, 255}
-	a := &krillv1.Augmentation{Distractors: 1, Degrees: 180, Scale: 0.5, Aspect: 1.5}
 	r := testRand()
 	for range 30 {
-		out, got := pasteBoxes(img, []ItemBox{{Class: 2, Corners: sq}}, true, a, r, solid(64, 64, green))
+		out, got := pasteBoxes(img, []ItemBox{{Class: 2, Corners: sq}}, true, r, solid(64, 64, green))
 		if len(got) != 1 {
 			t.Fatalf("%d boxes, want 1", len(got))
 		}
 		c := got[0].Corners
 		if got[0].Class != 2 || !clockwiseOnScreen(c) {
 			t.Fatalf("box = %+v, want class 2 clockwise", got[0])
+		}
+		// The warp after pasting resizes and rotates the whole frame, so
+		// pasting only moves objects.
+		for k := 1; k < 4; k++ {
+			if !near([]float64{c[2*k] - c[0], c[2*k+1] - c[1]}, []float64{sq[2*k] - sq[0], sq[2*k+1] - sq[1]}) {
+				t.Fatalf("pasted %v, want %v moved", c, sq)
+			}
 		}
 		for k, want := range map[int]color.RGBA{0: red, 1: white, 2: red, 3: red} {
 			p := toward(c, w, h, k, 0.25)
@@ -235,7 +241,7 @@ func TestAugmentPasteSkipsOverlaps(t *testing.T) {
 	a := &krillv1.Augmentation{Distractors: 1, Aspect: 1}
 	r := testRand()
 	for range 10 {
-		out, got := Augment(img, boxes, false, a, r, distractor)
+		out, got := Augment(img, boxes, false, nil, a, r, distractor)
 		if len(got) == 0 || len(got) == len(boxes) {
 			t.Fatalf("%d of %d boxes placed", len(got), len(boxes))
 		}
@@ -265,9 +271,8 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 	back := solid(50, 50, blue)
 	imgPix, backPix := slices.Clone(img.Pix), slices.Clone(back.Pix)
 	corners := slices.Clone(boxes[0].Corners)
-	a := &krillv1.Augmentation{Distractors: 1, Degrees: 30, Scale: 0.5, Aspect: 1.5, HsvV: 0.4}
 
-	if _, got := pasteBoxes(img, boxes, true, a, testRand(), back); len(got) != 1 {
+	if _, got := pasteBoxes(img, boxes, true, testRand(), back); len(got) != 1 {
 		t.Errorf("%d boxes, want 1", len(got))
 	}
 	if !slices.Equal(img.Pix, imgPix) || !slices.Equal(back.Pix, backPix) || !slices.Equal(boxes[0].Corners, corners) {
@@ -275,7 +280,7 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 	}
 
 	distractor := func(*rand.Rand) *image.RGBA { return back }
-	out, got := Augment(img, nil, false, &krillv1.Augmentation{Distractors: 1, Aspect: 1}, testRand(), distractor)
+	out, got := Augment(img, nil, false, nil, &krillv1.Augmentation{Distractors: 1, Aspect: 1}, testRand(), distractor)
 	if len(got) != 0 || out.Rect.Dx() != 100 || out.Rect.Dy() != 80 {
 		t.Fatalf("frame without boxes: %d boxes, size %v", len(got), out.Rect)
 	}
@@ -285,5 +290,55 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 				t.Fatalf("frame without boxes: (%d, %d) = %v, want the distractor", x, y, c)
 			}
 		}
+	}
+}
+
+func TestOverlappingShadowsStayWithinThePatchGain(t *testing.T) {
+	const v = 200
+	lo, hi := uint8(v*(1-maxPatchGain)), uint8(min(255, math.Round(v*(1+maxPatchGain))))
+	r := testRand()
+	for range 200 {
+		img := solid(60, 40, color.RGBA{v, v, v, 255})
+		shadows(img, r)
+		for i, c := range img.Pix {
+			if i%4 != 3 && (c < lo || c > hi) {
+				t.Fatalf("pixel channel %d = %d, want between %d and %d", i, c, lo, hi)
+			}
+		}
+	}
+}
+
+func TestAugmentFlipLRSwapsKeypoints(t *testing.T) {
+	img := solid(100, 100, black)
+	// Left and right corners of a sheet, and its center, which mirrors onto
+	// itself.
+	boxes := []ItemBox{{Class: 0, X: 0.1, Y: 0.2, W: 0.4, H: 0.2, Keypoints: []float64{0.1, 0.3, 2, 0.5, 0.3, 1, 0, 0, 0}}}
+	a := &krillv1.Augmentation{Fliplr: 1, Aspect: 1}
+	_, got := Augment(img, boxes, false, []int{1, 0, 2}, a, testRand(), nil)
+	if len(got) != 1 {
+		t.Fatalf("%d boxes, want 1", len(got))
+	}
+	if want := []float64{0.5, 0.3, 1, 0.9, 0.3, 2, 0, 0, 0}; !near(got[0].Keypoints, want) {
+		t.Errorf("keypoints = %v, want %v", got[0].Keypoints, want)
+	}
+}
+
+func TestTransformMovesKeypoints(t *testing.T) {
+	img := solid(100, 100, black)
+	box := ItemBox{Class: 0, X: 0.1, Y: 0.2, W: 0.2, H: 0.2, Keypoints: []float64{0.1, 0.2, 2, 0.3, 0.4, 1}}
+	_, bs := transform(img, toAugBoxes([]ItemBox{box}, false), rotate90(100, 100), 1, false)
+	got := fromAugBoxes(bs, false)
+	if want := []float64{0.2, 0.9, 2, 0.4, 0.7, 1}; len(got) != 1 || !near(got[0].Keypoints, want) {
+		t.Errorf("rotated keypoints = %+v, want %v", got, want)
+	}
+
+	// Half the box and one keypoint leave the frame.
+	shift := identity()
+	shift[0][2] = 80
+	box = ItemBox{Class: 0, X: 0.1, Y: 0.4, W: 0.2, H: 0.2, Keypoints: []float64{0.15, 0.5, 2, 0.25, 0.5, 2}}
+	_, bs = transform(img, toAugBoxes([]ItemBox{box}, false), shift, 1, false)
+	got = fromAugBoxes(bs, false)
+	if want := []float64{0.95, 0.5, 2, 0, 0, 0}; len(got) != 1 || !near(got[0].Keypoints, want) {
+		t.Errorf("shifted keypoints = %+v, want %v", got, want)
 	}
 }

@@ -39,10 +39,6 @@ NOISE_SIGMA = (2.0, 10.0)
 # Pixels around each pasted object over which its surroundings fade into the
 # distractor, so its edge isn't a hard cut.
 FEATHER = 4
-# Pasted objects are at least MIN_PASTE_SIDE pixels on their long side and at
-# most MAX_PASTE_FRACTION of the frame either way.
-MIN_PASTE_SIDE = 12
-MAX_PASTE_FRACTION = 0.9
 # A spot is rejected when it covers more than this share of the smaller of the
 # new object and an object already pasted there.
 MAX_PASTE_OVERLAP = 0.1
@@ -90,6 +86,9 @@ def shadows(im: Image, rng: np.random.Generator) -> Image:
         blur = (max(axes) // 2) * 2 + 1
         soft = cv2.GaussianBlur(mask, (blur, blur), 0)
         gain += soft * rng.uniform(-MAX_PATCH_GAIN, MAX_PATCH_GAIN)
+    # Overlapping patches add up, and could otherwise black out a labeled
+    # object or blow it out to white.
+    gain = np.clip(gain, 1 - MAX_PATCH_GAIN, 1 + MAX_PATCH_GAIN)
     return to_image(im.astype(np.float32) * gain[..., None])
 
 
@@ -147,27 +146,40 @@ def cover(src: Image, h: int, w: int, rng: np.random.Generator) -> Image:
     return np.asarray(scaled[y : y + h, x : x + w], dtype=np.uint8)
 
 
-def recolor(im: Image, saturation: float, value: float) -> Image:
-    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV).astype(np.float32)
-    hsv[..., 1:] *= (saturation, value)
-    return np.asarray(cv2.cvtColor(to_image(hsv), cv2.COLOR_HSV2BGR), dtype=np.uint8)
+def overlap(
+    a: tuple[int, int, npt.NDArray[np.bool_]], b: tuple[int, int, npt.NDArray[np.bool_]]
+) -> int:
+    """How many pixels two masks share, each given with its top-left corner."""
+    (ax, ay, am), (bx, by, bm) = a, b
+    x0, y0 = max(ax, bx), max(ay, by)
+    x1 = min(ax + am.shape[1], bx + bm.shape[1])
+    y1 = min(ay + am.shape[0], by + bm.shape[0])
+    if x1 <= x0 or y1 <= y0:
+        return 0
+    shared = am[y0 - ay : y1 - ay, x0 - ax : x1 - ax] & bm[y0 - by : y1 - by, x0 - bx : x1 - bx]
+    return int(shared.sum())
 
 
 def paste(
     im: Image,
     polygons: Sequence[Outline],
     distractor: Image,
-    aug: export_pb2.Augmentation,
     rng: np.random.Generator,
 ) -> tuple[Image, list[Outline], list[int]]:
-    """Cut each polygon out of im and paste it, resized, rotated, stretched,
-    and recolored, at a random free spot on the distractor. Returns the new
-    image, the pasted polygons, and the indices of the objects that found a
-    spot, in their original order."""
+    """Cut each polygon out of im and paste it, unchanged, at a random free
+    spot on the distractor. Returns the new image, the pasted polygons, and
+    the indices of the objects that found a spot, in their original order.
+
+    Ultralytics' warp and color jitter run on the whole image afterwards, so
+    resizing, rotating, or recoloring objects here as well would compound
+    them: the same zoom twice, then mosaic, shrinks small objects to a few
+    pixels."""
     h, w = im.shape[:2]
     canvas = cover(distractor, h, w, rng).astype(np.float32)
-    owner = np.zeros((h, w), np.int32)
-    areas = [0]
+    # Each pasted object's mask and top-left corner, kept whole: later objects
+    # may cover parts of earlier ones, and a map of which object was pasted
+    # last at each pixel would undercount overlap with those.
+    masks: list[tuple[int, int, npt.NDArray[np.bool_]]] = []
     placed: dict[int, Outline] = {}
     for i in rng.permutation(len(polygons)):
         p = np.asarray(polygons[i], np.float32).reshape(-1, 2)
@@ -175,68 +187,30 @@ def paste(
         x1, y1 = np.minimum(np.ceil(p.max(0)).astype(int) + FEATHER + 1, (w, h))
         if x1 <= x0 or y1 <= y0:
             continue
-
-        angle = np.radians(rng.uniform(-aug.degrees, aug.degrees))
-        squeeze = np.ones(2)
-        squeeze[rng.integers(2)] = 1 / rng.uniform(1.0, max(aug.aspect, 1.0))
-        rotate = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
-        m = rotate * squeeze * rng.uniform(max(1 - aug.scale, 0.01), 1 + aug.scale)
-        center = (p.min(0) + p.max(0)) / 2
-        q = (p - center) @ m.T
-        extent = q.max(0) - q.min(0)
-        if extent.max() <= 0:
-            continue
-        fit = max(1.0, MIN_PASTE_SIDE / extent.max())
-        fit = min(fit, *(MAX_PASTE_FRACTION * np.array([w, h]) / np.maximum(extent, 1e-6)))
-        m, q = m * fit, q * fit
-
-        pad = FEATHER + 1
-        offset = pad - q.min(0)
-        q = q + offset
-        pw, ph = np.ceil(q.max(0)).astype(int) + pad + 1
-        # Maps the crop's pixels to the patch's, as q maps the polygon.
-        warp = np.hstack([m, ((np.array([x0, y0]) - center) @ m.T + offset)[:, None]])
-        patch = cv2.warpAffine(
-            im[y0:y1, x0:x1],
-            warp.astype(np.float32),
-            (int(pw), int(ph)),
-            flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_REPLICATE,
-        )
-        patch = recolor(
-            np.asarray(patch, np.uint8),
-            rng.uniform(1 - aug.hsv_s, 1 + aug.hsv_s),
-            rng.uniform(1 - aug.hsv_v, 1 + aug.hsv_v),
-        )
+        patch = im[y0:y1, x0:x1].astype(np.float32)
+        ph, pw = patch.shape[:2]
+        q = p - np.array([x0, y0], np.float32)
         hard = np.zeros((ph, pw), np.uint8)
         cv2.fillPoly(hard, [np.round(q).astype(np.int32)], 1)
-        area = int(hard.sum())
+        inside = hard > 0
+        area = int(inside.sum())
         if area == 0:
             continue
         # Only the blur's outer half is kept, so the blend falls outside the
         # polygon and every labeled pixel is the object's.
         k = 2 * FEATHER + 1
-        alpha = np.maximum(cv2.GaussianBlur(hard.astype(np.float32), (k, k), 0), hard)
+        alpha = np.maximum(cv2.GaussianBlur(hard.astype(np.float32), (k, k), 0), hard)[..., None]
 
-        lo, hi = q.min(0), q.max(0)
-        xs = (int(np.ceil(-lo[0])), int(np.floor(w - hi[0])))
-        ys = (int(np.ceil(-lo[1])), int(np.floor(h - hi[1])))
-        if xs[1] < xs[0] or ys[1] < ys[0]:
-            continue
         for _ in range(PASTE_TRIES):
-            ox, oy = int(rng.integers(xs[0], xs[1] + 1)), int(rng.integers(ys[0], ys[1] + 1))
-            # The patch clipped to the frame, in frame and patch coordinates.
-            fx0, fy0 = max(ox, 0), max(oy, 0)
-            fx1, fy1 = min(ox + pw, w), min(oy + ph, h)
-            region = (slice(fy0, fy1), slice(fx0, fx1))
-            local = (slice(fy0 - oy, fy1 - oy), slice(fx0 - ox, fx1 - ox))
-            covered = np.bincount(owner[region][hard[local] > 0], minlength=len(areas))
-            if any(c > MAX_PASTE_OVERLAP * min(area, areas[j]) for j, c in enumerate(covered) if j):
+            ox, oy = int(rng.integers(w - pw + 1)), int(rng.integers(h - ph + 1))
+            if any(
+                overlap((ox, oy, inside), m) > MAX_PASTE_OVERLAP * min(area, int(m[2].sum()))
+                for m in masks
+            ):
                 continue
-            blend = alpha[local][..., None]
-            canvas[region] = patch[local] * blend + canvas[region] * (1 - blend)
-            owner[region][hard[local] > 0] = len(areas)
-            areas.append(area)
+            region = (slice(oy, oy + ph), slice(ox, ox + pw))
+            canvas[region] = patch * alpha + canvas[region] * (1 - alpha)
+            masks.append((ox, oy, inside))
             placed[int(i)] = q + np.array([ox, oy], np.float32)
             break
     kept = sorted(placed)
@@ -289,15 +263,24 @@ def trainer(
     return Trainer
 
 
-def pasted(
-    label: dict[str, Any],
-    distractor: Image,
-    aug: export_pb2.Augmentation,
-    rng: np.random.Generator,
-) -> None:
+def shifted(
+    keypoints: npt.NDArray[np.float32], by: npt.NDArray[np.float32], w: int, h: int
+) -> npt.NDArray[np.float32]:
+    """Move each object's (x, y, visibility) pixel keypoints by its own (x, y)
+    offset. Keypoints that leave the image become unlabeled, as YOLO-pose
+    labels can't place them outside it."""
+    out = keypoints.copy()
+    out[..., :2] += by[:, None, :]
+    x, y = out[..., 0], out[..., 1]
+    out[(out[..., 2] == 0) | (x < 0) | (x > w) | (y < 0) | (y > h)] = 0
+    return out
+
+
+def pasted(label: dict[str, Any], distractor: Image, rng: np.random.Generator) -> None:
     """Paste the objects of an Ultralytics label onto the distractor, keeping
     its instances in the box format and normalization they came in. OBB labels
-    carry their corners as segments; detect labels only boxes."""
+    carry their corners as segments; detect and pose labels only boxes, and
+    pose labels keypoints that move with their object."""
     im = label["img"]
     h, w = im.shape[:2]
     instances = label["instances"]
@@ -315,13 +298,23 @@ def pasted(
             for x1, y1, x2, y2 in boxes
         ]
 
-    im, polygons, kept = paste(im, polygons, distractor, aug, rng)
+    im, moved, kept = paste(im, polygons, distractor, rng)
 
-    points = np.stack(polygons) if polygons else np.zeros((0, 4, 2), np.float32)
+    points = np.stack(moved) if moved else np.zeros((0, 4, 2), np.float32)
     boxes = np.concatenate([points.min(1), points.max(1)], 1).astype(np.float32)
     if oriented:
-        segments = points.astype(np.float32) if polygons else segments[:0]
-    out = type(instances)(boxes, segments, None, bbox_format="xyxy", normalized=False)
+        segments = points.astype(np.float32) if moved else segments[:0]
+    keypoints = instances.keypoints
+    if keypoints is not None:
+        # paste only moves objects, so any corner gives an object's offset.
+        by = np.array([m[0] - polygons[i][0] for m, i in zip(moved, kept, strict=True)])
+        keypoints = shifted(
+            np.asarray(keypoints, np.float32)[np.asarray(kept, int)],
+            by.reshape(-1, 2).astype(np.float32),
+            w,
+            h,
+        )
+    out = type(instances)(boxes, segments, keypoints, bbox_format="xyxy", normalized=False)
     out.convert_bbox(box_format)
     if normalized:
         out.normalize(w, h)
@@ -348,12 +341,11 @@ def varied(
             library is not None
             and im.ndim == 3
             and im.shape[2] == 3
-            and label["instances"].keypoints is None
             and rng.random() < aug.distractors
         ):
             distractor = library.pick(rng)
             if distractor is not None:
-                pasted(label, distractor, aug, rng)
+                pasted(label, distractor, rng)
         label["img"] = vary(label["img"], aug, rng)
         h, w = label["resized_shape"] = label["img"].shape[:2]
         h0, w0 = label["ori_shape"]

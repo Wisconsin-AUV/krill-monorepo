@@ -1,9 +1,11 @@
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import cv2
 import numpy as np
+import pytest
 from krill.v1 import export_pb2
 
 from krill_worker import augment
@@ -28,6 +30,14 @@ def test_stretch_only_shrinks_one_side_within_the_ratio() -> None:
         assert 640 / 360 / 1.5 - 0.01 <= w / h <= 640 / 360 * 1.5 + 0.01
 
 
+def test_overlapping_shadows_stay_within_the_patch_gain() -> None:
+    gray = np.full((60, 80, 3), 200, np.uint8)
+    lo, hi = 200 * (1 - augment.MAX_PATCH_GAIN), 200 * (1 + augment.MAX_PATCH_GAIN)
+    for seed in range(200):
+        out = augment.shadows(gray, np.random.default_rng(seed)).astype(int)
+        assert out.min() >= int(lo) and out.max() <= min(255, round(hi))
+
+
 def test_underwater_takes_red_away_not_blue() -> None:
     gray = np.full((8, 8, 3), 128, np.uint8)
     for seed in range(20):
@@ -38,8 +48,6 @@ def test_underwater_takes_red_away_not_blue() -> None:
 RED, GREEN = (0, 0, 255), (0, 255, 0)
 BLACK = np.zeros((120, 200, 3), np.uint8)
 DISTRACTOR = np.full((50, 70, 3), GREEN, np.uint8)
-# Every per-object change except recoloring, which would change RED.
-MOVE = export_pb2.Augmentation(degrees=180, scale=0.5, aspect=1.5)
 
 
 def red(im: np.ndarray, polygons: list[np.ndarray]) -> np.ndarray:
@@ -73,10 +81,14 @@ def test_pasted_labels_land_on_the_pasted_pixels() -> None:
     for polygon in (diamond, square):
         for seed in range(20):
             out, pasted, kept = augment.paste(
-                im, [polygon], distractor, MOVE, np.random.default_rng(seed)
+                im, [polygon], distractor, np.random.default_rng(seed)
             )
             assert kept == [0]
             p = pasted[0]
+            # Ultralytics resizes and rotates the whole image afterwards, so
+            # paste only moves objects.
+            shift = p - polygon
+            assert np.allclose(shift, shift[0])
             assert (p >= 0).all() and (p[:, 0] <= 200).all() and (p[:, 1] <= 120).all()
             inside = interior(out.shape, p)
             assert inside.sum() > 0
@@ -95,10 +107,9 @@ def test_paste_drops_what_cannot_be_placed_without_overlap() -> None:
         for y in (0, 60)
     ]
     im = red(BLACK, boxes)
-    aug = export_pb2.Augmentation(degrees=30, scale=0.2)
     dropped = 0
     for seed in range(20):
-        _, pasted, kept = augment.paste(im, boxes, DISTRACTOR, aug, np.random.default_rng(seed))
+        _, pasted, kept = augment.paste(im, boxes, DISTRACTOR, np.random.default_rng(seed))
         dropped += len(boxes) - len(kept)
         masks = [mask(im.shape, p) for p in pasted]
         for i, a in enumerate(masks):
@@ -109,7 +120,7 @@ def test_paste_drops_what_cannot_be_placed_without_overlap() -> None:
 
 
 def test_paste_without_labels_is_the_distractor() -> None:
-    out, pasted, kept = augment.paste(BLACK, [], DISTRACTOR, MOVE, np.random.default_rng(0))
+    out, pasted, kept = augment.paste(BLACK, [], DISTRACTOR, np.random.default_rng(0))
     assert out.shape == BLACK.shape and (out == GREEN).all()
     assert pasted == [] and kept == []
 
@@ -143,12 +154,16 @@ class Instances:
         if self.normalized:
             self.bboxes = self.bboxes * (w, h, w, h)
             self.segments = self.segments * (w, h)
+            if self.keypoints is not None:
+                self.keypoints = self.keypoints * (w, h, 1)
             self.normalized = False
 
     def normalize(self, w: int, h: int) -> None:
         if not self.normalized:
             self.bboxes = self.bboxes / (w, h, w, h)
             self.segments = self.segments / (w, h)
+            if self.keypoints is not None:
+                self.keypoints = self.keypoints / (w, h, 1)
             self.normalized = True
 
 
@@ -203,3 +218,31 @@ def test_wrapper_relabels_detect_and_obb_objects_where_they_were_pasted(
 
     label = load("empty")
     assert (label["img"] == GREEN).all() and len(label["cls"]) == 0
+
+
+def test_pasted_pose_objects_carry_their_keypoints() -> None:
+    im = red(BLACK, [np.array([[40, 30], [80, 30], [80, 90], [40, 90]], np.float32)])
+    # On the object, unlabeled, and hidden off to its right, which leaves the
+    # image when the object moves right.
+    keypoints = np.array([[[50, 40, 2], [0, 0, 0], [195, 60, 1]]]) / (200, 120, 1)
+    left = 0
+    for seed in range(30):
+        label: dict[str, Any] = {
+            "img": im,
+            "cls": np.ones((1, 1), np.float32),
+            "instances": Instances(np.array([[0.3, 0.5, 0.2, 0.5]]), None, keypoints.copy()),
+        }
+        augment.pasted(label, DISTRACTOR, np.random.default_rng(seed))
+        out, instances = label["img"], label["instances"]
+        assert instances.normalized and len(label["cls"]) == 1
+        dx, dy = instances.bboxes[0, :2] * (200, 120) - (60, 60)
+        on, unlabeled, off = instances.keypoints[0] * (200, 120, 1)
+        assert on == pytest.approx((50 + dx, 40 + dy, 2), abs=1e-3)
+        assert (out[round(on[1]), round(on[0])] == RED).all()
+        assert (unlabeled == 0).all()
+        if 195 + dx > 200:
+            assert (off == 0).all()
+            left += 1
+        else:
+            assert off == pytest.approx((195 + dx, 60 + dy, 1), abs=1e-3)
+    assert 0 < left < 30

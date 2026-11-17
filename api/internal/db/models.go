@@ -27,6 +27,7 @@ type Annotation struct {
 	Drift        pgtype.Text        `json:"drift"`
 	Confidence   pgtype.Float4      `json:"confidence"`
 	Corners      []float64          `json:"corners"`
+	Keypoints    []float64          `json:"keypoints"`
 }
 
 type ApprovedEmail struct {
@@ -198,17 +199,20 @@ type LabelExample struct {
 }
 
 type LabelType struct {
-	ID           int64              `json:"id"`
-	Name         string             `json:"name"`
-	Color        string             `json:"color"`
-	Description  string             `json:"description"`
-	Position     int32              `json:"position"`
-	Attributes   []byte             `json:"attributes"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	Title        string             `json:"title"`
-	Guideline    string             `json:"guideline"`
-	Oriented     bool               `json:"oriented"`
-	ReferenceKey pgtype.Text        `json:"reference_key"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Color         string             `json:"color"`
+	Description   string             `json:"description"`
+	Position      int32              `json:"position"`
+	Attributes    []byte             `json:"attributes"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Title         string             `json:"title"`
+	Guideline     string             `json:"guideline"`
+	Oriented      bool               `json:"oriented"`
+	ReferenceKey  pgtype.Text        `json:"reference_key"`
+	Keypoints     []byte             `json:"keypoints"`
+	Quads         []byte             `json:"quads"`
+	KeypointEdges []byte             `json:"keypoint_edges"`
 }
 
 type LiveClip struct {
@@ -243,6 +247,7 @@ type ModelTrialBox struct {
 	Confidence float32   `json:"confidence"`
 	Track      int32     `json:"track"`
 	Corners    []float64 `json:"corners"`
+	Keypoints  []float64 `json:"keypoints"`
 }
 
 type PrelabelRun struct {
@@ -384,6 +389,7 @@ type TrainingRun struct {
 	FinishedAt          pgtype.Timestamptz `json:"finished_at"`
 	Filename            string             `json:"filename"`
 	Oriented            bool               `json:"oriented"`
+	Keypoints           int32              `json:"keypoints"`
 }
 
 type User struct {

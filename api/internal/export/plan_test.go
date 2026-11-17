@@ -1,6 +1,7 @@
 package export
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/wauv/krill/api/internal/taxonomy"
@@ -170,5 +171,37 @@ func TestAssignSplits(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestBuildPose(t *testing.T) {
+	mirror := func(i int32) *int32 { return &i }
+	types := []LabelType{
+		{ID: 1, Name: "gate", Oriented: true},
+		{ID: 2, Name: "bin", Pose: taxonomy.Pose{Keypoints: []taxonomy.Keypoint{{Name: "l", Mirror: mirror(1)}, {Name: "r", Mirror: mirror(0)}}}},
+		{ID: 3, Name: "torpedo", Pose: taxonomy.Pose{Keypoints: []taxonomy.Keypoint{{Name: "a"}, {Name: "b"}, {Name: "c"}}}},
+	}
+	videos := []Video{{ID: 1, Name: "a", Split: "train"}}
+	fs := frames(1, 10, 1, "labeled", distinct)
+	boxes := []Box{
+		{FrameID: fs[0].ID, TypeID: 1, X: 0.1, Y: 0.1, W: 0.2, H: 0.2, Corners: []float64{0.2, 0.1, 0.3, 0.2, 0.2, 0.3, 0.1, 0.2}, Status: "verified"},
+		// Labeled before the type had its second keypoint.
+		{FrameID: fs[0].ID, TypeID: 2, X: 0.5, Y: 0.5, W: 0.2, H: 0.2, Keypoints: []float64{0.55, 0.6, 2}, Status: "verified"},
+	}
+
+	p := Build(Options{Stride: 1}, types, videos, fs, boxes)
+
+	if p.Oriented || p.Stats.Oriented || p.Keypoints != 3 || p.Stats.Keypoints != 3 {
+		t.Fatalf("oriented %v, keypoints %d, want a pose plan with 3", p.Oriented, p.Keypoints)
+	}
+	got := p.Items[0].Boxes
+	if got[0].Corners != nil || !slices.Equal(got[0].Keypoints, make([]float64, 9)) {
+		t.Errorf("oriented box = %+v, want its bounds and unlabeled keypoints", got[0])
+	}
+	if want := []float64{0.55, 0.6, 2, 0, 0, 0, 0, 0, 0}; !slices.Equal(got[1].Keypoints, want) {
+		t.Errorf("keypoints = %v, want %v", got[1].Keypoints, want)
+	}
+	if want := []int{1, 0, 2}; !slices.Equal(p.FlipIdx, want) {
+		t.Errorf("flip_idx = %v, want %v", p.FlipIdx, want)
 	}
 }

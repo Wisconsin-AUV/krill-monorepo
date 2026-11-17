@@ -122,7 +122,7 @@ class TrainConfig(_message.Message):
     def __init__(self, size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_run_id: _Optional[int] = ..., dataset: _Optional[_Union[_export_pb2.ExportOptions, _Mapping]] = ..., augmentation: _Optional[_Union[_export_pb2.Augmentation, _Mapping]] = ...) -> None: ...
 
 class EpochMetrics(_message.Message):
-    __slots__ = ("epoch", "box_loss", "cls_loss", "precision", "recall", "map50", "map50_95")
+    __slots__ = ("epoch", "box_loss", "cls_loss", "precision", "recall", "map50", "map50_95", "pose_loss", "kobj_loss", "pose_map50", "pose_map50_95")
     EPOCH_FIELD_NUMBER: _ClassVar[int]
     BOX_LOSS_FIELD_NUMBER: _ClassVar[int]
     CLS_LOSS_FIELD_NUMBER: _ClassVar[int]
@@ -130,6 +130,10 @@ class EpochMetrics(_message.Message):
     RECALL_FIELD_NUMBER: _ClassVar[int]
     MAP50_FIELD_NUMBER: _ClassVar[int]
     MAP50_95_FIELD_NUMBER: _ClassVar[int]
+    POSE_LOSS_FIELD_NUMBER: _ClassVar[int]
+    KOBJ_LOSS_FIELD_NUMBER: _ClassVar[int]
+    POSE_MAP50_FIELD_NUMBER: _ClassVar[int]
+    POSE_MAP50_95_FIELD_NUMBER: _ClassVar[int]
     epoch: int
     box_loss: float
     cls_loss: float
@@ -137,10 +141,14 @@ class EpochMetrics(_message.Message):
     recall: float
     map50: float
     map50_95: float
-    def __init__(self, epoch: _Optional[int] = ..., box_loss: _Optional[float] = ..., cls_loss: _Optional[float] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ..., map50: _Optional[float] = ..., map50_95: _Optional[float] = ...) -> None: ...
+    pose_loss: float
+    kobj_loss: float
+    pose_map50: float
+    pose_map50_95: float
+    def __init__(self, epoch: _Optional[int] = ..., box_loss: _Optional[float] = ..., cls_loss: _Optional[float] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ..., map50: _Optional[float] = ..., map50_95: _Optional[float] = ..., pose_loss: _Optional[float] = ..., kobj_loss: _Optional[float] = ..., pose_map50: _Optional[float] = ..., pose_map50_95: _Optional[float] = ...) -> None: ...
 
 class ClassMetrics(_message.Message):
-    __slots__ = ("name", "images", "instances", "precision", "recall", "map50", "map50_95")
+    __slots__ = ("name", "images", "instances", "precision", "recall", "map50", "map50_95", "pose_map50", "pose_map50_95")
     NAME_FIELD_NUMBER: _ClassVar[int]
     IMAGES_FIELD_NUMBER: _ClassVar[int]
     INSTANCES_FIELD_NUMBER: _ClassVar[int]
@@ -148,6 +156,8 @@ class ClassMetrics(_message.Message):
     RECALL_FIELD_NUMBER: _ClassVar[int]
     MAP50_FIELD_NUMBER: _ClassVar[int]
     MAP50_95_FIELD_NUMBER: _ClassVar[int]
+    POSE_MAP50_FIELD_NUMBER: _ClassVar[int]
+    POSE_MAP50_95_FIELD_NUMBER: _ClassVar[int]
     name: str
     images: int
     instances: int
@@ -155,7 +165,9 @@ class ClassMetrics(_message.Message):
     recall: float
     map50: float
     map50_95: float
-    def __init__(self, name: _Optional[str] = ..., images: _Optional[int] = ..., instances: _Optional[int] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ..., map50: _Optional[float] = ..., map50_95: _Optional[float] = ...) -> None: ...
+    pose_map50: float
+    pose_map50_95: float
+    def __init__(self, name: _Optional[str] = ..., images: _Optional[int] = ..., instances: _Optional[int] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ..., map50: _Optional[float] = ..., map50_95: _Optional[float] = ..., pose_map50: _Optional[float] = ..., pose_map50_95: _Optional[float] = ...) -> None: ...
 
 class EvalMetrics(_message.Message):
     __slots__ = ("all", "classes")
@@ -166,7 +178,7 @@ class EvalMetrics(_message.Message):
     def __init__(self, all: _Optional[_Union[ClassMetrics, _Mapping]] = ..., classes: _Optional[_Iterable[_Union[ClassMetrics, _Mapping]]] = ...) -> None: ...
 
 class TrainingRun(_message.Message):
-    __slots__ = ("id", "status", "trigger", "created_by", "config", "dataset", "epoch", "history", "val", "test", "baseline_run_id", "baseline_val", "baseline_test", "pinned", "error", "log", "created_at", "started_at", "finished_at", "weights_url", "weights_bytes", "device", "verified_boxes", "filename", "classes", "oriented")
+    __slots__ = ("id", "status", "trigger", "created_by", "config", "dataset", "epoch", "history", "val", "test", "baseline_run_id", "baseline_val", "baseline_test", "pinned", "error", "log", "created_at", "started_at", "finished_at", "weights_url", "weights_bytes", "device", "verified_boxes", "filename", "classes", "oriented", "keypoints")
     ID_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     TRIGGER_FIELD_NUMBER: _ClassVar[int]
@@ -193,6 +205,7 @@ class TrainingRun(_message.Message):
     FILENAME_FIELD_NUMBER: _ClassVar[int]
     CLASSES_FIELD_NUMBER: _ClassVar[int]
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
     id: int
     status: TrainingStatus
     trigger: TrainingTrigger
@@ -219,7 +232,8 @@ class TrainingRun(_message.Message):
     filename: str
     classes: _containers.RepeatedCompositeFieldContainer[ModelClass]
     oriented: bool
-    def __init__(self, id: _Optional[int] = ..., status: _Optional[_Union[TrainingStatus, str]] = ..., trigger: _Optional[_Union[TrainingTrigger, str]] = ..., created_by: _Optional[str] = ..., config: _Optional[_Union[TrainConfig, _Mapping]] = ..., dataset: _Optional[_Union[_export_pb2.ExportStats, _Mapping]] = ..., epoch: _Optional[int] = ..., history: _Optional[_Iterable[_Union[EpochMetrics, _Mapping]]] = ..., val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_run_id: _Optional[int] = ..., baseline_val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., pinned: _Optional[bool] = ..., error: _Optional[str] = ..., log: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., weights_url: _Optional[str] = ..., weights_bytes: _Optional[int] = ..., device: _Optional[str] = ..., verified_boxes: _Optional[int] = ..., filename: _Optional[str] = ..., classes: _Optional[_Iterable[_Union[ModelClass, _Mapping]]] = ..., oriented: _Optional[bool] = ...) -> None: ...
+    keypoints: int
+    def __init__(self, id: _Optional[int] = ..., status: _Optional[_Union[TrainingStatus, str]] = ..., trigger: _Optional[_Union[TrainingTrigger, str]] = ..., created_by: _Optional[str] = ..., config: _Optional[_Union[TrainConfig, _Mapping]] = ..., dataset: _Optional[_Union[_export_pb2.ExportStats, _Mapping]] = ..., epoch: _Optional[int] = ..., history: _Optional[_Iterable[_Union[EpochMetrics, _Mapping]]] = ..., val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_run_id: _Optional[int] = ..., baseline_val: _Optional[_Union[EvalMetrics, _Mapping]] = ..., baseline_test: _Optional[_Union[EvalMetrics, _Mapping]] = ..., pinned: _Optional[bool] = ..., error: _Optional[str] = ..., log: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., started_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., finished_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., weights_url: _Optional[str] = ..., weights_bytes: _Optional[int] = ..., device: _Optional[str] = ..., verified_boxes: _Optional[int] = ..., filename: _Optional[str] = ..., classes: _Optional[_Iterable[_Union[ModelClass, _Mapping]]] = ..., oriented: _Optional[bool] = ..., keypoints: _Optional[int] = ...) -> None: ...
 
 class ModelClass(_message.Message):
     __slots__ = ("name", "label_type_id")
@@ -552,7 +566,7 @@ class ModelTrialBox(_message.Message):
     def __init__(self, frame_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., confidence: _Optional[float] = ..., track: _Optional[int] = ...) -> None: ...
 
 class ModelTrialClass(_message.Message):
-    __slots__ = ("label_type_id", "name", "matched", "correct", "missed", "extra", "precision", "recall")
+    __slots__ = ("label_type_id", "name", "matched", "correct", "missed", "extra", "precision", "recall", "oks")
     LABEL_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     MATCHED_FIELD_NUMBER: _ClassVar[int]
@@ -561,6 +575,7 @@ class ModelTrialClass(_message.Message):
     EXTRA_FIELD_NUMBER: _ClassVar[int]
     PRECISION_FIELD_NUMBER: _ClassVar[int]
     RECALL_FIELD_NUMBER: _ClassVar[int]
+    OKS_FIELD_NUMBER: _ClassVar[int]
     label_type_id: int
     name: str
     matched: int
@@ -569,7 +584,8 @@ class ModelTrialClass(_message.Message):
     extra: int
     precision: float
     recall: float
-    def __init__(self, label_type_id: _Optional[int] = ..., name: _Optional[str] = ..., matched: _Optional[int] = ..., correct: _Optional[int] = ..., missed: _Optional[int] = ..., extra: _Optional[int] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ...) -> None: ...
+    oks: float
+    def __init__(self, label_type_id: _Optional[int] = ..., name: _Optional[str] = ..., matched: _Optional[int] = ..., correct: _Optional[int] = ..., missed: _Optional[int] = ..., extra: _Optional[int] = ..., precision: _Optional[float] = ..., recall: _Optional[float] = ..., oks: _Optional[float] = ...) -> None: ...
 
 class ModelTrialSummary(_message.Message):
     __slots__ = ("min_confidence", "labeled_frames", "all", "classes")
@@ -760,7 +776,7 @@ class PrelabelFrame(_message.Message):
     def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ...) -> None: ...
 
 class TrainTask(_message.Message):
-    __slots__ = ("id", "run_id", "dataset_url", "classes", "size", "epochs", "image_size", "batch", "base_weights_url", "baseline_weights_url", "weights_upload_url", "has_test", "oriented", "augmentation", "distractor_urls")
+    __slots__ = ("id", "run_id", "dataset_url", "classes", "size", "epochs", "image_size", "batch", "base_weights_url", "baseline_weights_url", "weights_upload_url", "has_test", "oriented", "augmentation", "distractor_urls", "keypoints")
     ID_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
     DATASET_URL_FIELD_NUMBER: _ClassVar[int]
@@ -776,6 +792,7 @@ class TrainTask(_message.Message):
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
     AUGMENTATION_FIELD_NUMBER: _ClassVar[int]
     DISTRACTOR_URLS_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
     id: int
     run_id: int
     dataset_url: str
@@ -791,7 +808,8 @@ class TrainTask(_message.Message):
     oriented: bool
     augmentation: _export_pb2.Augmentation
     distractor_urls: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, id: _Optional[int] = ..., run_id: _Optional[int] = ..., dataset_url: _Optional[str] = ..., classes: _Optional[_Iterable[str]] = ..., size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_weights_url: _Optional[str] = ..., baseline_weights_url: _Optional[str] = ..., weights_upload_url: _Optional[str] = ..., has_test: _Optional[bool] = ..., oriented: _Optional[bool] = ..., augmentation: _Optional[_Union[_export_pb2.Augmentation, _Mapping]] = ..., distractor_urls: _Optional[_Iterable[str]] = ...) -> None: ...
+    keypoints: int
+    def __init__(self, id: _Optional[int] = ..., run_id: _Optional[int] = ..., dataset_url: _Optional[str] = ..., classes: _Optional[_Iterable[str]] = ..., size: _Optional[_Union[ModelSize, str]] = ..., epochs: _Optional[int] = ..., image_size: _Optional[int] = ..., batch: _Optional[int] = ..., base_weights_url: _Optional[str] = ..., baseline_weights_url: _Optional[str] = ..., weights_upload_url: _Optional[str] = ..., has_test: _Optional[bool] = ..., oriented: _Optional[bool] = ..., augmentation: _Optional[_Union[_export_pb2.Augmentation, _Mapping]] = ..., distractor_urls: _Optional[_Iterable[str]] = ..., keypoints: _Optional[int] = ...) -> None: ...
 
 class InspectTask(_message.Message):
     __slots__ = ("id", "weights_url")

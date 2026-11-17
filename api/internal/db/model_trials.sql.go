@@ -155,7 +155,7 @@ func (q *Queries) GetModelTrialID(ctx context.Context, arg GetModelTrialIDParams
 }
 
 const insertModelTrialBoxes = `-- name: InsertModelTrialBoxes :execrows
-INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, confidence)
+INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, keypoints, confidence)
 SELECT
     $1,
     ($2::bigint[])[i],
@@ -165,27 +165,33 @@ SELECT
     ($6::float8[])[i],
     ($7::float8[])[i],
     CASE WHEN ($8::bool[])[i] THEN ($9::float8[])[(i - 1) * 8 + 1:i * 8] END,
-    ($10::real[])[i]
+    CASE WHEN ($10::int[])[i] > coalesce(($10::int[])[i - 1], 0)
+        THEN ($11::float8[])[coalesce(($10::int[])[i - 1], 0) + 1:($10::int[])[i]]
+    END,
+    ($12::real[])[i]
 FROM generate_subscripts($2::bigint[], 1) AS i
 WHERE EXISTS (SELECT 1 FROM model_trials t WHERE t.id = $1 AND t.status = 'running')
 `
 
 type InsertModelTrialBoxesParams struct {
-	TrialID     int64     `json:"trial_id"`
-	FrameIds    []int64   `json:"frame_ids"`
-	Classes     []int32   `json:"classes"`
-	Xs          []float64 `json:"xs"`
-	Ys          []float64 `json:"ys"`
-	Widths      []float64 `json:"widths"`
-	Heights     []float64 `json:"heights"`
-	HasCorners  []bool    `json:"has_corners"`
-	Corners     []float64 `json:"corners"`
-	Confidences []float32 `json:"confidences"`
+	TrialID      int64     `json:"trial_id"`
+	FrameIds     []int64   `json:"frame_ids"`
+	Classes      []int32   `json:"classes"`
+	Xs           []float64 `json:"xs"`
+	Ys           []float64 `json:"ys"`
+	Widths       []float64 `json:"widths"`
+	Heights      []float64 `json:"heights"`
+	HasCorners   []bool    `json:"has_corners"`
+	Corners      []float64 `json:"corners"`
+	KeypointEnds []int32   `json:"keypoint_ends"`
+	Keypoints    []float64 `json:"keypoints"`
+	Confidences  []float32 `json:"confidences"`
 }
 
 // Boxes a worker reports after the trial stopped are dropped. @corners holds
 // eight values per box, which are ignored unless the box's @has_corners is
-// set.
+// set. @keypoints holds each box's keypoints one after another, with box
+// i's ending at @keypoint_ends[i].
 func (q *Queries) InsertModelTrialBoxes(ctx context.Context, arg InsertModelTrialBoxesParams) (int64, error) {
 	result, err := q.db.Exec(ctx, insertModelTrialBoxes,
 		arg.TrialID,
@@ -197,6 +203,8 @@ func (q *Queries) InsertModelTrialBoxes(ctx context.Context, arg InsertModelTria
 		arg.Heights,
 		arg.HasCorners,
 		arg.Corners,
+		arg.KeypointEnds,
+		arg.Keypoints,
 		arg.Confidences,
 	)
 	if err != nil {
@@ -230,7 +238,7 @@ func (q *Queries) ListDoneClipFrames(ctx context.Context, clipID int64) ([]int64
 }
 
 const listDoneTrialBoxes = `-- name: ListDoneTrialBoxes :many
-SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height, b.keypoints
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = $1 AND f.status <> 'unlabeled' AND b.confidence >= $2
@@ -242,12 +250,13 @@ type ListDoneTrialBoxesParams struct {
 }
 
 type ListDoneTrialBoxesRow struct {
-	FrameID int64   `json:"frame_id"`
-	Class   int32   `json:"class"`
-	X       float64 `json:"x"`
-	Y       float64 `json:"y"`
-	Width   float64 `json:"width"`
-	Height  float64 `json:"height"`
+	FrameID   int64     `json:"frame_id"`
+	Class     int32     `json:"class"`
+	X         float64   `json:"x"`
+	Y         float64   `json:"y"`
+	Width     float64   `json:"width"`
+	Height    float64   `json:"height"`
+	Keypoints []float64 `json:"keypoints"`
 }
 
 // The boxes a summary scores: those at or above the threshold on frames
@@ -268,6 +277,7 @@ func (q *Queries) ListDoneTrialBoxes(ctx context.Context, arg ListDoneTrialBoxes
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
 		); err != nil {
 			return nil, err
 		}
@@ -280,21 +290,26 @@ func (q *Queries) ListDoneTrialBoxes(ctx context.Context, arg ListDoneTrialBoxes
 }
 
 const listDoneVerifiedBoxes = `-- name: ListDoneVerifiedBoxes :many
-SELECT a.frame_id, t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
+SELECT a.frame_id, t.label_type_id, t.attributes, a.x, a.y, a.width, a.height, a.keypoints,
+    v.width AS frame_width, v.height AS frame_height
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN frames f ON f.id = a.frame_id
+JOIN videos v ON v.id = f.video_id
 WHERE f.clip_id = $1 AND f.status <> 'unlabeled' AND a.status = 'verified'
 `
 
 type ListDoneVerifiedBoxesRow struct {
-	FrameID     int64   `json:"frame_id"`
-	LabelTypeID int64   `json:"label_type_id"`
-	Attributes  []byte  `json:"attributes"`
-	X           float64 `json:"x"`
-	Y           float64 `json:"y"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
+	FrameID     int64     `json:"frame_id"`
+	LabelTypeID int64     `json:"label_type_id"`
+	Attributes  []byte    `json:"attributes"`
+	X           float64   `json:"x"`
+	Y           float64   `json:"y"`
+	Width       float64   `json:"width"`
+	Height      float64   `json:"height"`
+	Keypoints   []float64 `json:"keypoints"`
+	FrameWidth  int32     `json:"frame_width"`
+	FrameHeight int32     `json:"frame_height"`
 }
 
 func (q *Queries) ListDoneVerifiedBoxes(ctx context.Context, clipID int64) ([]ListDoneVerifiedBoxesRow, error) {
@@ -314,6 +329,9 @@ func (q *Queries) ListDoneVerifiedBoxes(ctx context.Context, clipID int64) ([]Li
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
+			&i.FrameWidth,
+			&i.FrameHeight,
 		); err != nil {
 			return nil, err
 		}
@@ -326,7 +344,7 @@ func (q *Queries) ListDoneVerifiedBoxes(ctx context.Context, clipID int64) ([]Li
 }
 
 const listModelTrialBoxes = `-- name: ListModelTrialBoxes :many
-SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.confidence, b.track
+SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.keypoints, b.confidence, b.track
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = $1
@@ -343,6 +361,7 @@ type ListModelTrialBoxesRow struct {
 	Width      float64   `json:"width"`
 	Height     float64   `json:"height"`
 	Corners    []float64 `json:"corners"`
+	Keypoints  []float64 `json:"keypoints"`
 	Confidence float32   `json:"confidence"`
 	Track      int32     `json:"track"`
 }
@@ -366,6 +385,7 @@ func (q *Queries) ListModelTrialBoxes(ctx context.Context, trialID int64) ([]Lis
 			&i.Width,
 			&i.Height,
 			&i.Corners,
+			&i.Keypoints,
 			&i.Confidence,
 			&i.Track,
 		); err != nil {
@@ -447,7 +467,7 @@ func (q *Queries) ListModelTrials(ctx context.Context, arg ListModelTrialsParams
 }
 
 const listRunTrialBoxes = `-- name: ListRunTrialBoxes :many
-SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height, b.keypoints
 FROM model_trials t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
@@ -466,12 +486,13 @@ type ListRunTrialBoxesParams struct {
 }
 
 type ListRunTrialBoxesRow struct {
-	FrameID int64   `json:"frame_id"`
-	Class   int32   `json:"class"`
-	X       float64 `json:"x"`
-	Y       float64 `json:"y"`
-	Width   float64 `json:"width"`
-	Height  float64 `json:"height"`
+	FrameID   int64     `json:"frame_id"`
+	Class     int32     `json:"class"`
+	X         float64   `json:"x"`
+	Y         float64   `json:"y"`
+	Width     float64   `json:"width"`
+	Height    float64   `json:"height"`
+	Keypoints []float64 `json:"keypoints"`
 }
 
 // The trial boxes on the frames ListRunTrialFrames returns, at or above the
@@ -492,6 +513,7 @@ func (q *Queries) ListRunTrialBoxes(ctx context.Context, arg ListRunTrialBoxesPa
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
 		); err != nil {
 			return nil, err
 		}
@@ -568,7 +590,8 @@ func (q *Queries) ListRunTrialFrames(ctx context.Context, arg ListRunTrialFrames
 }
 
 const listRunTrialVerifiedBoxes = `-- name: ListRunTrialVerifiedBoxes :many
-SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height
+SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height, a.keypoints,
+    v.width AS frame_width, v.height AS frame_height
 FROM model_trials t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
@@ -587,13 +610,16 @@ type ListRunTrialVerifiedBoxesParams struct {
 }
 
 type ListRunTrialVerifiedBoxesRow struct {
-	FrameID     int64   `json:"frame_id"`
-	LabelTypeID int64   `json:"label_type_id"`
-	Attributes  []byte  `json:"attributes"`
-	X           float64 `json:"x"`
-	Y           float64 `json:"y"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
+	FrameID     int64     `json:"frame_id"`
+	LabelTypeID int64     `json:"label_type_id"`
+	Attributes  []byte    `json:"attributes"`
+	X           float64   `json:"x"`
+	Y           float64   `json:"y"`
+	Width       float64   `json:"width"`
+	Height      float64   `json:"height"`
+	Keypoints   []float64 `json:"keypoints"`
+	FrameWidth  int32     `json:"frame_width"`
+	FrameHeight int32     `json:"frame_height"`
 }
 
 // The verified boxes on the frames ListRunTrialFrames returns.
@@ -614,6 +640,9 @@ func (q *Queries) ListRunTrialVerifiedBoxes(ctx context.Context, arg ListRunTria
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
+			&i.FrameWidth,
+			&i.FrameHeight,
 		); err != nil {
 			return nil, err
 		}

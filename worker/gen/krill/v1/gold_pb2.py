@@ -27,7 +27,7 @@ from krill.v1 import annotation_pb2 as krill_dot_v1_dot_annotation__pb2
 from krill.v1 import stats_pb2 as krill_dot_v1_dot_stats__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/gold.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/stats.proto\"\xd0\x01\n\x07GoldBox\x12\"\n\rlabel_type_id\x18\x01 \x01(\x03R\x0blabelTypeId\x12\x41\n\nattributes\x18\x02 \x03(\x0b\x32!.krill.v1.GoldBox.AttributesEntryR\nattributes\x12\x1f\n\x03\x62ox\x18\x03 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\x1a=\n\x0f\x41ttributesEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value:\x02\x38\x01\"m\n\tGoldMatch\x12\x1c\n\treference\x18\x01 \x01(\x05R\treference\x12\x16\n\x06\x61nswer\x18\x02 \x01(\x05R\x06\x61nswer\x12\x10\n\x03iou\x18\x03 \x01(\x01R\x03iou\x12\x18\n\x07\x63orrect\x18\x04 \x01(\x08R\x07\x63orrect\"\xad\x01\n\nGoldResult\x12/\n\treference\x18\x01 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\treference\x12)\n\x06\x61nswer\x18\x02 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\x06\x61nswer\x12-\n\x07matches\x18\x03 \x03(\x0b\x32\x13.krill.v1.GoldMatchR\x07matches\x12\x14\n\x05score\x18\x04 \x01(\x01R\x05score\"D\n\x13SetGoldFrameRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x12\n\x04gold\x18\x02 \x01(\x08R\x04gold\"\x16\n\x14SetGoldFrameResponse\"0\n\x13GetGoldCheckRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\"q\n\x14GetGoldCheckResponse\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x14\n\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x04 \x01(\x05R\x06height\"\\\n\x16SubmitGoldCheckRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\'\n\x05\x62oxes\x18\x02 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\x05\x62oxes\"G\n\x17SubmitGoldCheckResponse\x12,\n\x06result\x18\x01 \x01(\x0b\x32\x14.krill.v1.GoldResultR\x06result\"\x15\n\x13GetGoldStatsRequest\"\xaa\x01\n\x0bGoldLabeler\x12%\n\x04user\x18\x01 \x01(\x0b\x32\x11.krill.v1.ProfileR\x04user\x12\x1a\n\x08\x61ttempts\x18\x02 \x01(\x05R\x08\x61ttempts\x12\x1a\n\x08\x61\x63\x63uracy\x18\x03 \x01(\x01R\x08\x61\x63\x63uracy\x12\x19\n\x08mean_iou\x18\x04 \x01(\x01R\x07meanIou\x12!\n\x0cneeds_review\x18\x05 \x01(\x08R\x0bneedsReview\"\xf1\x01\n\tGoldFrame\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x17\n\x07\x63lip_id\x18\x02 \x01(\x03R\x06\x63lipId\x12\x14\n\x05index\x18\x03 \x01(\x05R\x05index\x12\x1d\n\nvideo_name\x18\x04 \x01(\tR\tvideoName\x12#\n\rthumbnail_url\x18\x05 \x01(\tR\x0cthumbnailUrl\x12\x1b\n\tbox_count\x18\x06 \x01(\x05R\x08\x62oxCount\x12\x1a\n\x08\x61ttempts\x18\x07 \x01(\x05R\x08\x61ttempts\x12\x1d\n\nmean_score\x18\x08 \x01(\x01R\tmeanScore\"v\n\x14GetGoldStatsResponse\x12\x31\n\x08labelers\x18\x01 \x03(\x0b\x32\x15.krill.v1.GoldLabelerR\x08labelers\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.GoldFrameR\x06\x66rames\"\x89\x02\n\x0bGoldAttempt\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12%\n\x04user\x18\x02 \x01(\x0b\x32\x11.krill.v1.ProfileR\x04user\x12\x17\n\x07\x63lip_id\x18\x03 \x01(\x03R\x06\x63lipId\x12\x14\n\x05index\x18\x04 \x01(\x05R\x05index\x12\x1d\n\nvideo_name\x18\x05 \x01(\tR\tvideoName\x12\x14\n\x05score\x18\x06 \x01(\x01R\x05score\x12\x19\n\x08mean_iou\x18\x07 \x01(\x01R\x07meanIou\x12\x39\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\"K\n\x15GetGoldAttemptRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\"\xb7\x01\n\x16GetGoldAttemptResponse\x12/\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x15.krill.v1.GoldAttemptR\x07\x61ttempt\x12,\n\x06result\x18\x02 \x01(\x0b\x32\x14.krill.v1.GoldResultR\x06result\x12\x10\n\x03url\x18\x03 \x01(\tR\x03url\x12\x14\n\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x05 \x01(\x05R\x06height\"\x89\x01\n\x17ListGoldAttemptsRequest\x12\x17\n\x07user_id\x18\x01 \x01(\tR\x06userId\x12\x19\n\x08\x66rame_id\x18\x02 \x01(\x03R\x07\x66rameId\x12\x1b\n\tpage_size\x18\x03 \x01(\x05R\x08pageSize\x12\x1d\n\npage_token\x18\x04 \x01(\tR\tpageToken\"u\n\x18ListGoldAttemptsResponse\x12\x31\n\x08\x61ttempts\x18\x01 \x03(\x0b\x32\x15.krill.v1.GoldAttemptR\x08\x61ttempts\x12&\n\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\x8e\x04\n\x0bGoldService\x12O\n\x0cSetGoldFrame\x12\x1d.krill.v1.SetGoldFrameRequest\x1a\x1e.krill.v1.SetGoldFrameResponse\"\x00\x12O\n\x0cGetGoldCheck\x12\x1d.krill.v1.GetGoldCheckRequest\x1a\x1e.krill.v1.GetGoldCheckResponse\"\x00\x12X\n\x0fSubmitGoldCheck\x12 .krill.v1.SubmitGoldCheckRequest\x1a!.krill.v1.SubmitGoldCheckResponse\"\x00\x12O\n\x0cGetGoldStats\x12\x1d.krill.v1.GetGoldStatsRequest\x1a\x1e.krill.v1.GetGoldStatsResponse\"\x00\x12U\n\x0eGetGoldAttempt\x12\x1f.krill.v1.GetGoldAttemptRequest\x1a .krill.v1.GetGoldAttemptResponse\"\x00\x12[\n\x10ListGoldAttempts\x12!.krill.v1.ListGoldAttemptsRequest\x1a\".krill.v1.ListGoldAttemptsResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tGoldProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13krill/v1/gold.proto\x12\x08krill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/stats.proto\"\xd0\x01\n\x07GoldBox\x12\"\n\rlabel_type_id\x18\x01 \x01(\x03R\x0blabelTypeId\x12\x41\n\nattributes\x18\x02 \x03(\x0b\x32!.krill.v1.GoldBox.AttributesEntryR\nattributes\x12\x1f\n\x03\x62ox\x18\x03 \x01(\x0b\x32\r.krill.v1.BoxR\x03\x62ox\x1a=\n\x0f\x41ttributesEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value:\x02\x38\x01\"\x8c\x01\n\tGoldMatch\x12\x1c\n\treference\x18\x01 \x01(\x05R\treference\x12\x16\n\x06\x61nswer\x18\x02 \x01(\x05R\x06\x61nswer\x12\x10\n\x03iou\x18\x03 \x01(\x01R\x03iou\x12\x18\n\x07\x63orrect\x18\x04 \x01(\x08R\x07\x63orrect\x12\x15\n\x03oks\x18\x05 \x01(\x01H\x00R\x03oks\x88\x01\x01\x42\x06\n\x04_oks\"\xad\x01\n\nGoldResult\x12/\n\treference\x18\x01 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\treference\x12)\n\x06\x61nswer\x18\x02 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\x06\x61nswer\x12-\n\x07matches\x18\x03 \x03(\x0b\x32\x13.krill.v1.GoldMatchR\x07matches\x12\x14\n\x05score\x18\x04 \x01(\x01R\x05score\"D\n\x13SetGoldFrameRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x12\n\x04gold\x18\x02 \x01(\x08R\x04gold\"\x16\n\x14SetGoldFrameResponse\"0\n\x13GetGoldCheckRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\"q\n\x14GetGoldCheckResponse\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x10\n\x03url\x18\x02 \x01(\tR\x03url\x12\x14\n\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x04 \x01(\x05R\x06height\"\\\n\x16SubmitGoldCheckRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\'\n\x05\x62oxes\x18\x02 \x03(\x0b\x32\x11.krill.v1.GoldBoxR\x05\x62oxes\"G\n\x17SubmitGoldCheckResponse\x12,\n\x06result\x18\x01 \x01(\x0b\x32\x14.krill.v1.GoldResultR\x06result\"\x15\n\x13GetGoldStatsRequest\"\xaa\x01\n\x0bGoldLabeler\x12%\n\x04user\x18\x01 \x01(\x0b\x32\x11.krill.v1.ProfileR\x04user\x12\x1a\n\x08\x61ttempts\x18\x02 \x01(\x05R\x08\x61ttempts\x12\x1a\n\x08\x61\x63\x63uracy\x18\x03 \x01(\x01R\x08\x61\x63\x63uracy\x12\x19\n\x08mean_iou\x18\x04 \x01(\x01R\x07meanIou\x12!\n\x0cneeds_review\x18\x05 \x01(\x08R\x0bneedsReview\"\xf1\x01\n\tGoldFrame\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x17\n\x07\x63lip_id\x18\x02 \x01(\x03R\x06\x63lipId\x12\x14\n\x05index\x18\x03 \x01(\x05R\x05index\x12\x1d\n\nvideo_name\x18\x04 \x01(\tR\tvideoName\x12#\n\rthumbnail_url\x18\x05 \x01(\tR\x0cthumbnailUrl\x12\x1b\n\tbox_count\x18\x06 \x01(\x05R\x08\x62oxCount\x12\x1a\n\x08\x61ttempts\x18\x07 \x01(\x05R\x08\x61ttempts\x12\x1d\n\nmean_score\x18\x08 \x01(\x01R\tmeanScore\"v\n\x14GetGoldStatsResponse\x12\x31\n\x08labelers\x18\x01 \x03(\x0b\x32\x15.krill.v1.GoldLabelerR\x08labelers\x12+\n\x06\x66rames\x18\x02 \x03(\x0b\x32\x13.krill.v1.GoldFrameR\x06\x66rames\"\x89\x02\n\x0bGoldAttempt\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12%\n\x04user\x18\x02 \x01(\x0b\x32\x11.krill.v1.ProfileR\x04user\x12\x17\n\x07\x63lip_id\x18\x03 \x01(\x03R\x06\x63lipId\x12\x14\n\x05index\x18\x04 \x01(\x05R\x05index\x12\x1d\n\nvideo_name\x18\x05 \x01(\tR\tvideoName\x12\x14\n\x05score\x18\x06 \x01(\x01R\x05score\x12\x19\n\x08mean_iou\x18\x07 \x01(\x01R\x07meanIou\x12\x39\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\tcreatedAt\"K\n\x15GetGoldAttemptRequest\x12\x19\n\x08\x66rame_id\x18\x01 \x01(\x03R\x07\x66rameId\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\"\xb7\x01\n\x16GetGoldAttemptResponse\x12/\n\x07\x61ttempt\x18\x01 \x01(\x0b\x32\x15.krill.v1.GoldAttemptR\x07\x61ttempt\x12,\n\x06result\x18\x02 \x01(\x0b\x32\x14.krill.v1.GoldResultR\x06result\x12\x10\n\x03url\x18\x03 \x01(\tR\x03url\x12\x14\n\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x05 \x01(\x05R\x06height\"\x89\x01\n\x17ListGoldAttemptsRequest\x12\x17\n\x07user_id\x18\x01 \x01(\tR\x06userId\x12\x19\n\x08\x66rame_id\x18\x02 \x01(\x03R\x07\x66rameId\x12\x1b\n\tpage_size\x18\x03 \x01(\x05R\x08pageSize\x12\x1d\n\npage_token\x18\x04 \x01(\tR\tpageToken\"u\n\x18ListGoldAttemptsResponse\x12\x31\n\x08\x61ttempts\x18\x01 \x03(\x0b\x32\x15.krill.v1.GoldAttemptR\x08\x61ttempts\x12&\n\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\x8e\x04\n\x0bGoldService\x12O\n\x0cSetGoldFrame\x12\x1d.krill.v1.SetGoldFrameRequest\x1a\x1e.krill.v1.SetGoldFrameResponse\"\x00\x12O\n\x0cGetGoldCheck\x12\x1d.krill.v1.GetGoldCheckRequest\x1a\x1e.krill.v1.GetGoldCheckResponse\"\x00\x12X\n\x0fSubmitGoldCheck\x12 .krill.v1.SubmitGoldCheckRequest\x1a!.krill.v1.SubmitGoldCheckResponse\"\x00\x12O\n\x0cGetGoldStats\x12\x1d.krill.v1.GetGoldStatsRequest\x1a\x1e.krill.v1.GetGoldStatsResponse\"\x00\x12U\n\x0eGetGoldAttempt\x12\x1f.krill.v1.GetGoldAttemptRequest\x1a .krill.v1.GetGoldAttemptResponse\"\x00\x12[\n\x10ListGoldAttempts\x12!.krill.v1.ListGoldAttemptsRequest\x1a\".krill.v1.ListGoldAttemptsResponse\"\x00\x42\x8a\x01\n\x0c\x63om.krill.v1B\tGoldProtoP\x01Z.github.com/wauv/krill/api/gen/krill/v1;krillv1\xa2\x02\x03KXX\xaa\x02\x08Krill.V1\xca\x02\x08Krill\\V1\xe2\x02\x14Krill\\V1\\GPBMetadata\xea\x02\tKrill::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -41,40 +41,40 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GOLDBOX']._serialized_end=324
   _globals['_GOLDBOX_ATTRIBUTESENTRY']._serialized_start=263
   _globals['_GOLDBOX_ATTRIBUTESENTRY']._serialized_end=324
-  _globals['_GOLDMATCH']._serialized_start=326
-  _globals['_GOLDMATCH']._serialized_end=435
-  _globals['_GOLDRESULT']._serialized_start=438
-  _globals['_GOLDRESULT']._serialized_end=611
-  _globals['_SETGOLDFRAMEREQUEST']._serialized_start=613
-  _globals['_SETGOLDFRAMEREQUEST']._serialized_end=681
-  _globals['_SETGOLDFRAMERESPONSE']._serialized_start=683
-  _globals['_SETGOLDFRAMERESPONSE']._serialized_end=705
-  _globals['_GETGOLDCHECKREQUEST']._serialized_start=707
-  _globals['_GETGOLDCHECKREQUEST']._serialized_end=755
-  _globals['_GETGOLDCHECKRESPONSE']._serialized_start=757
-  _globals['_GETGOLDCHECKRESPONSE']._serialized_end=870
-  _globals['_SUBMITGOLDCHECKREQUEST']._serialized_start=872
-  _globals['_SUBMITGOLDCHECKREQUEST']._serialized_end=964
-  _globals['_SUBMITGOLDCHECKRESPONSE']._serialized_start=966
-  _globals['_SUBMITGOLDCHECKRESPONSE']._serialized_end=1037
-  _globals['_GETGOLDSTATSREQUEST']._serialized_start=1039
-  _globals['_GETGOLDSTATSREQUEST']._serialized_end=1060
-  _globals['_GOLDLABELER']._serialized_start=1063
-  _globals['_GOLDLABELER']._serialized_end=1233
-  _globals['_GOLDFRAME']._serialized_start=1236
-  _globals['_GOLDFRAME']._serialized_end=1477
-  _globals['_GETGOLDSTATSRESPONSE']._serialized_start=1479
-  _globals['_GETGOLDSTATSRESPONSE']._serialized_end=1597
-  _globals['_GOLDATTEMPT']._serialized_start=1600
-  _globals['_GOLDATTEMPT']._serialized_end=1865
-  _globals['_GETGOLDATTEMPTREQUEST']._serialized_start=1867
-  _globals['_GETGOLDATTEMPTREQUEST']._serialized_end=1942
-  _globals['_GETGOLDATTEMPTRESPONSE']._serialized_start=1945
-  _globals['_GETGOLDATTEMPTRESPONSE']._serialized_end=2128
-  _globals['_LISTGOLDATTEMPTSREQUEST']._serialized_start=2131
-  _globals['_LISTGOLDATTEMPTSREQUEST']._serialized_end=2268
-  _globals['_LISTGOLDATTEMPTSRESPONSE']._serialized_start=2270
-  _globals['_LISTGOLDATTEMPTSRESPONSE']._serialized_end=2387
-  _globals['_GOLDSERVICE']._serialized_start=2390
-  _globals['_GOLDSERVICE']._serialized_end=2916
+  _globals['_GOLDMATCH']._serialized_start=327
+  _globals['_GOLDMATCH']._serialized_end=467
+  _globals['_GOLDRESULT']._serialized_start=470
+  _globals['_GOLDRESULT']._serialized_end=643
+  _globals['_SETGOLDFRAMEREQUEST']._serialized_start=645
+  _globals['_SETGOLDFRAMEREQUEST']._serialized_end=713
+  _globals['_SETGOLDFRAMERESPONSE']._serialized_start=715
+  _globals['_SETGOLDFRAMERESPONSE']._serialized_end=737
+  _globals['_GETGOLDCHECKREQUEST']._serialized_start=739
+  _globals['_GETGOLDCHECKREQUEST']._serialized_end=787
+  _globals['_GETGOLDCHECKRESPONSE']._serialized_start=789
+  _globals['_GETGOLDCHECKRESPONSE']._serialized_end=902
+  _globals['_SUBMITGOLDCHECKREQUEST']._serialized_start=904
+  _globals['_SUBMITGOLDCHECKREQUEST']._serialized_end=996
+  _globals['_SUBMITGOLDCHECKRESPONSE']._serialized_start=998
+  _globals['_SUBMITGOLDCHECKRESPONSE']._serialized_end=1069
+  _globals['_GETGOLDSTATSREQUEST']._serialized_start=1071
+  _globals['_GETGOLDSTATSREQUEST']._serialized_end=1092
+  _globals['_GOLDLABELER']._serialized_start=1095
+  _globals['_GOLDLABELER']._serialized_end=1265
+  _globals['_GOLDFRAME']._serialized_start=1268
+  _globals['_GOLDFRAME']._serialized_end=1509
+  _globals['_GETGOLDSTATSRESPONSE']._serialized_start=1511
+  _globals['_GETGOLDSTATSRESPONSE']._serialized_end=1629
+  _globals['_GOLDATTEMPT']._serialized_start=1632
+  _globals['_GOLDATTEMPT']._serialized_end=1897
+  _globals['_GETGOLDATTEMPTREQUEST']._serialized_start=1899
+  _globals['_GETGOLDATTEMPTREQUEST']._serialized_end=1974
+  _globals['_GETGOLDATTEMPTRESPONSE']._serialized_start=1977
+  _globals['_GETGOLDATTEMPTRESPONSE']._serialized_end=2160
+  _globals['_LISTGOLDATTEMPTSREQUEST']._serialized_start=2163
+  _globals['_LISTGOLDATTEMPTSREQUEST']._serialized_end=2300
+  _globals['_LISTGOLDATTEMPTSRESPONSE']._serialized_start=2302
+  _globals['_LISTGOLDATTEMPTSRESPONSE']._serialized_end=2419
+  _globals['_GOLDSERVICE']._serialized_start=2422
+  _globals['_GOLDSERVICE']._serialized_end=2948
 # @@protoc_insertion_point(module_scope)
