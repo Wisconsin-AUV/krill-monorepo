@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Tracking from a frame with R uses the keypoints labeled on the track's earlier frames. Keypoints missing on the frame it starts from, or that tracking loses along the way, are put back where they sat on the printed sheet.
+- A tracked sheet only jumps to a fresh find that matches its design clearly better, so a sheet half under the crate's wall no longer shrinks to its visible part.
+- Dragging a keypoint moves its quad, center, and reference design with it instead of after the drop.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
