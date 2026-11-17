@@ -28,6 +28,12 @@ class AnnotationStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     ANNOTATION_STATUS_PROPOSED: _ClassVar[AnnotationStatus]
     ANNOTATION_STATUS_VERIFIED: _ClassVar[AnnotationStatus]
     ANNOTATION_STATUS_REJECTED: _ClassVar[AnnotationStatus]
+
+class KeypointVisibility(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    KEYPOINT_VISIBILITY_UNSPECIFIED: _ClassVar[KeypointVisibility]
+    KEYPOINT_VISIBILITY_HIDDEN: _ClassVar[KeypointVisibility]
+    KEYPOINT_VISIBILITY_VISIBLE: _ClassVar[KeypointVisibility]
 FRAME_STATUS_UNSPECIFIED: FrameStatus
 FRAME_STATUS_UNLABELED: FrameStatus
 FRAME_STATUS_LABELED: FrameStatus
@@ -41,20 +47,35 @@ ANNOTATION_STATUS_UNSPECIFIED: AnnotationStatus
 ANNOTATION_STATUS_PROPOSED: AnnotationStatus
 ANNOTATION_STATUS_VERIFIED: AnnotationStatus
 ANNOTATION_STATUS_REJECTED: AnnotationStatus
+KEYPOINT_VISIBILITY_UNSPECIFIED: KeypointVisibility
+KEYPOINT_VISIBILITY_HIDDEN: KeypointVisibility
+KEYPOINT_VISIBILITY_VISIBLE: KeypointVisibility
 
 class Box(_message.Message):
-    __slots__ = ("x", "y", "width", "height", "corners")
+    __slots__ = ("x", "y", "width", "height", "corners", "keypoints")
     X_FIELD_NUMBER: _ClassVar[int]
     Y_FIELD_NUMBER: _ClassVar[int]
     WIDTH_FIELD_NUMBER: _ClassVar[int]
     HEIGHT_FIELD_NUMBER: _ClassVar[int]
     CORNERS_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
     x: float
     y: float
     width: float
     height: float
     corners: _containers.RepeatedCompositeFieldContainer[Point]
-    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ..., corners: _Optional[_Iterable[_Union[Point, _Mapping]]] = ...) -> None: ...
+    keypoints: _containers.RepeatedCompositeFieldContainer[Keypoint]
+    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ..., corners: _Optional[_Iterable[_Union[Point, _Mapping]]] = ..., keypoints: _Optional[_Iterable[_Union[Keypoint, _Mapping]]] = ...) -> None: ...
+
+class Keypoint(_message.Message):
+    __slots__ = ("x", "y", "visibility")
+    X_FIELD_NUMBER: _ClassVar[int]
+    Y_FIELD_NUMBER: _ClassVar[int]
+    VISIBILITY_FIELD_NUMBER: _ClassVar[int]
+    x: float
+    y: float
+    visibility: KeypointVisibility
+    def __init__(self, x: _Optional[float] = ..., y: _Optional[float] = ..., visibility: _Optional[_Union[KeypointVisibility, str]] = ...) -> None: ...
 
 class Point(_message.Message):
     __slots__ = ("x", "y")
@@ -228,7 +249,7 @@ class SetFrameStatusResponse(_message.Message):
     def __init__(self, status: _Optional[_Union[FrameStatus, str]] = ...) -> None: ...
 
 class TrackObjectRequest(_message.Message):
-    __slots__ = ("frame_id", "track_id", "label_type_id", "attributes", "point", "box")
+    __slots__ = ("frame_id", "track_id", "label_type_id", "attributes", "point", "box", "quad")
     class AttributesEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -242,13 +263,23 @@ class TrackObjectRequest(_message.Message):
     ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
     POINT_FIELD_NUMBER: _ClassVar[int]
     BOX_FIELD_NUMBER: _ClassVar[int]
+    QUAD_FIELD_NUMBER: _ClassVar[int]
     frame_id: int
     track_id: int
     label_type_id: int
     attributes: _containers.ScalarMap[str, str]
     point: Point
     box: Box
-    def __init__(self, frame_id: _Optional[int] = ..., track_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., point: _Optional[_Union[Point, _Mapping]] = ..., box: _Optional[_Union[Box, _Mapping]] = ...) -> None: ...
+    quad: QuadPrompt
+    def __init__(self, frame_id: _Optional[int] = ..., track_id: _Optional[int] = ..., label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., point: _Optional[_Union[Point, _Mapping]] = ..., box: _Optional[_Union[Box, _Mapping]] = ..., quad: _Optional[_Union[QuadPrompt, _Mapping]] = ...) -> None: ...
+
+class QuadPrompt(_message.Message):
+    __slots__ = ("quad", "point")
+    QUAD_FIELD_NUMBER: _ClassVar[int]
+    POINT_FIELD_NUMBER: _ClassVar[int]
+    quad: int
+    point: Point
+    def __init__(self, quad: _Optional[int] = ..., point: _Optional[_Union[Point, _Mapping]] = ...) -> None: ...
 
 class TrackObjectResponse(_message.Message):
     __slots__ = ("track",)

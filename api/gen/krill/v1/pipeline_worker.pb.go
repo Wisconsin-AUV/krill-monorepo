@@ -729,7 +729,9 @@ type FinishInspectRequest struct {
 	// The image size the model trained at, or 0 when the weights don't say.
 	ImageSize int32 `protobuf:"varint,3,opt,name=image_size,json=imageSize,proto3" json:"image_size,omitempty"`
 	// An OBB model rather than a detection model.
-	Oriented      bool `protobuf:"varint,4,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	Oriented bool `protobuf:"varint,4,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	// Keypoints per object, for pose models.
+	Keypoints     int32 `protobuf:"varint,5,opt,name=keypoints,proto3" json:"keypoints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -790,6 +792,13 @@ func (x *FinishInspectRequest) GetOriented() bool {
 		return x.Oriented
 	}
 	return false
+}
+
+func (x *FinishInspectRequest) GetKeypoints() int32 {
+	if x != nil {
+		return x.Keypoints
+	}
+	return 0
 }
 
 type FinishInspectResponse struct {
@@ -878,13 +887,14 @@ const file_krill_v1_pipeline_worker_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12*\n" +
 	"\x05boxes\x18\x02 \x03(\v2\x14.krill.v1.PreviewBoxR\x05boxes\x12\x17\n" +
 	"\atook_ms\x18\x03 \x01(\x05R\x06tookMs\"\x17\n" +
-	"\x15ReportPreviewResponse\"\x84\x01\n" +
+	"\x15ReportPreviewResponse\"\xa2\x01\n" +
 	"\x14FinishInspectRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x18\n" +
 	"\aclasses\x18\x02 \x03(\tR\aclasses\x12\x1d\n" +
 	"\n" +
 	"image_size\x18\x03 \x01(\x05R\timageSize\x12\x1a\n" +
-	"\boriented\x18\x04 \x01(\bR\boriented\"\x17\n" +
+	"\boriented\x18\x04 \x01(\bR\boriented\x12\x1c\n" +
+	"\tkeypoints\x18\x05 \x01(\x05R\tkeypoints\"\x17\n" +
 	"\x15FinishInspectResponse2\xf5\x04\n" +
 	"\x15PipelineWorkerService\x12d\n" +
 	"\x13RegisterPrelabelers\x12$.krill.v1.RegisterPrelabelersRequest\x1a%.krill.v1.RegisterPrelabelersResponse\"\x00\x12@\n" +

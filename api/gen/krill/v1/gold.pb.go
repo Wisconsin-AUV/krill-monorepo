@@ -89,8 +89,11 @@ type GoldMatch struct {
 	Reference int32   `protobuf:"varint,1,opt,name=reference,proto3" json:"reference,omitempty"`
 	Answer    int32   `protobuf:"varint,2,opt,name=answer,proto3" json:"answer,omitempty"`
 	Iou       float64 `protobuf:"fixed64,3,opt,name=iou,proto3" json:"iou,omitempty"`
-	// The box is tight enough and every attribute matches.
-	Correct       bool `protobuf:"varint,4,opt,name=correct,proto3" json:"correct,omitempty"`
+	// The box is tight enough, its keypoints are close enough, and every
+	// attribute matches.
+	Correct bool `protobuf:"varint,4,opt,name=correct,proto3" json:"correct,omitempty"`
+	// Object keypoint similarity, from 0 to 1, for types with keypoints.
+	Oks           *float64 `protobuf:"fixed64,5,opt,name=oks,proto3,oneof" json:"oks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -151,6 +154,13 @@ func (x *GoldMatch) GetCorrect() bool {
 		return x.Correct
 	}
 	return false
+}
+
+func (x *GoldMatch) GetOks() float64 {
+	if x != nil && x.Oks != nil {
+		return *x.Oks
+	}
+	return 0
 }
 
 type GoldResult struct {
@@ -1163,12 +1173,14 @@ const file_krill_v1_gold_proto_rawDesc = "" +
 	"\x03box\x18\x03 \x01(\v2\r.krill.v1.BoxR\x03box\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"m\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\x01\n" +
 	"\tGoldMatch\x12\x1c\n" +
 	"\treference\x18\x01 \x01(\x05R\treference\x12\x16\n" +
 	"\x06answer\x18\x02 \x01(\x05R\x06answer\x12\x10\n" +
 	"\x03iou\x18\x03 \x01(\x01R\x03iou\x12\x18\n" +
-	"\acorrect\x18\x04 \x01(\bR\acorrect\"\xad\x01\n" +
+	"\acorrect\x18\x04 \x01(\bR\acorrect\x12\x15\n" +
+	"\x03oks\x18\x05 \x01(\x01H\x00R\x03oks\x88\x01\x01B\x06\n" +
+	"\x04_oks\"\xad\x01\n" +
 	"\n" +
 	"GoldResult\x12/\n" +
 	"\treference\x18\x01 \x03(\v2\x11.krill.v1.GoldBoxR\treference\x12)\n" +
@@ -1329,6 +1341,7 @@ func file_krill_v1_gold_proto_init() {
 	}
 	file_krill_v1_annotation_proto_init()
 	file_krill_v1_stats_proto_init()
+	file_krill_v1_gold_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

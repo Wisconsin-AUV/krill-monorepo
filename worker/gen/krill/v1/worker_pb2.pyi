@@ -2,6 +2,7 @@ import datetime
 
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from krill.v1 import annotation_pb2 as _annotation_pb2
+from krill.v1 import label_pb2 as _label_pb2
 from krill.v1 import log_pb2 as _log_pb2
 from krill.v1 import pipeline_pb2 as _pipeline_pb2
 from krill.v1 import system_pb2 as _system_pb2
@@ -61,17 +62,19 @@ class NextTaskResponse(_message.Message):
     def __init__(self, track: _Optional[_Union[TrackTask, _Mapping]] = ..., exemplar: _Optional[_Union[ExemplarTask, _Mapping]] = ..., embed: _Optional[_Union[EmbedTask, _Mapping]] = ..., orient: _Optional[_Union[OrientTask, _Mapping]] = ..., train: _Optional[_Union[_pipeline_pb2.TrainTask, _Mapping]] = ..., prelabel: _Optional[_Union[_pipeline_pb2.PrelabelTask, _Mapping]] = ..., preview: _Optional[_Union[_pipeline_pb2.PreviewTask, _Mapping]] = ..., inspect: _Optional[_Union[_pipeline_pb2.InspectTask, _Mapping]] = ...) -> None: ...
 
 class TaskFrame(_message.Message):
-    __slots__ = ("id", "url", "embedding_url")
+    __slots__ = ("id", "url", "embedding_url", "keypoints")
     ID_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
     EMBEDDING_URL_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
     id: int
     url: str
     embedding_url: str
-    def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ..., embedding_url: _Optional[str] = ...) -> None: ...
+    keypoints: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Keypoint]
+    def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ..., embedding_url: _Optional[str] = ..., keypoints: _Optional[_Iterable[_Union[_annotation_pb2.Keypoint, _Mapping]]] = ...) -> None: ...
 
 class TrackTask(_message.Message):
-    __slots__ = ("id", "frames", "point", "box", "embedding_model", "oriented", "reference_url")
+    __slots__ = ("id", "frames", "point", "box", "embedding_model", "oriented", "reference_url", "keypoint_count", "quads", "fill")
     ID_FIELD_NUMBER: _ClassVar[int]
     FRAMES_FIELD_NUMBER: _ClassVar[int]
     POINT_FIELD_NUMBER: _ClassVar[int]
@@ -79,6 +82,9 @@ class TrackTask(_message.Message):
     EMBEDDING_MODEL_FIELD_NUMBER: _ClassVar[int]
     ORIENTED_FIELD_NUMBER: _ClassVar[int]
     REFERENCE_URL_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINT_COUNT_FIELD_NUMBER: _ClassVar[int]
+    QUADS_FIELD_NUMBER: _ClassVar[int]
+    FILL_FIELD_NUMBER: _ClassVar[int]
     id: int
     frames: _containers.RepeatedCompositeFieldContainer[TaskFrame]
     point: _annotation_pb2.Point
@@ -86,7 +92,10 @@ class TrackTask(_message.Message):
     embedding_model: str
     oriented: bool
     reference_url: str
-    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., embedding_model: _Optional[str] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ...) -> None: ...
+    keypoint_count: int
+    quads: _containers.RepeatedCompositeFieldContainer[_label_pb2.KeypointQuad]
+    fill: _annotation_pb2.QuadPrompt
+    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., embedding_model: _Optional[str] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ..., keypoint_count: _Optional[int] = ..., quads: _Optional[_Iterable[_Union[_label_pb2.KeypointQuad, _Mapping]]] = ..., fill: _Optional[_Union[_annotation_pb2.QuadPrompt, _Mapping]] = ...) -> None: ...
 
 class EmbedTask(_message.Message):
     __slots__ = ("id", "frames")
@@ -117,14 +126,18 @@ class ExemplarTask(_message.Message):
     def __init__(self, id: _Optional[int] = ..., frame: _Optional[_Union[TaskFrame, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
 
 class OrientTask(_message.Message):
-    __slots__ = ("id", "frames", "reference_url")
+    __slots__ = ("id", "frames", "reference_url", "keypoint_count", "quads")
     ID_FIELD_NUMBER: _ClassVar[int]
     FRAMES_FIELD_NUMBER: _ClassVar[int]
     REFERENCE_URL_FIELD_NUMBER: _ClassVar[int]
+    KEYPOINT_COUNT_FIELD_NUMBER: _ClassVar[int]
+    QUADS_FIELD_NUMBER: _ClassVar[int]
     id: int
     frames: _containers.RepeatedCompositeFieldContainer[OrientFrame]
     reference_url: str
-    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[OrientFrame, _Mapping]]] = ..., reference_url: _Optional[str] = ...) -> None: ...
+    keypoint_count: int
+    quads: _containers.RepeatedCompositeFieldContainer[_label_pb2.KeypointQuad]
+    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[OrientFrame, _Mapping]]] = ..., reference_url: _Optional[str] = ..., keypoint_count: _Optional[int] = ..., quads: _Optional[_Iterable[_Union[_label_pb2.KeypointQuad, _Mapping]]] = ...) -> None: ...
 
 class OrientFrame(_message.Message):
     __slots__ = ("frame", "boxes")

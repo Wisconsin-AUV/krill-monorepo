@@ -29,16 +29,18 @@ class GoldBox(_message.Message):
     def __init__(self, label_type_id: _Optional[int] = ..., attributes: _Optional[_Mapping[str, str]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ...) -> None: ...
 
 class GoldMatch(_message.Message):
-    __slots__ = ("reference", "answer", "iou", "correct")
+    __slots__ = ("reference", "answer", "iou", "correct", "oks")
     REFERENCE_FIELD_NUMBER: _ClassVar[int]
     ANSWER_FIELD_NUMBER: _ClassVar[int]
     IOU_FIELD_NUMBER: _ClassVar[int]
     CORRECT_FIELD_NUMBER: _ClassVar[int]
+    OKS_FIELD_NUMBER: _ClassVar[int]
     reference: int
     answer: int
     iou: float
     correct: bool
-    def __init__(self, reference: _Optional[int] = ..., answer: _Optional[int] = ..., iou: _Optional[float] = ..., correct: _Optional[bool] = ...) -> None: ...
+    oks: float
+    def __init__(self, reference: _Optional[int] = ..., answer: _Optional[int] = ..., iou: _Optional[float] = ..., correct: _Optional[bool] = ..., oks: _Optional[float] = ...) -> None: ...
 
 class GoldResult(_message.Message):
     __slots__ = ("reference", "answer", "matches", "score")

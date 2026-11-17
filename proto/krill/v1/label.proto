@@ -26,6 +26,10 @@ service LabelService {
   // oriented type that has none, matching the reference design when there is
   // one and the object's SAM mask when there isn't.
   rpc FitRotations(FitRotationsRequest) returns (FitRotationsResponse) {}
+  // FitKeypoints has a GPU worker fill the reference design's quad on every
+  // box of the type with no keypoints labeled. Boxes it fills become
+  // proposals again for a labeler to check.
+  rpc FitKeypoints(FitKeypointsRequest) returns (FitKeypointsResponse) {}
   // PreviewMergeLabelTypes shows what merging one type into another would
   // change.
   rpc PreviewMergeLabelTypes(PreviewMergeLabelTypesRequest) returns (PreviewMergeLabelTypesResponse) {}
@@ -60,6 +64,40 @@ message LabelType {
   string reference_url = 13;
   // Boxes of an oriented type with no rotation yet.
   int32 unrotated_box_count = 14;
+  // Points labeled on each object, exported and trained as YOLO-pose. A type
+  // can't be both oriented and have keypoints.
+  repeated KeypointDef keypoints = 15;
+  repeated KeypointQuad quads = 16;
+  // Lines drawn between keypoints besides the quads' edges.
+  repeated KeypointEdge edges = 17;
+  // Boxes of a type with keypoints that have none labeled.
+  int32 unposed_box_count = 18;
+}
+
+message KeypointDef {
+  string name = 1;
+  // The keypoint this one swaps with when an image is mirrored left to
+  // right. Unset when it mirrors onto itself.
+  optional int32 mirror = 2;
+}
+
+// KeypointQuad is four keypoints at the corners of a flat surface, such as a
+// printed sheet. They go clockwise from the surface's own top left, not the
+// one on screen, so the order says which way the object is turned.
+message KeypointQuad {
+  // Indexes into the type's keypoints.
+  repeated int32 corners = 1;
+  // The type's reference design covers the quad corner to corner, so SAM
+  // tracking finds it in each box and aligns the corners to it.
+  bool reference = 2;
+  // A keypoint placed where the quad's diagonals cross, which is its center
+  // in perspective, whenever its corners are.
+  optional int32 center = 3;
+}
+
+message KeypointEdge {
+  int32 from = 1;
+  int32 to = 2;
 }
 
 message LabelExample {
@@ -82,6 +120,9 @@ message CreateLabelTypeRequest {
   string title = 5;
   string guideline = 6;
   bool oriented = 7;
+  repeated KeypointDef keypoints = 8;
+  repeated KeypointQuad quads = 9;
+  repeated KeypointEdge edges = 10;
 }
 
 message CreateLabelTypeResponse {
@@ -97,6 +138,9 @@ message UpdateLabelTypeRequest {
   string title = 6;
   string guideline = 7;
   bool oriented = 8;
+  repeated KeypointDef keypoints = 9;
+  repeated KeypointQuad quads = 10;
+  repeated KeypointEdge edges = 11;
 }
 
 message UpdateLabelTypeResponse {
@@ -156,6 +200,15 @@ message FitRotationsRequest {
 }
 
 message FitRotationsResponse {
+  // Boxes queued for fitting.
+  int32 box_count = 1;
+}
+
+message FitKeypointsRequest {
+  int64 label_type_id = 1;
+}
+
+message FitKeypointsResponse {
   // Boxes queued for fitting.
   int32 box_count = 1;
 }

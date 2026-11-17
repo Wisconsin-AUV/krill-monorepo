@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file krill/v1/label.proto.
  */
 export const file_krill_v1_label: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIsMCCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZRIQCghvcmllbnRlZBgMIAEoCBIVCg1yZWZlcmVuY2VfdXJsGA0gASgJEhsKE3Vucm90YXRlZF9ib3hfY291bnQYDiABKAUiOAoMTGFiZWxFeGFtcGxlEgoKAmlkGAEgASgDEgsKA3VybBgCIAEoCRIPCgdjYXB0aW9uGAMgASgJIhcKFUxpc3RMYWJlbFR5cGVzUmVxdWVzdCJCChZMaXN0TGFiZWxUeXBlc1Jlc3BvbnNlEigKC2xhYmVsX3R5cGVzGAEgAygLMhMua3JpbGwudjEuTGFiZWxUeXBlIqwBChZDcmVhdGVMYWJlbFR5cGVSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFY29sb3IYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSLAoKYXR0cmlidXRlcxgEIAMoCzIYLmtyaWxsLnYxLkxhYmVsQXR0cmlidXRlEg0KBXRpdGxlGAUgASgJEhEKCWd1aWRlbGluZRgGIAEoCRIQCghvcmllbnRlZBgHIAEoCCJCChdDcmVhdGVMYWJlbFR5cGVSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIrgBChZVcGRhdGVMYWJlbFR5cGVSZXF1ZXN0EgoKAmlkGAEgASgDEgwKBG5hbWUYAiABKAkSDQoFY29sb3IYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSLAoKYXR0cmlidXRlcxgFIAMoCzIYLmtyaWxsLnYxLkxhYmVsQXR0cmlidXRlEg0KBXRpdGxlGAYgASgJEhEKCWd1aWRlbGluZRgHIAEoCRIQCghvcmllbnRlZBgIIAEoCCJCChdVcGRhdGVMYWJlbFR5cGVSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIiQKFkRlbGV0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMiGQoXRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiJwoYUmVvcmRlckxhYmVsVHlwZXNSZXF1ZXN0EgsKA2lkcxgBIAMoAyJFChlSZW9yZGVyTGFiZWxUeXBlc1Jlc3BvbnNlEigKC2xhYmVsX3R5cGVzGAEgAygLMhMua3JpbGwudjEuTGFiZWxUeXBlIjgKH0NyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAyJDCiBDcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXNwb25zZRILCgNrZXkYASABKAkSEgoKdXBsb2FkX3VybBgCIAEoCSJNChZBZGRMYWJlbEV4YW1wbGVSZXF1ZXN0EhUKDWxhYmVsX3R5cGVfaWQYASABKAMSCwoDa2V5GAIgASgJEg8KB2NhcHRpb24YAyABKAkiQgoXQWRkTGFiZWxFeGFtcGxlUmVzcG9uc2USJwoHZXhhbXBsZRgBIAEoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZSInChlEZWxldGVMYWJlbEV4YW1wbGVSZXF1ZXN0EgoKAmlkGAEgASgDIhwKGkRlbGV0ZUxhYmVsRXhhbXBsZVJlc3BvbnNlIj4KGFNldExhYmVsUmVmZXJlbmNlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgsKA2tleRgCIAEoCSJEChlTZXRMYWJlbFJlZmVyZW5jZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiLAoTRml0Um90YXRpb25zUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIikKFEZpdFJvdGF0aW9uc1Jlc3BvbnNlEhEKCWJveF9jb3VudBgBIAEoBSKOAQoVQXR0cmlidXRlVmFsdWVNYXBwaW5nEhgKEHNvdXJjZV9hdHRyaWJ1dGUYASABKAkSFQoNc291cmNlX29wdGlvbhgCIAEoCRIYChB0YXJnZXRfYXR0cmlidXRlGAMgASgJEhUKDXRhcmdldF9vcHRpb24YBCABKAkSEwoLdHJhY2tfY291bnQYBSABKAUiUgoRRXhwb3J0Q2xhc3NDaGFuZ2USDAoEbmFtZRgBIAEoCRIOCgZvbGRfaWQYAiABKAUSDgoGbmV3X2lkGAMgASgFEg8KB2JlY29tZXMYBCABKAkieAodUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QSEQoJc291cmNlX2lkGAEgASgDEhEKCXRhcmdldF9pZBgCIAEoAxIxCghtYXBwaW5ncxgDIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZyL6AgoeUHJldmlld01lcmdlTGFiZWxUeXBlc1Jlc3BvbnNlEhMKC3RyYWNrX2NvdW50GAEgASgFEhEKCWJveF9jb3VudBgCIAEoBRISCgpjbGlwX2NvdW50GAMgASgFEhMKC3ZpZGVvX2NvdW50GAQgASgFEhsKE3RyYXNoZWRfdHJhY2tfY291bnQYBSABKAUSGAoQZ29sZF9mcmFtZV9jb3VudBgGIAEoBRIaChJnb2xkX2F0dGVtcHRfY291bnQYByABKAUSGQoRb3Blbl9yZXZpZXdfY291bnQYCCABKAUSFQoNZXhhbXBsZV9jb3VudBgJIAEoBRIxCghtYXBwaW5ncxgKIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZxIyCg1jbGFzc19jaGFuZ2VzGAsgAygLMhsua3JpbGwudjEuRXhwb3J0Q2xhc3NDaGFuZ2USGwoTdW5maWxsZWRfYXR0cmlidXRlcxgMIAMoCSJxChZNZXJnZUxhYmVsVHlwZXNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoAxIRCgl0YXJnZXRfaWQYAiABKAMSMQoIbWFwcGluZ3MYAyADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmcieAoXTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2USEwoLdHJhY2tfY291bnQYASABKAUSEQoJYm94X2NvdW50GAIgASgFEhgKEGdvbGRfZnJhbWVfY291bnQYAyABKAUSGwoTZHJvcHBlZF92YWx1ZV9jb3VudBgEIAEoBTL/CAoMTGFiZWxTZXJ2aWNlElUKDkxpc3RMYWJlbFR5cGVzEh8ua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXF1ZXN0GiAua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXNwb25zZSIAElgKD0NyZWF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD1VwZGF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD0RlbGV0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkRlbGV0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXNwb25zZSIAEl4KEVJlb3JkZXJMYWJlbFR5cGVzEiIua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXF1ZXN0GiMua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZSIAEnMKGENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZBIpLmtyaWxsLnYxLkNyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlcXVlc3QaKi5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXNwb25zZSIAElgKD0FkZExhYmVsRXhhbXBsZRIgLmtyaWxsLnYxLkFkZExhYmVsRXhhbXBsZVJlcXVlc3QaIS5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXNwb25zZSIAEmEKEkRlbGV0ZUxhYmVsRXhhbXBsZRIjLmtyaWxsLnYxLkRlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QaJC5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSIAEl4KEVNldExhYmVsUmVmZXJlbmNlEiIua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXF1ZXN0GiMua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZSIAEk8KDEZpdFJvdGF0aW9ucxIdLmtyaWxsLnYxLkZpdFJvdGF0aW9uc1JlcXVlc3QaHi5rcmlsbC52MS5GaXRSb3RhdGlvbnNSZXNwb25zZSIAEm0KFlByZXZpZXdNZXJnZUxhYmVsVHlwZXMSJy5rcmlsbC52MS5QcmV2aWV3TWVyZ2VMYWJlbFR5cGVzUmVxdWVzdBooLmtyaWxsLnYxLlByZXZpZXdNZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAElgKD01lcmdlTGFiZWxUeXBlcxIgLmtyaWxsLnYxLk1lcmdlTGFiZWxUeXBlc1JlcXVlc3QaIS5rcmlsbC52MS5NZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAQosBCgxjb20ua3JpbGwudjFCCkxhYmVsUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z");
+  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJItYDCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZRIQCghvcmllbnRlZBgMIAEoCBIVCg1yZWZlcmVuY2VfdXJsGA0gASgJEhsKE3Vucm90YXRlZF9ib3hfY291bnQYDiABKAUSKAoJa2V5cG9pbnRzGA8gAygLMhUua3JpbGwudjEuS2V5cG9pbnREZWYSJQoFcXVhZHMYECADKAsyFi5rcmlsbC52MS5LZXlwb2ludFF1YWQSJQoFZWRnZXMYESADKAsyFi5rcmlsbC52MS5LZXlwb2ludEVkZ2USGQoRdW5wb3NlZF9ib3hfY291bnQYEiABKAUiOwoLS2V5cG9pbnREZWYSDAoEbmFtZRgBIAEoCRITCgZtaXJyb3IYAiABKAVIAIgBAUIJCgdfbWlycm9yIlIKDEtleXBvaW50UXVhZBIPCgdjb3JuZXJzGAEgAygFEhEKCXJlZmVyZW5jZRgCIAEoCBITCgZjZW50ZXIYAyABKAVIAIgBAUIJCgdfY2VudGVyIigKDEtleXBvaW50RWRnZRIMCgRmcm9tGAEgASgFEgoKAnRvGAIgASgFIjgKDExhYmVsRXhhbXBsZRIKCgJpZBgBIAEoAxILCgN1cmwYAiABKAkSDwoHY2FwdGlvbhgDIAEoCSIXChVMaXN0TGFiZWxUeXBlc1JlcXVlc3QiQgoWTGlzdExhYmVsVHlwZXNSZXNwb25zZRIoCgtsYWJlbF90eXBlcxgBIAMoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSKkAgoWQ3JlYXRlTGFiZWxUeXBlUmVxdWVzdBIMCgRuYW1lGAEgASgJEg0KBWNvbG9yGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEiwKCmF0dHJpYnV0ZXMYBCADKAsyGC5rcmlsbC52MS5MYWJlbEF0dHJpYnV0ZRINCgV0aXRsZRgFIAEoCRIRCglndWlkZWxpbmUYBiABKAkSEAoIb3JpZW50ZWQYByABKAgSKAoJa2V5cG9pbnRzGAggAygLMhUua3JpbGwudjEuS2V5cG9pbnREZWYSJQoFcXVhZHMYCSADKAsyFi5rcmlsbC52MS5LZXlwb2ludFF1YWQSJQoFZWRnZXMYCiADKAsyFi5rcmlsbC52MS5LZXlwb2ludEVkZ2UiQgoXQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2USJwoKbGFiZWxfdHlwZRgBIAEoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSKwAgoWVXBkYXRlTGFiZWxUeXBlUmVxdWVzdBIKCgJpZBgBIAEoAxIMCgRuYW1lGAIgASgJEg0KBWNvbG9yGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEiwKCmF0dHJpYnV0ZXMYBSADKAsyGC5rcmlsbC52MS5MYWJlbEF0dHJpYnV0ZRINCgV0aXRsZRgGIAEoCRIRCglndWlkZWxpbmUYByABKAkSEAoIb3JpZW50ZWQYCCABKAgSKAoJa2V5cG9pbnRzGAkgAygLMhUua3JpbGwudjEuS2V5cG9pbnREZWYSJQoFcXVhZHMYCiADKAsyFi5rcmlsbC52MS5LZXlwb2ludFF1YWQSJQoFZWRnZXMYCyADKAsyFi5rcmlsbC52MS5LZXlwb2ludEVkZ2UiQgoXVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2USJwoKbGFiZWxfdHlwZRgBIAEoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSIkChZEZWxldGVMYWJlbFR5cGVSZXF1ZXN0EgoKAmlkGAEgASgDIhkKF0RlbGV0ZUxhYmVsVHlwZVJlc3BvbnNlIicKGFJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBILCgNpZHMYASADKAMiRQoZUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZRIoCgtsYWJlbF90eXBlcxgBIAMoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSI4Ch9DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0EhUKDWxhYmVsX3R5cGVfaWQYASABKAMiQwogQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2USCwoDa2V5GAEgASgJEhIKCnVwbG9hZF91cmwYAiABKAkiTQoWQWRkTGFiZWxFeGFtcGxlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgsKA2tleRgCIAEoCRIPCgdjYXB0aW9uGAMgASgJIkIKF0FkZExhYmVsRXhhbXBsZVJlc3BvbnNlEicKB2V4YW1wbGUYASABKAsyFi5rcmlsbC52MS5MYWJlbEV4YW1wbGUiJwoZRGVsZXRlTGFiZWxFeGFtcGxlUmVxdWVzdBIKCgJpZBgBIAEoAyIcChpEZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSI+ChhTZXRMYWJlbFJlZmVyZW5jZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkiRAoZU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIiwKE0ZpdFJvdGF0aW9uc1JlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAyIpChRGaXRSb3RhdGlvbnNSZXNwb25zZRIRCglib3hfY291bnQYASABKAUiLAoTRml0S2V5cG9pbnRzUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIikKFEZpdEtleXBvaW50c1Jlc3BvbnNlEhEKCWJveF9jb3VudBgBIAEoBSKOAQoVQXR0cmlidXRlVmFsdWVNYXBwaW5nEhgKEHNvdXJjZV9hdHRyaWJ1dGUYASABKAkSFQoNc291cmNlX29wdGlvbhgCIAEoCRIYChB0YXJnZXRfYXR0cmlidXRlGAMgASgJEhUKDXRhcmdldF9vcHRpb24YBCABKAkSEwoLdHJhY2tfY291bnQYBSABKAUiUgoRRXhwb3J0Q2xhc3NDaGFuZ2USDAoEbmFtZRgBIAEoCRIOCgZvbGRfaWQYAiABKAUSDgoGbmV3X2lkGAMgASgFEg8KB2JlY29tZXMYBCABKAkieAodUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QSEQoJc291cmNlX2lkGAEgASgDEhEKCXRhcmdldF9pZBgCIAEoAxIxCghtYXBwaW5ncxgDIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZyL6AgoeUHJldmlld01lcmdlTGFiZWxUeXBlc1Jlc3BvbnNlEhMKC3RyYWNrX2NvdW50GAEgASgFEhEKCWJveF9jb3VudBgCIAEoBRISCgpjbGlwX2NvdW50GAMgASgFEhMKC3ZpZGVvX2NvdW50GAQgASgFEhsKE3RyYXNoZWRfdHJhY2tfY291bnQYBSABKAUSGAoQZ29sZF9mcmFtZV9jb3VudBgGIAEoBRIaChJnb2xkX2F0dGVtcHRfY291bnQYByABKAUSGQoRb3Blbl9yZXZpZXdfY291bnQYCCABKAUSFQoNZXhhbXBsZV9jb3VudBgJIAEoBRIxCghtYXBwaW5ncxgKIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZxIyCg1jbGFzc19jaGFuZ2VzGAsgAygLMhsua3JpbGwudjEuRXhwb3J0Q2xhc3NDaGFuZ2USGwoTdW5maWxsZWRfYXR0cmlidXRlcxgMIAMoCSJxChZNZXJnZUxhYmVsVHlwZXNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoAxIRCgl0YXJnZXRfaWQYAiABKAMSMQoIbWFwcGluZ3MYAyADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmcieAoXTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2USEwoLdHJhY2tfY291bnQYASABKAUSEQoJYm94X2NvdW50GAIgASgFEhgKEGdvbGRfZnJhbWVfY291bnQYAyABKAUSGwoTZHJvcHBlZF92YWx1ZV9jb3VudBgEIAEoBTLQCQoMTGFiZWxTZXJ2aWNlElUKDkxpc3RMYWJlbFR5cGVzEh8ua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXF1ZXN0GiAua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXNwb25zZSIAElgKD0NyZWF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD1VwZGF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD0RlbGV0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkRlbGV0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXNwb25zZSIAEl4KEVJlb3JkZXJMYWJlbFR5cGVzEiIua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXF1ZXN0GiMua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZSIAEnMKGENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZBIpLmtyaWxsLnYxLkNyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlcXVlc3QaKi5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXNwb25zZSIAElgKD0FkZExhYmVsRXhhbXBsZRIgLmtyaWxsLnYxLkFkZExhYmVsRXhhbXBsZVJlcXVlc3QaIS5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXNwb25zZSIAEmEKEkRlbGV0ZUxhYmVsRXhhbXBsZRIjLmtyaWxsLnYxLkRlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QaJC5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSIAEl4KEVNldExhYmVsUmVmZXJlbmNlEiIua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXF1ZXN0GiMua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZSIAEk8KDEZpdFJvdGF0aW9ucxIdLmtyaWxsLnYxLkZpdFJvdGF0aW9uc1JlcXVlc3QaHi5rcmlsbC52MS5GaXRSb3RhdGlvbnNSZXNwb25zZSIAEk8KDEZpdEtleXBvaW50cxIdLmtyaWxsLnYxLkZpdEtleXBvaW50c1JlcXVlc3QaHi5rcmlsbC52MS5GaXRLZXlwb2ludHNSZXNwb25zZSIAEm0KFlByZXZpZXdNZXJnZUxhYmVsVHlwZXMSJy5rcmlsbC52MS5QcmV2aWV3TWVyZ2VMYWJlbFR5cGVzUmVxdWVzdBooLmtyaWxsLnYxLlByZXZpZXdNZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAElgKD01lcmdlTGFiZWxUeXBlcxIgLmtyaWxsLnYxLk1lcmdlTGFiZWxUeXBlc1JlcXVlc3QaIS5rcmlsbC52MS5NZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAQosBCgxjb20ua3JpbGwudjFCCkxhYmVsUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message krill.v1.LabelAttribute
@@ -119,6 +119,33 @@ export type LabelType = Message<"krill.v1.LabelType"> & {
    * @generated from field: int32 unrotated_box_count = 14;
    */
   unrotatedBoxCount: number;
+
+  /**
+   * Points labeled on each object, exported and trained as YOLO-pose. A type
+   * can't be both oriented and have keypoints.
+   *
+   * @generated from field: repeated krill.v1.KeypointDef keypoints = 15;
+   */
+  keypoints: KeypointDef[];
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointQuad quads = 16;
+   */
+  quads: KeypointQuad[];
+
+  /**
+   * Lines drawn between keypoints besides the quads' edges.
+   *
+   * @generated from field: repeated krill.v1.KeypointEdge edges = 17;
+   */
+  edges: KeypointEdge[];
+
+  /**
+   * Boxes of a type with keypoints that have none labeled.
+   *
+   * @generated from field: int32 unposed_box_count = 18;
+   */
+  unposedBoxCount: number;
 };
 
 /**
@@ -127,6 +154,92 @@ export type LabelType = Message<"krill.v1.LabelType"> & {
  */
 export const LabelTypeSchema: GenMessage<LabelType> = /*@__PURE__*/
   messageDesc(file_krill_v1_label, 1);
+
+/**
+ * @generated from message krill.v1.KeypointDef
+ */
+export type KeypointDef = Message<"krill.v1.KeypointDef"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * The keypoint this one swaps with when an image is mirrored left to
+   * right. Unset when it mirrors onto itself.
+   *
+   * @generated from field: optional int32 mirror = 2;
+   */
+  mirror?: number | undefined;
+};
+
+/**
+ * Describes the message krill.v1.KeypointDef.
+ * Use `create(KeypointDefSchema)` to create a new message.
+ */
+export const KeypointDefSchema: GenMessage<KeypointDef> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 2);
+
+/**
+ * KeypointQuad is four keypoints at the corners of a flat surface, such as a
+ * printed sheet. They go clockwise from the surface's own top left, not the
+ * one on screen, so the order says which way the object is turned.
+ *
+ * @generated from message krill.v1.KeypointQuad
+ */
+export type KeypointQuad = Message<"krill.v1.KeypointQuad"> & {
+  /**
+   * Indexes into the type's keypoints.
+   *
+   * @generated from field: repeated int32 corners = 1;
+   */
+  corners: number[];
+
+  /**
+   * The type's reference design covers the quad corner to corner, so SAM
+   * tracking finds it in each box and aligns the corners to it.
+   *
+   * @generated from field: bool reference = 2;
+   */
+  reference: boolean;
+
+  /**
+   * A keypoint placed where the quad's diagonals cross, which is its center
+   * in perspective, whenever its corners are.
+   *
+   * @generated from field: optional int32 center = 3;
+   */
+  center?: number | undefined;
+};
+
+/**
+ * Describes the message krill.v1.KeypointQuad.
+ * Use `create(KeypointQuadSchema)` to create a new message.
+ */
+export const KeypointQuadSchema: GenMessage<KeypointQuad> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 3);
+
+/**
+ * @generated from message krill.v1.KeypointEdge
+ */
+export type KeypointEdge = Message<"krill.v1.KeypointEdge"> & {
+  /**
+   * @generated from field: int32 from = 1;
+   */
+  from: number;
+
+  /**
+   * @generated from field: int32 to = 2;
+   */
+  to: number;
+};
+
+/**
+ * Describes the message krill.v1.KeypointEdge.
+ * Use `create(KeypointEdgeSchema)` to create a new message.
+ */
+export const KeypointEdgeSchema: GenMessage<KeypointEdge> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 4);
 
 /**
  * @generated from message krill.v1.LabelExample
@@ -153,7 +266,7 @@ export type LabelExample = Message<"krill.v1.LabelExample"> & {
  * Use `create(LabelExampleSchema)` to create a new message.
  */
 export const LabelExampleSchema: GenMessage<LabelExample> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 2);
+  messageDesc(file_krill_v1_label, 5);
 
 /**
  * @generated from message krill.v1.ListLabelTypesRequest
@@ -166,7 +279,7 @@ export type ListLabelTypesRequest = Message<"krill.v1.ListLabelTypesRequest"> & 
  * Use `create(ListLabelTypesRequestSchema)` to create a new message.
  */
 export const ListLabelTypesRequestSchema: GenMessage<ListLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 3);
+  messageDesc(file_krill_v1_label, 6);
 
 /**
  * @generated from message krill.v1.ListLabelTypesResponse
@@ -183,7 +296,7 @@ export type ListLabelTypesResponse = Message<"krill.v1.ListLabelTypesResponse"> 
  * Use `create(ListLabelTypesResponseSchema)` to create a new message.
  */
 export const ListLabelTypesResponseSchema: GenMessage<ListLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 4);
+  messageDesc(file_krill_v1_label, 7);
 
 /**
  * @generated from message krill.v1.CreateLabelTypeRequest
@@ -223,6 +336,21 @@ export type CreateLabelTypeRequest = Message<"krill.v1.CreateLabelTypeRequest"> 
    * @generated from field: bool oriented = 7;
    */
   oriented: boolean;
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointDef keypoints = 8;
+   */
+  keypoints: KeypointDef[];
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointQuad quads = 9;
+   */
+  quads: KeypointQuad[];
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointEdge edges = 10;
+   */
+  edges: KeypointEdge[];
 };
 
 /**
@@ -230,7 +358,7 @@ export type CreateLabelTypeRequest = Message<"krill.v1.CreateLabelTypeRequest"> 
  * Use `create(CreateLabelTypeRequestSchema)` to create a new message.
  */
 export const CreateLabelTypeRequestSchema: GenMessage<CreateLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 5);
+  messageDesc(file_krill_v1_label, 8);
 
 /**
  * @generated from message krill.v1.CreateLabelTypeResponse
@@ -247,7 +375,7 @@ export type CreateLabelTypeResponse = Message<"krill.v1.CreateLabelTypeResponse"
  * Use `create(CreateLabelTypeResponseSchema)` to create a new message.
  */
 export const CreateLabelTypeResponseSchema: GenMessage<CreateLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 6);
+  messageDesc(file_krill_v1_label, 9);
 
 /**
  * @generated from message krill.v1.UpdateLabelTypeRequest
@@ -292,6 +420,21 @@ export type UpdateLabelTypeRequest = Message<"krill.v1.UpdateLabelTypeRequest"> 
    * @generated from field: bool oriented = 8;
    */
   oriented: boolean;
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointDef keypoints = 9;
+   */
+  keypoints: KeypointDef[];
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointQuad quads = 10;
+   */
+  quads: KeypointQuad[];
+
+  /**
+   * @generated from field: repeated krill.v1.KeypointEdge edges = 11;
+   */
+  edges: KeypointEdge[];
 };
 
 /**
@@ -299,7 +442,7 @@ export type UpdateLabelTypeRequest = Message<"krill.v1.UpdateLabelTypeRequest"> 
  * Use `create(UpdateLabelTypeRequestSchema)` to create a new message.
  */
 export const UpdateLabelTypeRequestSchema: GenMessage<UpdateLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 7);
+  messageDesc(file_krill_v1_label, 10);
 
 /**
  * @generated from message krill.v1.UpdateLabelTypeResponse
@@ -316,7 +459,7 @@ export type UpdateLabelTypeResponse = Message<"krill.v1.UpdateLabelTypeResponse"
  * Use `create(UpdateLabelTypeResponseSchema)` to create a new message.
  */
 export const UpdateLabelTypeResponseSchema: GenMessage<UpdateLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 8);
+  messageDesc(file_krill_v1_label, 11);
 
 /**
  * @generated from message krill.v1.DeleteLabelTypeRequest
@@ -333,7 +476,7 @@ export type DeleteLabelTypeRequest = Message<"krill.v1.DeleteLabelTypeRequest"> 
  * Use `create(DeleteLabelTypeRequestSchema)` to create a new message.
  */
 export const DeleteLabelTypeRequestSchema: GenMessage<DeleteLabelTypeRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 9);
+  messageDesc(file_krill_v1_label, 12);
 
 /**
  * @generated from message krill.v1.DeleteLabelTypeResponse
@@ -346,7 +489,7 @@ export type DeleteLabelTypeResponse = Message<"krill.v1.DeleteLabelTypeResponse"
  * Use `create(DeleteLabelTypeResponseSchema)` to create a new message.
  */
 export const DeleteLabelTypeResponseSchema: GenMessage<DeleteLabelTypeResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 10);
+  messageDesc(file_krill_v1_label, 13);
 
 /**
  * @generated from message krill.v1.ReorderLabelTypesRequest
@@ -363,7 +506,7 @@ export type ReorderLabelTypesRequest = Message<"krill.v1.ReorderLabelTypesReques
  * Use `create(ReorderLabelTypesRequestSchema)` to create a new message.
  */
 export const ReorderLabelTypesRequestSchema: GenMessage<ReorderLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 11);
+  messageDesc(file_krill_v1_label, 14);
 
 /**
  * @generated from message krill.v1.ReorderLabelTypesResponse
@@ -380,7 +523,7 @@ export type ReorderLabelTypesResponse = Message<"krill.v1.ReorderLabelTypesRespo
  * Use `create(ReorderLabelTypesResponseSchema)` to create a new message.
  */
 export const ReorderLabelTypesResponseSchema: GenMessage<ReorderLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 12);
+  messageDesc(file_krill_v1_label, 15);
 
 /**
  * @generated from message krill.v1.CreateLabelExampleUploadRequest
@@ -397,7 +540,7 @@ export type CreateLabelExampleUploadRequest = Message<"krill.v1.CreateLabelExamp
  * Use `create(CreateLabelExampleUploadRequestSchema)` to create a new message.
  */
 export const CreateLabelExampleUploadRequestSchema: GenMessage<CreateLabelExampleUploadRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 13);
+  messageDesc(file_krill_v1_label, 16);
 
 /**
  * @generated from message krill.v1.CreateLabelExampleUploadResponse
@@ -419,7 +562,7 @@ export type CreateLabelExampleUploadResponse = Message<"krill.v1.CreateLabelExam
  * Use `create(CreateLabelExampleUploadResponseSchema)` to create a new message.
  */
 export const CreateLabelExampleUploadResponseSchema: GenMessage<CreateLabelExampleUploadResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 14);
+  messageDesc(file_krill_v1_label, 17);
 
 /**
  * @generated from message krill.v1.AddLabelExampleRequest
@@ -446,7 +589,7 @@ export type AddLabelExampleRequest = Message<"krill.v1.AddLabelExampleRequest"> 
  * Use `create(AddLabelExampleRequestSchema)` to create a new message.
  */
 export const AddLabelExampleRequestSchema: GenMessage<AddLabelExampleRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 15);
+  messageDesc(file_krill_v1_label, 18);
 
 /**
  * @generated from message krill.v1.AddLabelExampleResponse
@@ -463,7 +606,7 @@ export type AddLabelExampleResponse = Message<"krill.v1.AddLabelExampleResponse"
  * Use `create(AddLabelExampleResponseSchema)` to create a new message.
  */
 export const AddLabelExampleResponseSchema: GenMessage<AddLabelExampleResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 16);
+  messageDesc(file_krill_v1_label, 19);
 
 /**
  * @generated from message krill.v1.DeleteLabelExampleRequest
@@ -480,7 +623,7 @@ export type DeleteLabelExampleRequest = Message<"krill.v1.DeleteLabelExampleRequ
  * Use `create(DeleteLabelExampleRequestSchema)` to create a new message.
  */
 export const DeleteLabelExampleRequestSchema: GenMessage<DeleteLabelExampleRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 17);
+  messageDesc(file_krill_v1_label, 20);
 
 /**
  * @generated from message krill.v1.DeleteLabelExampleResponse
@@ -493,7 +636,7 @@ export type DeleteLabelExampleResponse = Message<"krill.v1.DeleteLabelExampleRes
  * Use `create(DeleteLabelExampleResponseSchema)` to create a new message.
  */
 export const DeleteLabelExampleResponseSchema: GenMessage<DeleteLabelExampleResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 18);
+  messageDesc(file_krill_v1_label, 21);
 
 /**
  * @generated from message krill.v1.SetLabelReferenceRequest
@@ -515,7 +658,7 @@ export type SetLabelReferenceRequest = Message<"krill.v1.SetLabelReferenceReques
  * Use `create(SetLabelReferenceRequestSchema)` to create a new message.
  */
 export const SetLabelReferenceRequestSchema: GenMessage<SetLabelReferenceRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 19);
+  messageDesc(file_krill_v1_label, 22);
 
 /**
  * @generated from message krill.v1.SetLabelReferenceResponse
@@ -532,7 +675,7 @@ export type SetLabelReferenceResponse = Message<"krill.v1.SetLabelReferenceRespo
  * Use `create(SetLabelReferenceResponseSchema)` to create a new message.
  */
 export const SetLabelReferenceResponseSchema: GenMessage<SetLabelReferenceResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 20);
+  messageDesc(file_krill_v1_label, 23);
 
 /**
  * @generated from message krill.v1.FitRotationsRequest
@@ -549,7 +692,7 @@ export type FitRotationsRequest = Message<"krill.v1.FitRotationsRequest"> & {
  * Use `create(FitRotationsRequestSchema)` to create a new message.
  */
 export const FitRotationsRequestSchema: GenMessage<FitRotationsRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 21);
+  messageDesc(file_krill_v1_label, 24);
 
 /**
  * @generated from message krill.v1.FitRotationsResponse
@@ -568,7 +711,43 @@ export type FitRotationsResponse = Message<"krill.v1.FitRotationsResponse"> & {
  * Use `create(FitRotationsResponseSchema)` to create a new message.
  */
 export const FitRotationsResponseSchema: GenMessage<FitRotationsResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 22);
+  messageDesc(file_krill_v1_label, 25);
+
+/**
+ * @generated from message krill.v1.FitKeypointsRequest
+ */
+export type FitKeypointsRequest = Message<"krill.v1.FitKeypointsRequest"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.FitKeypointsRequest.
+ * Use `create(FitKeypointsRequestSchema)` to create a new message.
+ */
+export const FitKeypointsRequestSchema: GenMessage<FitKeypointsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 26);
+
+/**
+ * @generated from message krill.v1.FitKeypointsResponse
+ */
+export type FitKeypointsResponse = Message<"krill.v1.FitKeypointsResponse"> & {
+  /**
+   * Boxes queued for fitting.
+   *
+   * @generated from field: int32 box_count = 1;
+   */
+  boxCount: number;
+};
+
+/**
+ * Describes the message krill.v1.FitKeypointsResponse.
+ * Use `create(FitKeypointsResponseSchema)` to create a new message.
+ */
+export const FitKeypointsResponseSchema: GenMessage<FitKeypointsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 27);
 
 /**
  * AttributeValueMapping says what a source track's attribute value becomes.
@@ -611,7 +790,7 @@ export type AttributeValueMapping = Message<"krill.v1.AttributeValueMapping"> & 
  * Use `create(AttributeValueMappingSchema)` to create a new message.
  */
 export const AttributeValueMappingSchema: GenMessage<AttributeValueMapping> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 23);
+  messageDesc(file_krill_v1_label, 28);
 
 /**
  * @generated from message krill.v1.ExportClassChange
@@ -648,7 +827,7 @@ export type ExportClassChange = Message<"krill.v1.ExportClassChange"> & {
  * Use `create(ExportClassChangeSchema)` to create a new message.
  */
 export const ExportClassChangeSchema: GenMessage<ExportClassChange> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 24);
+  messageDesc(file_krill_v1_label, 29);
 
 /**
  * @generated from message krill.v1.PreviewMergeLabelTypesRequest
@@ -677,7 +856,7 @@ export type PreviewMergeLabelTypesRequest = Message<"krill.v1.PreviewMergeLabelT
  * Use `create(PreviewMergeLabelTypesRequestSchema)` to create a new message.
  */
 export const PreviewMergeLabelTypesRequestSchema: GenMessage<PreviewMergeLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 25);
+  messageDesc(file_krill_v1_label, 30);
 
 /**
  * @generated from message krill.v1.PreviewMergeLabelTypesResponse
@@ -763,7 +942,7 @@ export type PreviewMergeLabelTypesResponse = Message<"krill.v1.PreviewMergeLabel
  * Use `create(PreviewMergeLabelTypesResponseSchema)` to create a new message.
  */
 export const PreviewMergeLabelTypesResponseSchema: GenMessage<PreviewMergeLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 26);
+  messageDesc(file_krill_v1_label, 31);
 
 /**
  * @generated from message krill.v1.MergeLabelTypesRequest
@@ -792,7 +971,7 @@ export type MergeLabelTypesRequest = Message<"krill.v1.MergeLabelTypesRequest"> 
  * Use `create(MergeLabelTypesRequestSchema)` to create a new message.
  */
 export const MergeLabelTypesRequestSchema: GenMessage<MergeLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 27);
+  messageDesc(file_krill_v1_label, 32);
 
 /**
  * @generated from message krill.v1.MergeLabelTypesResponse
@@ -826,7 +1005,7 @@ export type MergeLabelTypesResponse = Message<"krill.v1.MergeLabelTypesResponse"
  * Use `create(MergeLabelTypesResponseSchema)` to create a new message.
  */
 export const MergeLabelTypesResponseSchema: GenMessage<MergeLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 28);
+  messageDesc(file_krill_v1_label, 33);
 
 /**
  * LabelService manages the taxonomy: object types and the attributes that
@@ -930,6 +1109,18 @@ export const LabelService: GenService<{
     methodKind: "unary";
     input: typeof FitRotationsRequestSchema;
     output: typeof FitRotationsResponseSchema;
+  },
+  /**
+   * FitKeypoints has a GPU worker fill the reference design's quad on every
+   * box of the type with no keypoints labeled. Boxes it fills become
+   * proposals again for a labeler to check.
+   *
+   * @generated from rpc krill.v1.LabelService.FitKeypoints
+   */
+  fitKeypoints: {
+    methodKind: "unary";
+    input: typeof FitKeypointsRequestSchema;
+    output: typeof FitKeypointsResponseSchema;
   },
   /**
    * PreviewMergeLabelTypes shows what merging one type into another would

@@ -63,6 +63,9 @@ const (
 	// LabelServiceFitRotationsProcedure is the fully-qualified name of the LabelService's FitRotations
 	// RPC.
 	LabelServiceFitRotationsProcedure = "/krill.v1.LabelService/FitRotations"
+	// LabelServiceFitKeypointsProcedure is the fully-qualified name of the LabelService's FitKeypoints
+	// RPC.
+	LabelServiceFitKeypointsProcedure = "/krill.v1.LabelService/FitKeypoints"
 	// LabelServicePreviewMergeLabelTypesProcedure is the fully-qualified name of the LabelService's
 	// PreviewMergeLabelTypes RPC.
 	LabelServicePreviewMergeLabelTypesProcedure = "/krill.v1.LabelService/PreviewMergeLabelTypes"
@@ -93,6 +96,10 @@ type LabelServiceClient interface {
 	// oriented type that has none, matching the reference design when there is
 	// one and the object's SAM mask when there isn't.
 	FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error)
+	// FitKeypoints has a GPU worker fill the reference design's quad on every
+	// box of the type with no keypoints labeled. Boxes it fills become
+	// proposals again for a labeler to check.
+	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -172,6 +179,12 @@ func NewLabelServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(labelServiceMethods.ByName("FitRotations")),
 			connect.WithClientOptions(opts...),
 		),
+		fitKeypoints: connect.NewClient[v1.FitKeypointsRequest, v1.FitKeypointsResponse](
+			httpClient,
+			baseURL+LabelServiceFitKeypointsProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("FitKeypoints")),
+			connect.WithClientOptions(opts...),
+		),
 		previewMergeLabelTypes: connect.NewClient[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse](
 			httpClient,
 			baseURL+LabelServicePreviewMergeLabelTypesProcedure,
@@ -199,6 +212,7 @@ type labelServiceClient struct {
 	deleteLabelExample       *connect.Client[v1.DeleteLabelExampleRequest, v1.DeleteLabelExampleResponse]
 	setLabelReference        *connect.Client[v1.SetLabelReferenceRequest, v1.SetLabelReferenceResponse]
 	fitRotations             *connect.Client[v1.FitRotationsRequest, v1.FitRotationsResponse]
+	fitKeypoints             *connect.Client[v1.FitKeypointsRequest, v1.FitKeypointsResponse]
 	previewMergeLabelTypes   *connect.Client[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse]
 	mergeLabelTypes          *connect.Client[v1.MergeLabelTypesRequest, v1.MergeLabelTypesResponse]
 }
@@ -293,6 +307,15 @@ func (c *labelServiceClient) FitRotations(ctx context.Context, req *v1.FitRotati
 	return nil, err
 }
 
+// FitKeypoints calls krill.v1.LabelService.FitKeypoints.
+func (c *labelServiceClient) FitKeypoints(ctx context.Context, req *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error) {
+	response, err := c.fitKeypoints.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PreviewMergeLabelTypes calls krill.v1.LabelService.PreviewMergeLabelTypes.
 func (c *labelServiceClient) PreviewMergeLabelTypes(ctx context.Context, req *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
 	response, err := c.previewMergeLabelTypes.CallUnary(ctx, connect.NewRequest(req))
@@ -333,6 +356,10 @@ type LabelServiceHandler interface {
 	// oriented type that has none, matching the reference design when there is
 	// one and the object's SAM mask when there isn't.
 	FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error)
+	// FitKeypoints has a GPU worker fill the reference design's quad on every
+	// box of the type with no keypoints labeled. Boxes it fills become
+	// proposals again for a labeler to check.
+	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -408,6 +435,12 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(labelServiceMethods.ByName("FitRotations")),
 		connect.WithHandlerOptions(opts...),
 	)
+	labelServiceFitKeypointsHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceFitKeypointsProcedure,
+		svc.FitKeypoints,
+		connect.WithSchema(labelServiceMethods.ByName("FitKeypoints")),
+		connect.WithHandlerOptions(opts...),
+	)
 	labelServicePreviewMergeLabelTypesHandler := connect.NewUnaryHandlerSimple(
 		LabelServicePreviewMergeLabelTypesProcedure,
 		svc.PreviewMergeLabelTypes,
@@ -442,6 +475,8 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 			labelServiceSetLabelReferenceHandler.ServeHTTP(w, r)
 		case LabelServiceFitRotationsProcedure:
 			labelServiceFitRotationsHandler.ServeHTTP(w, r)
+		case LabelServiceFitKeypointsProcedure:
+			labelServiceFitKeypointsHandler.ServeHTTP(w, r)
 		case LabelServicePreviewMergeLabelTypesProcedure:
 			labelServicePreviewMergeLabelTypesHandler.ServeHTTP(w, r)
 		case LabelServiceMergeLabelTypesProcedure:
@@ -493,6 +528,10 @@ func (UnimplementedLabelServiceHandler) SetLabelReference(context.Context, *v1.S
 
 func (UnimplementedLabelServiceHandler) FitRotations(context.Context, *v1.FitRotationsRequest) (*v1.FitRotationsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.FitRotations is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.FitKeypoints is not implemented"))
 }
 
 func (UnimplementedLabelServiceHandler) PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {

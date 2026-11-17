@@ -350,7 +350,11 @@ type TaskFrame struct {
 	Url string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	// Presigned URL of the frame's image embedding. Empty when the clip has
 	// none.
-	EmbeddingUrl  string `protobuf:"bytes,3,opt,name=embedding_url,json=embeddingUrl,proto3" json:"embedding_url,omitempty"`
+	EmbeddingUrl string `protobuf:"bytes,3,opt,name=embedding_url,json=embeddingUrl,proto3" json:"embedding_url,omitempty"`
+	// Keypoints a labeler placed or accepted on the tracked object's box on
+	// this frame, which tracking carries on from instead of its own. Empty on
+	// other frames and for other tasks.
+	Keypoints     []*Keypoint `protobuf:"bytes,4,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -406,6 +410,13 @@ func (x *TaskFrame) GetEmbeddingUrl() string {
 	return ""
 }
 
+func (x *TaskFrame) GetKeypoints() []*Keypoint {
+	if x != nil {
+		return x.Keypoints
+	}
+	return nil
+}
+
 type TrackTask struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -422,8 +433,15 @@ type TrackTask struct {
 	// Report rotated boxes, for oriented label types.
 	Oriented bool `protobuf:"varint,6,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	// Presigned URL of the label type's reference design, which rotated boxes
-	// are fit to when set.
-	ReferenceUrl  string `protobuf:"bytes,7,opt,name=reference_url,json=referenceUrl,proto3" json:"reference_url,omitempty"`
+	// and reference quads are fit to when set.
+	ReferenceUrl string `protobuf:"bytes,7,opt,name=reference_url,json=referenceUrl,proto3" json:"reference_url,omitempty"`
+	// Keypoints of the label type, which every reported box carries. 0 for
+	// types without keypoints.
+	KeypointCount int32           `protobuf:"varint,8,opt,name=keypoint_count,json=keypointCount,proto3" json:"keypoint_count,omitempty"`
+	Quads         []*KeypointQuad `protobuf:"bytes,9,rep,name=quads,proto3" json:"quads,omitempty"`
+	// A quad to fill on the first frame before tracking, from a point on its
+	// surface.
+	Fill          *QuadPrompt `protobuf:"bytes,10,opt,name=fill,proto3" json:"fill,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -518,6 +536,27 @@ func (x *TrackTask) GetReferenceUrl() string {
 	return ""
 }
 
+func (x *TrackTask) GetKeypointCount() int32 {
+	if x != nil {
+		return x.KeypointCount
+	}
+	return 0
+}
+
+func (x *TrackTask) GetQuads() []*KeypointQuad {
+	if x != nil {
+		return x.Quads
+	}
+	return nil
+}
+
+func (x *TrackTask) GetFill() *QuadPrompt {
+	if x != nil {
+		return x.Fill
+	}
+	return nil
+}
+
 type isTrackTask_Prompt interface {
 	isTrackTask_Prompt()
 }
@@ -527,6 +566,8 @@ type TrackTask_Point struct {
 }
 
 type TrackTask_Box struct {
+	// With the keypoints labeled on the first frame, which are tracked
+	// along with the box.
 	Box *Box `protobuf:"bytes,4,opt,name=box,proto3,oneof"`
 }
 
@@ -711,14 +752,19 @@ func (x *ExemplarTask) GetBox() *Box {
 }
 
 // OrientTask fits a rotated box to each axis-aligned box of one oriented
-// label type.
+// label type, or the reference quad's keypoints to each box of a type with
+// keypoints.
 type OrientTask struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Frames []*OrientFrame         `protobuf:"bytes,2,rep,name=frames,proto3" json:"frames,omitempty"`
 	// Presigned URL of the label type's reference design. When empty, boxes
 	// are fit to the object's SAM mask.
-	ReferenceUrl  string `protobuf:"bytes,3,opt,name=reference_url,json=referenceUrl,proto3" json:"reference_url,omitempty"`
+	ReferenceUrl string `protobuf:"bytes,3,opt,name=reference_url,json=referenceUrl,proto3" json:"reference_url,omitempty"`
+	// Set for types with keypoints, which are then reported instead of
+	// corners.
+	KeypointCount int32           `protobuf:"varint,4,opt,name=keypoint_count,json=keypointCount,proto3" json:"keypoint_count,omitempty"`
+	Quads         []*KeypointQuad `protobuf:"bytes,5,rep,name=quads,proto3" json:"quads,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -772,6 +818,20 @@ func (x *OrientTask) GetReferenceUrl() string {
 		return x.ReferenceUrl
 	}
 	return ""
+}
+
+func (x *OrientTask) GetKeypointCount() int32 {
+	if x != nil {
+		return x.KeypointCount
+	}
+	return 0
+}
+
+func (x *OrientTask) GetQuads() []*KeypointQuad {
+	if x != nil {
+		return x.Quads
+	}
+	return nil
 }
 
 type OrientFrame struct {
@@ -881,7 +941,8 @@ func (x *OrientBox) GetBox() *Box {
 type ReportOrientRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	TaskId int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	// Boxes with corners. Boxes the worker couldn't fit are left out.
+	// Boxes with corners or keypoints. Boxes the worker couldn't fit are left
+	// out.
 	Boxes         []*OrientBox `protobuf:"bytes,2,rep,name=boxes,proto3" json:"boxes,omitempty"`
 	Done          bool         `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1717,7 +1778,7 @@ var File_krill_v1_worker_proto protoreflect.FileDescriptor
 
 const file_krill_v1_worker_proto_rawDesc = "" +
 	"\n" +
-	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x12krill/v1/log.proto\x1a\x17krill/v1/pipeline.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
+	"\x15krill/v1/worker.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19krill/v1/annotation.proto\x1a\x14krill/v1/label.proto\x1a\x12krill/v1/log.proto\x1a\x17krill/v1/pipeline.proto\x1a\x15krill/v1/system.proto\"\x11\n" +
 	"\x0fNextTaskRequest\"\xa3\x03\n" +
 	"\x10NextTaskResponse\x12+\n" +
 	"\x05track\x18\x01 \x01(\v2\x13.krill.v1.TrackTaskH\x00R\x05track\x124\n" +
@@ -1729,11 +1790,12 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\bprelabel\x18\v \x01(\v2\x16.krill.v1.PrelabelTaskH\x00R\bprelabel\x121\n" +
 	"\apreview\x18\f \x01(\v2\x15.krill.v1.PreviewTaskH\x00R\apreview\x121\n" +
 	"\ainspect\x18\r \x01(\v2\x15.krill.v1.InspectTaskH\x00R\ainspectB\x06\n" +
-	"\x04task\"R\n" +
+	"\x04task\"\x84\x01\n" +
 	"\tTaskFrame\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12#\n" +
-	"\rembedding_url\x18\x03 \x01(\tR\fembeddingUrl\"\x88\x02\n" +
+	"\rembedding_url\x18\x03 \x01(\tR\fembeddingUrl\x120\n" +
+	"\tkeypoints\x18\x04 \x03(\v2\x12.krill.v1.KeypointR\tkeypoints\"\x87\x03\n" +
 	"\tTrackTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
 	"\x06frames\x18\x02 \x03(\v2\x13.krill.v1.TaskFrameR\x06frames\x12'\n" +
@@ -1741,7 +1803,11 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x03box\x18\x04 \x01(\v2\r.krill.v1.BoxH\x00R\x03box\x12'\n" +
 	"\x0fembedding_model\x18\x05 \x01(\tR\x0eembeddingModel\x12\x1a\n" +
 	"\boriented\x18\x06 \x01(\bR\boriented\x12#\n" +
-	"\rreference_url\x18\a \x01(\tR\freferenceUrlB\b\n" +
+	"\rreference_url\x18\a \x01(\tR\freferenceUrl\x12%\n" +
+	"\x0ekeypoint_count\x18\b \x01(\x05R\rkeypointCount\x12,\n" +
+	"\x05quads\x18\t \x03(\v2\x16.krill.v1.KeypointQuadR\x05quads\x12(\n" +
+	"\x04fill\x18\n" +
+	" \x01(\v2\x14.krill.v1.QuadPromptR\x04fillB\b\n" +
 	"\x06prompt\"I\n" +
 	"\tEmbedTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12,\n" +
@@ -1755,12 +1821,14 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\fExemplarTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12)\n" +
 	"\x05frame\x18\x02 \x01(\v2\x13.krill.v1.TaskFrameR\x05frame\x12\x1f\n" +
-	"\x03box\x18\x03 \x01(\v2\r.krill.v1.BoxR\x03box\"p\n" +
+	"\x03box\x18\x03 \x01(\v2\r.krill.v1.BoxR\x03box\"\xc5\x01\n" +
 	"\n" +
 	"OrientTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12-\n" +
 	"\x06frames\x18\x02 \x03(\v2\x15.krill.v1.OrientFrameR\x06frames\x12#\n" +
-	"\rreference_url\x18\x03 \x01(\tR\freferenceUrl\"c\n" +
+	"\rreference_url\x18\x03 \x01(\tR\freferenceUrl\x12%\n" +
+	"\x0ekeypoint_count\x18\x04 \x01(\x05R\rkeypointCount\x12,\n" +
+	"\x05quads\x18\x05 \x03(\v2\x16.krill.v1.KeypointQuadR\x05quads\"c\n" +
 	"\vOrientFrame\x12)\n" +
 	"\x05frame\x18\x01 \x01(\v2\x13.krill.v1.TaskFrameR\x05frame\x12)\n" +
 	"\x05boxes\x18\x02 \x03(\v2\x13.krill.v1.OrientBoxR\x05boxes\"Q\n" +
@@ -1891,12 +1959,15 @@ var file_krill_v1_worker_proto_goTypes = []any{
 	(*PrelabelTask)(nil),            // 27: krill.v1.PrelabelTask
 	(*PreviewTask)(nil),             // 28: krill.v1.PreviewTask
 	(*InspectTask)(nil),             // 29: krill.v1.InspectTask
-	(*Point)(nil),                   // 30: krill.v1.Point
-	(*Box)(nil),                     // 31: krill.v1.Box
-	(*timestamppb.Timestamp)(nil),   // 32: google.protobuf.Timestamp
-	(*HostStats)(nil),               // 33: krill.v1.HostStats
-	(*GpuStats)(nil),                // 34: krill.v1.GpuStats
-	(*LogRecord)(nil),               // 35: krill.v1.LogRecord
+	(*Keypoint)(nil),                // 30: krill.v1.Keypoint
+	(*Point)(nil),                   // 31: krill.v1.Point
+	(*Box)(nil),                     // 32: krill.v1.Box
+	(*KeypointQuad)(nil),            // 33: krill.v1.KeypointQuad
+	(*QuadPrompt)(nil),              // 34: krill.v1.QuadPrompt
+	(*timestamppb.Timestamp)(nil),   // 35: google.protobuf.Timestamp
+	(*HostStats)(nil),               // 36: krill.v1.HostStats
+	(*GpuStats)(nil),                // 37: krill.v1.GpuStats
+	(*LogRecord)(nil),               // 38: krill.v1.LogRecord
 }
 var file_krill_v1_worker_proto_depIdxs = []int32{
 	5,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
@@ -1907,46 +1978,50 @@ var file_krill_v1_worker_proto_depIdxs = []int32{
 	27, // 5: krill.v1.NextTaskResponse.prelabel:type_name -> krill.v1.PrelabelTask
 	28, // 6: krill.v1.NextTaskResponse.preview:type_name -> krill.v1.PreviewTask
 	29, // 7: krill.v1.NextTaskResponse.inspect:type_name -> krill.v1.InspectTask
-	4,  // 8: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
-	30, // 9: krill.v1.TrackTask.point:type_name -> krill.v1.Point
-	31, // 10: krill.v1.TrackTask.box:type_name -> krill.v1.Box
-	7,  // 11: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
-	4,  // 12: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
-	31, // 13: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
-	10, // 14: krill.v1.OrientTask.frames:type_name -> krill.v1.OrientFrame
-	4,  // 15: krill.v1.OrientFrame.frame:type_name -> krill.v1.TaskFrame
-	11, // 16: krill.v1.OrientFrame.boxes:type_name -> krill.v1.OrientBox
-	31, // 17: krill.v1.OrientBox.box:type_name -> krill.v1.Box
-	11, // 18: krill.v1.ReportOrientRequest.boxes:type_name -> krill.v1.OrientBox
-	31, // 19: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
-	14, // 20: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
-	31, // 21: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
-	32, // 22: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
-	33, // 23: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
-	34, // 24: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
-	35, // 25: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
-	0,  // 26: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
-	25, // 27: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
-	1,  // 28: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
-	2,  // 29: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
-	15, // 30: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
-	17, // 31: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
-	19, // 32: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
-	12, // 33: krill.v1.WorkerService.ReportOrient:input_type -> krill.v1.ReportOrientRequest
-	21, // 34: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
-	23, // 35: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
-	3,  // 36: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
-	16, // 37: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
-	18, // 38: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
-	20, // 39: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
-	13, // 40: krill.v1.WorkerService.ReportOrient:output_type -> krill.v1.ReportOrientResponse
-	22, // 41: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
-	24, // 42: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
-	36, // [36:43] is the sub-list for method output_type
-	29, // [29:36] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	30, // 8: krill.v1.TaskFrame.keypoints:type_name -> krill.v1.Keypoint
+	4,  // 9: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
+	31, // 10: krill.v1.TrackTask.point:type_name -> krill.v1.Point
+	32, // 11: krill.v1.TrackTask.box:type_name -> krill.v1.Box
+	33, // 12: krill.v1.TrackTask.quads:type_name -> krill.v1.KeypointQuad
+	34, // 13: krill.v1.TrackTask.fill:type_name -> krill.v1.QuadPrompt
+	7,  // 14: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
+	4,  // 15: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
+	32, // 16: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
+	10, // 17: krill.v1.OrientTask.frames:type_name -> krill.v1.OrientFrame
+	33, // 18: krill.v1.OrientTask.quads:type_name -> krill.v1.KeypointQuad
+	4,  // 19: krill.v1.OrientFrame.frame:type_name -> krill.v1.TaskFrame
+	11, // 20: krill.v1.OrientFrame.boxes:type_name -> krill.v1.OrientBox
+	32, // 21: krill.v1.OrientBox.box:type_name -> krill.v1.Box
+	11, // 22: krill.v1.ReportOrientRequest.boxes:type_name -> krill.v1.OrientBox
+	32, // 23: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
+	14, // 24: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
+	32, // 25: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
+	35, // 26: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
+	36, // 27: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
+	37, // 28: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
+	38, // 29: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
+	0,  // 30: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
+	25, // 31: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
+	1,  // 32: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
+	2,  // 33: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
+	15, // 34: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
+	17, // 35: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
+	19, // 36: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
+	12, // 37: krill.v1.WorkerService.ReportOrient:input_type -> krill.v1.ReportOrientRequest
+	21, // 38: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
+	23, // 39: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
+	3,  // 40: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
+	16, // 41: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
+	18, // 42: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
+	20, // 43: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
+	13, // 44: krill.v1.WorkerService.ReportOrient:output_type -> krill.v1.ReportOrientResponse
+	22, // 45: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
+	24, // 46: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
+	40, // [40:47] is the sub-list for method output_type
+	33, // [33:40] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_worker_proto_init() }
@@ -1955,6 +2030,7 @@ func file_krill_v1_worker_proto_init() {
 		return
 	}
 	file_krill_v1_annotation_proto_init()
+	file_krill_v1_label_proto_init()
 	file_krill_v1_log_proto_init()
 	file_krill_v1_pipeline_proto_init()
 	file_krill_v1_system_proto_init()
