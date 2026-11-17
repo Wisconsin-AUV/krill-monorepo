@@ -209,9 +209,9 @@ type Augmentation struct {
 	Underwater float32 `protobuf:"fixed32,13,opt,name=underwater,proto3" json:"underwater,omitempty"`
 	Shadows    float32 `protobuf:"fixed32,14,opt,name=shadows,proto3" json:"shadows,omitempty"`
 	Noise      float32 `protobuf:"fixed32,15,opt,name=noise,proto3" json:"noise,omitempty"`
-	// Probability that an image's objects are cut out and pasted at random
-	// spots on a random distractor image, each resized, rotated, stretched, and
-	// recolored on its own. Does nothing until distractors are added.
+	// Probability that an image's objects are cut out and pasted, unchanged, at
+	// random spots on a random distractor image. Does nothing until distractors
+	// are added.
 	Distractors   float32 `protobuf:"fixed32,16,opt,name=distractors,proto3" json:"distractors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -28,6 +28,14 @@ def test_stretch_only_shrinks_one_side_within_the_ratio() -> None:
         assert 640 / 360 / 1.5 - 0.01 <= w / h <= 640 / 360 * 1.5 + 0.01
 
 
+def test_overlapping_shadows_stay_within_the_patch_gain() -> None:
+    gray = np.full((60, 80, 3), 200, np.uint8)
+    lo, hi = 200 * (1 - augment.MAX_PATCH_GAIN), 200 * (1 + augment.MAX_PATCH_GAIN)
+    for seed in range(200):
+        out = augment.shadows(gray, np.random.default_rng(seed)).astype(int)
+        assert out.min() >= int(lo) and out.max() <= min(255, round(hi))
+
+
 def test_underwater_takes_red_away_not_blue() -> None:
     gray = np.full((8, 8, 3), 128, np.uint8)
     for seed in range(20):
@@ -38,8 +46,6 @@ def test_underwater_takes_red_away_not_blue() -> None:
 RED, GREEN = (0, 0, 255), (0, 255, 0)
 BLACK = np.zeros((120, 200, 3), np.uint8)
 DISTRACTOR = np.full((50, 70, 3), GREEN, np.uint8)
-# Every per-object change except recoloring, which would change RED.
-MOVE = export_pb2.Augmentation(degrees=180, scale=0.5, aspect=1.5)
 
 
 def red(im: np.ndarray, polygons: list[np.ndarray]) -> np.ndarray:
@@ -73,10 +79,14 @@ def test_pasted_labels_land_on_the_pasted_pixels() -> None:
     for polygon in (diamond, square):
         for seed in range(20):
             out, pasted, kept = augment.paste(
-                im, [polygon], distractor, MOVE, np.random.default_rng(seed)
+                im, [polygon], distractor, np.random.default_rng(seed)
             )
             assert kept == [0]
             p = pasted[0]
+            # Ultralytics resizes and rotates the whole image afterwards, so
+            # paste only moves objects.
+            shift = p - polygon
+            assert np.allclose(shift, shift[0])
             assert (p >= 0).all() and (p[:, 0] <= 200).all() and (p[:, 1] <= 120).all()
             inside = interior(out.shape, p)
             assert inside.sum() > 0
@@ -95,10 +105,9 @@ def test_paste_drops_what_cannot_be_placed_without_overlap() -> None:
         for y in (0, 60)
     ]
     im = red(BLACK, boxes)
-    aug = export_pb2.Augmentation(degrees=30, scale=0.2)
     dropped = 0
     for seed in range(20):
-        _, pasted, kept = augment.paste(im, boxes, DISTRACTOR, aug, np.random.default_rng(seed))
+        _, pasted, kept = augment.paste(im, boxes, DISTRACTOR, np.random.default_rng(seed))
         dropped += len(boxes) - len(kept)
         masks = [mask(im.shape, p) for p in pasted]
         for i, a in enumerate(masks):
@@ -109,7 +118,7 @@ def test_paste_drops_what_cannot_be_placed_without_overlap() -> None:
 
 
 def test_paste_without_labels_is_the_distractor() -> None:
-    out, pasted, kept = augment.paste(BLACK, [], DISTRACTOR, MOVE, np.random.default_rng(0))
+    out, pasted, kept = augment.paste(BLACK, [], DISTRACTOR, np.random.default_rng(0))
     assert out.shape == BLACK.shape and (out == GREEN).all()
     assert pasted == [] and kept == []
 
