@@ -270,6 +270,45 @@ def test_tracking_carries_on_from_keypoints_labeled_on_later_frames() -> None:
     assert rim.visibility == HIDDEN
 
 
+def test_keypoints_labeled_on_earlier_frames_ride_on_the_print() -> None:
+    (_, second) = task_frames()
+    w, h = 340, 280
+    rim = (70.0, 50.0)
+    earlier = [annotation_pb2.Keypoint(x=x / w, y=y / h, visibility=VISIBLE) for x, y in PRINT_341]
+    earlier += [
+        annotation_pb2.Keypoint(),
+        annotation_pb2.Keypoint(x=rim[0] / w, y=rim[1] / h, visibility=VISIBLE),
+    ]
+    task = worker_pb2.TrackTask(
+        id=5,
+        frames=[second],
+        # Tracked again from a frame where only the print is labeled.
+        box=annotation_pb2.Box(
+            x=0.2,
+            y=0.1,
+            width=0.5,
+            height=0.7,
+            keypoints=[
+                annotation_pb2.Keypoint(x=x / w, y=y / h, visibility=VISIBLE) for x, y in PRINT_342
+            ],
+        ),
+        reference_url=(FIXTURES / "fire.png").as_uri(),
+        keypoint_count=6,
+        quads=quads(),
+        labeled_before=[worker_pb2.KeypointSet(keypoints=earlier)],
+    )
+    api = FakeApi()
+
+    run_track(cast(Api, api), BinTracker(), task)
+
+    (got,) = [b for r in api.tracks for b in r.boxes]
+    k = got.box.keypoints[5]
+    # Where the rim sat on the print a frame earlier, carried by the print's
+    # move of about 21 pixels left and 17 down.
+    assert (k.x * w, k.y * h) == pytest.approx((rim[0] - 21, rim[1] + 17), abs=4)
+    assert k.visibility == VISIBLE
+
+
 def test_filling_a_printed_quad_finds_the_paper_in_the_object_not_the_click() -> None:
     task = worker_pb2.TrackTask(
         id=2,
