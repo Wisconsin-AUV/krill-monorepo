@@ -110,6 +110,11 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 		}
 		for _, r := range rows {
 			labeled[r.FrameID] = r.Keypoints
+			if len(frames) > 0 && r.Idx < frames[0].Idx {
+				msg.LabeledBefore = append(msg.LabeledBefore, &krillv1.KeypointSet{
+					Keypoints: annotation.Keypoints(annotation.PadKeypoints(r.Keypoints, pose.Count())),
+				})
+			}
 		}
 	}
 	for i, f := range frames {

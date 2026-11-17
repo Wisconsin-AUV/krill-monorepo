@@ -4,11 +4,12 @@ import { Group, Label, Rect, Tag, Text, Transformer } from 'react-konva'
 import {
   AnnotationSource,
   AnnotationStatus,
+  KeypointVisibility,
   type Annotation,
   type Track,
 } from '@/gen/krill/v1/annotation_pb'
 import type { LabelType } from '@/gen/krill/v1/label_pb'
-import { hasKeypoints } from '@/lib/keypoints'
+import { hasKeypoints, setKeypoint } from '@/lib/keypoints'
 import { missingAttributes, withAlpha } from '@/lib/labels'
 import { bounds, fromTopLeft, isRotated, konvaBox, toCorners } from '@/lib/obb'
 import type { Size } from '@/workspace/useWorkspaceStore'
@@ -147,6 +148,22 @@ export function AnnotationLayer({
   }, [drawThrough])
 
   const selectedType = selectedBox ? tracks.get(idKey(selectedBox.trackId))?.type : undefined
+
+  // The keypoint being dragged, shown where it is so the quad, center, and
+  // reference design follow it before the drop saves it.
+  const [dragging, setDragging] = useState<{
+    index: number
+    point: { x: number; y: number }
+  } | null>(null)
+  const savedKeypoints = selectedBox?.box?.keypoints ?? []
+  const selectedKeypoints =
+    dragging && selectedType
+      ? setKeypoint(savedKeypoints, selectedType, dragging.index, {
+          x: dragging.point.x / imageSize.width,
+          y: dragging.point.y / imageSize.height,
+          visibility: savedKeypoints[dragging.index]?.visibility ?? KeypointVisibility.VISIBLE,
+        })
+      : savedKeypoints
 
   const commit = (a: Annotation, node: Konva.Node, oriented: boolean) => {
     const keypoints = a.box?.keypoints ?? []
@@ -306,12 +323,12 @@ export function AnnotationLayer({
           {selectedType.referenceUrl && (
             <ReferenceOverlay
               type={selectedType}
-              keypoints={selectedBox.box?.keypoints ?? []}
+              keypoints={selectedKeypoints}
               imageSize={imageSize}
             />
           )}
           <KeypointMarks
-            keypoints={selectedBox.box?.keypoints ?? []}
+            keypoints={selectedKeypoints}
             type={selectedType}
             color={selectedType.color}
             imageSize={imageSize}
@@ -321,8 +338,12 @@ export function AnnotationLayer({
             editing={{
               active: activeKeypoint,
               onPick: (index) => focusKeypoint({ trackId: selectedBox.trackId, frameId, index }),
-              onDragMove: onKeypointDrag,
+              onDragMove: (index, p) => {
+                setDragging({ index, point: p })
+                onKeypointDrag(p)
+              },
               onDragEnd: (index, p) => {
+                setDragging(null)
                 onKeypointDrag(null)
                 moveKeypoint(selectedType, selectedBox.trackId, frameId, index, {
                   x: p.x / imageSize.width,

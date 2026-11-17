@@ -179,7 +179,8 @@ def start_keypoints(
         start = from_proto(task.box.keypoints, schema.count, frame.shape)
     else:
         start = np.zeros((schema.count, 3))
-    keypoints = KeypointTracker(schema, design, start)
+    earlier = [from_proto(k.keypoints, schema.count, frame.shape) for k in task.labeled_before]
+    keypoints = KeypointTracker(schema, design, start, earlier)
     if task.HasField("fill") and 0 <= task.fill.quad < len(schema.quads):
         surface = mask
         if not (schema.quads[task.fill.quad].reference and design is not None):

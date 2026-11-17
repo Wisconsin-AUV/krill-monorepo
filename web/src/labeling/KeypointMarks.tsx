@@ -14,7 +14,7 @@ const OUTLINE = '#09090b'
 export interface KeypointEditing {
   active: number | null
   onPick: (index: number) => void
-  onDragMove: (point: { x: number; y: number }) => void
+  onDragMove: (index: number, point: { x: number; y: number }) => void
   // In image pixels.
   onDragEnd: (index: number, point: { x: number; y: number }) => void
 }
@@ -113,7 +113,7 @@ export function KeypointMarks({
                 if (c) c.style.cursor = ''
               }}
               onDragMove={(e: Konva.KonvaEventObject<DragEvent>) =>
-                editing?.onDragMove({ x: e.target.x(), y: e.target.y() })
+                editing?.onDragMove(i, { x: e.target.x(), y: e.target.y() })
               }
               onDragEnd={(e: Konva.KonvaEventObject<DragEvent>) => {
                 const to = { x: e.target.x(), y: e.target.y() }
