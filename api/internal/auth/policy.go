@@ -67,6 +67,7 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.LabelServiceDeleteLabelExampleProcedure:       manageLabelTypes,
 	krillv1connect.LabelServiceSetLabelReferenceProcedure:        manageLabelTypes,
 	krillv1connect.LabelServiceFitRotationsProcedure:             manageLabelTypes,
+	krillv1connect.LabelServiceFitKeypointsProcedure:             manageLabelTypes,
 	krillv1connect.LabelServicePreviewMergeLabelTypesProcedure:   manageLabelTypes,
 	krillv1connect.LabelServiceMergeLabelTypesProcedure:          manageLabelTypes,
 

@@ -14,6 +14,7 @@ import (
 	"github.com/wauv/krill/api/internal/annotation"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/taxonomy"
 )
 
 const (
@@ -82,8 +83,18 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 		return fmt.Errorf("load label type: %w", err)
 	}
 
-	msg := &krillv1.TrackTask{Id: id, Frames: make([]*krillv1.TaskFrame, len(frames)), Oriented: lt.Oriented}
-	if lt.Oriented {
+	pose, err := taxonomy.ParsePose(lt)
+	if err != nil {
+		return err
+	}
+	msg := &krillv1.TrackTask{
+		Id:            id,
+		Frames:        make([]*krillv1.TaskFrame, len(frames)),
+		Oriented:      lt.Oriented,
+		KeypointCount: int32(pose.Count()), //nolint:gosec // keypoints per type are capped
+		Quads:         pose.QuadsProto(),
+	}
+	if lt.Oriented || pose.HasReference() {
 		if msg.ReferenceUrl, err = referenceURL(ctx, w.store, lt); err != nil {
 			return err
 		}
@@ -91,12 +102,26 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 	if clip.EmbeddedAt.Valid {
 		msg.EmbeddingModel = clip.EmbedModel
 	}
+	labeled := map[int64][]float64{}
+	if pose.Count() > 0 && args.TrackID != 0 {
+		rows, err := q.ListVerifiedKeypoints(ctx, args.TrackID)
+		if err != nil {
+			return fmt.Errorf("load labeled keypoints: %w", err)
+		}
+		for _, r := range rows {
+			labeled[r.FrameID] = r.Keypoints
+		}
+	}
 	for i, f := range frames {
 		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
 		if err != nil {
 			return err
 		}
 		msg.Frames[i] = &krillv1.TaskFrame{Id: f.ID, Url: url}
+		// The prompt frame's keypoints come with the prompt.
+		if i > 0 {
+			msg.Frames[i].Keypoints = annotation.Keypoints(annotation.PadKeypoints(labeled[f.ID], pose.Count()))
+		}
 		if msg.EmbeddingModel != "" {
 			if msg.Frames[i].EmbeddingUrl, err = w.store.PresignGetInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry); err != nil {
 				return err
@@ -108,7 +133,13 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 		msg.Prompt = &krillv1.TrackTask_Point{Point: &krillv1.Point{X: args.Point.X, Y: args.Point.Y}}
 	case args.Box != nil:
 		b := args.Box
-		msg.Prompt = &krillv1.TrackTask_Box{Box: &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height}}
+		msg.Prompt = &krillv1.TrackTask_Box{Box: &krillv1.Box{
+			X: b.X, Y: b.Y, Width: b.Width, Height: b.Height,
+			Keypoints: annotation.Keypoints(annotation.PadKeypoints(args.Keypoints, pose.Count())),
+		}}
+		if f := args.Fill; f != nil {
+			msg.Fill = &krillv1.QuadPrompt{Quad: f.Quad, Point: &krillv1.Point{X: f.Point.X, Y: f.Point.Y}}
+		}
 	default:
 		return errors.New("job has no prompt")
 	}

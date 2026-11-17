@@ -564,8 +564,12 @@ type ExportStats struct {
 	Oriented bool `protobuf:"varint,15,opt,name=oriented,proto3" json:"oriented,omitempty"`
 	// Augmented copies of train images, on top of train_images.
 	AugmentedImages int32 `protobuf:"varint,16,opt,name=augmented_images,json=augmentedImages,proto3" json:"augmented_images,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Labels are written as YOLO-pose with this many keypoints, the most any
+	// exported type has, because a type has keypoints. Other boxes get
+	// unlabeled ones.
+	Keypoints     int32 `protobuf:"varint,17,opt,name=keypoints,proto3" json:"keypoints,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExportStats) Reset() {
@@ -706,6 +710,13 @@ func (x *ExportStats) GetOriented() bool {
 func (x *ExportStats) GetAugmentedImages() int32 {
 	if x != nil {
 		return x.AugmentedImages
+	}
+	return 0
+}
+
+func (x *ExportStats) GetKeypoints() int32 {
+	if x != nil {
+		return x.Keypoints
 	}
 	return 0
 }
@@ -1308,7 +1319,7 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\x05split\x18\x03 \x01(\tR\x05split\x12\x16\n" +
 	"\x06pinned\x18\x04 \x01(\bR\x06pinned\x12\x16\n" +
 	"\x06images\x18\x05 \x01(\x05R\x06images\x12\x14\n" +
-	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\x80\x05\n" +
+	"\x05boxes\x18\x06 \x01(\x05R\x05boxes\"\x9e\x05\n" +
 	"\vExportStats\x12!\n" +
 	"\ftrain_images\x18\x01 \x01(\x05R\vtrainImages\x12\x1d\n" +
 	"\n" +
@@ -1330,7 +1341,8 @@ const file_krill_v1_export_proto_rawDesc = "" +
 	"\n" +
 	"test_boxes\x18\x0e \x01(\x05R\ttestBoxes\x12\x1a\n" +
 	"\boriented\x18\x0f \x01(\bR\boriented\x12)\n" +
-	"\x10augmented_images\x18\x10 \x01(\x05R\x0faugmentedImages\"\xa8\x03\n" +
+	"\x10augmented_images\x18\x10 \x01(\x05R\x0faugmentedImages\x12\x1c\n" +
+	"\tkeypoints\x18\x11 \x01(\x05R\tkeypoints\"\xa8\x03\n" +
 	"\x06Export\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +

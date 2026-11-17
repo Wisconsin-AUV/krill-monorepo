@@ -124,7 +124,10 @@ func (s *Service) SetGoldFrame(ctx context.Context, req *krillv1.SetGoldFrameReq
 		if err != nil {
 			return nil, rpc.Internal(err, "decode attributes")
 		}
-		boxes[i] = Box{LabelTypeID: r.LabelTypeID, Attributes: values, X: r.X, Y: r.Y, Width: r.Width, Height: r.Height}
+		boxes[i] = Box{
+			LabelTypeID: r.LabelTypeID, Attributes: values, X: r.X, Y: r.Y, Width: r.Width, Height: r.Height,
+			Keypoints: annotation.PadKeypoints(r.Keypoints, int(r.KeypointCount)),
+		}
 	}
 	raw, err := json.Marshal(boxes)
 	if err != nil {
@@ -173,8 +176,12 @@ func (s *Service) answer(ctx context.Context, in []*krillv1.GoldBox) ([]Box, err
 		return nil, rpc.Internal(err, "list label types")
 	}
 	defs := make(map[int64][]taxonomy.Attribute, len(types))
+	poses := make(map[int64]taxonomy.Pose, len(types))
 	for _, t := range types {
 		if defs[t.LabelType.ID], err = taxonomy.ParseAttributes(t.LabelType.Attributes); err != nil {
+			return nil, rpc.Internal(err, "decode label type")
+		}
+		if poses[t.LabelType.ID], err = taxonomy.ParsePose(t.LabelType); err != nil {
 			return nil, rpc.Internal(err, "decode label type")
 		}
 	}
@@ -191,11 +198,15 @@ func (s *Service) answer(ctx context.Context, in []*krillv1.GoldBox) ([]Box, err
 		if err != nil {
 			return nil, rpc.Invalid("%s", err)
 		}
+		kps, err := annotation.ClampKeypoints(b.GetBox().GetKeypoints(), poses[b.GetLabelTypeId()])
+		if err != nil {
+			return nil, rpc.Invalid("%s", err)
+		}
 		values := b.GetAttributes()
 		if values == nil {
 			values = map[string]string{}
 		}
-		out[i] = Box{LabelTypeID: b.GetLabelTypeId(), Attributes: values, X: x, Y: y, Width: w, Height: h}
+		out[i] = Box{LabelTypeID: b.GetLabelTypeId(), Attributes: values, X: x, Y: y, Width: w, Height: h, Keypoints: kps}
 	}
 	return out, nil
 }
@@ -218,7 +229,7 @@ func (s *Service) SubmitGoldCheck(ctx context.Context, req *krillv1.SubmitGoldCh
 		return nil, rpc.Internal(err, "encode boxes")
 	}
 
-	res := Score(reference, answer)
+	res := Score(reference, answer, Frame{Width: float64(g.Width), Height: float64(g.Height)})
 	n, err := s.q.InsertGoldAttempt(ctx, db.InsertGoldAttemptParams{
 		FrameID:        g.FrameID,
 		UserID:         auth.CallerID(ctx),
@@ -252,7 +263,9 @@ func resultToProto(reference, answer []Box, res Result) *krillv1.GoldResult {
 		Score:     res.Score,
 	}
 	for i, m := range res.Matches {
-		out.Matches[i] = &krillv1.GoldMatch{Reference: small(m.Reference), Answer: small(m.Answer), Iou: m.IoU, Correct: m.Correct}
+		out.Matches[i] = &krillv1.GoldMatch{
+			Reference: small(m.Reference), Answer: small(m.Answer), Iou: m.IoU, Correct: m.Correct, Oks: m.OKS,
+		}
 	}
 	return out
 }
@@ -319,7 +332,9 @@ func boxesToProto(boxes []Box) []*krillv1.GoldBox {
 		out[i] = &krillv1.GoldBox{
 			LabelTypeId: b.LabelTypeID,
 			Attributes:  b.Attributes,
-			Box:         &krillv1.Box{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height},
+			Box: &krillv1.Box{
+				X: b.X, Y: b.Y, Width: b.Width, Height: b.Height, Keypoints: annotation.Keypoints(b.Keypoints),
+			},
 		}
 	}
 	return out

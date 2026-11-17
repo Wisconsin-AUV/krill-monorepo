@@ -1,6 +1,10 @@
 -- name: ListFramesFrom :many
 SELECT * FROM frames WHERE clip_id = $1 AND idx >= $2 ORDER BY idx;
 
+-- name: ListVerifiedKeypoints :many
+SELECT frame_id, keypoints FROM annotations
+WHERE track_id = $1 AND status = 'verified' AND keypoints IS NOT NULL;
+
 -- name: DeleteTrackProposalsFrom :exec
 -- Clears what an earlier run proposed on frames the new run covers.
 DELETE FROM annotations a
@@ -13,8 +17,10 @@ WHERE f.id = a.frame_id
 -- name: UpsertProposals :execrows
 -- Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 -- @corners holds eight values per box, which are ignored unless the box's
--- @has_corners is set.
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version)
+-- @has_corners is set. @keypoints holds each box's keypoints one after
+-- another, with box i's ending at @keypoint_ends[i], and a box with none
+-- gets NULL.
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, keypoints, source, status, model_version)
 SELECT
     sqlc.arg('track_id'),
     (sqlc.arg('frame_ids')::bigint[])[i],
@@ -23,6 +29,9 @@ SELECT
     (sqlc.arg('widths')::float8[])[i],
     (sqlc.arg('heights')::float8[])[i],
     CASE WHEN (sqlc.arg('has_corners')::bool[])[i] THEN (sqlc.arg('corners')::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    CASE WHEN (sqlc.arg('keypoint_ends')::int[])[i] > coalesce((sqlc.arg('keypoint_ends')::int[])[i - 1], 0)
+        THEN (sqlc.arg('keypoints')::float8[])[coalesce((sqlc.arg('keypoint_ends')::int[])[i - 1], 0) + 1:(sqlc.arg('keypoint_ends')::int[])[i]]
+    END,
     sqlc.arg('source'),
     'proposed',
     sqlc.arg('model_version')
@@ -33,15 +42,17 @@ ON CONFLICT (track_id, frame_id) DO UPDATE SET
     width = excluded.width,
     height = excluded.height,
     corners = excluded.corners,
+    keypoints = excluded.keypoints,
     source = excluded.source,
     model_version = excluded.model_version,
     updated_at = now()
 WHERE annotations.status = 'proposed';
 
 -- name: ListTrackBoxes :many
-SELECT a.id, a.x, a.y, a.width, a.height, a.status, a.drift
+SELECT a.id, a.x, a.y, a.width, a.height, a.keypoints, a.status, a.drift, v.width AS frame_width, v.height AS frame_height
 FROM annotations a
 JOIN frames f ON f.id = a.frame_id
+JOIN videos v ON v.id = f.video_id
 WHERE a.track_id = $1
 ORDER BY f.idx;
 
@@ -63,8 +74,23 @@ UPDATE annotations SET
 WHERE frame_id = sqlc.arg('frame_id') AND status = 'proposed';
 
 -- name: GetTrackBox :one
-SELECT x, y, width, height FROM annotations
+SELECT x, y, width, height, keypoints FROM annotations
 WHERE track_id = $1 AND frame_id = $2 AND status <> 'rejected';
+
+-- name: LockTrackAnnotation :one
+SELECT id, keypoints, status FROM annotations
+WHERE track_id = $1 AND frame_id = $2
+FOR UPDATE;
+
+-- name: ProposeKeypoints :exec
+-- The box stays where it is, but someone has to check its keypoints.
+UPDATE annotations SET
+    keypoints = @keypoints,
+    status = 'proposed',
+    source = 'sam',
+    model_version = @model_version,
+    updated_at = now()
+WHERE id = @id;
 
 -- name: ListFrameBoxes :many
 SELECT x, y, width, height FROM annotations
@@ -86,3 +112,19 @@ WHERE a.id = (@ids::bigint[])[i]
     AND a.corners IS NULL
     AND t.id = a.track_id AND lt.id = t.label_type_id
     AND lt.id = @label_type_id AND lt.oriented;
+
+-- name: SetFittedKeypoints :execrows
+-- Like SetFittedCorners, and also leaves boxes someone labeled keypoints on.
+-- @keypoints holds each box's keypoints one after another, with box i's
+-- ending at @keypoint_ends[i].
+UPDATE annotations a SET
+    keypoints = (@keypoints::float8[])[coalesce((@keypoint_ends::int[])[i - 1], 0) + 1:(@keypoint_ends::int[])[i]],
+    status = 'proposed',
+    updated_at = now()
+FROM generate_subscripts(@ids::bigint[], 1) AS i, tracks t, label_types lt
+WHERE a.id = (@ids::bigint[])[i]
+    AND a.updated_at = (@updated_ats::timestamptz[])[i]
+    AND a.keypoints IS NULL
+    AND a.status <> 'rejected'
+    AND t.id = a.track_id AND lt.id = t.label_type_id
+    AND lt.id = @label_type_id AND lt.keypoints <> '[]';

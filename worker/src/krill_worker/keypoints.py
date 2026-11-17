@@ -1,0 +1,590 @@
+"""Tracking a label type's keypoints along with SAM's mask of the object.
+
+Keypoints follow the object's motion between frames, measured by optical flow
+inside its mask. A quad with the type's reference design is instead found
+again on every frame, by aligning the design to the bright paper inside the
+mask, so it can't drift and its corners come out in the design's own order
+however the object is turned. Keypoints on other quads snap to the corners of
+the mask's outline when they line up with them.
+"""
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+import cv2
+import numpy as np
+import numpy.typing as npt
+from krill.v1 import annotation_pb2, label_pb2
+
+from krill_worker.orient import largest, ncc, quad
+from krill_worker.prelabelers import Frame
+from krill_worker.track import Mask
+
+UNLABELED = annotation_pb2.KEYPOINT_VISIBILITY_UNSPECIFIED
+HIDDEN = annotation_pb2.KEYPOINT_VISIBILITY_HIDDEN
+VISIBLE = annotation_pb2.KEYPOINT_VISIBILITY_VISIBLE
+
+# Rows of x and y in pixels and the visibility.
+Keypoints = npt.NDArray[np.float64]
+Points = npt.NDArray[np.float32]
+Gray = npt.NDArray[np.uint8]
+
+# The design's side, in pixels, while matching. Frames are at most 1024
+# pixels wide, so prints rarely cover more.
+DESIGN_SIDE = 200
+ECC_ITERATIONS = 50
+ECC_EPS = 1e-4
+# Correlation between the design and the frame under a fit, measured only
+# where the frame shows paper. Aligned prints score about 0.6 to 0.85 under
+# water, and a quarter turn off or a fit onto the crate under 0.45.
+MIN_SCORE = 0.45
+# A print found with nothing tracked yet to compare against must score
+# higher, since a turn off by a quarter can reach 0.5.
+MIN_FOUND_SCORE = 0.6
+# Under this share of the design on visible paper, a score says too little.
+MIN_COVER = 0.25
+# A fresh find further than this share of the quad's size from where the
+# print was tracked to is a different reading of it, not a correction.
+MAX_SHIFT = 0.3
+# ECC only polishes a fit. Where the crate hides part of the print nothing
+# holds those corners, and on paper curled up a wall it bends the design to
+# match, so a refinement moving a corner further than this share of the
+# quad's size is dropped. Flat prints refine by about 0.03.
+MAX_REFINE = 0.06
+# How far toward the quad's center, as a share of the way, a corner is
+# checked for paper. The paper's own edge is darker than its middle.
+INSET = 0.12
+# A corner within this share of its quad's size of an outline corner is
+# snapped to it.
+SNAP = 0.08
+# A tracked keypoint further than this many box sizes from the object's mask
+# has lost it.
+LOST = 0.75
+# Optical flow needs this many features that agree to give the motion.
+MIN_FEATURES = 8
+# Most features flow finds in the mask.
+MAX_FEATURES = 300
+# Pixels a feature may land from where it started after flowing there and
+# back.
+MAX_ROUND_TRIP = 1.0
+# Pixels a feature may be off its fit motion and still agree with it.
+RANSAC_PIXELS = 2.0
+# Paper regions smaller than this many pixels can't be matched.
+MIN_PAPER = 100
+# A print found unprompted must be at least this many pixels across, and
+# keep its corners further than EDGE_PIXELS inside the frame.
+MIN_SIDE = 16
+EDGE_PIXELS = 2
+# A quad whose area changes by more than this factor in one frame has folded
+# over or slid off its object, as when a crate turns edge on.
+MAX_GROWTH = 2.5
+
+
+@dataclass(frozen=True)
+class Quad:
+    corners: tuple[int, int, int, int]
+    reference: bool
+    center: int | None
+
+
+@dataclass(frozen=True)
+class Schema:
+    count: int
+    quads: tuple[Quad, ...]
+
+    @staticmethod
+    def of(count: int, quads: Sequence[label_pb2.KeypointQuad]) -> "Schema":
+        return Schema(
+            count,
+            tuple(
+                Quad(
+                    (q.corners[0], q.corners[1], q.corners[2], q.corners[3]),
+                    q.reference,
+                    q.center if q.HasField("center") else None,
+                )
+                for q in quads
+                if len(q.corners) == 4
+            ),
+        )
+
+    @property
+    def reference(self) -> Quad | None:
+        return next((q for q in self.quads if q.reference), None)
+
+
+@dataclass(frozen=True)
+class Design:
+    """A reference design as ink: how far each pixel is from the paper."""
+
+    ink: Gray
+    smooth: npt.NDArray[np.float32]
+    corners: Points
+    # Where scores compare, leaving out the border, where a fit that is a
+    # little off samples the crate around the print.
+    window: npt.NDArray[np.bool_]
+
+
+def load_design(data: bytes) -> Design:
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_UNCHANGED)
+    if img is None:
+        raise ValueError("reference design is not a valid image")
+    if img.ndim == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    if img.shape[2] == 4:
+        # Transparent parts are bare paper.
+        alpha = img[..., 3:].astype(np.float32) / 255
+        img = (img[..., :3] * alpha + 255 * (1 - alpha)).astype(np.uint8)
+    rgb = np.asarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), dtype=np.uint8)
+    paper = np.full(rgb.shape[:2], 255, np.uint8)
+    full = ink(rgb, paper, white=np.array([255, 255, 255], np.float32))
+    s = DESIGN_SIDE
+    small = np.asarray(cv2.resize(full, (s, s), interpolation=cv2.INTER_AREA), dtype=np.uint8)
+    window = np.zeros((s, s), bool)
+    m = s // 20
+    window[m : s - m, m : s - m] = True
+    return Design(
+        ink=small,
+        smooth=cv2.GaussianBlur(small, (5, 5), 0).astype(np.float32),
+        corners=np.array([[0, 0], [s, 0], [s, s], [0, s]], np.float32),
+        window=window,
+    )
+
+
+def ink(
+    rgb: Frame, paper: Gray, white: npt.NDArray[np.float32] | None = None
+) -> npt.NDArray[np.uint8]:
+    """Each pixel's distance from the paper's color.
+
+    Under water the paper is tinted blue-green and the ink loses its hue, so
+    gray levels hardly separate a yellow flame from the paper. Distance from
+    the paper's own color does, whatever the tint.
+    """
+    f = rgb.astype(np.float32)
+    if white is None:
+        white = np.median(f[paper > 0], axis=0)
+    return np.asarray(np.clip(np.linalg.norm(f - white, axis=2), 0, 255), np.uint8)
+
+
+def paper_in(gray: Gray, mask: Mask) -> Gray | None:
+    """The brightest region inside the object's mask, which is the paper its
+    design is printed on."""
+    inside = cv2.erode(mask.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+    values = gray[inside]
+    if values.size < MIN_PAPER:
+        return None
+    t, _ = cv2.threshold(values.reshape(-1, 1), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    bright = ((gray > t) & inside).astype(np.uint8) * 255
+    k = max(3, int(np.sqrt(values.size) / 25)) | 1
+    bright = np.asarray(
+        cv2.morphologyEx(bright, cv2.MORPH_CLOSE, np.ones((k, k), np.uint8)), np.uint8
+    )
+    contours, _ = cv2.findContours(bright, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    outline = largest(contours)
+    if outline is None or cv2.contourArea(outline) < MIN_PAPER:
+        return None
+    paper = np.zeros_like(bright)
+    cv2.drawContours(paper, [outline.astype(np.int32).reshape(-1, 1, 2)], -1, 255, cv2.FILLED)
+    return np.asarray(paper & bright, dtype=np.uint8)
+
+
+def homography(design: Design, corners: Points) -> npt.NDArray[np.float64] | None:
+    try:
+        h = np.asarray(cv2.getPerspectiveTransform(design.corners, corners), np.float64)
+    except cv2.error:
+        return None
+    if not np.isfinite(h).all() or abs(np.linalg.det(h)) < 1e-12:
+        return None
+    return h
+
+
+def on_paper(design: Design, h: npt.NDArray[np.float64], paper: Gray) -> npt.NDArray[np.bool_]:
+    """The design's pixels that land on visible paper under h."""
+    s = DESIGN_SIDE
+    warped = cv2.warpPerspective(
+        paper, np.linalg.inv(h), (s, s), flags=cv2.INTER_NEAREST, borderValue=0
+    )
+    return np.asarray(warped > 0)
+
+
+def score(img: Gray, corners: Points, design: Design, paper: Gray) -> float:
+    """How well the design under the corners matches the frame where it shows."""
+    h = homography(design, corners)
+    if h is None:
+        return -1.0
+    seen = on_paper(design, h, paper) & design.window
+    if seen.mean() < MIN_COVER:
+        return -1.0
+    s = DESIGN_SIDE
+    rect = cv2.warpPerspective(img, np.linalg.inv(h), (s, s), flags=cv2.INTER_LINEAR)
+    return ncc(np.asarray(rect, np.uint8), design.ink, seen)
+
+
+def refine(img: Gray, corners: Points, design: Design, paper: Gray) -> Points | None:
+    """Align the design from corners with ECC, matching only where paper shows,
+    so the crate's walls over part of the print don't pull it off."""
+    h = homography(design, corners)
+    if h is None or (on_paper(design, h, paper) & design.window).mean() < MIN_COVER:
+        return None
+    warp = (h / h[2, 2]).astype(np.float32)
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, ECC_ITERATIONS, ECC_EPS)
+    image = cv2.GaussianBlur(img, (3, 3), 0).astype(np.float32)
+    try:
+        _, warp = cv2.findTransformECC(
+            design.smooth, image, warp, cv2.MOTION_HOMOGRAPHY, criteria, paper, 5
+        )
+    except cv2.error:
+        return None
+    out = np.asarray(
+        cv2.perspectiveTransform(design.corners.reshape(-1, 1, 2), warp).reshape(4, 2),
+        np.float32,
+    )
+    if not np.isfinite(out).all() or shift(out, corners) > MAX_REFINE:
+        return None
+    return out
+
+
+def shift(a: Points, b: Points) -> float:
+    """The furthest corner move from b to a, as a share of b's size."""
+    size = np.sqrt(abs(cv2.contourArea(b.astype(np.float32)))) + 1e-9
+    return float(np.linalg.norm(a - b, axis=1).max() / size)
+
+
+def turned(img: Gray, q: Points, design: Design, paper: Gray) -> tuple[Points, float]:
+    """q starting from whichever corner best matches the design's top left."""
+    best, best_score = q, -1.0
+    for k in range(4):
+        rolled = np.roll(q, -k, axis=0)
+        s = score(img, rolled, design, paper)
+        if s > best_score:
+            best, best_score = rolled, s
+    return best, best_score
+
+
+def find_print(
+    rgb: Frame, gray: Gray, mask: Mask, design: Design, guess: Points | None
+) -> tuple[Points, Gray] | None:
+    """The print's corners in design order and the paper that shows, or None.
+
+    Both the fit from guess, where the print was tracked to, and a fresh one
+    from the paper's outline are tried, and the better match wins, so neither
+    a tracking slip nor paper curled up a wall decides alone.
+    """
+    paper = paper_in(gray, mask)
+    if paper is None:
+        return None
+    img = ink(rgb, paper)
+    candidates: list[tuple[float, Points]] = []
+    if guess is not None:
+        for c in (refine(img, guess, design, paper), guess):
+            if c is not None:
+                candidates.append((score(img, c, design, paper), c))
+    contours, _ = cv2.findContours(paper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    outline = largest(contours)
+    if outline is not None:
+        start, _ = turned(img, quad(outline), design, paper)
+        found = refine(img, start, design, paper)
+        for c in (found, start):
+            if c is None or (guess is not None and shift(c, guess) > MAX_SHIFT):
+                continue
+            candidates.append((score(img, c, design, paper), c))
+    if not candidates:
+        return None
+    best_score, best = max(candidates, key=lambda t: t[0])
+    if guess is None and (best_score < MIN_FOUND_SCORE or clipped(best, paper.shape)):
+        return None
+    if best_score < MIN_SCORE:
+        return None
+    return best, paper
+
+
+def clipped(corners: Points, shape: tuple[int, ...]) -> bool:
+    """Whether a quad is too small to place its corners, or is the part of a
+    print the frame's edge cuts off rather than the print, whose corners would
+    lie beyond the edge."""
+    h, w = shape[:2]
+    x, y = corners[:, 0], corners[:, 1]
+    on_edge = (x <= EDGE_PIXELS) | (x >= w - 1 - EDGE_PIXELS)
+    on_edge |= (y <= EDGE_PIXELS) | (y >= h - 1 - EDGE_PIXELS)
+    return bool(on_edge.any()) or np.sqrt(abs(cv2.contourArea(corners))) < MIN_SIDE
+
+
+def print_visibility(corners: Points, paper: Gray) -> list[int]:
+    """Visible for corners with paper just inside them, hidden for the rest."""
+    h, w = paper.shape
+    center = corners.mean(axis=0)
+    out: list[int] = []
+    for p in corners:
+        x, y = (p + (center - p) * INSET).round().astype(int)
+        inside = 0 <= p[0] < w and 0 <= p[1] < h and 0 <= x < w and 0 <= y < h
+        out.append(VISIBLE if inside and paper[y, x] > 0 else HIDDEN)
+    return out
+
+
+def motion(
+    prev: Gray, gray: Gray, prev_mask: Mask, mask: Mask | None
+) -> npt.NDArray[np.float64] | None:
+    """The object's motion between frames as a homography, from features
+    that flow inside its mask and back to where they started."""
+    region = cv2.dilate(prev_mask.astype(np.uint8) * 255, np.ones((15, 15), np.uint8))
+    p0 = cv2.goodFeaturesToTrack(prev, MAX_FEATURES, 0.01, 5, mask=region)
+    if p0 is not None and len(p0) >= MIN_FEATURES:
+        p1, ok1, _ = cv2.calcOpticalFlowPyrLK(
+            prev, gray, p0, np.empty_like(p0), winSize=(21, 21), maxLevel=4
+        )
+        back, ok2, _ = cv2.calcOpticalFlowPyrLK(
+            gray, prev, p1, np.empty_like(p1), winSize=(21, 21), maxLevel=4
+        )
+        good = (
+            (ok1[:, 0] == 1)
+            & (ok2[:, 0] == 1)
+            & (np.linalg.norm((back - p0).reshape(-1, 2), axis=1) < MAX_ROUND_TRIP)
+        )
+        if good.sum() >= MIN_FEATURES:
+            h, _ = cv2.findHomography(p0[good], p1[good], cv2.RANSAC, RANSAC_PIXELS)
+            if h is not None and np.isfinite(h).all():
+                return np.asarray(h, np.float64)
+    if mask is None:
+        return None
+    return box_motion(prev_mask, mask)
+
+
+def box_motion(prev_mask: Mask, mask: Mask) -> npt.NDArray[np.float64] | None:
+    """Scale and shift taking one mask's bounds onto the other's, for when the
+    object has too little texture to flow."""
+    a, b = bounds(prev_mask), bounds(mask)
+    if a is None or b is None:
+        return None
+    sx, sy = b[2] / a[2], b[3] / a[3]
+    return np.array([[sx, 0, b[0] - a[0] * sx], [0, sy, b[1] - a[1] * sy], [0, 0, 1]], np.float64)
+
+
+def bounds(mask: Mask) -> tuple[float, float, float, float] | None:
+    ys, xs = np.nonzero(mask)
+    if len(xs) == 0:
+        return None
+    x0, y0 = float(xs.min()), float(ys.min())
+    return x0, y0, float(xs.max()) - x0 + 1, float(ys.max()) - y0 + 1
+
+
+def transform(h: npt.NDArray[np.float64], points: npt.NDArray[np.float64]) -> Points:
+    out = cv2.perspectiveTransform(points.reshape(-1, 1, 2).astype(np.float64), h)
+    return np.asarray(out.reshape(-1, 2), np.float32)
+
+
+def snap(corners: Points, mask: Mask) -> Points:
+    """Corners moved onto the mask outline's own corners where they line up."""
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    outline = largest(contours)
+    if outline is None:
+        return corners
+    vertices = quad(outline)
+    size = np.sqrt(abs(cv2.contourArea(corners))) + 1e-9
+    out = corners.copy()
+    taken: set[int] = set()
+    for i, c in enumerate(corners):
+        d = np.linalg.norm(vertices - c, axis=1)
+        j = int(np.argmin(d))
+        if j not in taken and d[j] <= SNAP * size:
+            out[i] = vertices[j]
+            taken.add(j)
+    return out
+
+
+def center(corners: Points) -> npt.NDArray[np.float64] | None:
+    """Where the quad's diagonals cross, its center in perspective."""
+    a, b, c, d = corners.astype(np.float64)
+    r, s = c - a, d - b
+    denom = r[0] * s[1] - r[1] * s[0]
+    if abs(denom) < 1e-9:
+        return None
+    t = ((b[0] - a[0]) * s[1] - (b[1] - a[1]) * s[0]) / denom
+    return np.asarray(a + t * r, np.float64)
+
+
+def place_centers(points: Keypoints, schema: Schema) -> None:
+    for q in schema.quads:
+        if q.center is None:
+            continue
+        idx = list(q.corners)
+        v = points[idx, 2]
+        c = center(points[idx, :2].astype(np.float32)) if (v > UNLABELED).all() else None
+        if c is None:
+            points[q.center] = (0, 0, UNLABELED)
+        else:
+            points[q.center] = (c[0], c[1], HIDDEN if (v == HIDDEN).all() else VISIBLE)
+
+
+def fill_quad(rgb: Frame, mask: Mask, design: Design | None) -> tuple[Points, list[int]] | None:
+    """A quad's corners from a mask: in the design's order when the reference
+    design is printed on it, else clockwise from the top left on screen.
+
+    For a printed quad the mask is the whole object's, and the print is the
+    paper inside it. The labeler pointed at it, so the design's best quarter
+    turn is taken even when it scores too low to have been found unprompted.
+    """
+    gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+    if design is not None:
+        paper = paper_in(gray, mask)
+        if paper is not None:
+            contours, _ = cv2.findContours(paper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            outline = largest(contours)
+            if outline is not None:
+                img = ink(rgb, paper)
+                start, _ = turned(img, quad(outline), design, paper)
+                corners = refine(img, start, design, paper)
+                if corners is None:
+                    corners = start
+                return corners, print_visibility(corners, paper)
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    outline = largest(contours)
+    if outline is None:
+        return None
+    q = quad(outline)
+    first = int(np.argmin(q.sum(axis=1)))
+    return np.roll(q, -first, axis=0), [VISIBLE] * 4
+
+
+class KeypointTracker:
+    """Carries keypoints from frame to frame along with the object's mask."""
+
+    def __init__(self, schema: Schema, design: Design | None, start: Keypoints) -> None:
+        self.schema = schema
+        self.design = design if schema.reference is not None else None
+        self.points = start.copy()
+        # What the labeler set, which hidden keypoints return to once they're
+        # back in the frame.
+        self.given = start[:, 2].copy()
+        self.prev: tuple[Gray, Mask] | None = None
+
+    def fill(self, rgb: Frame, index: int, mask: Mask) -> None:
+        """Place quad index's corners from the mask fill_quad takes."""
+        q = self.schema.quads[index]
+        found = fill_quad(rgb, mask, self.design if q.reference else None)
+        if found is None:
+            return
+        corners, vis = found
+        for i, c, v in zip(q.corners, corners, vis, strict=True):
+            self.points[i] = (c[0], c[1], v)
+            self.given[i] = VISIBLE
+        place_centers(self.points, self.schema)
+
+    def anchor(self, labeled: Keypoints) -> None:
+        """Take the labeler's keypoints on this frame over the tracked ones,
+        so tracking carries on from what they placed."""
+        placed = labeled[:, 2] > UNLABELED
+        self.points[placed] = labeled[placed]
+        self.given[placed] = labeled[placed, 2]
+
+    def step(self, rgb: Frame, mask: Mask | None) -> Keypoints:
+        """The keypoints on the next frame, in pixels."""
+        gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+        before = self.points.copy()
+        labeled = self.points[:, 2] > UNLABELED
+        if self.prev is not None and labeled.any():
+            prev_gray, prev_mask = self.prev
+            h = motion(prev_gray, gray, prev_mask, mask)
+            if h is None:
+                self.points[:, 2] = UNLABELED
+            else:
+                self.points[labeled, :2] = transform(h, self.points[labeled, :2])
+        if mask is None or not mask.any():
+            self.prev = None
+            self.points[:, 2] = UNLABELED
+            return self.points.copy()
+        self._lose_strays(mask)
+        self._lose_folded(before)
+        ref = self.schema.reference
+        for q in self.schema.quads:
+            if q is ref and self.design is not None:
+                self._find_print(rgb, gray, mask, q)
+            elif (self.points[list(q.corners), 2] > UNLABELED).all():
+                idx = list(q.corners)
+                self.points[idx, :2] = snap(self.points[idx, :2].astype(np.float32), mask)
+        self._out_of_frame(gray.shape)
+        place_centers(self.points, self.schema)
+        self.prev = (gray, mask)
+        return self.points.copy()
+
+    def _find_print(self, rgb: Frame, gray: Gray, mask: Mask, q: Quad) -> None:
+        assert self.design is not None
+        idx = list(q.corners)
+        tracked = (self.points[idx, 2] > UNLABELED).all()
+        guess = self.points[idx, :2].astype(np.float32) if tracked else None
+        found = find_print(rgb, gray, mask, self.design, guess)
+        if found is None:
+            # A tracked print stays where the motion took it, which is how
+            # prints mostly hidden by the crate stay labeled.
+            return
+        corners, paper = found
+        for i, c, v in zip(idx, corners, print_visibility(corners, paper), strict=True):
+            self.points[i] = (c[0], c[1], v)
+            self.given[i] = VISIBLE
+
+    def _lose_strays(self, mask: Mask) -> None:
+        b = bounds(mask)
+        if b is None:
+            return
+        x, y, w, h = b
+        reach = LOST * max(w, h)
+        p = self.points
+        stray = (
+            (p[:, 0] < x - reach)
+            | (p[:, 0] > x + w + reach)
+            | (p[:, 1] < y - reach)
+            | (p[:, 1] > y + h + reach)
+        )
+        p[stray, 2] = UNLABELED
+
+    def _lose_folded(self, before: Keypoints) -> None:
+        for q in self.schema.quads:
+            idx = list(q.corners)
+            if not (self.points[idx, 2] > UNLABELED).all():
+                continue
+            was = abs(cv2.contourArea(before[idx, :2].astype(np.float32)))
+            now = cv2.contourArea(self.points[idx, :2].astype(np.float32), oriented=True)
+            # Corners go clockwise on screen, so a quad that turns
+            # counterclockwise has flipped over.
+            if now <= 0 or was <= 0 or not 1 / MAX_GROWTH <= now / was <= MAX_GROWTH:
+                self.points[idx, 2] = UNLABELED
+
+    def _out_of_frame(self, shape: tuple[int, ...]) -> None:
+        h, w = shape[:2]
+        p = self.points
+        labeled = p[:, 2] > UNLABELED
+        outside = (p[:, 0] < 0) | (p[:, 0] >= w) | (p[:, 1] < 0) | (p[:, 1] >= h)
+        ref = self.schema.reference
+        printed = set(ref.corners) if ref is not None and self.design is not None else set()
+        for i in np.flatnonzero(labeled):
+            if outside[i]:
+                p[i, 2] = HIDDEN
+            elif i not in printed:
+                p[i, 2] = self.given[i]
+
+
+def from_proto(
+    keypoints: Sequence[annotation_pb2.Keypoint], count: int, shape: tuple[int, ...]
+) -> Keypoints:
+    """Keypoints in pixels, padded with unlabeled ones to count."""
+    h, w = shape[:2]
+    out = np.zeros((count, 3), np.float64)
+    for i, k in enumerate(keypoints[:count]):
+        if k.visibility != UNLABELED:
+            out[i] = (k.x * w, k.y * h, k.visibility)
+    return out
+
+
+def to_proto(points: Keypoints, shape: tuple[int, ...]) -> list[annotation_pb2.Keypoint]:
+    h, w = shape[:2]
+    out = []
+    for x, y, v in points:
+        if int(v) == UNLABELED:
+            out.append(annotation_pb2.Keypoint())
+        else:
+            out.append(
+                annotation_pb2.Keypoint(
+                    x=float(np.clip(x / w, -1, 2)),
+                    y=float(np.clip(y / h, -1, 2)),
+                    visibility=VISIBLE if int(v) == VISIBLE else HIDDEN,
+                )
+            )
+    return out

@@ -13,6 +13,7 @@ import (
 	"math/rand/v2"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,9 +50,23 @@ func isTrain(it Item) bool {
 	return it.Split != splitVal && it.Split != splitTest
 }
 
-func labelLines(boxes []ItemBox, oriented bool) string {
+func labelLines(boxes []ItemBox, oriented bool, keypoints int) string {
 	var b strings.Builder
 	for _, box := range boxes {
+		if keypoints > 0 {
+			cx := clamp01(box.X + box.W/2)
+			cy := clamp01(box.Y + box.H/2)
+			fmt.Fprintf(&b, "%d %.6f %.6f %.6f %.6f", box.Class, cx, cy, clamp01(box.W), clamp01(box.H))
+			for i := range keypoints {
+				x, y, v := 0.0, 0.0, 0
+				if k := box.Keypoints; 3*i+2 < len(k) && k[3*i+2] != 0 && inFrame(k[3*i], k[3*i+1]) {
+					x, y, v = k[3*i], k[3*i+1], int(k[3*i+2])
+				}
+				fmt.Fprintf(&b, " %.6f %.6f %d", x, y, v)
+			}
+			b.WriteByte('\n')
+			continue
+		}
 		if oriented {
 			c := box.Corners
 			if len(c) != 8 {
@@ -75,11 +90,22 @@ func clamp01(v float64) float64 {
 	return min(max(v, 0), 1)
 }
 
-func dataYAML(classes []string, test bool) string {
+func inFrame(x, y float64) bool {
+	return x >= 0 && x <= 1 && y >= 0 && y <= 1
+}
+
+func dataYAML(classes []string, test bool, flipIdx []int) string {
 	var b strings.Builder
 	b.WriteString("path: .\ntrain: images/train\nval: images/val\n")
 	if test {
 		b.WriteString("test: images/test\n")
+	}
+	if len(flipIdx) > 0 {
+		idx := make([]string, len(flipIdx))
+		for i, j := range flipIdx {
+			idx[i] = strconv.Itoa(j)
+		}
+		fmt.Fprintf(&b, "kpt_shape: [%d, 3]\nflip_idx: [%s]\n", len(flipIdx), strings.Join(idx, ", "))
 	}
 	fmt.Fprintf(&b, "nc: %d\nnames:\n", len(classes))
 	for i, c := range classes {
@@ -109,7 +135,7 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open Opener, on
 		if err != nil {
 			return fmt.Errorf("add labels %s: %w", name, err)
 		}
-		if _, err := io.WriteString(lbl, labelLines(boxes, p.Oriented)); err != nil {
+		if _, err := io.WriteString(lbl, labelLines(boxes, p.Oriented, p.Keypoints)); err != nil {
 			return fmt.Errorf("write labels %s: %w", name, err)
 		}
 		return nil
@@ -180,14 +206,18 @@ func Write(ctx context.Context, w io.Writer, p Plan, m Manifest, open Opener, on
 	if err != nil {
 		return fmt.Errorf("add data.yaml: %w", err)
 	}
-	if _, err := io.WriteString(yaml, dataYAML(p.Classes, len(m.TestFiles) > 0)); err != nil {
+	if _, err := io.WriteString(yaml, dataYAML(p.Classes, len(m.TestFiles) > 0, p.FlipIdx)); err != nil {
 		return fmt.Errorf("write data.yaml: %w", err)
 	}
 
 	m.Classes = p.Classes
-	m.Task = "detect"
-	if p.Oriented {
+	switch {
+	case p.Keypoints > 0:
+		m.Task = "pose"
+	case p.Oriented:
 		m.Task = "obb"
+	default:
+		m.Task = "detect"
 	}
 	manifest, err := create("manifest.json", zip.Deflate)
 	if err != nil {
@@ -216,6 +246,7 @@ type augmenter struct {
 	opts     *krillv1.Augmentation
 	n        int
 	oriented bool
+	flipIdx  []int
 	pick     func(*rand.Rand) *image.RGBA
 }
 
@@ -232,6 +263,7 @@ func newAugmenter(ctx context.Context, p Plan, m Manifest, open Opener) *augment
 		opts:     p.Augmentation,
 		n:        p.Copies,
 		oriented: p.Oriented,
+		flipIdx:  p.FlipIdx,
 	}
 	if len(p.Distractors) > 0 && p.Augmentation.GetDistractors() > 0 {
 		a.pick = newDistractorLibrary(ctx, p.Distractors, open).pick
@@ -252,7 +284,7 @@ func (a *augmenter) copies(jpg []byte, boxes []ItemBox) ([]augmented, error) {
 		r := rand.New(rand.NewPCG(a.rng.Uint64(), a.rng.Uint64())) //nolint:gosec // variety, not secrecy
 		g.Go(func() error {
 			img := &image.RGBA{Pix: slices.Clone(base.Pix), Stride: base.Stride, Rect: base.Rect}
-			img, bs := Augment(img, boxes, a.oriented, a.opts, r, a.pick)
+			img, bs := Augment(img, boxes, a.oriented, a.flipIdx, a.opts, r, a.pick)
 			var buf bytes.Buffer
 			if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: jpegQuality}); err != nil {
 				return fmt.Errorf("encode: %w", err)

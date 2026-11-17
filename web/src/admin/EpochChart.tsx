@@ -6,9 +6,18 @@ const W = 640
 const H = 160
 const PAD = 4
 
-const series = [
+const boxSeries = [
   { key: 'map50', label: 'mAP50', className: 'stroke-sky-300 dark:stroke-sky-700' },
   { key: 'map5095', label: 'mAP50-95', className: 'stroke-sky-500' },
+] as const
+
+const poseSeries = [
+  {
+    key: 'poseMap50',
+    label: 'Pose mAP50',
+    className: 'stroke-violet-300 dark:stroke-violet-700',
+  },
+  { key: 'poseMap5095', label: 'Pose mAP50-95', className: 'stroke-violet-500' },
 ] as const
 
 // Validation scores after each epoch, out of the run's total so the line
@@ -19,6 +28,8 @@ export function EpochChart({ history, epochs }: { history: EpochMetrics[]; epoch
   const x = (epoch: number) => PAD + ((epoch - 1) / (n - 1)) * (W - 2 * PAD)
   const y = (v: number) => H - PAD - Math.min(Math.max(v, 0), 1) * (H - 2 * PAD)
   const shown = hover !== null ? history[hover] : history.at(-1)
+  const pose = history.some((h) => h.poseLoss > 0)
+  const series = pose ? [...boxSeries, ...poseSeries] : boxSeries
 
   return (
     <div>
@@ -35,6 +46,14 @@ export function EpochChart({ history, epochs }: { history: EpochMetrics[]; epoch
             </span>
           </span>
         ))}
+        {pose && (
+          <span className="flex items-center gap-2">
+            <span className="text-zinc-500 dark:text-zinc-400">Pose loss</span>
+            <span className="font-medium text-zinc-950 tabular-nums dark:text-white">
+              {shown ? shown.poseLoss.toFixed(3) : '—'}
+            </span>
+          </span>
+        )}
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}

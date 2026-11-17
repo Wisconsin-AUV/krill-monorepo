@@ -30,6 +30,8 @@ const (
 // orientBoxes is what an orient task's reports are checked against.
 type orientBoxes struct {
 	labelTypeID int64
+	// pose is set when the task fits keypoints rather than corners.
+	pose *taxonomy.Pose
 	// updatedAt is when each of the task's boxes last changed before the fit.
 	updatedAt map[int64]pgtype.Timestamptz
 }
@@ -56,25 +58,49 @@ func (w *OrientWorker) Work(ctx context.Context, job *river.Job[taxonomy.OrientA
 	if err != nil {
 		return fmt.Errorf("load label type: %w", err)
 	}
-	if !lt.Oriented {
-		return nil
+	var pose *taxonomy.Pose
+	var rows []db.ListUnrotatedBoxesRow
+	if job.Args.Keypoints {
+		p, err := taxonomy.ParsePose(lt)
+		if err != nil {
+			return err
+		}
+		if !p.HasReference() || !lt.ReferenceKey.Valid {
+			return nil
+		}
+		pose = &p
+		unposed, err := q.ListUnposedBoxes(ctx, lt.ID)
+		if err != nil {
+			return fmt.Errorf("list boxes: %w", err)
+		}
+		rows = make([]db.ListUnrotatedBoxesRow, len(unposed))
+		for i, r := range unposed {
+			rows[i] = db.ListUnrotatedBoxesRow(r)
+		}
+	} else {
+		if !lt.Oriented {
+			return nil
+		}
+		if rows, err = q.ListUnrotatedBoxes(ctx, lt.ID); err != nil {
+			return fmt.Errorf("list boxes: %w", err)
+		}
 	}
 	ref, err := referenceURL(ctx, w.store, lt)
 	if err != nil {
 		return err
 	}
-	rows, err := q.ListUnrotatedBoxes(ctx, lt.ID)
-	if err != nil {
-		return fmt.Errorf("list boxes: %w", err)
-	}
 	frames := groupByFrame(rows)
 	for start := 0; start < len(frames); start += orientChunk {
 		chunk := frames[start:min(start+orientChunk, len(frames))]
-		if err := w.orient(ctx, job.ID, lt.ID, ref, chunk); err != nil {
+		if err := w.orient(ctx, job.ID, lt.ID, ref, pose, chunk); err != nil {
 			return err
 		}
 	}
-	slog.Info("rotations fit", "label_type_id", lt.ID, "frames", len(frames), "boxes", len(rows))
+	if pose != nil {
+		slog.Info("keypoints fit", "label_type_id", lt.ID, "frames", len(frames), "boxes", len(rows))
+	} else {
+		slog.Info("rotations fit", "label_type_id", lt.ID, "frames", len(frames), "boxes", len(rows))
+	}
 	return nil
 }
 
@@ -91,10 +117,14 @@ func groupByFrame(rows []db.ListUnrotatedBoxesRow) [][]db.ListUnrotatedBoxesRow 
 	return out
 }
 
-func (w *OrientWorker) orient(ctx context.Context, jobID, labelTypeID int64, ref string, frames [][]db.ListUnrotatedBoxesRow) error {
+func (w *OrientWorker) orient(ctx context.Context, jobID, labelTypeID int64, ref string, pose *taxonomy.Pose, frames [][]db.ListUnrotatedBoxesRow) error {
 	id := w.dispatcher.nextID()
 	msg := &krillv1.OrientTask{Id: id, ReferenceUrl: ref, Frames: make([]*krillv1.OrientFrame, len(frames))}
-	boxes := &orientBoxes{labelTypeID: labelTypeID, updatedAt: map[int64]pgtype.Timestamptz{}}
+	if pose != nil {
+		msg.KeypointCount = int32(pose.Count()) //nolint:gosec // keypoints per type are capped
+		msg.Quads = pose.QuadsProto()
+	}
+	boxes := &orientBoxes{labelTypeID: labelTypeID, pose: pose, updatedAt: map[int64]pgtype.Timestamptz{}}
 	for i, rows := range frames {
 		f := rows[0]
 		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(f.VideoID, f.FrameIdx), frameURLExpiry)
@@ -113,7 +143,7 @@ func (w *OrientWorker) orient(ctx context.Context, jobID, labelTypeID int64, ref
 	t.orient = boxes
 	if err := run(ctx, w.dispatcher, t, orientPickupTimeout); err != nil {
 		first, last := frames[0][0], frames[len(frames)-1][0]
-		return fmt.Errorf("fit rotations from frame %d to %d: %w", first.FrameID, last.FrameID, err)
+		return fmt.Errorf("fit frames %d to %d: %w", first.FrameID, last.FrameID, err)
 	}
 	return nil
 }

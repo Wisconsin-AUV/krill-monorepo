@@ -15,6 +15,15 @@ Each section needs example images of correct and incorrect labels.
 - Press E for frames with no objects. Empty frames are exported as negative examples.
 - Check the last frame of every tracked object. None of its boxes are exported until that frame is marked done.
 
+## Keypoints
+
+Types with keypoints still get a box around the whole object. Then place each keypoint, in the order the number and name by the cursor show.
+
+- Place a keypoint where it is, even when something covers it or it's outside the frame, and mark it hidden (Alt+click, or O). Clear it (X) only when you can't tell where it is.
+- A quad's corners go clockwise from the top left of the surface as it was printed, not as it appears on screen. A sheet turned on its side starts from the corner that was its top left.
+- When the type has a reference design, it is laid over the quad. If the design looks turned or stretched, a corner is wrong.
+- Shift+click a print inside the selected box to have SAM find its corners. Fix any keypoint SAM got wrong on one frame and press R. Tracking keeps the keypoints you placed on later frames.
+
 ## Roles
 
 Every type except `gate`, `torpedo_board`, and `table` has a `role` attribute for the symbol it shows. Export combines the type and role into one class, for example `role_sign-compass`.
@@ -32,6 +41,7 @@ Every type except `gate`, `torpedo_board`, and `table` has a `role` attribute fo
 ## Bins
 
 - `bin`: the whole bin opening, including the image inside it.
+- With keypoints, the sheet's four corners and the four outer corners of the crate's top rim. On angled views the rim corners go on the top of the near wall, not where the crate meets the floor.
 
 ## Table / Octagon
 

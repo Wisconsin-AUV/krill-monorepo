@@ -21,6 +21,9 @@ class Proposal:
     angle: float | None = None
     # Normalized corners of the rotated box, for oriented boxes.
     corners: tuple[Point, Point, Point, Point] | None = None
+    # Normalized keypoints in the model's order, for pose models. None where
+    # the model isn't sure enough of one to label it.
+    keypoints: tuple[Point | None, ...] = ()
 
 
 class PreLabeler(Protocol):

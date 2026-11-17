@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/logs"
 	"github.com/wauv/krill/api/internal/rpc"
+	"github.com/wauv/krill/api/internal/taxonomy"
 )
 
 // pollTimeout stays under common proxy idle timeouts.
@@ -70,6 +72,8 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 	if t.msg.GetTrack() == nil {
 		return nil, rpc.Invalid("task %d is not a track task", t.id)
 	}
+	msg := t.msg.GetTrack()
+	pose := taxonomy.Pose{Keypoints: make([]taxonomy.Keypoint, msg.GetKeypointCount()), Quads: taxonomy.QuadsFromProto(msg.GetQuads())}
 	n := len(req.GetBoxes())
 	p := db.UpsertProposalsParams{
 		TrackID:      t.trackID,
@@ -80,16 +84,26 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 		Heights:      make([]float64, 0, n),
 		HasCorners:   make([]bool, 0, n),
 		Corners:      make([]float64, 0, 8*n),
+		KeypointEnds: make([]int32, 0, n),
+		Keypoints:    make([]float64, 0, 3*pose.Count()*n),
 		Source:       "sam",
 		ModelVersion: req.GetModel(),
 	}
+	var prompt *promptKeypoints
 	for _, b := range req.GetBoxes() {
 		if !t.frames[b.GetFrameId()] {
 			return nil, rpc.Invalid("frame %d is not part of the task", b.GetFrameId())
 		}
-		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), t.msg.GetTrack().GetOriented())
+		x, y, w, h, corners, err := annotation.ClampCorners(b.GetBox(), msg.GetOriented())
 		if err != nil {
 			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
+		}
+		kps, err := annotation.ClampKeypoints(b.GetBox().GetKeypoints(), pose)
+		if err != nil {
+			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
+		}
+		if b.GetFrameId() == msg.GetFrames()[0].GetId() {
+			prompt = &promptKeypoints{frameID: b.GetFrameId(), keypoints: kps, refilled: pose.QuadSlots(msg.GetFill())}
 		}
 		p.FrameIds = append(p.FrameIds, b.GetFrameId())
 		p.Xs = append(p.Xs, x)
@@ -101,9 +115,11 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 			corners = make([]float64, 8)
 		}
 		p.Corners = append(p.Corners, corners...)
+		p.Keypoints = append(p.Keypoints, kps...)
+		p.KeypointEnds = append(p.KeypointEnds, int32(len(p.Keypoints))) //nolint:gosec // a report's keypoints fit in int32
 	}
 	if len(p.FrameIds) > 0 {
-		if err := s.saveProposals(ctx, p); err != nil {
+		if err := s.saveProposals(ctx, p, pose, prompt); err != nil {
 			// Usually the track was deleted while tracking ran.
 			t.finish(err)
 			return nil, rpc.Internal(err, "save boxes")
@@ -117,7 +133,16 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 	return &krillv1.ReportTrackResponse{}, nil
 }
 
-func (s *Service) saveProposals(ctx context.Context, p db.UpsertProposalsParams) error {
+// promptKeypoints are what the worker found on the frame it was prompted on.
+type promptKeypoints struct {
+	frameID   int64
+	keypoints []float64
+	// The keypoints of the quad the labeler asked to fill, which replace
+	// theirs.
+	refilled []int32
+}
+
+func (s *Service) saveProposals(ctx context.Context, p db.UpsertProposalsParams, pose taxonomy.Pose, prompt *promptKeypoints) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -126,6 +151,11 @@ func (s *Service) saveProposals(ctx context.Context, p db.UpsertProposalsParams)
 	q := s.q.WithTx(tx)
 	if _, err := q.UpsertProposals(ctx, p); err != nil {
 		return err
+	}
+	if prompt != nil && prompt.keypoints != nil {
+		if err := mergePromptKeypoints(ctx, q, p, pose, prompt); err != nil {
+			return err
+		}
 	}
 	boxes, err := q.ListTrackBoxes(ctx, p.TrackID)
 	if err != nil {
@@ -139,16 +169,43 @@ func (s *Service) saveProposals(ctx context.Context, p db.UpsertProposalsParams)
 	return tx.Commit(ctx)
 }
 
+// mergePromptKeypoints adds the keypoints the worker found on the prompt
+// frame, such as a quad it filled, to a box a labeler drew or accepted there,
+// which UpsertProposals leaves alone. The box keeps its bounds and every
+// keypoint already labeled except the filled quad's, and goes back to being
+// a proposal when any changes.
+func mergePromptKeypoints(ctx context.Context, q *db.Queries, p db.UpsertProposalsParams, pose taxonomy.Pose, prompt *promptKeypoints) error {
+	a, err := q.LockTrackAnnotation(ctx, db.LockTrackAnnotationParams{TrackID: p.TrackID, FrameID: prompt.frameID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if a.Status != "verified" {
+		return nil
+	}
+	merged := annotation.MergeKeypoints(a.Keypoints, prompt.keypoints, pose, prompt.refilled)
+	if merged == nil {
+		return nil
+	}
+	return q.ProposeKeypoints(ctx, db.ProposeKeypointsParams{ID: a.ID, Keypoints: merged, ModelVersion: p.ModelVersion})
+}
+
 // staleDrift compares each proposal with the track's box on the frame before
 // it, whoever drew that one, and returns the proposals whose stored flag is
 // out of date.
 func staleDrift(boxes []db.ListTrackBoxesRow) db.SetDriftParams {
 	var p db.SetDriftParams
 	var prev annotation.Rect
+	var prevKeypoints []float64
 	for i, b := range boxes {
 		cur := annotation.Rect{X: b.X, Y: b.Y, W: b.Width, H: b.Height}
 		flagged := i > 0 && annotation.Drifted(prev, cur)
-		prev = cur
+		if i > 0 && !flagged {
+			flagged = annotation.KeypointsDrifted(prevKeypoints, b.Keypoints, prev, float64(b.FrameWidth), float64(b.FrameHeight))
+		}
+		prev, prevKeypoints = cur, b.Keypoints
 		if b.Status != "proposed" {
 			continue
 		}
@@ -217,6 +274,9 @@ func (s *Service) ReportOrient(ctx context.Context, req *krillv1.ReportOrientReq
 	if t.msg.GetOrient() == nil {
 		return nil, rpc.Invalid("task %d is not an orient task", t.id)
 	}
+	if t.orient.pose != nil {
+		return s.reportFittedKeypoints(ctx, t, req)
+	}
 	n := len(req.GetBoxes())
 	p := db.SetFittedCornersParams{
 		LabelTypeID: t.orient.labelTypeID,
@@ -250,6 +310,46 @@ func (s *Service) ReportOrient(ctx context.Context, req *krillv1.ReportOrientReq
 	}
 	if len(p.Ids) > 0 {
 		if _, err := s.q.SetFittedCorners(ctx, p); err != nil {
+			t.finish(err)
+			return nil, rpc.Internal(err, "save boxes")
+		}
+	}
+	if req.GetDone() {
+		t.finish(nil)
+	} else {
+		t.touch()
+	}
+	return &krillv1.ReportOrientResponse{}, nil
+}
+
+func (s *Service) reportFittedKeypoints(ctx context.Context, t *task, req *krillv1.ReportOrientRequest) (*krillv1.ReportOrientResponse, error) {
+	n := len(req.GetBoxes())
+	p := db.SetFittedKeypointsParams{
+		LabelTypeID:  t.orient.labelTypeID,
+		Ids:          make([]int64, 0, n),
+		UpdatedAts:   make([]pgtype.Timestamptz, 0, n),
+		KeypointEnds: make([]int32, 0, n),
+		Keypoints:    make([]float64, 0, 3*t.orient.pose.Count()*n),
+	}
+	for _, b := range req.GetBoxes() {
+		updatedAt, ok := t.orient.updatedAt[b.GetAnnotationId()]
+		if !ok {
+			return nil, rpc.Invalid("box %d is not part of the task", b.GetAnnotationId())
+		}
+		kps, err := annotation.ClampKeypoints(b.GetBox().GetKeypoints(), *t.orient.pose)
+		if err != nil {
+			return nil, rpc.Invalid("box %d: %s", b.GetAnnotationId(), err)
+		}
+		if kps == nil {
+			continue
+		}
+		p.Ids = append(p.Ids, b.GetAnnotationId())
+		p.UpdatedAts = append(p.UpdatedAts, updatedAt)
+		p.Keypoints = append(p.Keypoints, kps...)
+		p.KeypointEnds = append(p.KeypointEnds, int32(len(p.Keypoints))) //nolint:gosec // a report's keypoints fit in int32
+	}
+	if len(p.Ids) > 0 {
+		if _, err := s.q.SetFittedKeypoints(ctx, p); err != nil {
 			t.finish(err)
 			return nil, rpc.Internal(err, "save boxes")
 		}

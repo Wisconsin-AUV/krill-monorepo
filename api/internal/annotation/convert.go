@@ -53,10 +53,12 @@ func Annotation(a db.Annotation) *krillv1.Annotation {
 		Id:      a.ID,
 		TrackId: a.TrackID,
 		FrameId: a.FrameID,
-		Box:     &krillv1.Box{X: a.X, Y: a.Y, Width: a.Width, Height: a.Height, Corners: Corners(a.Corners)},
-		Source:  sourceToProto[a.Source],
-		Status:  statusToProto[a.Status],
-		Drift:   a.Drift.String == "flagged",
+		Box: &krillv1.Box{
+			X: a.X, Y: a.Y, Width: a.Width, Height: a.Height, Corners: Corners(a.Corners), Keypoints: Keypoints(a.Keypoints),
+		},
+		Source: sourceToProto[a.Source],
+		Status: statusToProto[a.Status],
+		Drift:  a.Drift.String == "flagged",
 	}
 	if a.Confidence.Valid {
 		out.Confidence = &a.Confidence.Float32

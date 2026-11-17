@@ -4,13 +4,14 @@ from types import SimpleNamespace
 import cv2
 import numpy as np
 import pytest
-from krill.v1 import pipeline_pb2
+from krill.v1 import annotation_pb2, pipeline_pb2
 
+from krill_worker.pipeline import to_box
 from krill_worker.prelabelers import Frame
 from krill_worker.prelabelers.params import HsvRange, parse, specs
 from krill_worker.prelabelers.path_marker import PathMarker, PathMarkerParams
 from krill_worker.prelabelers.slalom import Slalom, SlalomParams
-from krill_worker.prelabelers.yolo import obb
+from krill_worker.prelabelers.yolo import obb, pose
 
 H, W = 480, 640
 POOL = (20, 90, 130)
@@ -144,3 +145,26 @@ def test_obb_results_become_ordered_corners_and_clipped_boxes() -> None:
     assert p.label == "marker"
     assert p.corners == ((-0.1, 0.2), (0.4, 0.4), (0.3, 0.6), (0.1, 0.5))
     assert p.box == pytest.approx((0.2, 0.4, 0.4, 0.4))
+
+
+def test_pose_results_label_only_the_keypoints_the_model_is_sure_of() -> None:
+    boxes = SimpleNamespace(
+        xywhn=np.array([[0.5, 0.5, 0.2, 0.4]]), conf=np.array([0.8]), cls=np.array([0.0])
+    )
+    keypoints = SimpleNamespace(
+        xyn=np.array([[[0.4, 0.3], [0.6, 0.3], [0.6, 0.7]]]),
+        conf=np.array([[0.9, 0.5, 0.49]]),
+    )
+    r = SimpleNamespace(boxes=boxes, keypoints=keypoints, names={0: "bin"})
+
+    (p,) = pose(r)
+    box = to_box(p)
+
+    assert p.label == "bin"
+    assert (box.x, box.y, box.width, box.height) == pytest.approx((0.4, 0.3, 0.2, 0.4))
+    visible = annotation_pb2.KEYPOINT_VISIBILITY_VISIBLE
+    assert [(k.x, k.y, k.visibility) for k in box.keypoints] == [
+        (0.4, 0.3, visible),
+        (0.6, 0.3, visible),
+        (0, 0, annotation_pb2.KEYPOINT_VISIBILITY_UNSPECIFIED),
+    ]

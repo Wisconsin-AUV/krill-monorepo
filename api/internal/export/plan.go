@@ -32,6 +32,7 @@ type LabelType struct {
 	Name       string
 	Attributes []taxonomy.Attribute
 	Oriented   bool
+	Pose       taxonomy.Pose
 }
 
 type Video struct {
@@ -54,7 +55,9 @@ type Box struct {
 	X, Y, W, H float64
 	// Corners are x1, y1, ..., x4, y4, or nil for an unrotated box.
 	Corners []float64
-	Status  string
+	// Keypoints are x, y, visibility triples, or nil when none is labeled.
+	Keypoints []float64
+	Status    string
 	// TrackUnconfirmed is set when the last box of the box's track is still a
 	// proposal.
 	TrackUnconfirmed bool
@@ -67,6 +70,9 @@ type ItemBox struct {
 	X, Y, W, H float64
 	// Corners are only kept for boxes of oriented types.
 	Corners []float64
+	// Keypoints are the plan's number of x, y, visibility triples, with
+	// unlabeled ones for keypoints the box's type doesn't have.
+	Keypoints []float64
 }
 
 type Item struct {
@@ -81,6 +87,10 @@ type Plan struct {
 	Stats   *krillv1.ExportStats
 	// Oriented plans are written as YOLO-OBB.
 	Oriented bool
+	// Keypoints plans are written as YOLO-pose with this many keypoints per
+	// box, which FlipIdx says how to swap when an image is mirrored.
+	Keypoints int
+	FlipIdx   []int
 	// Copies is how many augmented copies of each train item are written,
 	// with Augmentation.
 	Copies       int
@@ -103,14 +113,21 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 	classIDs := map[string]int{}
 	var classes []string
 	typesByID := map[int64]LabelType{}
+	oriented := false
 	for _, t := range types {
 		typesByID[t.ID] = t
-		stats.Oriented = stats.Oriented || t.Oriented
+		oriented = oriented || t.Oriented
+		stats.Keypoints = max(stats.Keypoints, int32(t.Pose.Count())) //nolint:gosec // keypoints per type are capped
 		for _, c := range taxonomy.Classes(t.Name, t.Attributes) {
 			classIDs[c] = len(classes)
 			classes = append(classes, c)
 		}
 	}
+
+	// A pose export has no room for corners, so oriented types export their
+	// bounds.
+	stats.Oriented = oriented && stats.Keypoints == 0
+	k := int(stats.Keypoints)
 
 	boxesByFrame := map[int64][]Box{}
 	for _, b := range boxes {
@@ -150,8 +167,12 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 					Class: classIDs[taxonomy.ClassName(t.Name, t.Attributes, b.Attributes)],
 					X:     b.X, Y: b.Y, W: b.W, H: b.H,
 				}
-				if t.Oriented {
+				if stats.Oriented && t.Oriented {
 					ib.Corners = b.Corners
+				}
+				if k > 0 {
+					ib.Keypoints = make([]float64, 3*k)
+					copy(ib.Keypoints, b.Keypoints[:min(len(b.Keypoints), 3*t.Pose.Count())])
 				}
 				item.Boxes = append(item.Boxes, ib)
 			}
@@ -233,7 +254,36 @@ func Build(opts Options, types []LabelType, videos []Video, frames []Frame, boxe
 	copies := max(opts.AugmentedCopies, 0)
 	stats.AugmentedImages = stats.TrainImages * int32(copies) //nolint:gosec // copies are at most maxAugmentedCopies
 
-	return Plan{Classes: classes, Items: items, Stats: stats, Oriented: stats.Oriented, Copies: copies}
+	return Plan{
+		Classes: classes, Items: items, Stats: stats, Oriented: stats.Oriented,
+		Keypoints: k, FlipIdx: flipIdx(types, k), Copies: copies,
+	}
+}
+
+// flipIdx maps each keypoint slot to the one it swaps with when an image is
+// mirrored, by the first type with that slot. Types that disagree can make
+// two slots swap with one, so a slot whose partner doesn't swap back keeps
+// its place.
+func flipIdx(types []LabelType, k int) []int {
+	if k == 0 {
+		return nil
+	}
+	out := make([]int, k)
+	for i := range out {
+		out[i] = i
+		for _, t := range types {
+			if i < t.Pose.Count() {
+				out[i] = t.Pose.Mirror(i)
+				break
+			}
+		}
+	}
+	for i, j := range slices.Clone(out) {
+		if out[j] != i {
+			out[i] = i
+		}
+	}
+	return out
 }
 
 // assignSplits keeps pinned videos where they are, then fills val with

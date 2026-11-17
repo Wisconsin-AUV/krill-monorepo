@@ -106,6 +106,11 @@ message EpochMetrics {
   double recall = 5;
   double map50 = 6;
   double map50_95 = 7;
+  // Pose models only.
+  double pose_loss = 8;
+  double kobj_loss = 9;
+  double pose_map50 = 10;
+  double pose_map50_95 = 11;
 }
 
 message ClassMetrics {
@@ -116,6 +121,9 @@ message ClassMetrics {
   double recall = 5;
   double map50 = 6;
   double map50_95 = 7;
+  // Of keypoints, for pose models.
+  double pose_map50 = 8;
+  double pose_map50_95 = 9;
 }
 
 message EvalMetrics {
@@ -164,6 +172,9 @@ message TrainingRun {
   repeated ModelClass classes = 25;
   // The model finds rotated boxes (YOLO-OBB).
   bool oriented = 26;
+  // Keypoints the model finds on each object (YOLO-pose). 0 for models
+  // without keypoints.
+  int32 keypoints = 27;
 }
 
 // ModelClass is one class of an uploaded model.
@@ -436,6 +447,9 @@ message ModelTrialClass {
   double precision = 7;
   // matched over matched plus missed.
   double recall = 8;
+  // Mean object keypoint similarity of matched boxes with keypoints, from 0
+  // to 1. Unset when none has keypoints.
+  optional double oks = 9;
 }
 
 // ModelTrialSummary scores a trial against the clip's verified boxes on
@@ -602,6 +616,8 @@ message TrainTask {
   // Presigned URLs of the distractor images, when the augmentation pastes
   // objects onto them.
   repeated string distractor_urls = 15;
+  // The dataset's labels have this many keypoints, so train a pose model.
+  int32 keypoints = 16;
 }
 
 // InspectTask loads uploaded weights and reports their classes.

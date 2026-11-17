@@ -26,6 +26,7 @@ import { useClaimNextClip } from '@/lib/queue'
 import type { TrackInfo } from '@/labeling/AnnotationLayer'
 import { resultBoxes, scoreColor } from '@/labeling/goldResult'
 import { GoldResultLayer } from '@/labeling/GoldResultLayer'
+import { keypointKeys } from '@/labeling/keypointEdit'
 import { LabelCanvas } from '@/labeling/LabelCanvas'
 import { localBackend } from '@/labeling/localBackend'
 import { TrackPanel } from '@/labeling/TrackPanel'
@@ -261,6 +262,11 @@ export function GoldCheckPage() {
             f: fit,
             h: () => labels().toggleHidden(),
             ...typeKeys,
+            ...keypointKeys(
+              selectedTrackId === null ? undefined : tracks.get(idKey(selectedTrackId))?.type,
+              selectedTrackId,
+              data.frameId,
+            ),
             Escape: () => labels().select(null),
             Tab: () => cycleSelection(1),
             'shift+Tab': () => cycleSelection(-1),

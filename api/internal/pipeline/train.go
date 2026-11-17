@@ -141,7 +141,11 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 		if err != nil {
 			return nil, fmt.Errorf("list label types: %w", err)
 		}
-		if err := sameOrientation(base.TrainingRun, anyOriented(types)); err != nil {
+		want, err := datasetTask(types)
+		if err != nil {
+			return nil, err
+		}
+		if err := sameTask(base.TrainingRun, want); err != nil {
 			return nil, invalidConfig{err}
 		}
 		baseCfg := &krillv1.TrainConfig{}
@@ -159,18 +163,53 @@ func (p *Pipeline) resolveConfig(ctx context.Context, q *db.Queries, in *krillv1
 	return out, nil
 }
 
-func anyOriented(types []db.LabelType) bool {
-	return slices.ContainsFunc(types, func(t db.LabelType) bool { return t.Oriented })
+// modelTask is what a model finds. A model is only fine-tuned into, or
+// compared with, another of the same task.
+type modelTask struct {
+	oriented  bool
+	keypoints int32
 }
 
-// sameOrientation fails when a base run's model can't be fine-tuned on a
-// dataset of the given orientation.
-func sameOrientation(base db.TrainingRun, oriented bool) error {
+func runTask(r db.TrainingRun) modelTask {
+	return modelTask{oriented: r.Oriented, keypoints: r.Keypoints}
+}
+
+func planTask(p export.Plan) modelTask {
+	return modelTask{oriented: p.Oriented, keypoints: int32(p.Keypoints)} //nolint:gosec // keypoints per type are capped
+}
+
+// datasetTask is the task a dataset of the label types trains, as
+// export.Build decides it.
+func datasetTask(types []db.LabelType) (modelTask, error) {
+	var t modelTask
+	for _, lt := range types {
+		pose, err := taxonomy.ParsePose(lt)
+		if err != nil {
+			return modelTask{}, err
+		}
+		t.oriented = t.oriented || lt.Oriented
+		t.keypoints = max(t.keypoints, int32(pose.Count())) //nolint:gosec // keypoints per type are capped
+	}
+	t.oriented = t.oriented && t.keypoints == 0
+	return t, nil
+}
+
+func (t modelTask) String() string {
 	switch {
-	case base.Oriented && !oriented:
-		return fmt.Errorf("run %d finds rotated boxes, but no label type is oriented", base.ID)
-	case !base.Oriented && oriented:
-		return fmt.Errorf("run %d finds unrotated boxes, but a label type is oriented", base.ID)
+	case t.keypoints > 0:
+		return fmt.Sprintf("boxes with %d keypoints", t.keypoints)
+	case t.oriented:
+		return "rotated boxes"
+	default:
+		return "unrotated boxes"
+	}
+}
+
+// sameTask fails when a base run's model can't be fine-tuned on a dataset of
+// the given task.
+func sameTask(base db.TrainingRun, want modelTask) error {
+	if have := runTask(base); have != want {
+		return fmt.Errorf("run %d finds %s, but the label types need %s", base.ID, have, want)
 	}
 	return nil
 }
@@ -329,6 +368,7 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	}
 	err = q.SetTrainingDataset(ctx, db.SetTrainingDatasetParams{
 		ID: id, Dataset: statsJSON, Classes: classesJSON, Epochs: cfg.GetEpochs(), Oriented: plan.Oriented,
+		Keypoints: int32(plan.Keypoints), //nolint:gosec // keypoints per type are capped
 	})
 	if err != nil {
 		return fmt.Errorf("save dataset stats: %w", err)
@@ -353,6 +393,7 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 		Batch:        cfg.GetBatch(),
 		HasTest:      stats.GetTestImages() > 0,
 		Oriented:     plan.Oriented,
+		Keypoints:    int32(plan.Keypoints), //nolint:gosec // keypoints per type are capped
 		Augmentation: cfg.GetAugmentation(),
 	}
 	if msg.DatasetUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingDatasetKey(id), trainURLExpiry); err != nil {
@@ -379,7 +420,7 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 		if err != nil {
 			return fmt.Errorf("load base run: %w", err)
 		}
-		if err := sameOrientation(row.TrainingRun, plan.Oriented); err != nil {
+		if err := sameTask(row.TrainingRun, planTask(plan)); err != nil {
 			return err
 		}
 		if msg.BaseWeightsUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingWeightsKey(base), trainURLExpiry); err != nil {
@@ -392,7 +433,7 @@ func (p *Pipeline) train(ctx context.Context, id int64) error {
 	case errors.Is(err, pgx.ErrNoRows):
 	case err != nil:
 		return fmt.Errorf("load pinned run: %w", err)
-	case sameClasses(pinned.Classes, classesJSON) && pinned.Oriented == plan.Oriented:
+	case sameClasses(pinned.Classes, classesJSON) && runTask(pinned) == planTask(plan):
 		state.baseline = pinned.ID
 		if msg.BaselineWeightsUrl, err = p.Store.PresignGetInternal(ctx, storage.TrainingWeightsKey(pinned.ID), trainURLExpiry); err != nil {
 			return err

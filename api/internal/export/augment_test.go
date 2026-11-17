@@ -129,7 +129,7 @@ func TestAugmentFlipLR(t *testing.T) {
 	fill(img, image.Rect(10, 20, 30, 40), white)
 	boxes := []ItemBox{{Class: 0, X: 0.1, Y: 0.2, W: 0.2, H: 0.2, Corners: []float64{0.1, 0.2, 0.3, 0.2, 0.3, 0.4, 0.1, 0.4}}}
 	a := &krillv1.Augmentation{Fliplr: 1, Aspect: 1}
-	out, got := Augment(img, boxes, true, a, testRand(), nil)
+	out, got := Augment(img, boxes, true, nil, a, testRand(), nil)
 	if len(got) != 1 {
 		t.Fatalf("%d boxes, want 1", len(got))
 	}
@@ -241,7 +241,7 @@ func TestAugmentPasteSkipsOverlaps(t *testing.T) {
 	a := &krillv1.Augmentation{Distractors: 1, Aspect: 1}
 	r := testRand()
 	for range 10 {
-		out, got := Augment(img, boxes, false, a, r, distractor)
+		out, got := Augment(img, boxes, false, nil, a, r, distractor)
 		if len(got) == 0 || len(got) == len(boxes) {
 			t.Fatalf("%d of %d boxes placed", len(got), len(boxes))
 		}
@@ -280,7 +280,7 @@ func TestAugmentPasteLeavesInputs(t *testing.T) {
 	}
 
 	distractor := func(*rand.Rand) *image.RGBA { return back }
-	out, got := Augment(img, nil, false, &krillv1.Augmentation{Distractors: 1, Aspect: 1}, testRand(), distractor)
+	out, got := Augment(img, nil, false, nil, &krillv1.Augmentation{Distractors: 1, Aspect: 1}, testRand(), distractor)
 	if len(got) != 0 || out.Rect.Dx() != 100 || out.Rect.Dy() != 80 {
 		t.Fatalf("frame without boxes: %d boxes, size %v", len(got), out.Rect)
 	}
@@ -305,5 +305,40 @@ func TestOverlappingShadowsStayWithinThePatchGain(t *testing.T) {
 				t.Fatalf("pixel channel %d = %d, want between %d and %d", i, c, lo, hi)
 			}
 		}
+	}
+}
+
+func TestAugmentFlipLRSwapsKeypoints(t *testing.T) {
+	img := solid(100, 100, black)
+	// Left and right corners of a sheet, and its center, which mirrors onto
+	// itself.
+	boxes := []ItemBox{{Class: 0, X: 0.1, Y: 0.2, W: 0.4, H: 0.2, Keypoints: []float64{0.1, 0.3, 2, 0.5, 0.3, 1, 0, 0, 0}}}
+	a := &krillv1.Augmentation{Fliplr: 1, Aspect: 1}
+	_, got := Augment(img, boxes, false, []int{1, 0, 2}, a, testRand(), nil)
+	if len(got) != 1 {
+		t.Fatalf("%d boxes, want 1", len(got))
+	}
+	if want := []float64{0.5, 0.3, 1, 0.9, 0.3, 2, 0, 0, 0}; !near(got[0].Keypoints, want) {
+		t.Errorf("keypoints = %v, want %v", got[0].Keypoints, want)
+	}
+}
+
+func TestTransformMovesKeypoints(t *testing.T) {
+	img := solid(100, 100, black)
+	box := ItemBox{Class: 0, X: 0.1, Y: 0.2, W: 0.2, H: 0.2, Keypoints: []float64{0.1, 0.2, 2, 0.3, 0.4, 1}}
+	_, bs := transform(img, toAugBoxes([]ItemBox{box}, false), rotate90(100, 100), 1, false)
+	got := fromAugBoxes(bs, false)
+	if want := []float64{0.2, 0.9, 2, 0.4, 0.7, 1}; len(got) != 1 || !near(got[0].Keypoints, want) {
+		t.Errorf("rotated keypoints = %+v, want %v", got, want)
+	}
+
+	// Half the box and one keypoint leave the frame.
+	shift := identity()
+	shift[0][2] = 80
+	box = ItemBox{Class: 0, X: 0.1, Y: 0.4, W: 0.2, H: 0.2, Keypoints: []float64{0.15, 0.5, 2, 0.25, 0.5, 2}}
+	_, bs = transform(img, toAugBoxes([]ItemBox{box}, false), shift, 1, false)
+	got = fromAugBoxes(bs, false)
+	if want := []float64{0.95, 0.5, 2, 0, 0, 0}; len(got) != 1 || !near(got[0].Keypoints, want) {
+		t.Errorf("shifted keypoints = %+v, want %v", got, want)
 	}
 }

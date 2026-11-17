@@ -64,7 +64,7 @@ func (s *Service) GetGoldAttempt(ctx context.Context, req *krillv1.GetGoldAttemp
 	}
 	// Matches are recomputed because only their totals are stored. The answer
 	// key is frozen when the frame is made gold, so they come out the same.
-	result := resultToProto(reference, answer, Score(reference, answer))
+	result := resultToProto(reference, answer, Score(reference, answer, Frame{Width: float64(a.Width), Height: float64(a.Height)}))
 	result.Score = a.Score
 	return &krillv1.GetGoldAttemptResponse{
 		Attempt: &krillv1.GoldAttempt{

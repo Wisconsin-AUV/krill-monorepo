@@ -4,6 +4,7 @@ package krill.v1;
 
 import "google/protobuf/timestamp.proto";
 import "krill/v1/annotation.proto";
+import "krill/v1/label.proto";
 import "krill/v1/log.proto";
 import "krill/v1/pipeline.proto";
 import "krill/v1/system.proto";
@@ -53,6 +54,10 @@ message TaskFrame {
   // Presigned URL of the frame's image embedding. Empty when the clip has
   // none.
   string embedding_url = 3;
+  // Keypoints a labeler placed or accepted on the tracked object's box on
+  // this frame, which tracking carries on from instead of its own. Empty on
+  // other frames and for other tasks.
+  repeated Keypoint keypoints = 4;
 }
 
 message TrackTask {
@@ -61,6 +66,8 @@ message TrackTask {
   repeated TaskFrame frames = 2;
   oneof prompt {
     Point point = 3;
+    // With the keypoints labeled on the first frame, which are tracked
+    // along with the box.
     Box box = 4;
   }
   // Model that computed the frames' embeddings. Workers running a different
@@ -69,8 +76,15 @@ message TrackTask {
   // Report rotated boxes, for oriented label types.
   bool oriented = 6;
   // Presigned URL of the label type's reference design, which rotated boxes
-  // are fit to when set.
+  // and reference quads are fit to when set.
   string reference_url = 7;
+  // Keypoints of the label type, which every reported box carries. 0 for
+  // types without keypoints.
+  int32 keypoint_count = 8;
+  repeated KeypointQuad quads = 9;
+  // A quad to fill on the first frame before tracking, from a point on its
+  // surface.
+  QuadPrompt fill = 10;
 }
 
 // EmbedTask computes the SAM image embedding of each frame.
@@ -95,13 +109,18 @@ message ExemplarTask {
 }
 
 // OrientTask fits a rotated box to each axis-aligned box of one oriented
-// label type.
+// label type, or the reference quad's keypoints to each box of a type with
+// keypoints.
 message OrientTask {
   int64 id = 1;
   repeated OrientFrame frames = 2;
   // Presigned URL of the label type's reference design. When empty, boxes
   // are fit to the object's SAM mask.
   string reference_url = 3;
+  // Set for types with keypoints, which are then reported instead of
+  // corners.
+  int32 keypoint_count = 4;
+  repeated KeypointQuad quads = 5;
 }
 
 message OrientFrame {
@@ -116,7 +135,8 @@ message OrientBox {
 
 message ReportOrientRequest {
   int64 task_id = 1;
-  // Boxes with corners. Boxes the worker couldn't fit are left out.
+  // Boxes with corners or keypoints. Boxes the worker couldn't fit are left
+  // out.
   repeated OrientBox boxes = 2;
   bool done = 3;
 }

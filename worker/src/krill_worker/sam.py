@@ -1,6 +1,6 @@
 import io
 import warnings
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from typing import Any
 
 import numpy as np
@@ -18,7 +18,7 @@ from transformers import (
 from krill_worker import attention
 from krill_worker.models import supports_exemplars
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, BoxPrompt, Embedding, Mask, PointPrompt, Prompt
+from krill_worker.track import Box, Embedding, Mask, PointPrompt, Prompt
 
 # Score a found object needs to be proposed. Labelers delete false positives,
 # so this leans toward recall.
@@ -130,10 +130,10 @@ class SamTracker:
             masks = self.processor.post_process_masks([out.pred_masks], original_sizes=[size])[0]
             yield masks[0, 0].cpu().numpy()
 
-    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
-        """The mask of the object in each box, encoding the frame only once."""
+    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
+        """The mask of the object each prompt points at, encoding the frame only once."""
         embedding = self._features(frame)
-        return [next(self.track([(frame, embedding)], BoxPrompt(b))) for b in boxes]
+        return [next(self.track([(frame, embedding)], p)) for p in prompts]
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
         """Return every object on the frame like the one in box, most confident first."""

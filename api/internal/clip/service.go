@@ -85,6 +85,7 @@ func (s *Service) GetClip(ctx context.Context, req *krillv1.GetClipRequest) (*kr
 		if !a.Oriented {
 			a.Annotation.Corners = nil
 		}
+		a.Annotation.Keypoints = annotation.PadKeypoints(a.Annotation.Keypoints, int(a.KeypointCount))
 		annotations[i] = annotation.Annotation(a.Annotation)
 	}
 
