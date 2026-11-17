@@ -83,7 +83,16 @@ def batched(items: Iterable[T], n: int) -> Iterator[list[T]]:
 
 def to_box(p: Proposal) -> annotation_pb2.Box:
     cx, cy, w, h = p.box
-    return to_proto((cx - w / 2, cy - h / 2, w, h), p.corners)
+    box = to_proto((cx - w / 2, cy - h / 2, w, h), p.corners)
+    box.keypoints.extend(
+        annotation_pb2.Keypoint()
+        if k is None
+        else annotation_pb2.Keypoint(
+            x=k[0], y=k[1], visibility=annotation_pb2.KEYPOINT_VISIBILITY_VISIBLE
+        )
+        for k in p.keypoints
+    )
+    return box
 
 
 def plugin(config: pipeline_pb2.PluginConfig) -> CvPreLabeler[object]:
@@ -195,10 +204,10 @@ def run_inspect(api: Api, task: pipeline_pb2.InspectTask) -> None:
 
     with tempfile.TemporaryDirectory(prefix="krill-inspect-") as tmp:
         model = YOLO(str(download(task.weights_url, Path(tmp) / "upload.pt")))
-    # Segment and pose models also find boxes, but their val and training
-    # need labels a Krill export doesn't have.
-    if model.task not in ("detect", "obb"):
-        raise ValueError(f"these are {model.task} weights, not detection or OBB weights")
+    # Segment models also find boxes, but their val and training need labels
+    # a Krill export doesn't have.
+    if model.task not in ("detect", "obb", "pose"):
+        raise ValueError(f"these are {model.task} weights, not detection, OBB, or pose weights")
     names = model.names
     api.finish_inspect(
         pipeline_worker_pb2.FinishInspectRequest(
@@ -206,6 +215,7 @@ def run_inspect(api: Api, task: pipeline_pb2.InspectTask) -> None:
             classes=[str(names[i]) for i in range(len(names))],
             image_size=image_size(model.overrides.get("imgsz")),
             oriented=model.task == "obb",
+            keypoints=int(model.model.yaml["kpt_shape"][0]) if model.task == "pose" else 0,
         )
     )
     log.info("inspected task %d: %d classes", task.id, len(names))

@@ -1,5 +1,5 @@
 import math
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import cast
 
@@ -14,7 +14,7 @@ from krill_worker.geometry import Corners, bounds, ordered, rotated_rect
 from krill_worker.main import run_orient, run_track
 from krill_worker.orient import fit, load_reference
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Box, Embedding, Mask, Prompt
+from krill_worker.track import Box, BoxPrompt, Embedding, Mask, Prompt
 
 FIXTURES = Path(__file__).parent / "fixtures"
 H, W = 480, 640
@@ -173,8 +173,11 @@ class MaskTracker:
         for frame, _ in frames:
             yield self.mask(frame)
 
-    def segment(self, frame: Frame, boxes: list[Box]) -> list[Mask | None]:
-        return [self.mask(frame) if b[0] < 0.5 else None for b in boxes]
+    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
+        return [
+            self.mask(frame) if isinstance(p, BoxPrompt) and p.box[0] < 0.5 else None
+            for p in prompts
+        ]
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
         raise AssertionError("not called")

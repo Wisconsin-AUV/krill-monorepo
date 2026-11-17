@@ -263,10 +263,24 @@ def trainer(
     return Trainer
 
 
+def shifted(
+    keypoints: npt.NDArray[np.float32], by: npt.NDArray[np.float32], w: int, h: int
+) -> npt.NDArray[np.float32]:
+    """Move each object's (x, y, visibility) pixel keypoints by its own (x, y)
+    offset. Keypoints that leave the image become unlabeled, as YOLO-pose
+    labels can't place them outside it."""
+    out = keypoints.copy()
+    out[..., :2] += by[:, None, :]
+    x, y = out[..., 0], out[..., 1]
+    out[(out[..., 2] == 0) | (x < 0) | (x > w) | (y < 0) | (y > h)] = 0
+    return out
+
+
 def pasted(label: dict[str, Any], distractor: Image, rng: np.random.Generator) -> None:
     """Paste the objects of an Ultralytics label onto the distractor, keeping
     its instances in the box format and normalization they came in. OBB labels
-    carry their corners as segments; detect labels only boxes."""
+    carry their corners as segments; detect and pose labels only boxes, and
+    pose labels keypoints that move with their object."""
     im = label["img"]
     h, w = im.shape[:2]
     instances = label["instances"]
@@ -284,13 +298,23 @@ def pasted(label: dict[str, Any], distractor: Image, rng: np.random.Generator) -
             for x1, y1, x2, y2 in boxes
         ]
 
-    im, polygons, kept = paste(im, polygons, distractor, rng)
+    im, moved, kept = paste(im, polygons, distractor, rng)
 
-    points = np.stack(polygons) if polygons else np.zeros((0, 4, 2), np.float32)
+    points = np.stack(moved) if moved else np.zeros((0, 4, 2), np.float32)
     boxes = np.concatenate([points.min(1), points.max(1)], 1).astype(np.float32)
     if oriented:
-        segments = points.astype(np.float32) if polygons else segments[:0]
-    out = type(instances)(boxes, segments, None, bbox_format="xyxy", normalized=False)
+        segments = points.astype(np.float32) if moved else segments[:0]
+    keypoints = instances.keypoints
+    if keypoints is not None:
+        # paste only moves objects, so any corner gives an object's offset.
+        by = np.array([m[0] - polygons[i][0] for m, i in zip(moved, kept, strict=True)])
+        keypoints = shifted(
+            np.asarray(keypoints, np.float32)[np.asarray(kept, int)],
+            by.reshape(-1, 2).astype(np.float32),
+            w,
+            h,
+        )
+    out = type(instances)(boxes, segments, keypoints, bbox_format="xyxy", normalized=False)
     out.convert_bbox(box_format)
     if normalized:
         out.normalize(w, h)
@@ -317,7 +341,6 @@ def varied(
             library is not None
             and im.ndim == 3
             and im.shape[2] == 3
-            and label["instances"].keypoints is None
             and rng.random() < aug.distractors
         ):
             distractor = library.pick(rng)

@@ -1,11 +1,15 @@
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from krill_worker.geometry import bounds, ordered
-from krill_worker.prelabelers import Frame, Proposal
+from krill_worker.prelabelers import Frame, Point, Proposal
+
+# Keypoints a pose model is less sure of than this are left unlabeled.
+KEYPOINT_CONFIDENCE = 0.5
 
 
 class YoloPreLabeler:
@@ -30,7 +34,7 @@ class YoloPreLabeler:
         results = self.model.predict(
             bgr, conf=self.min_confidence, imgsz=self.image_size, verbose=False
         )
-        read = obb if self.model.task == "obb" else boxes
+        read = {"obb": obb, "pose": pose}.get(self.model.task, boxes)
         return [read(r) for r in results]
 
 
@@ -55,4 +59,19 @@ def obb(r: Any) -> list[Proposal]:
         x, y, w, h = bounds(rect)
         box = (x + w / 2, y + h / 2, w, h)
         out.append(Proposal(r.names[int(c)], box, float(p), corners=rect))
+    return out
+
+
+def pose(r: Any) -> list[Proposal]:
+    """Proposals from a pose model, with the keypoints it is sure of."""
+    xyn = r.keypoints.xyn.tolist()
+    # Models trained on keypoints without visibility have no confidences.
+    conf = r.keypoints.conf.tolist() if r.keypoints.conf is not None else None
+    out = []
+    for i, p in enumerate(boxes(r)):
+        points: list[Point | None] = [
+            (x, y) if conf is None or conf[i][k] >= KEYPOINT_CONFIDENCE else None
+            for k, (x, y) in enumerate(xyn[i])
+        ]
+        out.append(replace(p, keypoints=tuple(points)))
     return out
