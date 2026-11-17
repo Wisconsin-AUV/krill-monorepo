@@ -8,14 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- Label types can have keypoints, exported and trained as YOLO-pose. A type's keypoints can form quads, the four corners of a flat surface like a printed sheet, and one quad can carry the type's reference design. Types without keypoints are exported with unlabeled ones, so every type can be in a pose export.
+- Label types can have up to 64 keypoints, exported and trained as YOLO-pose. Each keypoint can name the one it swaps with when an image is mirrored, so flips keep left and right apart. Four keypoints can form a quad, the corners of a flat surface like a printed sheet, with an optional keypoint where its diagonals cross, and one quad can carry the type's reference design. A type can't be both oriented and have keypoints, and a type whose boxes have keypoints can only be merged into one with the same keypoints.
 - Click to place the next keypoint, Alt+click to place it hidden, and drag keypoints to move them, with a magnifier while placing. O hides or shows a keypoint, X clears it, and W and Q step through them. The reference design is laid over its quad, so corners in the wrong order show up as a turned design.
-- SAM tracking carries keypoints along with the box. It finds the reference design's quad on every frame by itself, and keeps keypoints a labeler placed on later frames instead of its own. Shift+click a surface inside the selected box to have SAM fill its quad.
-- Fit keypoints, in a type's settings, finds the reference design's quad in the boxes the type already had.
-- YOLO-pose weights can be trained, uploaded, pinned, and trialed, and their pre-labels carry keypoints. Runs show pose mAP, and gold checks and model trials score keypoints by object keypoint similarity.
+- SAM tracking carries keypoints along with the box. It finds the reference design's quad on every frame by itself, and keeps keypoints a labeler placed on later frames instead of its own. Shift+click a surface inside the selected box to have SAM fill its quad. Keypoints that jump between frames get a drift flag like boxes do.
+- Fit keypoints, in a type's settings, finds the reference design's quad in the boxes the type already had. The boxes it fills become proposals again for a labeler to check.
+- YOLO-pose weights can be trained, uploaded, pinned, and trialed, and their pre-labels carry keypoints. Runs show pose mAP, and gold checks and model trials score keypoints by object keypoint similarity. A box with keypoints only counts as correct when they're close enough too.
 
 ### Changed
 
+- When any type has keypoints, exports and training use YOLO-pose instead of YOLO-OBB. Boxes of oriented types are then written unrotated, and boxes of types without keypoints get unlabeled ones.
+- A run can only be fine-tuned from, or compared against, a model with the same number of keypoints, so the first pose model has to be pinned by hand.
 - Training and exports don't rotate images by default, since the box around a rotated object is looser than the object. Saturation varies by 0.4 instead of 0.7, so classes told apart by color stay apart.
 
 ### Fixed
