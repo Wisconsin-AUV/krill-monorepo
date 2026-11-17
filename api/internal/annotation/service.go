@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"maps"
+	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -70,12 +71,34 @@ func (s *Service) typeAttributes(ctx context.Context, q *db.Queries, labelTypeID
 	return attrs, nil
 }
 
-func (s *Service) oriented(ctx context.Context, labelTypeID int64) (bool, error) {
+// shape is what a label type's boxes carry besides their bounds.
+type shape struct {
+	oriented bool
+	pose     taxonomy.Pose
+}
+
+func (s *Service) shape(ctx context.Context, labelTypeID int64) (shape, error) {
 	lt, err := s.q.GetLabelType(ctx, labelTypeID)
 	if err != nil {
-		return false, rpc.DBError(err, "label type")
+		return shape{}, rpc.DBError(err, "label type")
 	}
-	return lt.Oriented, nil
+	pose, err := taxonomy.ParsePose(lt)
+	if err != nil {
+		return shape{}, rpc.Internal(err, "decode label type")
+	}
+	return shape{oriented: lt.Oriented, pose: pose}, nil
+}
+
+// clamp is ClampCorners and ClampKeypoints for a box of the type.
+func (sh shape) clamp(b *krillv1.Box) (x, y, w, h float64, corners, keypoints []float64, err error) {
+	x, y, w, h, corners, err = ClampCorners(b, sh.oriented)
+	if err != nil {
+		return 0, 0, 0, 0, nil, nil, err
+	}
+	if keypoints, err = ClampKeypoints(b.GetKeypoints(), sh.pose); err != nil {
+		return 0, 0, 0, 0, nil, nil, err
+	}
+	return x, y, w, h, corners, keypoints, nil
 }
 
 // newTrackAttributes checks and encodes the attributes for a new track.
@@ -98,11 +121,11 @@ func (s *Service) newTrackAttributes(ctx context.Context, labelTypeID int64, val
 }
 
 func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackRequest) (*krillv1.CreateTrackResponse, error) {
-	oriented, err := s.oriented(ctx, req.GetLabelTypeId())
+	sh, err := s.shape(ctx, req.GetLabelTypeId())
 	if err != nil {
 		return nil, err
 	}
-	x, y, w, h, corners, err := ClampCorners(req.GetBox(), oriented)
+	x, y, w, h, corners, keypoints, err := sh.clamp(req.GetBox())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -133,7 +156,8 @@ func (s *Service) CreateTrack(ctx context.Context, req *krillv1.CreateTrackReque
 		return nil, rpc.Internal(err, "create box")
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
-		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, Corners: corners, UserID: auth.CallerID(ctx),
+		TrackID: track.ID, FrameID: frame.ID, X: x, Y: y, Width: w, Height: h, Corners: corners, Keypoints: keypoints,
+		UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create box")
@@ -198,6 +222,15 @@ func (s *Service) UpdateTrack(ctx context.Context, req *krillv1.UpdateTrackReque
 		if err := recordBoxEvents(ctx, q, auth.CallerID(ctx), track.ID, nil, opRelabel, rect{}); err != nil {
 			return nil, rpc.Internal(err, "update track")
 		}
+		same, err := s.sameKeypoints(ctx, track.LabelTypeID, labelTypeID)
+		if err != nil {
+			return nil, err
+		}
+		if !same {
+			if err := q.ClearTrackKeypoints(ctx, track.ID); err != nil {
+				return nil, rpc.Internal(err, "update track")
+			}
+		}
 	}
 	updated, err := q.UpdateTrack(ctx, db.UpdateTrackParams{
 		ID: track.ID, LabelTypeID: labelTypeID, Attributes: raw,
@@ -238,6 +271,20 @@ func (s *Service) DeleteTrack(ctx context.Context, req *krillv1.DeleteTrackReque
 	return &krillv1.DeleteTrackResponse{}, nil
 }
 
+// sameKeypoints reports whether two label types' keypoints are the same, so
+// a box's keypoints mean the same on either.
+func (s *Service) sameKeypoints(ctx context.Context, a, b int64) (bool, error) {
+	from, err := s.shape(ctx, a)
+	if err != nil {
+		return false, err
+	}
+	to, err := s.shape(ctx, b)
+	if err != nil {
+		return false, err
+	}
+	return slices.Equal(from.pose.Names(), to.pose.Names()), nil
+}
+
 // sameClip returns the track after checking the frame is in its clip.
 func (s *Service) sameClip(ctx context.Context, trackID, frameID int64) (db.Track, error) {
 	track, err := s.q.GetTrack(ctx, trackID)
@@ -259,11 +306,11 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	if err != nil {
 		return nil, err
 	}
-	oriented, err := s.oriented(ctx, track.LabelTypeID)
+	sh, err := s.shape(ctx, track.LabelTypeID)
 	if err != nil {
 		return nil, err
 	}
-	x, y, w, h, corners, err := ClampCorners(req.GetBox(), oriented)
+	x, y, w, h, corners, keypoints, err := sh.clamp(req.GetBox())
 	if err != nil {
 		return nil, rpc.Invalid("%s", err)
 	}
@@ -279,7 +326,7 @@ func (s *Service) SetBox(ctx context.Context, req *krillv1.SetBoxRequest) (*kril
 	}
 	ann, err := q.UpsertAnnotation(ctx, db.UpsertAnnotationParams{
 		TrackID: req.GetTrackId(), FrameID: frameID, X: x, Y: y, Width: w, Height: h, Corners: corners,
-		UserID: auth.CallerID(ctx),
+		Keypoints: keypoints, UserID: auth.CallerID(ctx),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "save box")

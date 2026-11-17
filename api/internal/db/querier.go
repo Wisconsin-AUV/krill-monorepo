@@ -29,6 +29,7 @@ type Querier interface {
 	ClaimClip(ctx context.Context, arg ClaimClipParams) (int64, error)
 	ClearEmptyFrame(ctx context.Context, id int64) error
 	ClearPassword(ctx context.Context, id uuid.UUID) error
+	ClearTrackKeypoints(ctx context.Context, trackID int64) error
 	CopyAnnotations(ctx context.Context, arg CopyAnnotationsParams) ([]Annotation, error)
 	CountActiveSessions(ctx context.Context) ([]CountActiveSessionsRow, error)
 	CountActiveTrainingRuns(ctx context.Context) (int32, error)
@@ -38,9 +39,12 @@ type Querier interface {
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
 	CountOpenPrelabels(ctx context.Context) (CountOpenPrelabelsRow, error)
 	CountOpenReviews(ctx context.Context) (int32, error)
+	// Covers tracks in the trash too, since they come back with their keypoints.
+	CountPosedBoxes(ctx context.Context, labelTypeID int64) (int32, error)
 	CountTrackAnnotations(ctx context.Context, trackID int64) (int32, error)
 	CountTrackValues(ctx context.Context, labelTypeID int64) ([]CountTrackValuesRow, error)
 	CountTracksForLabelType(ctx context.Context, labelTypeID int64) (CountTracksForLabelTypeRow, error)
+	CountUnposedBoxes(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUnrotatedBoxes(ctx context.Context, labelTypeID int64) (int32, error)
 	CountUsers(ctx context.Context) (int32, error)
 	// Held-out boxes are left out because no run trains on them.
@@ -183,10 +187,13 @@ type Querier interface {
 	InsertGoldFrame(ctx context.Context, arg InsertGoldFrameParams) (int64, error)
 	// Boxes a worker reports after the trial stopped are dropped. @corners holds
 	// eight values per box, which are ignored unless the box's @has_corners is
-	// set.
+	// set. @keypoints holds each box's keypoints one after another, with box
+	// i's ending at @keypoint_ends[i].
 	InsertModelTrialBoxes(ctx context.Context, arg InsertModelTrialBoxesParams) (int64, error)
 	// @corners holds eight values per box, which are kept only when the box's
-	// @has_corners is set and its track's label type is oriented.
+	// @has_corners is set and its track's label type is oriented. @keypoints
+	// holds each box's keypoints one after another, with box i's ending at
+	// @keypoint_ends[i].
 	InsertPrelabels(ctx context.Context, arg InsertPrelabelsParams) (int64, error)
 	InsertRejectedPrelabels(ctx context.Context, arg InsertRejectedPrelabelsParams) error
 	InsertStorageOrphans(ctx context.Context, arg []InsertStorageOrphansParams) (int64, error)
@@ -310,9 +317,11 @@ type Querier interface {
 	// is verified yet.
 	ListTypeTracks(ctx context.Context, arg ListTypeTracksParams) ([]ListTypeTracksRow, error)
 	ListUnlabeledClipFrames(ctx context.Context, clipID int64) ([]ListUnlabeledClipFramesRow, error)
+	ListUnposedBoxes(ctx context.Context, labelTypeID int64) ([]ListUnposedBoxesRow, error)
 	ListUnrotatedBoxes(ctx context.Context, labelTypeID int64) ([]ListUnrotatedBoxesRow, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ListUsersByID(ctx context.Context, ids []uuid.UUID) ([]User, error)
+	ListVerifiedKeypoints(ctx context.Context, trackID int64) ([]ListVerifiedKeypointsRow, error)
 	ListVideoClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListVideos(ctx context.Context) ([]ListVideosRow, error)
 	ListWorkerTokens(ctx context.Context) ([]ListWorkerTokensRow, error)
@@ -322,6 +331,7 @@ type Querier interface {
 	LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error)
 	LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error)
 	LockPrelabelRun(ctx context.Context, id int64) (string, error)
+	LockTrackAnnotation(ctx context.Context, arg LockTrackAnnotationParams) (LockTrackAnnotationRow, error)
 	LockTrashedVideo(ctx context.Context, id int64) (LockTrashedVideoRow, error)
 	// Locking keeps a frame from being marked done while its proposals are
 	// replaced.
@@ -360,6 +370,8 @@ type Querier interface {
 	// at negative indexes first avoids that.
 	ParkClips(ctx context.Context, videoID int64) error
 	PinTrainingRun(ctx context.Context, id int64) (int64, error)
+	// The box stays where it is, but someone has to check its keypoints.
+	ProposeKeypoints(ctx context.Context, arg ProposeKeypointsParams) error
 	QueueDistractor(ctx context.Context, id int64) (Distractor, error)
 	QueueIngest(ctx context.Context, id int64) (Video, error)
 	// Returns no row when the trial exists and is not failed or cancelled.
@@ -408,6 +420,10 @@ type Querier interface {
 	// are left alone, as are boxes moved to another type. @corners holds eight
 	// values per box.
 	SetFittedCorners(ctx context.Context, arg SetFittedCornersParams) (int64, error)
+	// Like SetFittedCorners, and also leaves boxes someone labeled keypoints on.
+	// @keypoints holds each box's keypoints one after another, with box i's
+	// ending at @keypoint_ends[i].
+	SetFittedKeypoints(ctx context.Context, arg SetFittedKeypointsParams) (int64, error)
 	// Credit stays with whoever first set the current status.
 	SetFrameStatus(ctx context.Context, arg SetFrameStatusParams) (SetFrameStatusRow, error)
 	SetIngestProgress(ctx context.Context, arg SetIngestProgressParams) error
@@ -450,7 +466,9 @@ type Querier interface {
 	UpsertPrelabelerSpec(ctx context.Context, arg UpsertPrelabelerSpecParams) error
 	// Only proposals are replaced. Boxes a labeler drew, accepted, or rejected stay.
 	// @corners holds eight values per box, which are ignored unless the box's
-	// @has_corners is set.
+	// @has_corners is set. @keypoints holds each box's keypoints one after
+	// another, with box i's ending at @keypoint_ends[i], and a box with none
+	// gets NULL.
 	UpsertProposals(ctx context.Context, arg UpsertProposalsParams) (int64, error)
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	UseApprovedEmail(ctx context.Context, arg UseApprovedEmailParams) error

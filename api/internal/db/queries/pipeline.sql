@@ -21,11 +21,11 @@ SELECT * FROM training_runs WHERE pinned;
 
 -- name: CreateUploadedTrainingRun :one
 INSERT INTO training_runs (
-    status, trigger, created_by, config, classes, filename, weights_bytes, oriented, started_at, finished_at
+    status, trigger, created_by, config, classes, filename, weights_bytes, oriented, keypoints, started_at, finished_at
 )
 VALUES (
     'succeeded', 'upload', sqlc.narg('created_by')::uuid, @config, @classes, @filename, @weights_bytes, @oriented,
-    now(), now()
+    @keypoints, now(), now()
 )
 RETURNING *;
 
@@ -43,7 +43,7 @@ UPDATE training_runs SET status = 'preparing', started_at = now()
 WHERE id = $1 AND status = 'queued';
 
 -- name: SetTrainingDataset :exec
-UPDATE training_runs SET dataset = @dataset, classes = @classes, epochs = @epochs, oriented = @oriented
+UPDATE training_runs SET dataset = @dataset, classes = @classes, epochs = @epochs, oriented = @oriented, keypoints = @keypoints
 WHERE id = @id;
 
 -- name: SetTrainingProgress :exec
@@ -235,8 +235,10 @@ RETURNING a.track_id;
 
 -- name: InsertPrelabels :execrows
 -- @corners holds eight values per box, which are kept only when the box's
--- @has_corners is set and its track's label type is oriented.
-INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, source, status, model_version, confidence)
+-- @has_corners is set and its track's label type is oriented. @keypoints
+-- holds each box's keypoints one after another, with box i's ending at
+-- @keypoint_ends[i].
+INSERT INTO annotations (track_id, frame_id, x, y, width, height, corners, keypoints, source, status, model_version, confidence)
 SELECT
     t.id,
     (@frame_ids::bigint[])[i],
@@ -245,6 +247,9 @@ SELECT
     (@widths::float8[])[i],
     (@heights::float8[])[i],
     CASE WHEN lt.oriented AND (@has_corners::bool[])[i] THEN (@corners::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    CASE WHEN (@keypoint_ends::int[])[i] > coalesce((@keypoint_ends::int[])[i - 1], 0)
+        THEN (@keypoints::float8[])[coalesce((@keypoint_ends::int[])[i - 1], 0) + 1:(@keypoint_ends::int[])[i]]
+    END,
     @source,
     'proposed',
     (@model_versions::text[])[i],

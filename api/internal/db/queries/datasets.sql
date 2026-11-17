@@ -56,7 +56,7 @@ WITH last_boxes AS (
     WHERE a.status <> 'rejected'
     ORDER BY a.track_id, f.idx DESC
 )
-SELECT a.frame_id, a.x, a.y, a.width, a.height, a.corners, a.status, t.label_type_id, t.attributes,
+SELECT a.frame_id, a.x, a.y, a.width, a.height, a.corners, a.keypoints, a.status, t.label_type_id, t.attributes,
     (l.status = 'proposed' AND l.source = 'sam')::bool AS track_unconfirmed
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id

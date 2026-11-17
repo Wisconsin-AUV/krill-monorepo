@@ -127,6 +127,9 @@ func (s *Service) AddModel(ctx context.Context, req *krillv1.AddModelRequest) (*
 		}
 		return nil, failed("could not read the weights: %s", err)
 	}
+	if res.GetKeypoints() < 0 {
+		return nil, failed("the weights report %d keypoints", res.GetKeypoints())
+	}
 	q := s.p.q
 	types, err := q.ListAllLabelTypes(ctx)
 	if err != nil {
@@ -171,6 +174,7 @@ func (s *Service) AddModel(ctx context.Context, req *krillv1.AddModelRequest) (*
 		Filename:     filename,
 		WeightsBytes: obj.Size,
 		Oriented:     res.GetOriented(),
+		Keypoints:    res.GetKeypoints(),
 	})
 	if err != nil {
 		return nil, rpc.Internal(err, "create run")

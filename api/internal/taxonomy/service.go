@@ -69,6 +69,11 @@ func toProto(lt db.LabelType, tracks, boxes int32) (*krillv1.LabelType, error) {
 		BoxCount:    boxes,
 		Oriented:    lt.Oriented,
 	}
+	pose, err := ParsePose(lt)
+	if err != nil {
+		return nil, err
+	}
+	out.Keypoints, out.Quads, out.Edges = pose.Proto()
 	for _, a := range attrs {
 		out.Attributes = append(out.Attributes, &krillv1.LabelAttribute{Name: a.Name, Options: a.Options})
 	}
@@ -87,6 +92,8 @@ type typeInput struct {
 	name, title, color, description, guideline string
 	attrs                                      []byte
 	oriented                                   bool
+	pose                                       Pose
+	keypoints, quads, edges                    []byte
 }
 
 type typeRequest interface {
@@ -97,6 +104,7 @@ type typeRequest interface {
 	GetGuideline() string
 	GetAttributes() []*krillv1.LabelAttribute
 	GetOriented() bool
+	poseRequest
 }
 
 func validate(req typeRequest) (typeInput, error) {
@@ -126,6 +134,13 @@ func validate(req typeRequest) (typeInput, error) {
 	}
 	if in.attrs, err = json.Marshal(clean); err != nil {
 		return typeInput{}, rpc.Internal(err, "encode attributes")
+	}
+	in.pose = poseFromProto(req)
+	if err := in.pose.validate(in.oriented); err != nil {
+		return typeInput{}, rpc.Invalid("%s", err)
+	}
+	if in.keypoints, in.quads, in.edges, err = in.pose.Encode(); err != nil {
+		return typeInput{}, rpc.Internal(err, "encode keypoints")
 	}
 	return in, nil
 }
@@ -166,6 +181,7 @@ func (s *Service) list(ctx context.Context, q *db.Queries) ([]*krillv1.LabelType
 		}
 		out[i].Examples = byType[r.LabelType.ID]
 		out[i].UnrotatedBoxCount = r.UnrotatedBoxCount
+		out[i].UnposedBoxCount = r.UnposedBoxCount
 		if k := r.LabelType.ReferenceKey; k.Valid {
 			if out[i].ReferenceUrl, err = s.store.PresignGet(ctx, k.String, urlExpiry, ""); err != nil {
 				slog.WarnContext(ctx, "presign label reference", "label_type_id", r.LabelType.ID, "err", err)
@@ -197,6 +213,7 @@ func (s *Service) CreateLabelType(ctx context.Context, req *krillv1.CreateLabelT
 	lt, err := q.CreateLabelType(ctx, db.CreateLabelTypeParams{
 		Name: in.name, Title: in.title, Color: in.color, Description: in.description,
 		Guideline: in.guideline, Attributes: in.attrs, Oriented: in.oriented,
+		Keypoints: in.keypoints, Quads: in.quads, KeypointEdges: in.edges,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -232,9 +249,24 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 	if err != nil {
 		return nil, rpc.DBError(err, "label type")
 	}
+	oldPose, err := ParsePose(before)
+	if err != nil {
+		return nil, rpc.Internal(err, "decode label type")
+	}
+	if in.pose.Rekeyed(oldPose) {
+		posed, err := q.CountPosedBoxes(ctx, before.ID)
+		if err != nil {
+			return nil, rpc.Internal(err, "count boxes")
+		}
+		if posed > 0 {
+			return nil, connect.NewError(connect.CodeFailedPrecondition,
+				fmt.Errorf("%d boxes have keypoints labeled; keypoints can only be added after the last one", posed))
+		}
+	}
 	lt, err := q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
 		ID: req.GetId(), Name: in.name, Title: in.title, Color: in.color, Description: in.description,
 		Guideline: in.guideline, Attributes: in.attrs, Oriented: in.oriented,
+		Keypoints: in.keypoints, Quads: in.quads, KeypointEdges: in.edges,
 	})
 	if err != nil {
 		if dup := duplicateName(err, in.name); dup != nil {
@@ -331,6 +363,7 @@ func changedFields(a, b db.LabelType) []string {
 		{"guideline", a.Guideline != b.Guideline},
 		{"attributes", !bytes.Equal(a.Attributes, b.Attributes)},
 		{"oriented", a.Oriented != b.Oriented},
+		{"keypoints", !bytes.Equal(a.Keypoints, b.Keypoints) || !bytes.Equal(a.Quads, b.Quads) || !bytes.Equal(a.KeypointEdges, b.KeypointEdges)},
 	} {
 		if f.changed {
 			out = append(out, f.name)

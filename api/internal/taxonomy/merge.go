@@ -266,7 +266,35 @@ func planMerge(ctx context.Context, q *db.Queries, sourceID, targetID int64, req
 	if in.plan, err = PlanMerge(sourceAttrs, in.targetAttrs, observed, requested); err != nil {
 		return mergeInput{}, rpc.Invalid("%s", err)
 	}
+	if err := sameKeypoints(ctx, q, in.source, in.target); err != nil {
+		return mergeInput{}, err
+	}
 	return in, nil
+}
+
+// sameKeypoints fails when the source's boxes have keypoints labeled that
+// would mean something else on the target.
+func sameKeypoints(ctx context.Context, q *db.Queries, source, target db.LabelType) error {
+	from, err := ParsePose(source)
+	if err != nil {
+		return rpc.Internal(err, "decode label type")
+	}
+	to, err := ParsePose(target)
+	if err != nil {
+		return rpc.Internal(err, "decode label type")
+	}
+	if slices.Equal(from.Names(), to.Names()) {
+		return nil
+	}
+	posed, err := q.CountPosedBoxes(ctx, source.ID)
+	if err != nil {
+		return rpc.Internal(err, "count boxes")
+	}
+	if posed > 0 {
+		return connect.NewError(connect.CodeFailedPrecondition,
+			fmt.Errorf("%d boxes of %s have keypoints labeled, and %s's keypoints are different", posed, source.Name, target.Name))
+	}
+	return nil
 }
 
 func (s *Service) PreviewMergeLabelTypes(ctx context.Context, req *krillv1.PreviewMergeLabelTypesRequest) (*krillv1.PreviewMergeLabelTypesResponse, error) {

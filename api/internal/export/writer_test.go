@@ -89,7 +89,7 @@ func TestOrientedLabelLines(t *testing.T) {
 	}}
 	want := "0 0.200000 0.100000 0.400000 0.300000 0.200000 0.500000 0.000000 0.300000\n" +
 		"1 0.500000 0.600000 0.700000 0.600000 0.700000 0.700000 0.500000 0.700000\n"
-	if got := labelLines(it.Boxes, true); got != want {
+	if got := labelLines(it.Boxes, true, 0); got != want {
 		t.Errorf("labelLines = %q, want %q", got, want)
 	}
 }
@@ -149,5 +149,22 @@ func TestWriteAugmentedCopies(t *testing.T) {
 		if strings.Contains(name, "/val/") && strings.Contains(name, "_a") {
 			t.Errorf("val image augmented: %s", name)
 		}
+	}
+}
+
+func TestPoseLabelLines(t *testing.T) {
+	boxes := []ItemBox{
+		// Visible, hidden, past the right edge, and unlabeled.
+		{Class: 0, X: 0.1, Y: 0.2, W: 0.4, H: 0.2, Keypoints: []float64{0.1, 0.2, 2, 0.5, 0.4, 1, 1.2, 0.3, 2, 0.7, 0.7, 0}},
+		// A type without keypoints, or none labeled.
+		{Class: 1, X: 0.5, Y: 0.6, W: 0.2, H: 0.1},
+	}
+	want := "0 0.300000 0.300000 0.400000 0.200000 0.100000 0.200000 2 0.500000 0.400000 1 0.000000 0.000000 0 0.000000 0.000000 0\n" +
+		"1 0.600000 0.650000 0.200000 0.100000" + strings.Repeat(" 0.000000 0.000000 0", 4) + "\n"
+	if got := labelLines(boxes, false, 4); got != want {
+		t.Errorf("labelLines = %q, want %q", got, want)
+	}
+	if got, want := dataYAML([]string{"bin"}, false, []int{1, 0, 2}), "kpt_shape: [3, 3]\nflip_idx: [1, 0, 2]\n"; !strings.Contains(got, want) {
+		t.Errorf("data.yaml = %q, want it to contain %q", got, want)
 	}
 }

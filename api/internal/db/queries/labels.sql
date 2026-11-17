@@ -12,7 +12,11 @@ SELECT
     (
         SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
         WHERE t.label_type_id = lt.id AND lt.oriented AND a.corners IS NULL AND a.status <> 'rejected'
-    )::int AS unrotated_box_count
+    )::int AS unrotated_box_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
+        WHERE t.label_type_id = lt.id AND lt.keypoints <> '[]' AND a.keypoints IS NULL AND a.status <> 'rejected'
+    )::int AS unposed_box_count
 FROM label_types lt
 ORDER BY lt.position, lt.id;
 
@@ -20,13 +24,14 @@ ORDER BY lt.position, lt.id;
 SELECT * FROM label_types WHERE id = $1;
 
 -- name: CreateLabelType :one
-INSERT INTO label_types (name, title, color, description, guideline, attributes, oriented, position)
-VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
+INSERT INTO label_types (name, title, color, description, guideline, attributes, oriented, keypoints, quads, keypoint_edges, position)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, (SELECT coalesce(max(position), -1) + 1 FROM label_types))
 RETURNING *;
 
 -- name: UpdateLabelType :one
 UPDATE label_types
-SET name = $2, title = $3, color = $4, description = $5, guideline = $6, attributes = $7, oriented = $8
+SET name = $2, title = $3, color = $4, description = $5, guideline = $6, attributes = $7, oriented = $8,
+    keypoints = $9, quads = $10, keypoint_edges = $11
 WHERE id = $1
 RETURNING *;
 
@@ -183,3 +188,28 @@ JOIN tracks t ON t.id = a.track_id
 JOIN live_clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
 WHERE t.label_type_id = $1 AND a.corners IS NULL AND a.status <> 'rejected' AND v.status = 'ready';
+
+-- name: CountPosedBoxes :one
+-- Covers tracks in the trash too, since they come back with their keypoints.
+SELECT count(*)::int
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+WHERE t.label_type_id = $1 AND a.keypoints IS NOT NULL;
+
+-- name: ListUnposedBoxes :many
+SELECT a.id, a.frame_id, f.idx AS frame_idx, f.video_id, a.x, a.y, a.width, a.height, a.updated_at
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.id = a.frame_id
+WHERE t.label_type_id = $1 AND a.keypoints IS NULL AND a.status <> 'rejected' AND v.status = 'ready'
+ORDER BY f.video_id, f.idx, a.id;
+
+-- name: CountUnposedBoxes :one
+SELECT count(*)::int
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+WHERE t.label_type_id = $1 AND a.keypoints IS NULL AND a.status <> 'rejected' AND v.status = 'ready';

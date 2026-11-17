@@ -5,6 +5,7 @@ import (
 	"image/draw"
 	"math"
 	"math/rand/v2"
+	"slices"
 
 	xdraw "golang.org/x/image/draw"
 
@@ -55,12 +56,24 @@ type corners [8]float64
 type augBox struct {
 	class int
 	c     corners
+	// kps are x, y, visibility triples normalized to the frame.
+	kps []float64
+}
+
+// moveKeypoints moves each labeled keypoint with f.
+func (b *augBox) moveKeypoints(f func(x, y float64) (float64, float64)) {
+	for k := 0; k+2 < len(b.kps); k += 3 {
+		if b.kps[k+2] != 0 {
+			b.kps[k], b.kps[k+1] = f(b.kps[k], b.kps[k+1])
+		}
+	}
 }
 
 func toAugBoxes(boxes []ItemBox, oriented bool) []augBox {
 	out := make([]augBox, len(boxes))
 	for i, b := range boxes {
 		out[i].class = b.Class
+		out[i].kps = slices.Clone(b.Keypoints)
 		if oriented && len(b.Corners) == 8 {
 			copy(out[i].c[:], b.Corners)
 			continue
@@ -112,7 +125,7 @@ func fromAugBoxes(bs []augBox, oriented bool) []ItemBox {
 	for i, b := range bs {
 		x1, y1, x2, y2 := b.c.bounds()
 		x1, y1, x2, y2 = clamp01(x1), clamp01(y1), clamp01(x2), clamp01(y2)
-		out[i] = ItemBox{Class: b.class, X: x1, Y: y1, W: x2 - x1, H: y2 - y1}
+		out[i] = ItemBox{Class: b.class, X: x1, Y: y1, W: x2 - x1, H: y2 - y1, Keypoints: b.kps}
 		if oriented {
 			out[i].Corners = append([]float64(nil), b.c[:]...)
 		}
@@ -123,10 +136,12 @@ func fromAugBoxes(bs []augBox, oriented bool) []ItemBox {
 // Augment varies a frame and its boxes the way training would: Krill's own
 // effects as the worker applies them on load, then Ultralytics' warp, color
 // jitter, and flips. Boxes the warp pushes out of the frame, or that find no
-// free spot on a distractor, are dropped.
+// free spot on a distractor, are dropped. Keypoints move with their boxes,
+// become unlabeled when the warp pushes them out of the frame, and swap by
+// flipIdx when the image is mirrored left to right.
 // distractor returns an image to paste the objects onto, or nil when there
 // are none.
-func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augmentation, r *rand.Rand,
+func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, flipIdx []int, a *krillv1.Augmentation, r *rand.Rand,
 	distractor func(*rand.Rand) *image.RGBA,
 ) (*image.RGBA, []ItemBox) {
 	bs := toAugBoxes(boxes, oriented)
@@ -156,7 +171,7 @@ func Augment(img *image.RGBA, boxes []ItemBox, oriented bool, a *krillv1.Augment
 		flipUD(img, bs)
 	}
 	if r.Float64() < float64(a.GetFliplr()) {
-		flipLR(img, bs)
+		flipLR(img, bs, flipIdx)
 	}
 	return img, fromAugBoxes(bs, oriented)
 }
@@ -278,7 +293,9 @@ func pasteObjects(img *image.RGBA, bs []augBox, distractor *image.RGBA, r *rand.
 		}
 		q = q.scaled(1/fw, 1/fh)
 		q.clockwise()
-		kept = append(kept, augBox{class: b.class, c: q})
+		moved := augBox{class: b.class, c: q, kps: slices.Clone(b.kps)}
+		moved.moveKeypoints(func(x, y float64) (float64, float64) { return x + dx/fw, y + dy/fh })
+		kept = append(kept, moved)
 	}
 	return out, kept
 }
@@ -595,9 +612,30 @@ func transform(img *image.RGBA, bs []augBox, m mat3, s float64, oriented bool) (
 		}
 		p = p.scaled(1/fw, 1/fh)
 		p.clockwise()
-		out = append(out, augBox{class: b.class, c: p})
+		out = append(out, augBox{class: b.class, c: p, kps: warpKeypoints(b.kps, m, fw, fh)})
 	}
 	return warp(img, m), out
+}
+
+// warpKeypoints moves keypoints through m, as transform does corners, and
+// unlabels those that leave the frame.
+func warpKeypoints(kps []float64, m mat3, fw, fh float64) []float64 {
+	out := slices.Clone(kps)
+	for k := 0; k+2 < len(out); k += 3 {
+		if out[k+2] == 0 {
+			continue
+		}
+		x, y := out[k]*fw, out[k+1]*fh
+		d := m[2][0]*x + m[2][1]*y + m[2][2]
+		px := (m[0][0]*x + m[0][1]*y + m[0][2]) / d / fw
+		py := (m[1][0]*x + m[1][1]*y + m[1][2]) / d / fh
+		if d <= 0 || px < 0 || px > 1 || py < 0 || py > 1 {
+			out[k], out[k+1], out[k+2] = 0, 0, 0
+			continue
+		}
+		out[k], out[k+1] = px, py
+	}
+	return out
 }
 
 // warp maps each output pixel back through m and samples bilinearly, with
@@ -741,8 +779,9 @@ func hsvToRGB(h, s, v uint8) (r, g, b uint8) {
 }
 
 // flipLR mirrors the image and boxes. Mirroring reverses the corners'
-// winding, so they're put back in clockwise order.
-func flipLR(img *image.RGBA, bs []augBox) {
+// winding, so they're put back in clockwise order, and swaps left and right
+// keypoints, so slot i takes the keypoint from slot flipIdx[i].
+func flipLR(img *image.RGBA, bs []augBox, flipIdx []int) {
 	w, h := img.Rect.Dx(), img.Rect.Dy()
 	for y := range h {
 		row := img.Pix[y*img.Stride : y*img.Stride+w*4]
@@ -756,6 +795,14 @@ func flipLR(img *image.RGBA, bs []augBox) {
 			bs[i].c[j] = 1 - bs[i].c[j]
 		}
 		bs[i].c.clockwise()
+		bs[i].moveKeypoints(func(x, y float64) (float64, float64) { return 1 - x, y })
+		if len(bs[i].kps) == 3*len(flipIdx) {
+			swapped := make([]float64, len(bs[i].kps))
+			for k, from := range flipIdx {
+				copy(swapped[3*k:3*k+3], bs[i].kps[3*from:3*from+3])
+			}
+			bs[i].kps = swapped
+		}
 	}
 }
 
@@ -774,5 +821,6 @@ func flipUD(img *image.RGBA, bs []augBox) {
 			bs[i].c[j] = 1 - bs[i].c[j]
 		}
 		bs[i].c.clockwise()
+		bs[i].moveKeypoints(func(x, y float64) (float64, float64) { return x, 1 - y })
 	}
 }

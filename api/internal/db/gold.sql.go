@@ -279,20 +279,24 @@ func (q *Queries) ListClipGoldFrames(ctx context.Context, clipID int64) ([]int64
 }
 
 const listFrameGoldBoxes = `-- name: ListFrameGoldBoxes :many
-SELECT t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
+SELECT t.label_type_id, t.attributes, a.x, a.y, a.width, a.height, a.keypoints,
+    jsonb_array_length(lt.keypoints)::int AS keypoint_count
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
+JOIN label_types lt ON lt.id = t.label_type_id
 WHERE a.frame_id = $1 AND a.status <> 'rejected'
 ORDER BY a.id
 `
 
 type ListFrameGoldBoxesRow struct {
-	LabelTypeID int64   `json:"label_type_id"`
-	Attributes  []byte  `json:"attributes"`
-	X           float64 `json:"x"`
-	Y           float64 `json:"y"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
+	LabelTypeID   int64     `json:"label_type_id"`
+	Attributes    []byte    `json:"attributes"`
+	X             float64   `json:"x"`
+	Y             float64   `json:"y"`
+	Width         float64   `json:"width"`
+	Height        float64   `json:"height"`
+	Keypoints     []float64 `json:"keypoints"`
+	KeypointCount int32     `json:"keypoint_count"`
 }
 
 // Matches what the dataset export treats as labels on a done frame, so
@@ -313,6 +317,8 @@ func (q *Queries) ListFrameGoldBoxes(ctx context.Context, frameID int64) ([]List
 			&i.Y,
 			&i.Width,
 			&i.Height,
+			&i.Keypoints,
+			&i.KeypointCount,
 		); err != nil {
 			return nil, err
 		}

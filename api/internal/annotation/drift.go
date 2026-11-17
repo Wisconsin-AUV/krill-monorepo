@@ -7,6 +7,7 @@ import "math"
 const (
 	minDriftIoU       = 0.5
 	maxDriftAreaRatio = 1.5
+	minDriftOKS       = 0.5
 )
 
 // DuplicateIoU is the overlap above which two boxes of a frame are taken to
@@ -34,4 +35,11 @@ func iou(a, b Rect) float64 {
 func Drifted(prev, next Rect) bool {
 	ratio := next.area() / prev.area()
 	return iou(prev, next) < minDriftIoU || ratio > maxDriftAreaRatio || ratio < 1/maxDriftAreaRatio
+}
+
+// KeypointsDrifted reports whether next's keypoints moved too far from the
+// ones labeled on prev, the track's box on the frame before it.
+func KeypointsDrifted(prevKeypoints, nextKeypoints []float64, prev Rect, frameW, frameH float64) bool {
+	oks, ok := OKS(prevKeypoints, nextKeypoints, prev, frameW, frameH)
+	return ok && oks < minDriftOKS
 }

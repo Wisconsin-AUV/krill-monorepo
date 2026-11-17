@@ -113,7 +113,7 @@ func (q *Queries) GetDataset(ctx context.Context, id int64) (Dataset, error) {
 }
 
 const listAllLabelTypes = `-- name: ListAllLabelTypes :many
-SELECT id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key FROM label_types ORDER BY position, id
+SELECT id, name, color, description, position, attributes, created_at, title, guideline, oriented, reference_key, keypoints, quads, keypoint_edges FROM label_types ORDER BY position, id
 `
 
 func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
@@ -137,6 +137,9 @@ func (q *Queries) ListAllLabelTypes(ctx context.Context) ([]LabelType, error) {
 			&i.Guideline,
 			&i.Oriented,
 			&i.ReferenceKey,
+			&i.Keypoints,
+			&i.Quads,
+			&i.KeypointEdges,
 		); err != nil {
 			return nil, err
 		}
@@ -191,7 +194,7 @@ WITH last_boxes AS (
     WHERE a.status <> 'rejected'
     ORDER BY a.track_id, f.idx DESC
 )
-SELECT a.frame_id, a.x, a.y, a.width, a.height, a.corners, a.status, t.label_type_id, t.attributes,
+SELECT a.frame_id, a.x, a.y, a.width, a.height, a.corners, a.keypoints, a.status, t.label_type_id, t.attributes,
     (l.status = 'proposed' AND l.source = 'sam')::bool AS track_unconfirmed
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
@@ -213,6 +216,7 @@ type ListExportAnnotationsRow struct {
 	Width            float64   `json:"width"`
 	Height           float64   `json:"height"`
 	Corners          []float64 `json:"corners"`
+	Keypoints        []float64 `json:"keypoints"`
 	Status           string    `json:"status"`
 	LabelTypeID      int64     `json:"label_type_id"`
 	Attributes       []byte    `json:"attributes"`
@@ -238,6 +242,7 @@ func (q *Queries) ListExportAnnotations(ctx context.Context, videoIds []int64) (
 			&i.Width,
 			&i.Height,
 			&i.Corners,
+			&i.Keypoints,
 			&i.Status,
 			&i.LabelTypeID,
 			&i.Attributes,

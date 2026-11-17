@@ -77,8 +77,9 @@ WHERE status = 'running';
 -- name: InsertModelTrialBoxes :execrows
 -- Boxes a worker reports after the trial stopped are dropped. @corners holds
 -- eight values per box, which are ignored unless the box's @has_corners is
--- set.
-INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, confidence)
+-- set. @keypoints holds each box's keypoints one after another, with box
+-- i's ending at @keypoint_ends[i].
+INSERT INTO model_trial_boxes (trial_id, frame_id, class, x, y, width, height, corners, keypoints, confidence)
 SELECT
     @trial_id,
     (@frame_ids::bigint[])[i],
@@ -88,6 +89,9 @@ SELECT
     (@widths::float8[])[i],
     (@heights::float8[])[i],
     CASE WHEN (@has_corners::bool[])[i] THEN (@corners::float8[])[(i - 1) * 8 + 1:i * 8] END,
+    CASE WHEN (@keypoint_ends::int[])[i] > coalesce((@keypoint_ends::int[])[i - 1], 0)
+        THEN (@keypoints::float8[])[coalesce((@keypoint_ends::int[])[i - 1], 0) + 1:(@keypoint_ends::int[])[i]]
+    END,
     (@confidences::real[])[i]
 FROM generate_subscripts(@frame_ids::bigint[], 1) AS i
 WHERE EXISTS (SELECT 1 FROM model_trials t WHERE t.id = @trial_id AND t.status = 'running');
@@ -96,7 +100,7 @@ WHERE EXISTS (SELECT 1 FROM model_trials t WHERE t.id = @trial_id AND t.status =
 DELETE FROM model_trial_boxes WHERE trial_id = $1;
 
 -- name: ListModelTrialBoxes :many
-SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.confidence, b.track
+SELECT b.id, b.frame_id, f.idx AS frame_idx, b.class, b.x, b.y, b.width, b.height, b.corners, b.keypoints, b.confidence, b.track
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = $1
@@ -110,7 +114,7 @@ WHERE b.id = u.id AND b.trial_id = @trial_id;
 -- name: ListDoneTrialBoxes :many
 -- The boxes a summary scores: those at or above the threshold on frames
 -- someone marked done.
-SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height, b.keypoints
 FROM model_trial_boxes b
 JOIN frames f ON f.id = b.frame_id
 WHERE b.trial_id = @trial_id AND f.status <> 'unlabeled' AND b.confidence >= @min_confidence;
@@ -119,10 +123,12 @@ WHERE b.trial_id = @trial_id AND f.status <> 'unlabeled' AND b.confidence >= @mi
 SELECT id FROM frames WHERE clip_id = $1 AND status <> 'unlabeled' ORDER BY idx;
 
 -- name: ListDoneVerifiedBoxes :many
-SELECT a.frame_id, t.label_type_id, t.attributes, a.x, a.y, a.width, a.height
+SELECT a.frame_id, t.label_type_id, t.attributes, a.x, a.y, a.width, a.height, a.keypoints,
+    v.width AS frame_width, v.height AS frame_height
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 JOIN frames f ON f.id = a.frame_id
+JOIN videos v ON v.id = f.video_id
 WHERE f.clip_id = $1 AND f.status <> 'unlabeled' AND a.status = 'verified';
 
 -- name: ListRunTrialFrames :many
@@ -147,7 +153,8 @@ ORDER BY v.name, v.id, c.idx, f.idx;
 
 -- name: ListRunTrialVerifiedBoxes :many
 -- The verified boxes on the frames ListRunTrialFrames returns.
-SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height
+SELECT a.frame_id, tr.label_type_id, tr.attributes, a.x, a.y, a.width, a.height, a.keypoints,
+    v.width AS frame_width, v.height AS frame_height
 FROM model_trials t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id
@@ -162,7 +169,7 @@ WHERE t.training_run_id = @training_run_id AND t.status = 'succeeded'
 -- name: ListRunTrialBoxes :many
 -- The trial boxes on the frames ListRunTrialFrames returns, at or above the
 -- threshold.
-SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height
+SELECT b.frame_id, b.class, b.x, b.y, b.width, b.height, b.keypoints
 FROM model_trials t
 JOIN clips c ON c.id = t.clip_id
 JOIN videos v ON v.id = c.video_id

@@ -19,6 +19,7 @@ import (
 	"github.com/wauv/krill/api/internal/audit"
 	"github.com/wauv/krill/api/internal/db"
 	"github.com/wauv/krill/api/internal/storage"
+	"github.com/wauv/krill/api/internal/taxonomy"
 	"github.com/wauv/krill/api/internal/tracker"
 	"github.com/wauv/krill/api/internal/video"
 )
@@ -339,13 +340,14 @@ func (p *Pipeline) prelabelClip(ctx context.Context, runID int64, l *labeler, c 
 			model = b.GetPlugin()
 		}
 		dets = append(dets, detection{
-			frameID:  b.GetFrameId(),
-			frameIdx: idx[b.GetFrameId()],
-			box:      annotation.Box{X: x, Y: y, Width: w, Height: h},
-			corners:  corners,
-			conf:     min(max(b.GetConfidence(), 0), 1),
-			target:   tg.index,
-			model:    model,
+			frameID:   b.GetFrameId(),
+			frameIdx:  idx[b.GetFrameId()],
+			box:       annotation.Box{X: x, Y: y, Width: w, Height: h},
+			corners:   corners,
+			keypoints: b.GetBox().GetKeypoints(),
+			conf:      min(max(b.GetConfidence(), 0), 1),
+			target:    tg.index,
+			model:     model,
 		})
 	}
 	n, err := p.savePrelabels(ctx, runID, l, c, rows, dets)
@@ -440,7 +442,11 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 	}
 	kept = dropCovered(kept, existing)
 
-	ins := db.InsertPrelabelsParams{Source: l.source}
+	poses, err := labelTypePoses(ctx, q)
+	if err != nil {
+		return 0, err
+	}
+	ins := db.InsertPrelabelsParams{Source: l.source, KeypointEnds: []int32{}, Keypoints: []float64{}}
 	for _, group := range linkTracks(kept) {
 		tg := byIndex[kept[group[0]].target]
 		track, err := q.CreatePrelabelTrack(ctx, db.CreatePrelabelTrackParams{ClipID: c.ID, LabelTypeID: tg.labelTypeID, Attributes: tg.attributes})
@@ -461,6 +467,12 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 				corners = make([]float64, 8)
 			}
 			ins.Corners = append(ins.Corners, corners...)
+			pose := poses[tg.labelTypeID]
+			// A model's keypoints that don't make sense on the type are left
+			// for a labeler to place, like the rest of an unposed box's.
+			kps, _ := annotation.ClampKeypoints(annotation.ResizeKeypoints(d.keypoints, pose.Count()), pose)
+			ins.Keypoints = append(ins.Keypoints, kps...)
+			ins.KeypointEnds = append(ins.KeypointEnds, int32(len(ins.Keypoints))) //nolint:gosec // a clip's keypoints fit in int32
 			ins.ModelVersions = append(ins.ModelVersions, d.model)
 			ins.Confidences = append(ins.Confidences, d.conf)
 		}
@@ -475,4 +487,18 @@ func (p *Pipeline) savePrelabels(ctx context.Context, runID int64, l *labeler, c
 		return 0, err
 	}
 	return int(n), nil
+}
+
+func labelTypePoses(ctx context.Context, q *db.Queries) (map[int64]taxonomy.Pose, error) {
+	types, err := q.ListAllLabelTypes(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list label types: %w", err)
+	}
+	out := make(map[int64]taxonomy.Pose, len(types))
+	for _, t := range types {
+		if out[t.ID], err = taxonomy.ParsePose(t); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
 }
