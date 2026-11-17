@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-17
+
 ### Added
 
 - Label types can have up to 64 keypoints, exported and trained as YOLO-pose. Each keypoint can name the one it swaps with when an image is mirrored, so flips keep left and right apart. Four keypoints can form a quad, the corners of a flat surface like a printed sheet, with an optional keypoint where its diagonals cross, and one quad can carry the type's reference design. A type can't be both oriented and have keypoints, and a type whose boxes have keypoints can only be merged into one with the same keypoints.
@@ -220,7 +222,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.0...v0.6.1
