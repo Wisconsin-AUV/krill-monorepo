@@ -57,9 +57,15 @@ MAX_REFINE = 0.06
 # How far toward the quad's center, as a share of the way, a corner is
 # checked for paper. The paper's own edge is darker than its middle.
 INSET = 0.12
-# A corner within this share of its quad's size of an outline corner is
-# snapped to it.
+# Corners within this share of their quad's size of the outline's corners
+# are snapped to them.
 SNAP = 0.08
+# How far, as a share of the quad's size, the snapped corners may be from a
+# single affine move of the quad.
+SNAP_SHAPE = 0.015
+# Pixels past an object's outline a corner on its outline may sit, from the
+# outline's own jaggedness.
+OUTSIDE_PIXELS = 2.0
 # A tracked keypoint further than this many box sizes from the object's mask
 # has lost it.
 LOST = 0.75
@@ -333,8 +339,13 @@ def motion(
     prev: Gray, gray: Gray, prev_mask: Mask, mask: Mask | None
 ) -> npt.NDArray[np.float64] | None:
     """The object's motion between frames as a homography, from features
-    that flow inside its mask and back to where they started."""
-    region = cv2.dilate(prev_mask.astype(np.uint8) * 255, np.ones((15, 15), np.uint8))
+    that flow inside its mask and back to where they started.
+
+    Features on the floor around the object are left out. The floor sits
+    lower than a crate's rim, so it moves less as the camera moves, and
+    following it drags the rim's keypoints down the crate's walls.
+    """
+    region = cv2.erode(prev_mask.astype(np.uint8) * 255, np.ones((7, 7), np.uint8))
     p0 = cv2.goodFeaturesToTrack(prev, MAX_FEATURES, 0.01, 5, mask=region)
     if p0 is not None and len(p0) >= MIN_FEATURES:
         p1, ok1, _ = cv2.calcOpticalFlowPyrLK(
@@ -381,22 +392,49 @@ def transform(h: npt.NDArray[np.float64], points: npt.NDArray[np.float64]) -> Po
 
 
 def snap(corners: Points, mask: Mask) -> Points:
-    """Corners moved onto the mask outline's own corners where they line up."""
+    """Corners moved onto the mask outline's corners: all four when they line
+    up with it, else only the ones outside it.
+
+    Looking straight down, a crate's outline is its rim, and snapping to it
+    stops the rim's keypoints drifting. Seen at an angle the outline takes in
+    the near wall down to the floor, so the near corners belong inside it,
+    and snapping them would pull the rim down the wall a little more each
+    frame. The rim is never outside the crate's outline though, so a corner
+    that drifted out goes back to the outline's nearest corner.
+    """
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is None:
         return corners
     vertices = quad(outline)
     size = np.sqrt(abs(cv2.contourArea(corners))) + 1e-9
+    nearest = [int(np.argmin(np.linalg.norm(vertices - c, axis=1))) for c in corners]
+    near = [
+        float(np.linalg.norm(vertices[j] - c)) <= SNAP * size
+        for j, c in zip(nearest, corners, strict=True)
+    ]
+    if all(near) and len(set(nearest)) == 4 and moves_as_one(corners, vertices[nearest], size):
+        return np.asarray(vertices[nearest], np.float32)
     out = corners.copy()
-    taken: set[int] = set()
+    hull = outline.reshape(-1, 1, 2)
     for i, c in enumerate(corners):
-        d = np.linalg.norm(vertices - c, axis=1)
-        j = int(np.argmin(d))
-        if j not in taken and d[j] <= SNAP * size:
-            out[i] = vertices[j]
-            taken.add(j)
+        outside = cv2.pointPolygonTest(hull, (float(c[0]), float(c[1])), True) < -OUTSIDE_PIXELS
+        if outside and near[i]:
+            out[i] = vertices[nearest[i]]
     return out
+
+
+def moves_as_one(corners: Points, target: Points, size: float) -> bool:
+    """Whether moving corners onto target moves the quad as a whole: shifts,
+    turns, or scales it alike in every direction. A near wall the outline
+    takes in stretches it one way only."""
+    fit, _ = cv2.estimateAffinePartial2D(
+        corners.reshape(-1, 1, 2), target.reshape(-1, 1, 2), method=cv2.LMEDS
+    )
+    if fit is None:
+        return False
+    moved = cv2.transform(corners.reshape(-1, 1, 2), fit).reshape(4, 2)
+    return bool(np.linalg.norm(moved - target, axis=1).max() <= SNAP_SHAPE * size)
 
 
 def center(corners: Points) -> npt.NDArray[np.float64] | None:

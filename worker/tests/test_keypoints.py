@@ -20,6 +20,7 @@ from krill_worker.keypoints import (
     center,
     find_print,
     load_design,
+    snap,
 )
 from krill_worker.main import run_orient, run_track
 from krill_worker.prelabelers import Frame
@@ -98,6 +99,40 @@ def test_find_print_leaves_a_print_the_frame_edge_cuts_off() -> None:
     gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
 
     assert find_print(rgb, gray, mask, design(), None) is None
+
+
+def polygon_mask(points: list[tuple[int, int]]) -> Mask:
+    mask = np.zeros((300, 300), np.uint8)
+    cv2.fillPoly(mask, [np.array(points, np.int32)], 1)
+    return mask > 0
+
+
+RIM = np.array([[100, 100], [200, 100], [200, 200], [100, 200]], np.float32)
+
+
+def test_snap_leaves_the_rim_off_the_near_wall_below_it() -> None:
+    # Seen a little from the front, the crate's outline runs on down its near
+    # wall to the floor, a few pixels below the rim.
+    seen = polygon_mask([(100, 100), (200, 100), (200, 206), (100, 206)])
+
+    assert np.abs(snap(RIM, seen) - RIM).max() < 1
+
+
+def test_snap_pulls_back_a_corner_that_drifted_out_of_the_outline() -> None:
+    seen = polygon_mask([(100, 100), (200, 100), (200, 206), (100, 206)])
+    drifted = RIM.copy()
+    drifted[1] = (205, 96)
+
+    got = snap(drifted, seen)
+
+    assert got[1] == pytest.approx((200, 100), abs=1.5)
+    assert np.abs(got[2:] - RIM[2:]).max() < 1
+
+
+def test_snap_moves_the_whole_rim_onto_an_outline_seen_from_above() -> None:
+    shifted = polygon_mask([(104, 103), (204, 103), (204, 203), (104, 203)])
+
+    assert np.abs(snap(RIM, shifted) - RIM - np.array([4, 3])).max() < 1.5
 
 
 def test_center_is_where_the_diagonals_cross_in_perspective() -> None:
