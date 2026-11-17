@@ -85,6 +85,13 @@ message TrackTask {
   // A quad to fill on the first frame before tracking, from a point on its
   // surface.
   QuadPrompt fill = 10;
+  // Keypoints a labeler placed or accepted on the track's boxes before the
+  // first frame, oldest first, which show where keypoints sit on the object.
+  repeated KeypointSet labeled_before = 11;
+}
+
+message KeypointSet {
+  repeated Keypoint keypoints = 1;
 }
 
 // EmbedTask computes the SAM image embedding of each frame.
