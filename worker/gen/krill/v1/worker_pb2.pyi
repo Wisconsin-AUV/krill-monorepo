@@ -74,7 +74,7 @@ class TaskFrame(_message.Message):
     def __init__(self, id: _Optional[int] = ..., url: _Optional[str] = ..., embedding_url: _Optional[str] = ..., keypoints: _Optional[_Iterable[_Union[_annotation_pb2.Keypoint, _Mapping]]] = ...) -> None: ...
 
 class TrackTask(_message.Message):
-    __slots__ = ("id", "frames", "point", "box", "embedding_model", "oriented", "reference_url", "keypoint_count", "quads", "fill")
+    __slots__ = ("id", "frames", "point", "box", "embedding_model", "oriented", "reference_url", "keypoint_count", "quads", "fill", "labeled_before")
     ID_FIELD_NUMBER: _ClassVar[int]
     FRAMES_FIELD_NUMBER: _ClassVar[int]
     POINT_FIELD_NUMBER: _ClassVar[int]
@@ -85,6 +85,7 @@ class TrackTask(_message.Message):
     KEYPOINT_COUNT_FIELD_NUMBER: _ClassVar[int]
     QUADS_FIELD_NUMBER: _ClassVar[int]
     FILL_FIELD_NUMBER: _ClassVar[int]
+    LABELED_BEFORE_FIELD_NUMBER: _ClassVar[int]
     id: int
     frames: _containers.RepeatedCompositeFieldContainer[TaskFrame]
     point: _annotation_pb2.Point
@@ -95,7 +96,14 @@ class TrackTask(_message.Message):
     keypoint_count: int
     quads: _containers.RepeatedCompositeFieldContainer[_label_pb2.KeypointQuad]
     fill: _annotation_pb2.QuadPrompt
-    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., embedding_model: _Optional[str] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ..., keypoint_count: _Optional[int] = ..., quads: _Optional[_Iterable[_Union[_label_pb2.KeypointQuad, _Mapping]]] = ..., fill: _Optional[_Union[_annotation_pb2.QuadPrompt, _Mapping]] = ...) -> None: ...
+    labeled_before: _containers.RepeatedCompositeFieldContainer[KeypointSet]
+    def __init__(self, id: _Optional[int] = ..., frames: _Optional[_Iterable[_Union[TaskFrame, _Mapping]]] = ..., point: _Optional[_Union[_annotation_pb2.Point, _Mapping]] = ..., box: _Optional[_Union[_annotation_pb2.Box, _Mapping]] = ..., embedding_model: _Optional[str] = ..., oriented: _Optional[bool] = ..., reference_url: _Optional[str] = ..., keypoint_count: _Optional[int] = ..., quads: _Optional[_Iterable[_Union[_label_pb2.KeypointQuad, _Mapping]]] = ..., fill: _Optional[_Union[_annotation_pb2.QuadPrompt, _Mapping]] = ..., labeled_before: _Optional[_Iterable[_Union[KeypointSet, _Mapping]]] = ...) -> None: ...
+
+class KeypointSet(_message.Message):
+    __slots__ = ("keypoints",)
+    KEYPOINTS_FIELD_NUMBER: _ClassVar[int]
+    keypoints: _containers.RepeatedCompositeFieldContainer[_annotation_pb2.Keypoint]
+    def __init__(self, keypoints: _Optional[_Iterable[_Union[_annotation_pb2.Keypoint, _Mapping]]] = ...) -> None: ...
 
 class EmbedTask(_message.Message):
     __slots__ = ("id", "frames")

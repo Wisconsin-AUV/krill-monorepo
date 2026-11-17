@@ -46,6 +46,9 @@ MIN_COVER = 0.25
 # A fresh find further than this share of the quad's size from where the
 # print was tracked to is a different reading of it, not a correction.
 MAX_SHIFT = 0.3
+# How much better than the tracked print a fresh find must score to replace
+# it.
+FRESH_MARGIN = 0.05
 # ECC only polishes a fit. Where the crate hides part of the print nothing
 # holds those corners, and on paper curled up a wall it bends the design to
 # match, so a refinement moving a corner further than this share of the
@@ -54,9 +57,15 @@ MAX_REFINE = 0.06
 # How far toward the quad's center, as a share of the way, a corner is
 # checked for paper. The paper's own edge is darker than its middle.
 INSET = 0.12
-# A corner within this share of its quad's size of an outline corner is
-# snapped to it.
+# Corners within this share of their quad's size of the outline's corners
+# are snapped to them.
 SNAP = 0.08
+# How far, as a share of the quad's size, the snapped corners may be from a
+# single affine move of the quad.
+SNAP_SHAPE = 0.015
+# Pixels past an object's outline a corner on its outline may sit, from the
+# outline's own jaggedness.
+OUTSIDE_PIXELS = 2.0
 # A tracked keypoint further than this many box sizes from the object's mask
 # has lost it.
 LOST = 0.75
@@ -278,6 +287,10 @@ def find_print(
         for c in (refine(img, guess, design, paper), guess):
             if c is not None:
                 candidates.append((score(img, c, design, paper), c))
+    # A fresh find replaces the tracked print only when it matches clearly
+    # better. Paper half under a wall outlines a smaller quad that can match
+    # its visible part about as well as the whole print does.
+    bar = max((t[0] for t in candidates), default=-1.0) + FRESH_MARGIN
     contours, _ = cv2.findContours(paper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is not None:
@@ -286,7 +299,9 @@ def find_print(
         for c in (found, start):
             if c is None or (guess is not None and shift(c, guess) > MAX_SHIFT):
                 continue
-            candidates.append((score(img, c, design, paper), c))
+            s = score(img, c, design, paper)
+            if guess is None or s > bar:
+                candidates.append((s, c))
     if not candidates:
         return None
     best_score, best = max(candidates, key=lambda t: t[0])
@@ -324,8 +339,13 @@ def motion(
     prev: Gray, gray: Gray, prev_mask: Mask, mask: Mask | None
 ) -> npt.NDArray[np.float64] | None:
     """The object's motion between frames as a homography, from features
-    that flow inside its mask and back to where they started."""
-    region = cv2.dilate(prev_mask.astype(np.uint8) * 255, np.ones((15, 15), np.uint8))
+    that flow inside its mask and back to where they started.
+
+    Features on the floor around the object are left out. The floor sits
+    lower than a crate's rim, so it moves less as the camera moves, and
+    following it drags the rim's keypoints down the crate's walls.
+    """
+    region = cv2.erode(prev_mask.astype(np.uint8) * 255, np.ones((7, 7), np.uint8))
     p0 = cv2.goodFeaturesToTrack(prev, MAX_FEATURES, 0.01, 5, mask=region)
     if p0 is not None and len(p0) >= MIN_FEATURES:
         p1, ok1, _ = cv2.calcOpticalFlowPyrLK(
@@ -372,22 +392,49 @@ def transform(h: npt.NDArray[np.float64], points: npt.NDArray[np.float64]) -> Po
 
 
 def snap(corners: Points, mask: Mask) -> Points:
-    """Corners moved onto the mask outline's own corners where they line up."""
+    """Corners moved onto the mask outline's corners: all four when they line
+    up with it, else only the ones outside it.
+
+    Looking straight down, a crate's outline is its rim, and snapping to it
+    stops the rim's keypoints drifting. Seen at an angle the outline takes in
+    the near wall down to the floor, so the near corners belong inside it,
+    and snapping them would pull the rim down the wall a little more each
+    frame. The rim is never outside the crate's outline though, so a corner
+    that drifted out goes back to the outline's nearest corner.
+    """
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is None:
         return corners
     vertices = quad(outline)
     size = np.sqrt(abs(cv2.contourArea(corners))) + 1e-9
+    nearest = [int(np.argmin(np.linalg.norm(vertices - c, axis=1))) for c in corners]
+    near = [
+        float(np.linalg.norm(vertices[j] - c)) <= SNAP * size
+        for j, c in zip(nearest, corners, strict=True)
+    ]
+    if all(near) and len(set(nearest)) == 4 and moves_as_one(corners, vertices[nearest], size):
+        return np.asarray(vertices[nearest], np.float32)
     out = corners.copy()
-    taken: set[int] = set()
+    hull = outline.reshape(-1, 1, 2)
     for i, c in enumerate(corners):
-        d = np.linalg.norm(vertices - c, axis=1)
-        j = int(np.argmin(d))
-        if j not in taken and d[j] <= SNAP * size:
-            out[i] = vertices[j]
-            taken.add(j)
+        outside = cv2.pointPolygonTest(hull, (float(c[0]), float(c[1])), True) < -OUTSIDE_PIXELS
+        if outside and near[i]:
+            out[i] = vertices[nearest[i]]
     return out
+
+
+def moves_as_one(corners: Points, target: Points, size: float) -> bool:
+    """Whether moving corners onto target moves the quad as a whole: shifts,
+    turns, or scales it alike in every direction. A near wall the outline
+    takes in stretches it one way only."""
+    fit, _ = cv2.estimateAffinePartial2D(
+        corners.reshape(-1, 1, 2), target.reshape(-1, 1, 2), method=cv2.LMEDS
+    )
+    if fit is None:
+        return False
+    moved = cv2.transform(corners.reshape(-1, 1, 2), fit).reshape(4, 2)
+    return bool(np.linalg.norm(moved - target, axis=1).max() <= SNAP_SHAPE * size)
 
 
 def center(corners: Points) -> npt.NDArray[np.float64] | None:
@@ -444,10 +491,38 @@ def fill_quad(rgb: Frame, mask: Mask, design: Design | None) -> tuple[Points, li
     return np.roll(q, -first, axis=0), [VISIBLE] * 4
 
 
-class KeypointTracker:
-    """Carries keypoints from frame to frame along with the object's mask."""
+UNIT_SQUARE = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], np.float32)
 
-    def __init__(self, schema: Schema, design: Design | None, start: Keypoints) -> None:
+
+def surface(points: Keypoints, q: Quad) -> npt.NDArray[np.float64] | None:
+    """The map from the unit square onto quad q, when all its corners are
+    labeled."""
+    idx = list(q.corners)
+    if not (points[idx, 2] > UNLABELED).all():
+        return None
+    corners = points[idx, :2].astype(np.float32)
+    if abs(cv2.contourArea(corners)) < 1:
+        return None
+    return np.asarray(cv2.getPerspectiveTransform(UNIT_SQUARE, corners), np.float64)
+
+
+class KeypointTracker:
+    """Carries keypoints from frame to frame along with the object's mask.
+
+    Where keypoints off the reference quad sit on its surface is learned from
+    the frames a labeler labeled. Flow carries them, since a crate's rim sits
+    far enough above its print to shift against it as the camera moves, but
+    ones flow loses, or that were only labeled on earlier frames, are put back
+    from where they sat on the print.
+    """
+
+    def __init__(
+        self,
+        schema: Schema,
+        design: Design | None,
+        start: Keypoints,
+        earlier: Sequence[Keypoints] = (),
+    ) -> None:
         self.schema = schema
         self.design = design if schema.reference is not None else None
         self.points = start.copy()
@@ -455,6 +530,27 @@ class KeypointTracker:
         # back in the frame.
         self.given = start[:, 2].copy()
         self.prev: tuple[Gray, Mask] | None = None
+        # Keypoints off the reference quad, by where they sit on its unit
+        # square.
+        self.riding: dict[int, npt.NDArray[np.float64]] = {}
+        for labeled in earlier:
+            self.learn(labeled)
+        self.learn(start)
+
+    def learn(self, labeled: Keypoints, only_new: bool = False) -> None:
+        """Remember where labeled keypoints sit on the reference quad."""
+        ref = self.schema.reference
+        h = None if ref is None else surface(labeled, ref)
+        if ref is None or h is None:
+            return
+        on_quad = {*ref.corners, ref.center}
+        inverse = np.linalg.inv(h)
+        for i in np.flatnonzero(labeled[:, 2] > UNLABELED):
+            if int(i) in on_quad or (only_new and int(i) in self.riding):
+                continue
+            self.riding[int(i)] = transform(inverse, labeled[i : i + 1, :2])[0].astype(np.float64)
+            if self.given[i] == UNLABELED:
+                self.given[i] = labeled[i, 2]
 
     def fill(self, rgb: Frame, index: int, mask: Mask) -> None:
         """Place quad index's corners from the mask fill_quad takes."""
@@ -467,6 +563,7 @@ class KeypointTracker:
             self.points[i] = (c[0], c[1], v)
             self.given[i] = VISIBLE
         place_centers(self.points, self.schema)
+        self.learn(self.points)
 
     def anchor(self, labeled: Keypoints) -> None:
         """Take the labeler's keypoints on this frame over the tracked ones,
@@ -474,6 +571,7 @@ class KeypointTracker:
         placed = labeled[:, 2] > UNLABELED
         self.points[placed] = labeled[placed]
         self.given[placed] = labeled[placed, 2]
+        self.learn(self.points)
 
     def step(self, rgb: Frame, mask: Mask | None) -> Keypoints:
         """The keypoints on the next frame, in pixels."""
@@ -494,12 +592,14 @@ class KeypointTracker:
         self._lose_strays(mask)
         self._lose_folded(before)
         ref = self.schema.reference
+        if ref is not None and self.design is not None:
+            self._find_print(rgb, gray, mask, ref)
+        self._ride()
         for q in self.schema.quads:
-            if q is ref and self.design is not None:
-                self._find_print(rgb, gray, mask, q)
-            elif (self.points[list(q.corners), 2] > UNLABELED).all():
-                idx = list(q.corners)
-                self.points[idx, :2] = snap(self.points[idx, :2].astype(np.float32), mask)
+            if q is ref or not (self.points[list(q.corners), 2] > UNLABELED).all():
+                continue
+            idx = list(q.corners)
+            self.points[idx, :2] = snap(self.points[idx, :2].astype(np.float32), mask)
         self._out_of_frame(gray.shape)
         place_centers(self.points, self.schema)
         self.prev = (gray, mask)
@@ -519,6 +619,23 @@ class KeypointTracker:
         for i, c, v in zip(idx, corners, print_visibility(corners, paper), strict=True):
             self.points[i] = (c[0], c[1], v)
             self.given[i] = VISIBLE
+
+    def _ride(self) -> None:
+        ref = self.schema.reference
+        h = None if ref is None else surface(self.points, ref)
+        if h is None:
+            return
+        # Keypoints labeled before the print was first found learn their spot
+        # from where the motion has carried them.
+        self.learn(self.points, only_new=True)
+        if not self.riding:
+            return
+        idx = [i for i in self.riding if self.points[i, 2] == UNLABELED]
+        if not idx:
+            return
+        on_square = np.array([self.riding[i] for i in idx])
+        self.points[idx, :2] = transform(h, on_square)
+        self.points[idx, 2] = self.given[idx]
 
     def _lose_strays(self, mask: Mask) -> None:
         b = bounds(mask)

@@ -441,7 +441,10 @@ type TrackTask struct {
 	Quads         []*KeypointQuad `protobuf:"bytes,9,rep,name=quads,proto3" json:"quads,omitempty"`
 	// A quad to fill on the first frame before tracking, from a point on its
 	// surface.
-	Fill          *QuadPrompt `protobuf:"bytes,10,opt,name=fill,proto3" json:"fill,omitempty"`
+	Fill *QuadPrompt `protobuf:"bytes,10,opt,name=fill,proto3" json:"fill,omitempty"`
+	// Keypoints a labeler placed or accepted on the track's boxes before the
+	// first frame, oldest first, which show where keypoints sit on the object.
+	LabeledBefore []*KeypointSet `protobuf:"bytes,11,rep,name=labeled_before,json=labeledBefore,proto3" json:"labeled_before,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -557,6 +560,13 @@ func (x *TrackTask) GetFill() *QuadPrompt {
 	return nil
 }
 
+func (x *TrackTask) GetLabeledBefore() []*KeypointSet {
+	if x != nil {
+		return x.LabeledBefore
+	}
+	return nil
+}
+
 type isTrackTask_Prompt interface {
 	isTrackTask_Prompt()
 }
@@ -575,6 +585,50 @@ func (*TrackTask_Point) isTrackTask_Prompt() {}
 
 func (*TrackTask_Box) isTrackTask_Prompt() {}
 
+type KeypointSet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Keypoints     []*Keypoint            `protobuf:"bytes,1,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KeypointSet) Reset() {
+	*x = KeypointSet{}
+	mi := &file_krill_v1_worker_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KeypointSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeypointSet) ProtoMessage() {}
+
+func (x *KeypointSet) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_worker_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeypointSet.ProtoReflect.Descriptor instead.
+func (*KeypointSet) Descriptor() ([]byte, []int) {
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *KeypointSet) GetKeypoints() []*Keypoint {
+	if x != nil {
+		return x.Keypoints
+	}
+	return nil
+}
+
 // EmbedTask computes the SAM image embedding of each frame.
 type EmbedTask struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -586,7 +640,7 @@ type EmbedTask struct {
 
 func (x *EmbedTask) Reset() {
 	*x = EmbedTask{}
-	mi := &file_krill_v1_worker_proto_msgTypes[4]
+	mi := &file_krill_v1_worker_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -598,7 +652,7 @@ func (x *EmbedTask) String() string {
 func (*EmbedTask) ProtoMessage() {}
 
 func (x *EmbedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[4]
+	mi := &file_krill_v1_worker_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -611,7 +665,7 @@ func (x *EmbedTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmbedTask.ProtoReflect.Descriptor instead.
 func (*EmbedTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{4}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EmbedTask) GetId() int64 {
@@ -641,7 +695,7 @@ type EmbedFrame struct {
 
 func (x *EmbedFrame) Reset() {
 	*x = EmbedFrame{}
-	mi := &file_krill_v1_worker_proto_msgTypes[5]
+	mi := &file_krill_v1_worker_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -653,7 +707,7 @@ func (x *EmbedFrame) String() string {
 func (*EmbedFrame) ProtoMessage() {}
 
 func (x *EmbedFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[5]
+	mi := &file_krill_v1_worker_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -666,7 +720,7 @@ func (x *EmbedFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmbedFrame.ProtoReflect.Descriptor instead.
 func (*EmbedFrame) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{5}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *EmbedFrame) GetId() int64 {
@@ -702,7 +756,7 @@ type ExemplarTask struct {
 
 func (x *ExemplarTask) Reset() {
 	*x = ExemplarTask{}
-	mi := &file_krill_v1_worker_proto_msgTypes[6]
+	mi := &file_krill_v1_worker_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -714,7 +768,7 @@ func (x *ExemplarTask) String() string {
 func (*ExemplarTask) ProtoMessage() {}
 
 func (x *ExemplarTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[6]
+	mi := &file_krill_v1_worker_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -727,7 +781,7 @@ func (x *ExemplarTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExemplarTask.ProtoReflect.Descriptor instead.
 func (*ExemplarTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{6}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ExemplarTask) GetId() int64 {
@@ -771,7 +825,7 @@ type OrientTask struct {
 
 func (x *OrientTask) Reset() {
 	*x = OrientTask{}
-	mi := &file_krill_v1_worker_proto_msgTypes[7]
+	mi := &file_krill_v1_worker_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +837,7 @@ func (x *OrientTask) String() string {
 func (*OrientTask) ProtoMessage() {}
 
 func (x *OrientTask) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[7]
+	mi := &file_krill_v1_worker_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +850,7 @@ func (x *OrientTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrientTask.ProtoReflect.Descriptor instead.
 func (*OrientTask) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{7}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *OrientTask) GetId() int64 {
@@ -844,7 +898,7 @@ type OrientFrame struct {
 
 func (x *OrientFrame) Reset() {
 	*x = OrientFrame{}
-	mi := &file_krill_v1_worker_proto_msgTypes[8]
+	mi := &file_krill_v1_worker_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -856,7 +910,7 @@ func (x *OrientFrame) String() string {
 func (*OrientFrame) ProtoMessage() {}
 
 func (x *OrientFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[8]
+	mi := &file_krill_v1_worker_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -869,7 +923,7 @@ func (x *OrientFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrientFrame.ProtoReflect.Descriptor instead.
 func (*OrientFrame) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{8}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *OrientFrame) GetFrame() *TaskFrame {
@@ -896,7 +950,7 @@ type OrientBox struct {
 
 func (x *OrientBox) Reset() {
 	*x = OrientBox{}
-	mi := &file_krill_v1_worker_proto_msgTypes[9]
+	mi := &file_krill_v1_worker_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -908,7 +962,7 @@ func (x *OrientBox) String() string {
 func (*OrientBox) ProtoMessage() {}
 
 func (x *OrientBox) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[9]
+	mi := &file_krill_v1_worker_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -921,7 +975,7 @@ func (x *OrientBox) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrientBox.ProtoReflect.Descriptor instead.
 func (*OrientBox) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{9}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OrientBox) GetAnnotationId() int64 {
@@ -951,7 +1005,7 @@ type ReportOrientRequest struct {
 
 func (x *ReportOrientRequest) Reset() {
 	*x = ReportOrientRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[10]
+	mi := &file_krill_v1_worker_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -963,7 +1017,7 @@ func (x *ReportOrientRequest) String() string {
 func (*ReportOrientRequest) ProtoMessage() {}
 
 func (x *ReportOrientRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[10]
+	mi := &file_krill_v1_worker_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -976,7 +1030,7 @@ func (x *ReportOrientRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportOrientRequest.ProtoReflect.Descriptor instead.
 func (*ReportOrientRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{10}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ReportOrientRequest) GetTaskId() int64 {
@@ -1008,7 +1062,7 @@ type ReportOrientResponse struct {
 
 func (x *ReportOrientResponse) Reset() {
 	*x = ReportOrientResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[11]
+	mi := &file_krill_v1_worker_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1020,7 +1074,7 @@ func (x *ReportOrientResponse) String() string {
 func (*ReportOrientResponse) ProtoMessage() {}
 
 func (x *ReportOrientResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[11]
+	mi := &file_krill_v1_worker_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,7 +1087,7 @@ func (x *ReportOrientResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportOrientResponse.ProtoReflect.Descriptor instead.
 func (*ReportOrientResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{11}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{12}
 }
 
 type TrackedBox struct {
@@ -1046,7 +1100,7 @@ type TrackedBox struct {
 
 func (x *TrackedBox) Reset() {
 	*x = TrackedBox{}
-	mi := &file_krill_v1_worker_proto_msgTypes[12]
+	mi := &file_krill_v1_worker_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1058,7 +1112,7 @@ func (x *TrackedBox) String() string {
 func (*TrackedBox) ProtoMessage() {}
 
 func (x *TrackedBox) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[12]
+	mi := &file_krill_v1_worker_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1071,7 +1125,7 @@ func (x *TrackedBox) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackedBox.ProtoReflect.Descriptor instead.
 func (*TrackedBox) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{12}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TrackedBox) GetFrameId() int64 {
@@ -1101,7 +1155,7 @@ type ReportTrackRequest struct {
 
 func (x *ReportTrackRequest) Reset() {
 	*x = ReportTrackRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[13]
+	mi := &file_krill_v1_worker_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1113,7 +1167,7 @@ func (x *ReportTrackRequest) String() string {
 func (*ReportTrackRequest) ProtoMessage() {}
 
 func (x *ReportTrackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[13]
+	mi := &file_krill_v1_worker_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1126,7 +1180,7 @@ func (x *ReportTrackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportTrackRequest.ProtoReflect.Descriptor instead.
 func (*ReportTrackRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{13}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ReportTrackRequest) GetTaskId() int64 {
@@ -1165,7 +1219,7 @@ type ReportTrackResponse struct {
 
 func (x *ReportTrackResponse) Reset() {
 	*x = ReportTrackResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[14]
+	mi := &file_krill_v1_worker_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1177,7 +1231,7 @@ func (x *ReportTrackResponse) String() string {
 func (*ReportTrackResponse) ProtoMessage() {}
 
 func (x *ReportTrackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[14]
+	mi := &file_krill_v1_worker_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1244,7 @@ func (x *ReportTrackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportTrackResponse.ProtoReflect.Descriptor instead.
 func (*ReportTrackResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{14}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{15}
 }
 
 type ReportExemplarsRequest struct {
@@ -1205,7 +1259,7 @@ type ReportExemplarsRequest struct {
 
 func (x *ReportExemplarsRequest) Reset() {
 	*x = ReportExemplarsRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[15]
+	mi := &file_krill_v1_worker_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1217,7 +1271,7 @@ func (x *ReportExemplarsRequest) String() string {
 func (*ReportExemplarsRequest) ProtoMessage() {}
 
 func (x *ReportExemplarsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[15]
+	mi := &file_krill_v1_worker_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,7 +1284,7 @@ func (x *ReportExemplarsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportExemplarsRequest.ProtoReflect.Descriptor instead.
 func (*ReportExemplarsRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{15}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ReportExemplarsRequest) GetTaskId() int64 {
@@ -1262,7 +1316,7 @@ type ReportExemplarsResponse struct {
 
 func (x *ReportExemplarsResponse) Reset() {
 	*x = ReportExemplarsResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[16]
+	mi := &file_krill_v1_worker_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1328,7 @@ func (x *ReportExemplarsResponse) String() string {
 func (*ReportExemplarsResponse) ProtoMessage() {}
 
 func (x *ReportExemplarsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[16]
+	mi := &file_krill_v1_worker_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1341,7 @@ func (x *ReportExemplarsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportExemplarsResponse.ProtoReflect.Descriptor instead.
 func (*ReportExemplarsResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{16}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{17}
 }
 
 type ReportEmbedRequest struct {
@@ -1300,7 +1354,7 @@ type ReportEmbedRequest struct {
 
 func (x *ReportEmbedRequest) Reset() {
 	*x = ReportEmbedRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[17]
+	mi := &file_krill_v1_worker_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1312,7 +1366,7 @@ func (x *ReportEmbedRequest) String() string {
 func (*ReportEmbedRequest) ProtoMessage() {}
 
 func (x *ReportEmbedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[17]
+	mi := &file_krill_v1_worker_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1325,7 +1379,7 @@ func (x *ReportEmbedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportEmbedRequest.ProtoReflect.Descriptor instead.
 func (*ReportEmbedRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{17}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ReportEmbedRequest) GetTaskId() int64 {
@@ -1350,7 +1404,7 @@ type ReportEmbedResponse struct {
 
 func (x *ReportEmbedResponse) Reset() {
 	*x = ReportEmbedResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[18]
+	mi := &file_krill_v1_worker_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +1416,7 @@ func (x *ReportEmbedResponse) String() string {
 func (*ReportEmbedResponse) ProtoMessage() {}
 
 func (x *ReportEmbedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[18]
+	mi := &file_krill_v1_worker_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +1429,7 @@ func (x *ReportEmbedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportEmbedResponse.ProtoReflect.Descriptor instead.
 func (*ReportEmbedResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{18}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{19}
 }
 
 type FailTaskRequest struct {
@@ -1388,7 +1442,7 @@ type FailTaskRequest struct {
 
 func (x *FailTaskRequest) Reset() {
 	*x = FailTaskRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[19]
+	mi := &file_krill_v1_worker_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1400,7 +1454,7 @@ func (x *FailTaskRequest) String() string {
 func (*FailTaskRequest) ProtoMessage() {}
 
 func (x *FailTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[19]
+	mi := &file_krill_v1_worker_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1413,7 +1467,7 @@ func (x *FailTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FailTaskRequest.ProtoReflect.Descriptor instead.
 func (*FailTaskRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{19}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *FailTaskRequest) GetTaskId() int64 {
@@ -1438,7 +1492,7 @@ type FailTaskResponse struct {
 
 func (x *FailTaskResponse) Reset() {
 	*x = FailTaskResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[20]
+	mi := &file_krill_v1_worker_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1450,7 +1504,7 @@ func (x *FailTaskResponse) String() string {
 func (*FailTaskResponse) ProtoMessage() {}
 
 func (x *FailTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[20]
+	mi := &file_krill_v1_worker_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1463,7 +1517,7 @@ func (x *FailTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FailTaskResponse.ProtoReflect.Descriptor instead.
 func (*FailTaskResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{20}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{21}
 }
 
 type HeartbeatRequest struct {
@@ -1503,7 +1557,7 @@ type HeartbeatRequest struct {
 
 func (x *HeartbeatRequest) Reset() {
 	*x = HeartbeatRequest{}
-	mi := &file_krill_v1_worker_proto_msgTypes[21]
+	mi := &file_krill_v1_worker_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1515,7 +1569,7 @@ func (x *HeartbeatRequest) String() string {
 func (*HeartbeatRequest) ProtoMessage() {}
 
 func (x *HeartbeatRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[21]
+	mi := &file_krill_v1_worker_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1528,7 +1582,7 @@ func (x *HeartbeatRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeartbeatRequest.ProtoReflect.Descriptor instead.
 func (*HeartbeatRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{21}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *HeartbeatRequest) GetInstanceId() string {
@@ -1673,7 +1727,7 @@ type HeartbeatResponse struct {
 
 func (x *HeartbeatResponse) Reset() {
 	*x = HeartbeatResponse{}
-	mi := &file_krill_v1_worker_proto_msgTypes[22]
+	mi := &file_krill_v1_worker_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1685,7 +1739,7 @@ func (x *HeartbeatResponse) String() string {
 func (*HeartbeatResponse) ProtoMessage() {}
 
 func (x *HeartbeatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[22]
+	mi := &file_krill_v1_worker_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1698,7 +1752,7 @@ func (x *HeartbeatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeartbeatResponse.ProtoReflect.Descriptor instead.
 func (*HeartbeatResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{22}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *HeartbeatResponse) GetModel() string {
@@ -1732,7 +1786,7 @@ type WorkerCommand struct {
 
 func (x *WorkerCommand) Reset() {
 	*x = WorkerCommand{}
-	mi := &file_krill_v1_worker_proto_msgTypes[23]
+	mi := &file_krill_v1_worker_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1744,7 +1798,7 @@ func (x *WorkerCommand) String() string {
 func (*WorkerCommand) ProtoMessage() {}
 
 func (x *WorkerCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_worker_proto_msgTypes[23]
+	mi := &file_krill_v1_worker_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1757,7 +1811,7 @@ func (x *WorkerCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerCommand.ProtoReflect.Descriptor instead.
 func (*WorkerCommand) Descriptor() ([]byte, []int) {
-	return file_krill_v1_worker_proto_rawDescGZIP(), []int{23}
+	return file_krill_v1_worker_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *WorkerCommand) GetId() uint64 {
@@ -1795,7 +1849,7 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12#\n" +
 	"\rembedding_url\x18\x03 \x01(\tR\fembeddingUrl\x120\n" +
-	"\tkeypoints\x18\x04 \x03(\v2\x12.krill.v1.KeypointR\tkeypoints\"\x87\x03\n" +
+	"\tkeypoints\x18\x04 \x03(\v2\x12.krill.v1.KeypointR\tkeypoints\"\xc5\x03\n" +
 	"\tTrackTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
 	"\x06frames\x18\x02 \x03(\v2\x13.krill.v1.TaskFrameR\x06frames\x12'\n" +
@@ -1807,8 +1861,11 @@ const file_krill_v1_worker_proto_rawDesc = "" +
 	"\x0ekeypoint_count\x18\b \x01(\x05R\rkeypointCount\x12,\n" +
 	"\x05quads\x18\t \x03(\v2\x16.krill.v1.KeypointQuadR\x05quads\x12(\n" +
 	"\x04fill\x18\n" +
-	" \x01(\v2\x14.krill.v1.QuadPromptR\x04fillB\b\n" +
-	"\x06prompt\"I\n" +
+	" \x01(\v2\x14.krill.v1.QuadPromptR\x04fill\x12<\n" +
+	"\x0elabeled_before\x18\v \x03(\v2\x15.krill.v1.KeypointSetR\rlabeledBeforeB\b\n" +
+	"\x06prompt\"?\n" +
+	"\vKeypointSet\x120\n" +
+	"\tkeypoints\x18\x01 \x03(\v2\x12.krill.v1.KeypointR\tkeypoints\"I\n" +
 	"\tEmbedTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12,\n" +
 	"\x06frames\x18\x02 \x03(\v2\x14.krill.v1.EmbedFrameR\x06frames\"M\n" +
@@ -1927,7 +1984,7 @@ func file_krill_v1_worker_proto_rawDescGZIP() []byte {
 }
 
 var file_krill_v1_worker_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_krill_v1_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_krill_v1_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_krill_v1_worker_proto_goTypes = []any{
 	(ModelLoadState)(0),             // 0: krill.v1.ModelLoadState
 	(WorkerAction)(0),               // 1: krill.v1.WorkerAction
@@ -1935,93 +1992,96 @@ var file_krill_v1_worker_proto_goTypes = []any{
 	(*NextTaskResponse)(nil),        // 3: krill.v1.NextTaskResponse
 	(*TaskFrame)(nil),               // 4: krill.v1.TaskFrame
 	(*TrackTask)(nil),               // 5: krill.v1.TrackTask
-	(*EmbedTask)(nil),               // 6: krill.v1.EmbedTask
-	(*EmbedFrame)(nil),              // 7: krill.v1.EmbedFrame
-	(*ExemplarTask)(nil),            // 8: krill.v1.ExemplarTask
-	(*OrientTask)(nil),              // 9: krill.v1.OrientTask
-	(*OrientFrame)(nil),             // 10: krill.v1.OrientFrame
-	(*OrientBox)(nil),               // 11: krill.v1.OrientBox
-	(*ReportOrientRequest)(nil),     // 12: krill.v1.ReportOrientRequest
-	(*ReportOrientResponse)(nil),    // 13: krill.v1.ReportOrientResponse
-	(*TrackedBox)(nil),              // 14: krill.v1.TrackedBox
-	(*ReportTrackRequest)(nil),      // 15: krill.v1.ReportTrackRequest
-	(*ReportTrackResponse)(nil),     // 16: krill.v1.ReportTrackResponse
-	(*ReportExemplarsRequest)(nil),  // 17: krill.v1.ReportExemplarsRequest
-	(*ReportExemplarsResponse)(nil), // 18: krill.v1.ReportExemplarsResponse
-	(*ReportEmbedRequest)(nil),      // 19: krill.v1.ReportEmbedRequest
-	(*ReportEmbedResponse)(nil),     // 20: krill.v1.ReportEmbedResponse
-	(*FailTaskRequest)(nil),         // 21: krill.v1.FailTaskRequest
-	(*FailTaskResponse)(nil),        // 22: krill.v1.FailTaskResponse
-	(*HeartbeatRequest)(nil),        // 23: krill.v1.HeartbeatRequest
-	(*HeartbeatResponse)(nil),       // 24: krill.v1.HeartbeatResponse
-	(*WorkerCommand)(nil),           // 25: krill.v1.WorkerCommand
-	(*TrainTask)(nil),               // 26: krill.v1.TrainTask
-	(*PrelabelTask)(nil),            // 27: krill.v1.PrelabelTask
-	(*PreviewTask)(nil),             // 28: krill.v1.PreviewTask
-	(*InspectTask)(nil),             // 29: krill.v1.InspectTask
-	(*Keypoint)(nil),                // 30: krill.v1.Keypoint
-	(*Point)(nil),                   // 31: krill.v1.Point
-	(*Box)(nil),                     // 32: krill.v1.Box
-	(*KeypointQuad)(nil),            // 33: krill.v1.KeypointQuad
-	(*QuadPrompt)(nil),              // 34: krill.v1.QuadPrompt
-	(*timestamppb.Timestamp)(nil),   // 35: google.protobuf.Timestamp
-	(*HostStats)(nil),               // 36: krill.v1.HostStats
-	(*GpuStats)(nil),                // 37: krill.v1.GpuStats
-	(*LogRecord)(nil),               // 38: krill.v1.LogRecord
+	(*KeypointSet)(nil),             // 6: krill.v1.KeypointSet
+	(*EmbedTask)(nil),               // 7: krill.v1.EmbedTask
+	(*EmbedFrame)(nil),              // 8: krill.v1.EmbedFrame
+	(*ExemplarTask)(nil),            // 9: krill.v1.ExemplarTask
+	(*OrientTask)(nil),              // 10: krill.v1.OrientTask
+	(*OrientFrame)(nil),             // 11: krill.v1.OrientFrame
+	(*OrientBox)(nil),               // 12: krill.v1.OrientBox
+	(*ReportOrientRequest)(nil),     // 13: krill.v1.ReportOrientRequest
+	(*ReportOrientResponse)(nil),    // 14: krill.v1.ReportOrientResponse
+	(*TrackedBox)(nil),              // 15: krill.v1.TrackedBox
+	(*ReportTrackRequest)(nil),      // 16: krill.v1.ReportTrackRequest
+	(*ReportTrackResponse)(nil),     // 17: krill.v1.ReportTrackResponse
+	(*ReportExemplarsRequest)(nil),  // 18: krill.v1.ReportExemplarsRequest
+	(*ReportExemplarsResponse)(nil), // 19: krill.v1.ReportExemplarsResponse
+	(*ReportEmbedRequest)(nil),      // 20: krill.v1.ReportEmbedRequest
+	(*ReportEmbedResponse)(nil),     // 21: krill.v1.ReportEmbedResponse
+	(*FailTaskRequest)(nil),         // 22: krill.v1.FailTaskRequest
+	(*FailTaskResponse)(nil),        // 23: krill.v1.FailTaskResponse
+	(*HeartbeatRequest)(nil),        // 24: krill.v1.HeartbeatRequest
+	(*HeartbeatResponse)(nil),       // 25: krill.v1.HeartbeatResponse
+	(*WorkerCommand)(nil),           // 26: krill.v1.WorkerCommand
+	(*TrainTask)(nil),               // 27: krill.v1.TrainTask
+	(*PrelabelTask)(nil),            // 28: krill.v1.PrelabelTask
+	(*PreviewTask)(nil),             // 29: krill.v1.PreviewTask
+	(*InspectTask)(nil),             // 30: krill.v1.InspectTask
+	(*Keypoint)(nil),                // 31: krill.v1.Keypoint
+	(*Point)(nil),                   // 32: krill.v1.Point
+	(*Box)(nil),                     // 33: krill.v1.Box
+	(*KeypointQuad)(nil),            // 34: krill.v1.KeypointQuad
+	(*QuadPrompt)(nil),              // 35: krill.v1.QuadPrompt
+	(*timestamppb.Timestamp)(nil),   // 36: google.protobuf.Timestamp
+	(*HostStats)(nil),               // 37: krill.v1.HostStats
+	(*GpuStats)(nil),                // 38: krill.v1.GpuStats
+	(*LogRecord)(nil),               // 39: krill.v1.LogRecord
 }
 var file_krill_v1_worker_proto_depIdxs = []int32{
 	5,  // 0: krill.v1.NextTaskResponse.track:type_name -> krill.v1.TrackTask
-	8,  // 1: krill.v1.NextTaskResponse.exemplar:type_name -> krill.v1.ExemplarTask
-	6,  // 2: krill.v1.NextTaskResponse.embed:type_name -> krill.v1.EmbedTask
-	9,  // 3: krill.v1.NextTaskResponse.orient:type_name -> krill.v1.OrientTask
-	26, // 4: krill.v1.NextTaskResponse.train:type_name -> krill.v1.TrainTask
-	27, // 5: krill.v1.NextTaskResponse.prelabel:type_name -> krill.v1.PrelabelTask
-	28, // 6: krill.v1.NextTaskResponse.preview:type_name -> krill.v1.PreviewTask
-	29, // 7: krill.v1.NextTaskResponse.inspect:type_name -> krill.v1.InspectTask
-	30, // 8: krill.v1.TaskFrame.keypoints:type_name -> krill.v1.Keypoint
+	9,  // 1: krill.v1.NextTaskResponse.exemplar:type_name -> krill.v1.ExemplarTask
+	7,  // 2: krill.v1.NextTaskResponse.embed:type_name -> krill.v1.EmbedTask
+	10, // 3: krill.v1.NextTaskResponse.orient:type_name -> krill.v1.OrientTask
+	27, // 4: krill.v1.NextTaskResponse.train:type_name -> krill.v1.TrainTask
+	28, // 5: krill.v1.NextTaskResponse.prelabel:type_name -> krill.v1.PrelabelTask
+	29, // 6: krill.v1.NextTaskResponse.preview:type_name -> krill.v1.PreviewTask
+	30, // 7: krill.v1.NextTaskResponse.inspect:type_name -> krill.v1.InspectTask
+	31, // 8: krill.v1.TaskFrame.keypoints:type_name -> krill.v1.Keypoint
 	4,  // 9: krill.v1.TrackTask.frames:type_name -> krill.v1.TaskFrame
-	31, // 10: krill.v1.TrackTask.point:type_name -> krill.v1.Point
-	32, // 11: krill.v1.TrackTask.box:type_name -> krill.v1.Box
-	33, // 12: krill.v1.TrackTask.quads:type_name -> krill.v1.KeypointQuad
-	34, // 13: krill.v1.TrackTask.fill:type_name -> krill.v1.QuadPrompt
-	7,  // 14: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
-	4,  // 15: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
-	32, // 16: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
-	10, // 17: krill.v1.OrientTask.frames:type_name -> krill.v1.OrientFrame
-	33, // 18: krill.v1.OrientTask.quads:type_name -> krill.v1.KeypointQuad
-	4,  // 19: krill.v1.OrientFrame.frame:type_name -> krill.v1.TaskFrame
-	11, // 20: krill.v1.OrientFrame.boxes:type_name -> krill.v1.OrientBox
-	32, // 21: krill.v1.OrientBox.box:type_name -> krill.v1.Box
-	11, // 22: krill.v1.ReportOrientRequest.boxes:type_name -> krill.v1.OrientBox
-	32, // 23: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
-	14, // 24: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
-	32, // 25: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
-	35, // 26: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
-	36, // 27: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
-	37, // 28: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
-	38, // 29: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
-	0,  // 30: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
-	25, // 31: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
-	1,  // 32: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
-	2,  // 33: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
-	15, // 34: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
-	17, // 35: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
-	19, // 36: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
-	12, // 37: krill.v1.WorkerService.ReportOrient:input_type -> krill.v1.ReportOrientRequest
-	21, // 38: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
-	23, // 39: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
-	3,  // 40: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
-	16, // 41: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
-	18, // 42: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
-	20, // 43: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
-	13, // 44: krill.v1.WorkerService.ReportOrient:output_type -> krill.v1.ReportOrientResponse
-	22, // 45: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
-	24, // 46: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
-	40, // [40:47] is the sub-list for method output_type
-	33, // [33:40] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	32, // 10: krill.v1.TrackTask.point:type_name -> krill.v1.Point
+	33, // 11: krill.v1.TrackTask.box:type_name -> krill.v1.Box
+	34, // 12: krill.v1.TrackTask.quads:type_name -> krill.v1.KeypointQuad
+	35, // 13: krill.v1.TrackTask.fill:type_name -> krill.v1.QuadPrompt
+	6,  // 14: krill.v1.TrackTask.labeled_before:type_name -> krill.v1.KeypointSet
+	31, // 15: krill.v1.KeypointSet.keypoints:type_name -> krill.v1.Keypoint
+	8,  // 16: krill.v1.EmbedTask.frames:type_name -> krill.v1.EmbedFrame
+	4,  // 17: krill.v1.ExemplarTask.frame:type_name -> krill.v1.TaskFrame
+	33, // 18: krill.v1.ExemplarTask.box:type_name -> krill.v1.Box
+	11, // 19: krill.v1.OrientTask.frames:type_name -> krill.v1.OrientFrame
+	34, // 20: krill.v1.OrientTask.quads:type_name -> krill.v1.KeypointQuad
+	4,  // 21: krill.v1.OrientFrame.frame:type_name -> krill.v1.TaskFrame
+	12, // 22: krill.v1.OrientFrame.boxes:type_name -> krill.v1.OrientBox
+	33, // 23: krill.v1.OrientBox.box:type_name -> krill.v1.Box
+	12, // 24: krill.v1.ReportOrientRequest.boxes:type_name -> krill.v1.OrientBox
+	33, // 25: krill.v1.TrackedBox.box:type_name -> krill.v1.Box
+	15, // 26: krill.v1.ReportTrackRequest.boxes:type_name -> krill.v1.TrackedBox
+	33, // 27: krill.v1.ReportExemplarsRequest.boxes:type_name -> krill.v1.Box
+	36, // 28: krill.v1.HeartbeatRequest.started_at:type_name -> google.protobuf.Timestamp
+	37, // 29: krill.v1.HeartbeatRequest.host:type_name -> krill.v1.HostStats
+	38, // 30: krill.v1.HeartbeatRequest.gpus:type_name -> krill.v1.GpuStats
+	39, // 31: krill.v1.HeartbeatRequest.logs:type_name -> krill.v1.LogRecord
+	0,  // 32: krill.v1.HeartbeatRequest.model_state:type_name -> krill.v1.ModelLoadState
+	26, // 33: krill.v1.HeartbeatResponse.command:type_name -> krill.v1.WorkerCommand
+	1,  // 34: krill.v1.WorkerCommand.action:type_name -> krill.v1.WorkerAction
+	2,  // 35: krill.v1.WorkerService.NextTask:input_type -> krill.v1.NextTaskRequest
+	16, // 36: krill.v1.WorkerService.ReportTrack:input_type -> krill.v1.ReportTrackRequest
+	18, // 37: krill.v1.WorkerService.ReportExemplars:input_type -> krill.v1.ReportExemplarsRequest
+	20, // 38: krill.v1.WorkerService.ReportEmbed:input_type -> krill.v1.ReportEmbedRequest
+	13, // 39: krill.v1.WorkerService.ReportOrient:input_type -> krill.v1.ReportOrientRequest
+	22, // 40: krill.v1.WorkerService.FailTask:input_type -> krill.v1.FailTaskRequest
+	24, // 41: krill.v1.WorkerService.Heartbeat:input_type -> krill.v1.HeartbeatRequest
+	3,  // 42: krill.v1.WorkerService.NextTask:output_type -> krill.v1.NextTaskResponse
+	17, // 43: krill.v1.WorkerService.ReportTrack:output_type -> krill.v1.ReportTrackResponse
+	19, // 44: krill.v1.WorkerService.ReportExemplars:output_type -> krill.v1.ReportExemplarsResponse
+	21, // 45: krill.v1.WorkerService.ReportEmbed:output_type -> krill.v1.ReportEmbedResponse
+	14, // 46: krill.v1.WorkerService.ReportOrient:output_type -> krill.v1.ReportOrientResponse
+	23, // 47: krill.v1.WorkerService.FailTask:output_type -> krill.v1.FailTaskResponse
+	25, // 48: krill.v1.WorkerService.Heartbeat:output_type -> krill.v1.HeartbeatResponse
+	42, // [42:49] is the sub-list for method output_type
+	35, // [35:42] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_worker_proto_init() }
@@ -2054,7 +2114,7 @@ func file_krill_v1_worker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_worker_proto_rawDesc), len(file_krill_v1_worker_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   24,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

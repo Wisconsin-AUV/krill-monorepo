@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-17
+
+### Changed
+
+- Tracking from a frame with R uses the keypoints labeled on the track's earlier frames. Keypoints missing on the frame it starts from, or that tracking loses along the way, are put back where they sat on the printed sheet.
+- A tracked sheet only jumps to a fresh find that matches its design clearly better, so a sheet half under the crate's wall no longer shrinks to its visible part.
+- Dragging a keypoint moves its quad, center, and reference design with it instead of after the drop.
+
+### Fixed
+
+- Tracked keypoints on a crate's rim no longer slide down its near wall to where it meets the floor when the crate is seen at an angle.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
@@ -222,7 +234,8 @@ All notable changes to this project are documented here. The format follows
 - Gold frames: developers and admins pick gold frames, labelers get a gold check every 100 frames, and each labeler's accuracy is scored.
 - Sign-in rate limits can use a trusted proxy's client IP header, such as Cloudflare's `CF-Connecting-IP`.
 
-[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Wisconsin-AUV/krill-monorepo/compare/v0.6.1...v0.7.0
