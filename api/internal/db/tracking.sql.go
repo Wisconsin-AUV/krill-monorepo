@@ -224,12 +224,15 @@ func (q *Queries) ListTrackBoxes(ctx context.Context, trackID int64) ([]ListTrac
 }
 
 const listVerifiedKeypoints = `-- name: ListVerifiedKeypoints :many
-SELECT frame_id, keypoints FROM annotations
-WHERE track_id = $1 AND status = 'verified' AND keypoints IS NOT NULL
+SELECT a.frame_id, f.idx, a.keypoints FROM annotations a
+JOIN frames f ON f.id = a.frame_id
+WHERE a.track_id = $1 AND a.status = 'verified' AND a.keypoints IS NOT NULL
+ORDER BY f.idx
 `
 
 type ListVerifiedKeypointsRow struct {
 	FrameID   int64     `json:"frame_id"`
+	Idx       int32     `json:"idx"`
 	Keypoints []float64 `json:"keypoints"`
 }
 
@@ -242,7 +245,7 @@ func (q *Queries) ListVerifiedKeypoints(ctx context.Context, trackID int64) ([]L
 	var items []ListVerifiedKeypointsRow
 	for rows.Next() {
 		var i ListVerifiedKeypointsRow
-		if err := rows.Scan(&i.FrameID, &i.Keypoints); err != nil {
+		if err := rows.Scan(&i.FrameID, &i.Idx, &i.Keypoints); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

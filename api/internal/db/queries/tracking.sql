@@ -2,8 +2,10 @@
 SELECT * FROM frames WHERE clip_id = $1 AND idx >= $2 ORDER BY idx;
 
 -- name: ListVerifiedKeypoints :many
-SELECT frame_id, keypoints FROM annotations
-WHERE track_id = $1 AND status = 'verified' AND keypoints IS NOT NULL;
+SELECT a.frame_id, f.idx, a.keypoints FROM annotations a
+JOIN frames f ON f.id = a.frame_id
+WHERE a.track_id = $1 AND a.status = 'verified' AND a.keypoints IS NOT NULL
+ORDER BY f.idx;
 
 -- name: DeleteTrackProposalsFrom :exec
 -- Clears what an earlier run proposed on frames the new run covers.
