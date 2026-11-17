@@ -12,6 +12,10 @@ All notable changes to this project are documented here. The format follows
 - A tracked sheet only jumps to a fresh find that matches its design clearly better, so a sheet half under the crate's wall no longer shrinks to its visible part.
 - Dragging a keypoint moves its quad, center, and reference design with it instead of after the drop.
 
+### Fixed
+
+- Tracked keypoints on a crate's rim no longer slide down its near wall to where it meets the floor when the crate is seen at an angle.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
