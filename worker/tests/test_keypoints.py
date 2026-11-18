@@ -18,6 +18,7 @@ from krill_worker.keypoints import (
     Quad,
     Schema,
     center,
+    fill_quad,
     find_print,
     load_design,
     paper_in,
@@ -87,10 +88,8 @@ def test_find_print_ignores_the_bin_without_its_design() -> None:
     blood[:] = 255
     cv2.circle(blood, (120, 160), 60, (60, 20, 220), -1)
     cv2.fillPoly(blood, [np.array([[70, 140], [170, 140], [120, 30]], np.int32)], (60, 20, 220))
-    ok, png = cv2.imencode(".png", blood)
-    assert ok
 
-    assert find_print(rgb, gray, mask, load_design(png.tobytes()), None) is None
+    assert find_print(rgb, gray, mask, load_design(png(blood)), None) is None
 
 
 def test_find_print_leaves_a_print_the_frame_edge_cuts_off() -> None:
@@ -101,6 +100,90 @@ def test_find_print_leaves_a_print_the_frame_edge_cuts_off() -> None:
     gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
 
     assert find_print(rgb, gray, mask, design(), None) is None
+
+
+def png(img: Frame) -> bytes:
+    ok, data = cv2.imencode(".png", img)
+    assert ok
+    return data.tobytes()
+
+
+PAPER = np.array([[90, 70], [215, 85], [205, 210], [80, 195]], np.float32)
+
+
+def printed_crate(art: Frame) -> tuple[Frame, Mask]:
+    """A dark crate seen from above with the art printed on a sheet on its
+    floor at PAPER, tinted as under water."""
+    rgb = np.full((280, 300, 3), (25, 45, 80), np.uint8)
+    h, w = art.shape[:2]
+    corners = np.array([[0, 0], [w, 0], [w, h], [0, h]], np.float32)
+    warp = cv2.getPerspectiveTransform(corners, PAPER)
+    rgb_art = cv2.cvtColor(art, cv2.COLOR_BGR2RGB)
+    sheet = cv2.warpPerspective(rgb_art, warp, (300, 280))
+    on = cv2.warpPerspective(np.full((h, w), 255, np.uint8), warp, (300, 280)) > 0
+    rgb[on] = (sheet[on] * np.array([0.7, 0.95, 0.9])).astype(np.uint8)
+    mask = polygon_mask([(50, 40), (250, 40), (250, 240), (50, 240)])[:280]
+    return rgb, mask
+
+
+def test_find_print_matches_ink_that_runs_off_the_paper() -> None:
+    # A drop whose top runs off the sheet, so the bare paper is a U around
+    # it with no ink inside its outline.
+    art = np.full((240, 240, 3), 255, np.uint8)
+    cv2.ellipse(art, (120, 90), (45, 100), 0, 0, 360, (60, 20, 220), -1)
+    cv2.circle(art, (120, 150), 55, (60, 20, 220), -1)
+    rgb, mask = printed_crate(art)
+    gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+
+    found = find_print(rgb, gray, mask, load_design(png(art)), None)
+
+    assert found is not None
+    assert np.abs(found[0] - PAPER).max() < 3
+
+
+def test_find_print_leaves_a_design_that_looks_the_same_turned() -> None:
+    art = np.full((240, 240, 3), 255, np.uint8)
+    cv2.circle(art, (120, 120), 70, (60, 20, 220), -1)
+    rgb, mask = printed_crate(art)
+    gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+
+    assert find_print(rgb, gray, mask, load_design(png(art)), None) is None
+    # A labeler pointing at it still gets its quad.
+    filled = fill_quad(rgb, mask, load_design(png(art)))
+    assert filled is not None
+    nearest = [np.linalg.norm(PAPER - c, axis=1).min() for c in filled[0]]
+    assert max(nearest) < 3
+
+
+def test_tracked_print_drifts_back_onto_the_sheet() -> None:
+    rgb, mask = bin_frame(341)
+    start = np.zeros((6, 3))
+    start[:4, :2] = PRINT_341 + np.array([5, -4])
+    start[:4, 2] = VISIBLE
+    tracker = KeypointTracker(SCHEMA, design(), start)
+
+    for _ in range(12):
+        points = tracker.step(rgb, mask)
+
+    assert np.abs(points[:4, :2] - PRINT_341).max() < 2
+
+
+def test_tracked_print_keeps_its_size_when_a_wall_covers_part_of_it() -> None:
+    rgb, mask = bin_frame(341)
+    # The crate's wall over the print's right fifth, as at an angle.
+    wall = np.zeros(mask.shape, np.uint8)
+    cv2.fillPoly(wall, [np.array([[198, 0], [340, 0], [340, 280], [202, 280]], np.int32)], (1,))
+    rgb = rgb.copy()
+    rgb[(wall > 0) & mask] = (20, 40, 70)
+    start = np.zeros((6, 3))
+    start[:4, :2] = PRINT_341
+    start[:4, 2] = VISIBLE
+    tracker = KeypointTracker(SCHEMA, design(), start)
+
+    for _ in range(5):
+        points = tracker.step(rgb, mask)
+
+    assert np.abs(points[:4, :2] - PRINT_341).max() < 2
 
 
 def polygon_mask(points: list[tuple[int, int]]) -> Mask:
@@ -383,6 +466,42 @@ def test_keypoints_labeled_on_earlier_frames_ride_on_the_print() -> None:
     # move of about 21 pixels left and 17 down.
     assert (k.x * w, k.y * h) == pytest.approx((rim[0] - 21, rim[1] + 17), abs=4)
     assert k.visibility == VISIBLE
+
+
+class CountingTracker(BinTracker):
+    def __init__(self) -> None:
+        super().__init__()
+        self.encoded = 0
+        self.tracked_with: list[Embedding | None] = []
+
+    def track(
+        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+    ) -> Iterator[Mask | None]:
+        for frame, embedding in frames:
+            self.tracked_with.append(embedding)
+            yield self.mask(frame)
+
+    def features(self, frame: Frame) -> Embedding:
+        self.encoded += 1
+        return ["features"]
+
+
+def test_tracking_a_print_encodes_each_frame_once_for_tracking_and_its_sheet() -> None:
+    task = worker_pb2.TrackTask(
+        id=6,
+        frames=task_frames(),
+        box=annotation_pb2.Box(x=0.2, y=0.1, width=0.5, height=0.7),
+        reference_url=(FIXTURES / "fire.png").as_uri(),
+        keypoint_count=6,
+        quads=quads(),
+    )
+    tracker = CountingTracker()
+
+    run_track(cast(Api, FakeApi()), tracker, task)
+
+    assert tracker.encoded == 2
+    assert tracker.tracked_with == [["features"], ["features"]]
+    assert tracker.segmented
 
 
 def test_filling_a_printed_quad_finds_the_paper_in_the_object_not_the_click() -> None:

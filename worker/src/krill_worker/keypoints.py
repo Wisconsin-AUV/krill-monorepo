@@ -34,15 +34,16 @@ Segment = Callable[[Box], Mask | None]
 # The design's side, in pixels, while matching. Frames are at most 1024
 # pixels wide, so prints rarely cover more.
 DESIGN_SIDE = 200
-ECC_ITERATIONS = 50
-ECC_EPS = 1e-4
-# Correlation between the design and the frame under a fit, measured only
-# where the frame shows paper. Aligned prints score about 0.6 to 0.85 under
-# water, and a quarter turn off or a fit onto the crate under 0.45.
+# Correlation between the design and the frame under a fit, measured over
+# the paper that shows and the ink it surrounds. Aligned prints score about
+# 0.7 to 0.9 under water, and a fit onto the crate under 0.45.
 MIN_SCORE = 0.45
 # A print found with nothing tracked yet to compare against must score
-# higher, since a turn off by a quarter can reach 0.5.
+# higher, and beat its other quarter turns by a margin: a design that is one
+# blob of ink matches itself turned by a quarter at up to 0.7, as little as
+# 0.07 below its right turn.
 MIN_FOUND_SCORE = 0.6
+MIN_TURN_MARGIN = 0.04
 # Under this share of the design on visible paper, a score says too little.
 MIN_COVER = 0.25
 # A fresh find further than this share of the quad's size from where the
@@ -51,11 +52,16 @@ MAX_SHIFT = 0.3
 # How much better than the tracked print a fresh find must score to replace
 # it.
 FRESH_MARGIN = 0.05
-# ECC only polishes a fit. Where the crate hides part of the print nothing
-# holds those corners, and on paper curled up a wall it bends the design to
-# match, so a refinement moving a corner further than this share of the
-# quad's size is dropped. Flat prints refine by about 0.03.
-MAX_REFINE = 0.06
+# Otherwise the tracked print moves this share of the way toward the fresh
+# find. Flow drifts a little every frame and fresh finds are a few pixels off
+# at random, so going part of the way stops the drift building up and evens
+# out the jitter.
+PULL = 0.2
+# A fresh find smaller or larger than the tracked print by more than these
+# factors outlines only the paper the crate's wall leaves in view, or SAM's
+# sheet spilling onto the wall, so it doesn't pull.
+MIN_FRESH_AREA = 0.85
+MAX_FRESH_AREA = 1.2
 # How far toward the quad's center, as a share of the way, a corner is
 # checked for paper. The paper's own edge is darker than its middle.
 INSET = 0.12
@@ -98,6 +104,10 @@ SHEET_PAD = 0.08
 # the crate. Sheets fill at most about 0.6 of a crate seen from above.
 SHEET_COVER = 0.9
 SHEET_MAX = 0.8
+# Bright paper narrower than this share of its own side, like a lit strip
+# along a wall, doesn't stretch its hull, which would then reach over paper
+# in shadow, and shadow reads as ink.
+AREA_OPEN = 0.08
 
 
 @dataclass(frozen=True)
@@ -137,7 +147,6 @@ class Design:
     """A reference design as ink: how far each pixel is from the paper."""
 
     ink: Gray
-    smooth: npt.NDArray[np.float32]
     corners: Points
     # Where scores compare, leaving out the border, where a fit that is a
     # little off samples the crate around the print.
@@ -164,7 +173,6 @@ def load_design(data: bytes) -> Design:
     window[m : s - m, m : s - m] = True
     return Design(
         ink=small,
-        smooth=cv2.GaussianBlur(small, (5, 5), 0).astype(np.float32),
         corners=np.array([[0, 0], [s, 0], [s, s], [0, s]], np.float32),
         window=window,
     )
@@ -183,6 +191,15 @@ def ink(
     if white is None:
         white = np.median(f[paper > 0], axis=0)
     return np.asarray(np.clip(np.linalg.norm(f - white, axis=2), 0, 255), np.uint8)
+
+
+def ink_on(rgb: Frame, paper: Gray, area: Gray) -> Gray:
+    """ink() inside the area's bounds only, which is all a score looks at.
+    The whole frame takes longer than the rest of finding the print."""
+    x, y, w, h = cv2.boundingRect(area)
+    out = np.zeros(area.shape, np.uint8)
+    out[y : y + h, x : x + w] = ink(rgb[y : y + h, x : x + w], paper[y : y + h, x : x + w])
+    return out
 
 
 def paper_in(gray: Gray, mask: Mask) -> Gray | None:
@@ -205,6 +222,25 @@ def paper_in(gray: Gray, mask: Mask) -> Gray | None:
     paper = np.zeros_like(bright)
     cv2.drawContours(paper, [outline.astype(np.int32).reshape(-1, 1, 2)], -1, 255, cv2.FILLED)
     return np.asarray(paper & bright, dtype=np.uint8)
+
+
+def print_area(bright: Gray) -> Gray:
+    """Where the design is compared with the frame: the bright paper's convex
+    hull, which takes in the ink it surrounds. The ink is too dark to count
+    as bright paper, and where it reaches the paper's edge it isn't a hole in
+    it either, so without the hull a print would be matched on bare paper
+    alone."""
+    k = max(3, int(np.sqrt(np.count_nonzero(bright)) * AREA_OPEN)) | 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
+    body = np.asarray(cv2.morphologyEx(bright, cv2.MORPH_OPEN, kernel), np.uint8)
+    out = np.zeros_like(bright)
+    contours, _ = cv2.findContours(
+        body if body.any() else bright, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+    )
+    outline = largest(contours)
+    if outline is not None:
+        cv2.fillConvexPoly(out, cv2.convexHull(outline.astype(np.int32)), (255,))
+    return out
 
 
 def sheet_in(mask: Mask, bright: Gray, segment: Segment) -> Gray | None:
@@ -249,50 +285,32 @@ def homography(design: Design, corners: Points) -> npt.NDArray[np.float64] | Non
     return h
 
 
-def on_paper(design: Design, h: npt.NDArray[np.float64], paper: Gray) -> npt.NDArray[np.bool_]:
-    """The design's pixels that land on visible paper under h."""
+def on_paper(design: Design, h: npt.NDArray[np.float64], area: Gray) -> npt.NDArray[np.bool_]:
+    """The design's pixels that land on the area under h."""
     s = DESIGN_SIDE
     warped = cv2.warpPerspective(
-        paper, np.linalg.inv(h), (s, s), flags=cv2.INTER_NEAREST, borderValue=0
+        area, np.linalg.inv(h), (s, s), flags=cv2.INTER_NEAREST, borderValue=0
     )
     return np.asarray(warped > 0)
 
 
-def score(img: Gray, corners: Points, design: Design, paper: Gray) -> float:
-    """How well the design under the corners matches the frame where it shows."""
+def score(img: Gray, corners: Points, design: Design, area: Gray) -> float:
+    """How well the design under the corners matches the frame where it shows.
+
+    The corners come from the sheet's outline as they are. Aligning the design
+    to the frame's ink, by ECC or by searching for the best score, moves them
+    away from where labelers put them: the ink's shading under water differs
+    from the design's enough that the best match is a stretched one.
+    """
     h = homography(design, corners)
     if h is None:
         return -1.0
-    seen = on_paper(design, h, paper) & design.window
+    seen = on_paper(design, h, area) & design.window
     if seen.mean() < MIN_COVER:
         return -1.0
     s = DESIGN_SIDE
     rect = cv2.warpPerspective(img, np.linalg.inv(h), (s, s), flags=cv2.INTER_LINEAR)
     return ncc(np.asarray(rect, np.uint8), design.ink, seen)
-
-
-def refine(img: Gray, corners: Points, design: Design, paper: Gray) -> Points | None:
-    """Align the design from corners with ECC, matching only where paper shows,
-    so the crate's walls over part of the print don't pull it off."""
-    h = homography(design, corners)
-    if h is None or (on_paper(design, h, paper) & design.window).mean() < MIN_COVER:
-        return None
-    warp = (h / h[2, 2]).astype(np.float32)
-    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, ECC_ITERATIONS, ECC_EPS)
-    image = cv2.GaussianBlur(img, (3, 3), 0).astype(np.float32)
-    try:
-        _, warp = cv2.findTransformECC(
-            design.smooth, image, warp, cv2.MOTION_HOMOGRAPHY, criteria, paper, 5
-        )
-    except cv2.error:
-        return None
-    out = np.asarray(
-        cv2.perspectiveTransform(design.corners.reshape(-1, 1, 2), warp).reshape(4, 2),
-        np.float32,
-    )
-    if not np.isfinite(out).all() or shift(out, corners) > MAX_REFINE:
-        return None
-    return out
 
 
 def shift(a: Points, b: Points) -> float:
@@ -301,15 +319,13 @@ def shift(a: Points, b: Points) -> float:
     return float(np.linalg.norm(a - b, axis=1).max() / size)
 
 
-def turned(img: Gray, q: Points, design: Design, paper: Gray) -> tuple[Points, float]:
-    """q starting from whichever corner best matches the design's top left."""
-    best, best_score = q, -1.0
-    for k in range(4):
-        rolled = np.roll(q, -k, axis=0)
-        s = score(img, rolled, design, paper)
-        if s > best_score:
-            best, best_score = rolled, s
-    return best, best_score
+def turned(img: Gray, q: Points, design: Design, area: Gray) -> tuple[Points, float, float]:
+    """q starting from whichever corner best matches the design's top left,
+    its score, and how far ahead of the next best turn that is."""
+    scores = [score(img, np.roll(q, -k, axis=0), design, area) for k in range(4)]
+    k = int(np.argmax(scores))
+    runner_up = max(s for i, s in enumerate(scores) if i != k)
+    return np.roll(q, -k, axis=0), scores[k], scores[k] - runner_up
 
 
 def paper_of(gray: Gray, mask: Mask, segment: Segment | None) -> tuple[Gray, Gray] | None:
@@ -337,43 +353,50 @@ def find_print(
 ) -> tuple[Points, Gray] | None:
     """The print's corners in design order and the paper that shows, or None.
 
-    Both the fit from guess, where the print was tracked to, and a fresh one
-    from the paper's outline are tried, and the better match wins, so neither
-    a tracking slip nor paper curled up a wall decides alone.
+    guess, where the print was tracked to, is pulled toward a fresh find from
+    the sheet's outline, or replaced by it when that matches clearly better,
+    so neither a tracking slip nor paper curled up a wall decides alone.
     """
     papers = paper_of(gray, mask, segment)
     if papers is None:
         return None
     bright, sheet = papers
-    img = ink(rgb, bright)
-    candidates: list[tuple[float, Points]] = []
-    if guess is not None:
-        for c in (refine(img, guess, design, bright), guess):
-            if c is not None:
-                candidates.append((score(img, c, design, bright), c))
-    # A fresh find replaces the tracked print only when it matches clearly
-    # better. Paper half under a wall outlines a smaller quad that can match
-    # its visible part about as well as the whole print does.
-    bar = max((t[0] for t in candidates), default=-1.0) + FRESH_MARGIN
-    contours, _ = cv2.findContours(sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    outline = largest(contours)
-    if outline is not None:
-        start, _ = turned(img, quad(outline), design, bright)
-        found = refine(img, start, design, bright)
-        for c in (found, start):
-            if c is None or (guess is not None and shift(c, guess) > MAX_SHIFT):
-                continue
-            s = score(img, c, design, bright)
-            if guess is None or s > bar:
-                candidates.append((s, c))
-    if not candidates:
-        return None
-    best_score, best = max(candidates, key=lambda t: t[0])
-    if guess is None and (best_score < MIN_FOUND_SCORE or clipped(best, sheet.shape)):
-        return None
+    area = print_area(bright)
+    img = ink_on(rgb, bright, area)
+    outline = largest(cv2.findContours(sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0])
+    if guess is None:
+        if outline is None:
+            return None
+        corners, s, margin = turned(img, quad(outline), design, area)
+        if s < MIN_FOUND_SCORE or margin < MIN_TURN_MARGIN or clipped(corners, sheet.shape):
+            return None
+        return corners, sheet
+    best, best_score = guess, score(img, guess, design, area)
+    # A print can't turn a quarter between frames, so the fresh find starts
+    # from the corner nearest the tracked print's first.
+    fresh = None if outline is None else nearest_turn(quad(outline), guess)
+    if fresh is not None and shift(fresh, guess) <= MAX_SHIFT:
+        corners, s = fresh, score(img, fresh, design, area)
+        growth = quad_area(corners) / max(quad_area(guess), 1.0)
+        if s > best_score + FRESH_MARGIN:
+            best, best_score = corners, s
+        elif MIN_FRESH_AREA <= growth <= MAX_FRESH_AREA:
+            # Not by score: the tracked print mostly outscores the fresh find
+            # even while it drifts away from the print's corners.
+            best = np.asarray(guess + PULL * (corners - guess), np.float32)
+            best_score = score(img, best, design, area)
     if best_score < MIN_SCORE:
         return None
     return best, sheet
+
+
+def nearest_turn(q: Points, to: Points) -> Points:
+    turns = [np.roll(q, -k, axis=0) for k in range(4)]
+    return min(turns, key=lambda t: float(np.linalg.norm(t - to, axis=1).max()))
+
+
+def quad_area(corners: Points) -> float:
+    return abs(float(cv2.contourArea(corners.astype(np.float32))))
 
 
 def clipped(corners: Points, shape: tuple[int, ...]) -> bool:
@@ -543,11 +566,8 @@ def fill_quad(
             contours, _ = cv2.findContours(sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
             outline = largest(contours)
             if outline is not None:
-                img = ink(rgb, bright)
-                start, _ = turned(img, quad(outline), design, bright)
-                corners = refine(img, start, design, bright)
-                if corners is None:
-                    corners = start
+                area = print_area(bright)
+                corners, _, _ = turned(ink_on(rgb, bright, area), quad(outline), design, area)
                 return corners, print_visibility(corners, sheet)
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)

@@ -6,8 +6,9 @@ box, as fitting keypoints does, and three panels show what comes of it:
 - mask: SAM's mask, its convex hull, and the hull's four corners, which are
   where tracking snaps a quad's corners when the quad has no reference
   design.
-- paper: the bright paper in yellow, the whole sheet SAM segments from a box
-  around it in cyan, and the print found from the sheet: unprompted in red,
+- paper: the bright paper in yellow, outlined by its hull, which is where
+  the design is scored, the whole sheet SAM segments from a box around it in
+  cyan, and the print found from the sheet: unprompted in red,
   as fitting does, and forced in orange, as a click to fill the quad does.
   --bright-only leaves SAM out and finds the print from the bright paper.
 - keypoints: the stored keypoints (white for a labeler's, cyan for SAM's),
@@ -258,6 +259,7 @@ class Analysis:
     found_score: float | None = None
     forced: np.ndarray | None = None
     forced_score: float | None = None
+    forced_margin: float | None = None
     snapped: dict[int, np.ndarray] = field(default_factory=dict)
 
 
@@ -293,13 +295,14 @@ def analyze(
         if (outline := largest(pc)) is not None:
             a.paper_corners = quad(outline)
     if design is not None and a.paper is not None:
-        img = kp.ink(rgb, a.paper)
+        area = kp.print_area(a.paper)
+        img = kp.ink_on(rgb, a.paper, area)
         if (found := kp.find_print(rgb, gray, mask, design, None, segment)) is not None:
             a.found = found[0]
-            a.found_score = kp.score(img, a.found, design, a.paper)
+            a.found_score = kp.score(img, a.found, design, area)
         if (forced := kp.fill_quad(rgb, mask, design, segment)) is not None:
             a.forced = forced[0]
-            a.forced_score = kp.score(img, a.forced, design, a.paper)
+            _, a.forced_score, a.forced_margin = kp.turned(img, a.forced, design, area)
     for q in schema.quads:
         idx = list(q.corners)
         if q.reference or not (stored[idx, 2] > kp.UNLABELED).all():
@@ -412,6 +415,9 @@ def draw(
     paper_panel = view.panel()
     if a.paper is not None:
         view.tint(paper_panel, a.paper > 0, YELLOW)
+        contours, _ = cv2.findContours(kp.print_area(a.paper), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if (outline := largest(contours)) is not None:
+            view.poly(paper_panel, outline, YELLOW, 1)
     if a.sheet is not None and a.sheet is not a.paper:
         contours, _ = cv2.findContours(a.sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         if (outline := largest(contours)) is not None:
@@ -423,7 +429,7 @@ def draw(
         for i, c in enumerate(a.found):
             mark(paper_panel, view.pt(c), RED, "dot", str(i))
     found = "none" if a.found_score is None else f"{a.found_score:.2f}"
-    forced = "none" if a.forced_score is None else f"{a.forced_score:.2f}"
+    forced = "none" if a.forced_score is None else f"{a.forced_score:.2f} (turn +{a.forced_margin:.2f})"
     text(paper_panel, f"paper  found {found}  forced {forced}", (8, 20))
 
     kp_panel = view.panel()
@@ -477,6 +483,7 @@ def metrics(
         "mask_parts": a.parts,
         "found_score": None if a.found_score is None else round(a.found_score, 3),
         "forced_score": None if a.forced_score is None else round(a.forced_score, 3),
+        "forced_margin": None if a.forced_margin is None else round(a.forced_margin, 3),
     }
     if not human:
         return row
@@ -497,6 +504,9 @@ def metrics(
         ]
         row["found_max_any_turn"] = round(min(max(t, default=0) for t in turns), 1)
     row["found_max"] = round(max(found), 1) if found else None
+    if ref is not None and a.forced is not None:
+        forced = [distance(c, stored[i]) for i, c in zip(ref.corners, a.forced) if labeled[i]]
+        row["forced_max"] = round(max(forced), 1) if forced else None
     snapped = [distance(p, stored[i]) for i, p in a.snapped.items()]
     for i, p in a.snapped.items():
         row[f"snap_{names[i]}"] = round(distance(p, stored[i]), 1)
@@ -563,7 +573,7 @@ def track(
 def summarize(rows: list[dict[str, Any]]) -> str:
     human = [r for r in rows if r["source"] == "human"]
     out = [f"{len(rows)} boxes, {len(human)} labeled by hand"]
-    for key in ("mask_box_iou", "found_max", "found_max_any_turn", "snap_max", "tracked_max"):
+    for key in ("mask_box_iou", "found_max", "found_max_any_turn", "forced_max", "snap_max", "tracked_max"):
         vals = [r[key] for r in (rows if key == "mask_box_iou" else human) if r.get(key) is not None]
         if vals:
             out.append(
@@ -646,7 +656,7 @@ def main() -> None:
                         f"{name}  clip {clip}  frame {frame}  box {b.id}  track {b.track_id}  {b.source}  {model}",
                         "  ".join(
                             f"{k} {row[k]}"
-                            for k in ("found_max", "found_max_any_turn", "snap_max", "tracked_max")
+                            for k in ("found_max", "found_max_any_turn", "forced_max", "snap_max", "tracked_max")
                             if row.get(k) is not None
                         )
                         + "  (px at 1024 wide)",

@@ -102,12 +102,17 @@ class SamTracker:
         return feats
 
     def track(
-        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+        self,
+        frames: Iterable[tuple[Frame, Embedding | None]],
+        prompt: Prompt,
+        remember: bool = True,
     ) -> Iterator[Mask | None]:
         """Yield the object's mask on each frame.
 
         The prompt is on the first frame. Frames with an embedding skip the
-        image encoder.
+        image encoder. Without remember, masks aren't encoded into the memory
+        later frames are tracked from, which halves the time of a single
+        frame.
         """
         session = self.processor.init_video_session(
             inference_device=self.device, dtype=torch.float16
@@ -125,7 +130,9 @@ class SamTracker:
                 )
             with torch.inference_mode():
                 out = self.model(
-                    inference_session=session, frame=inputs.pixel_values[0].to(torch.float16)
+                    inference_session=session,
+                    frame=inputs.pixel_values[0].to(torch.float16),
+                    run_mem_encoder=remember,
                 )
             self._forget(session, i)
             masks = self.processor.post_process_masks([out.pred_masks], original_sizes=[size])[0]
@@ -137,7 +144,7 @@ class SamTracker:
         """The mask of the object each prompt points at, encoding the frame at most once."""
         if embedding is None:
             embedding = self.features(frame)
-        return [next(self.track([(frame, embedding)], p)) for p in prompts]
+        return [next(self.track([(frame, embedding)], p, remember=False)) for p in prompts]
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
         """Return every object on the frame like the one in box, most confident first."""

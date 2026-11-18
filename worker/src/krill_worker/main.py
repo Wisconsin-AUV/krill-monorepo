@@ -122,12 +122,18 @@ def run_track(
         reference = load_reference(fetch(task.reference_url))
     schema = Schema.of(task.keypoint_count, task.quads)
     keypoints: KeypointTracker | None = None
+    # SAM segments the sheet under a print on every frame from the same image
+    # features tracking takes, so frames without stored ones are encoded once
+    # for both, rather than again for the sheet.
+    sheets = schema.reference is not None and bool(task.reference_url)
     # The tracker takes the frames, so the ones it was given wait here for
     # fitting rotated boxes and keypoints to them.
     given: deque[tuple[Frame, Embedding | None]] = deque()
 
     def feed() -> Iterator[tuple[Frame, Embedding | None]]:
         for frame, embedding in prefetch(load, task.frames):
+            if embedding is None and sheets:
+                embedding = tracker.features(frame)
             given.append((frame, embedding))
             yield frame, embedding
 
