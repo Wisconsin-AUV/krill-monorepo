@@ -173,7 +173,12 @@ class MaskTracker:
         for frame, _ in frames:
             yield self.mask(frame)
 
-    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
+    def features(self, frame: Frame) -> Embedding:
+        raise AssertionError("not called")
+
+    def segment(
+        self, frame: Frame, prompts: Sequence[Prompt], embedding: Embedding | None = None
+    ) -> list[Mask | None]:
         return [
             self.mask(frame) if isinstance(p, BoxPrompt) and p.box[0] < 0.5 else None
             for p in prompts

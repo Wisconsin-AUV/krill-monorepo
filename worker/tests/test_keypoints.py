@@ -20,6 +20,8 @@ from krill_worker.keypoints import (
     center,
     find_print,
     load_design,
+    paper_in,
+    sheet_in,
     snap,
 )
 from krill_worker.main import run_orient, run_track
@@ -135,6 +137,40 @@ def test_snap_moves_the_whole_rim_onto_an_outline_seen_from_above() -> None:
     assert np.abs(snap(RIM, shifted) - RIM - np.array([4, 3])).max() < 1.5
 
 
+def shaded_print() -> tuple[Frame, Mask, Mask]:
+    """Frame 341 with the print's lower part in the crate's shadow, and the
+    whole sheet as SAM segments it."""
+    rgb, mask = bin_frame(341)
+    sheet = np.zeros(mask.shape, np.uint8)
+    cv2.fillConvexPoly(sheet, PRINT_341.astype(np.int32), (1,))
+    shade = (sheet > 0) & (np.arange(mask.shape[0])[:, None] > 165)
+    rgb = rgb.copy()
+    rgb[shade] = rgb[shade] // 2
+    return rgb, mask, sheet > 0
+
+
+def test_find_print_takes_paper_in_shadow_from_sams_sheet() -> None:
+    rgb, mask, sheet = shaded_print()
+    gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+
+    assert find_print(rgb, gray, mask, design(), None) is None
+    found = find_print(rgb, gray, mask, design(), None, lambda box: sheet)
+    assert found is not None
+    assert np.abs(found[0] - PRINT_341).max() < 2
+
+
+def test_sheet_in_ignores_sam_segmenting_the_crate_or_the_design() -> None:
+    rgb, mask = bin_frame(341)
+    gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
+    bright = paper_in(gray, mask)
+    assert bright is not None
+    design_only = np.zeros(mask.shape, np.uint8)
+    cv2.circle(design_only, (165, 140), 30, (1,), -1)
+
+    assert sheet_in(mask, bright, lambda box: mask) is None
+    assert sheet_in(mask, bright, lambda box: design_only > 0) is None
+
+
 def test_center_is_where_the_diagonals_cross_in_perspective() -> None:
     square = np.array([[0, 0], [100, 0], [100, 100], [0, 100]], np.float32)
     seen = np.array([[10, 10], [90, 20], [80, 70], [20, 90]], np.float32)
@@ -223,7 +259,12 @@ class BinTracker:
         for frame, _ in frames:
             yield self.mask(frame)
 
-    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
+    def features(self, frame: Frame) -> Embedding:
+        return []
+
+    def segment(
+        self, frame: Frame, prompts: Sequence[Prompt], embedding: Embedding | None = None
+    ) -> list[Mask | None]:
         self.segmented.extend(prompts)
         return [self.mask(frame) for _ in prompts]
 
@@ -359,7 +400,7 @@ def test_filling_a_printed_quad_finds_the_paper_in_the_object_not_the_click() ->
 
     run_track(cast(Api, api), tracker, task)
 
-    assert tracker.segmented == []
+    assert not any(isinstance(p, PointPrompt) for p in tracker.segmented)
     (got,) = [b for r in api.tracks for b in r.boxes]
     corners = np.array([(k.x * 340, k.y * 280) for k in got.box.keypoints[:4]])
     assert np.abs(corners - PRINT_341).max() < 4

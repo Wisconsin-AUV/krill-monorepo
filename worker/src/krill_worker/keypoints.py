@@ -2,13 +2,13 @@
 
 Keypoints follow the object's motion between frames, measured by optical flow
 inside its mask. A quad with the type's reference design is instead found
-again on every frame, by aligning the design to the bright paper inside the
+again on every frame, by aligning the design to the sheet of paper inside the
 mask, so it can't drift and its corners come out in the design's own order
 however the object is turned. Keypoints on other quads snap to the corners of
 the mask's outline when they line up with them.
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import cv2
@@ -18,7 +18,7 @@ from krill.v1 import annotation_pb2, label_pb2
 
 from krill_worker.orient import largest, ncc, quad
 from krill_worker.prelabelers import Frame
-from krill_worker.track import Mask
+from krill_worker.track import Box, Mask
 
 UNLABELED = annotation_pb2.KEYPOINT_VISIBILITY_UNSPECIFIED
 HIDDEN = annotation_pb2.KEYPOINT_VISIBILITY_HIDDEN
@@ -28,6 +28,8 @@ VISIBLE = annotation_pb2.KEYPOINT_VISIBILITY_VISIBLE
 Keypoints = npt.NDArray[np.float64]
 Points = npt.NDArray[np.float32]
 Gray = npt.NDArray[np.uint8]
+# SAM's mask of whatever fills a box on the frame being looked at.
+Segment = Callable[[Box], Mask | None]
 
 # The design's side, in pixels, while matching. Frames are at most 1024
 # pixels wide, so prints rarely cover more.
@@ -87,6 +89,15 @@ EDGE_PIXELS = 2
 # A quad whose area changes by more than this factor in one frame has folded
 # over or slid off its object, as when a crate turns edge on.
 MAX_GROWTH = 2.5
+# Room around the bright paper, as a share of its size, in the box SAM is
+# asked for the whole sheet with, so the box takes in paper in the crate's
+# shadow.
+SHEET_PAD = 0.08
+# SAM's sheet must cover this share of the bright paper, or it segmented the
+# design alone, and at most this share of the object's mask, or it segmented
+# the crate. Sheets fill at most about 0.6 of a crate seen from above.
+SHEET_COVER = 0.9
+SHEET_MAX = 0.8
 
 
 @dataclass(frozen=True)
@@ -196,6 +207,38 @@ def paper_in(gray: Gray, mask: Mask) -> Gray | None:
     return np.asarray(paper & bright, dtype=np.uint8)
 
 
+def sheet_in(mask: Mask, bright: Gray, segment: Segment) -> Gray | None:
+    """The whole sheet of paper the bright paper is part of, as SAM segments it
+    from a box around the bright paper, or None when SAM found something else.
+
+    Paper in the crate's shadow, or curled up toward its rim, is too dark to
+    count as bright, though it's the same sheet, so SAM follows its edge where
+    brightness stops short of it.
+    """
+    h, w = bright.shape
+    x, y, bw, bh = cv2.boundingRect(bright)
+    px, py = SHEET_PAD * bw, SHEET_PAD * bh
+    x0, y0 = max(0.0, x - px), max(0.0, y - py)
+    x1, y1 = min(float(w), x + bw + px), min(float(h), y + bh + py)
+    found = segment((x0 / w, y0 / h, (x1 - x0) / w, (y1 - y0) / h))
+    if found is None:
+        return None
+    contours, _ = cv2.findContours(
+        (found & mask).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+    )
+    outline = largest(contours)
+    if outline is None:
+        return None
+    sheet = np.zeros_like(bright)
+    cv2.drawContours(sheet, [outline.astype(np.int32).reshape(-1, 1, 2)], -1, (255,), cv2.FILLED)
+    covered = np.count_nonzero(sheet & bright)
+    if covered < SHEET_COVER * np.count_nonzero(bright):
+        return None
+    if np.count_nonzero(sheet) > SHEET_MAX * np.count_nonzero(mask):
+        return None
+    return sheet
+
+
 def homography(design: Design, corners: Points) -> npt.NDArray[np.float64] | None:
     try:
         h = np.asarray(cv2.getPerspectiveTransform(design.corners, corners), np.float64)
@@ -269,8 +312,28 @@ def turned(img: Gray, q: Points, design: Design, paper: Gray) -> tuple[Points, f
     return best, best_score
 
 
+def paper_of(gray: Gray, mask: Mask, segment: Segment | None) -> tuple[Gray, Gray] | None:
+    """The bright paper inside the object's mask, and the whole sheet: SAM's
+    when it found one, else the bright paper again.
+
+    The sheet's outline places the corners. The design is matched only on
+    the bright paper, since ink is told apart by its distance from the
+    paper's color, and the sheet's shaded paper would count as ink.
+    """
+    bright = paper_in(gray, mask)
+    if bright is None:
+        return None
+    sheet = None if segment is None else sheet_in(mask, bright, segment)
+    return bright, bright if sheet is None else sheet
+
+
 def find_print(
-    rgb: Frame, gray: Gray, mask: Mask, design: Design, guess: Points | None
+    rgb: Frame,
+    gray: Gray,
+    mask: Mask,
+    design: Design,
+    guess: Points | None,
+    segment: Segment | None = None,
 ) -> tuple[Points, Gray] | None:
     """The print's corners in design order and the paper that shows, or None.
 
@@ -278,38 +341,39 @@ def find_print(
     from the paper's outline are tried, and the better match wins, so neither
     a tracking slip nor paper curled up a wall decides alone.
     """
-    paper = paper_in(gray, mask)
-    if paper is None:
+    papers = paper_of(gray, mask, segment)
+    if papers is None:
         return None
-    img = ink(rgb, paper)
+    bright, sheet = papers
+    img = ink(rgb, bright)
     candidates: list[tuple[float, Points]] = []
     if guess is not None:
-        for c in (refine(img, guess, design, paper), guess):
+        for c in (refine(img, guess, design, bright), guess):
             if c is not None:
-                candidates.append((score(img, c, design, paper), c))
+                candidates.append((score(img, c, design, bright), c))
     # A fresh find replaces the tracked print only when it matches clearly
     # better. Paper half under a wall outlines a smaller quad that can match
     # its visible part about as well as the whole print does.
     bar = max((t[0] for t in candidates), default=-1.0) + FRESH_MARGIN
-    contours, _ = cv2.findContours(paper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is not None:
-        start, _ = turned(img, quad(outline), design, paper)
-        found = refine(img, start, design, paper)
+        start, _ = turned(img, quad(outline), design, bright)
+        found = refine(img, start, design, bright)
         for c in (found, start):
             if c is None or (guess is not None and shift(c, guess) > MAX_SHIFT):
                 continue
-            s = score(img, c, design, paper)
+            s = score(img, c, design, bright)
             if guess is None or s > bar:
                 candidates.append((s, c))
     if not candidates:
         return None
     best_score, best = max(candidates, key=lambda t: t[0])
-    if guess is None and (best_score < MIN_FOUND_SCORE or clipped(best, paper.shape)):
+    if guess is None and (best_score < MIN_FOUND_SCORE or clipped(best, sheet.shape)):
         return None
     if best_score < MIN_SCORE:
         return None
-    return best, paper
+    return best, sheet
 
 
 def clipped(corners: Points, shape: tuple[int, ...]) -> bool:
@@ -461,7 +525,9 @@ def place_centers(points: Keypoints, schema: Schema) -> None:
             points[q.center] = (c[0], c[1], HIDDEN if (v == HIDDEN).all() else VISIBLE)
 
 
-def fill_quad(rgb: Frame, mask: Mask, design: Design | None) -> tuple[Points, list[int]] | None:
+def fill_quad(
+    rgb: Frame, mask: Mask, design: Design | None, segment: Segment | None = None
+) -> tuple[Points, list[int]] | None:
     """A quad's corners from a mask: in the design's order when the reference
     design is printed on it, else clockwise from the top left on screen.
 
@@ -471,17 +537,18 @@ def fill_quad(rgb: Frame, mask: Mask, design: Design | None) -> tuple[Points, li
     """
     gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
     if design is not None:
-        paper = paper_in(gray, mask)
-        if paper is not None:
-            contours, _ = cv2.findContours(paper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        papers = paper_of(gray, mask, segment)
+        if papers is not None:
+            bright, sheet = papers
+            contours, _ = cv2.findContours(sheet, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
             outline = largest(contours)
             if outline is not None:
-                img = ink(rgb, paper)
-                start, _ = turned(img, quad(outline), design, paper)
-                corners = refine(img, start, design, paper)
+                img = ink(rgb, bright)
+                start, _ = turned(img, quad(outline), design, bright)
+                corners = refine(img, start, design, bright)
                 if corners is None:
                     corners = start
-                return corners, print_visibility(corners, paper)
+                return corners, print_visibility(corners, sheet)
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is None:
@@ -552,10 +619,10 @@ class KeypointTracker:
             if self.given[i] == UNLABELED:
                 self.given[i] = labeled[i, 2]
 
-    def fill(self, rgb: Frame, index: int, mask: Mask) -> None:
+    def fill(self, rgb: Frame, index: int, mask: Mask, segment: Segment | None = None) -> None:
         """Place quad index's corners from the mask fill_quad takes."""
         q = self.schema.quads[index]
-        found = fill_quad(rgb, mask, self.design if q.reference else None)
+        found = fill_quad(rgb, mask, self.design if q.reference else None, segment)
         if found is None:
             return
         corners, vis = found
@@ -573,7 +640,7 @@ class KeypointTracker:
         self.given[placed] = labeled[placed, 2]
         self.learn(self.points)
 
-    def step(self, rgb: Frame, mask: Mask | None) -> Keypoints:
+    def step(self, rgb: Frame, mask: Mask | None, segment: Segment | None = None) -> Keypoints:
         """The keypoints on the next frame, in pixels."""
         gray = np.asarray(cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), np.uint8)
         before = self.points.copy()
@@ -593,7 +660,7 @@ class KeypointTracker:
         self._lose_folded(before)
         ref = self.schema.reference
         if ref is not None and self.design is not None:
-            self._find_print(rgb, gray, mask, ref)
+            self._find_print(rgb, gray, mask, ref, segment)
         self._ride()
         for q in self.schema.quads:
             if q is ref or not (self.points[list(q.corners), 2] > UNLABELED).all():
@@ -605,12 +672,14 @@ class KeypointTracker:
         self.prev = (gray, mask)
         return self.points.copy()
 
-    def _find_print(self, rgb: Frame, gray: Gray, mask: Mask, q: Quad) -> None:
+    def _find_print(
+        self, rgb: Frame, gray: Gray, mask: Mask, q: Quad, segment: Segment | None
+    ) -> None:
         assert self.design is not None
         idx = list(q.corners)
         tracked = (self.points[idx, 2] > UNLABELED).all()
         guess = self.points[idx, :2].astype(np.float32) if tracked else None
-        found = find_print(rgb, gray, mask, self.design, guess)
+        found = find_print(rgb, gray, mask, self.design, guess, segment)
         if found is None:
             # A tracked print stays where the motion took it, which is how
             # prints mostly hidden by the crate stay labeled.
