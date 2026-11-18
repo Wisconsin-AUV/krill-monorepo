@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Tracked and fit reference quads reach the corners of paper in the crate's shadow or curled toward its rim. Their corners are placed on SAM's mask of the whole sheet instead of only its brightest part.
+
 ## [0.9.1] - 2026-11-17
 
 ### Changed
