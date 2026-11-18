@@ -468,6 +468,42 @@ def test_keypoints_labeled_on_earlier_frames_ride_on_the_print() -> None:
     assert k.visibility == VISIBLE
 
 
+class CountingTracker(BinTracker):
+    def __init__(self) -> None:
+        super().__init__()
+        self.encoded = 0
+        self.tracked_with: list[Embedding | None] = []
+
+    def track(
+        self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
+    ) -> Iterator[Mask | None]:
+        for frame, embedding in frames:
+            self.tracked_with.append(embedding)
+            yield self.mask(frame)
+
+    def features(self, frame: Frame) -> Embedding:
+        self.encoded += 1
+        return ["features"]
+
+
+def test_tracking_a_print_encodes_each_frame_once_for_tracking_and_its_sheet() -> None:
+    task = worker_pb2.TrackTask(
+        id=6,
+        frames=task_frames(),
+        box=annotation_pb2.Box(x=0.2, y=0.1, width=0.5, height=0.7),
+        reference_url=(FIXTURES / "fire.png").as_uri(),
+        keypoint_count=6,
+        quads=quads(),
+    )
+    tracker = CountingTracker()
+
+    run_track(cast(Api, FakeApi()), tracker, task)
+
+    assert tracker.encoded == 2
+    assert tracker.tracked_with == [["features"], ["features"]]
+    assert tracker.segmented
+
+
 def test_filling_a_printed_quad_finds_the_paper_in_the_object_not_the_click() -> None:
     task = worker_pb2.TrackTask(
         id=2,
