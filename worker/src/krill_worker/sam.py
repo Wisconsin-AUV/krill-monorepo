@@ -75,10 +75,11 @@ class SamTracker:
     def embed(self, frame: Frame) -> bytes:
         """Serialize the frame's image features as the tracker's vision cache expects them."""
         buf = io.BytesIO()
-        torch.save({"model": self.model_id, "vision_feats": self._features(frame)}, buf)
+        torch.save({"model": self.model_id, "vision_feats": self.features(frame)}, buf)
         return buf.getvalue()
 
-    def _features(self, frame: Frame) -> Embedding:
+    def features(self, frame: Frame) -> Embedding:
+        """The frame's image features, which track and segment take to skip the encoder."""
         inputs = self.processor(images=frame, device=self.device, return_tensors="pt")
         with torch.inference_mode():
             out = self.model.get_image_features(
@@ -130,9 +131,12 @@ class SamTracker:
             masks = self.processor.post_process_masks([out.pred_masks], original_sizes=[size])[0]
             yield masks[0, 0].cpu().numpy()
 
-    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
-        """The mask of the object each prompt points at, encoding the frame only once."""
-        embedding = self._features(frame)
+    def segment(
+        self, frame: Frame, prompts: Sequence[Prompt], embedding: Embedding | None = None
+    ) -> list[Mask | None]:
+        """The mask of the object each prompt points at, encoding the frame at most once."""
+        if embedding is None:
+            embedding = self.features(frame)
         return [next(self.track([(frame, embedding)], p)) for p in prompts]
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:

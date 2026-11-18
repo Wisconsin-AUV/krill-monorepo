@@ -48,7 +48,12 @@ class FakeTracker:
             self.seen.append((int(frame.mean()), embedding))
             yield None
 
-    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]:
+    def features(self, frame: Frame) -> Embedding:
+        raise AssertionError("not called")
+
+    def segment(
+        self, frame: Frame, prompts: Sequence[Prompt], embedding: Embedding | None = None
+    ) -> list[Mask | None]:
         raise AssertionError("not called")
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]:
