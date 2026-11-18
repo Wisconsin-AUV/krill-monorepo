@@ -6,9 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Tracking keypoints of a type with a reference design takes about 45% less time per frame.
+
 ### Fixed
 
 - Tracked and fit reference quads reach the corners of paper in the crate's shadow or curled toward its rim. Their corners are placed on SAM's mask of the whole sheet instead of only its brightest part.
+- Fit keypoints finds sheets whose design runs to the paper's edge, which it skipped about half the time, and skips designs that look the same turned a quarter instead of guessing their corners' order.
+- Tracked reference quads no longer drift off the sheet over a long track.
 
 ## [0.9.1] - 2026-11-17
 
