@@ -37,6 +37,7 @@ type Querier interface {
 	CountClips(ctx context.Context, videoID int64) (int32, error)
 	CountEmailCodeAttempt(ctx context.Context, arg CountEmailCodeAttemptParams) error
 	CountFrameAnnotations(ctx context.Context, frameID int64) (int32, error)
+	CountHandPosedBoxes(ctx context.Context, labelTypeID int64) (int32, error)
 	CountOpenPrelabels(ctx context.Context) (CountOpenPrelabelsRow, error)
 	CountOpenReviews(ctx context.Context) (int32, error)
 	// Covers tracks in the trash too, since they come back with their keypoints.
@@ -58,6 +59,7 @@ type Querier interface {
 	CreateDataset(ctx context.Context, arg CreateDatasetParams) (Dataset, error)
 	CreateDistractor(ctx context.Context, arg CreateDistractorParams) (Distractor, error)
 	CreateInvite(ctx context.Context, arg CreateInviteParams) (Invite, error)
+	CreateKeypointCheck(ctx context.Context, arg CreateKeypointCheckParams) (KeypointCheck, error)
 	CreateLabelExample(ctx context.Context, arg CreateLabelExampleParams) (LabelExample, error)
 	CreateLabelType(ctx context.Context, arg CreateLabelTypeParams) (LabelType, error)
 	CreatePrelabelRun(ctx context.Context, arg CreatePrelabelRunParams) (PrelabelRun, error)
@@ -119,6 +121,7 @@ type Querier interface {
 	FailInterruptedPrelabelRuns(ctx context.Context) (int64, error)
 	FailInterruptedStorageScans(ctx context.Context) (int64, error)
 	FailInterruptedTrainingRuns(ctx context.Context) (int64, error)
+	FailKeypointCheck(ctx context.Context, arg FailKeypointCheckParams) error
 	FailModelTrial(ctx context.Context, arg FailModelTrialParams) error
 	FailPrelabelRun(ctx context.Context, arg FailPrelabelRunParams) error
 	FailStorageCleanup(ctx context.Context, arg FailStorageCleanupParams) error
@@ -128,6 +131,7 @@ type Querier interface {
 	FinishDataset(ctx context.Context, arg FinishDatasetParams) error
 	FinishDistractor(ctx context.Context, arg FinishDistractorParams) (int64, error)
 	FinishIngest(ctx context.Context, arg FinishIngestParams) error
+	FinishKeypointCheck(ctx context.Context, arg FinishKeypointCheckParams) error
 	FinishModelTrial(ctx context.Context, id int64) (int64, error)
 	FinishPrelabelRun(ctx context.Context, id int64) error
 	FinishStorageCleanup(ctx context.Context, arg FinishStorageCleanupParams) error
@@ -164,6 +168,7 @@ type Querier interface {
 	GetPrelabelRun(ctx context.Context, id int64) (PrelabelRun, error)
 	GetPrelabeler(ctx context.Context, name string) (Prelabeler, error)
 	GetReviewAuditName(ctx context.Context, id int64) (GetReviewAuditNameRow, error)
+	GetRunningKeypointCheckByJob(ctx context.Context, jobID int64) (KeypointCheck, error)
 	GetStorageScan(ctx context.Context, id int64) (GetStorageScanRow, error)
 	GetTrack(ctx context.Context, id int64) (Track, error)
 	GetTrackBox(ctx context.Context, arg GetTrackBoxParams) (GetTrackBoxRow, error)
@@ -267,6 +272,8 @@ type Querier interface {
 	ListGoldAttempts(ctx context.Context, arg ListGoldAttemptsParams) ([]ListGoldAttemptsRow, error)
 	ListGoldFrames(ctx context.Context) ([]ListGoldFramesRow, error)
 	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
+	// Boxes a labeler placed keypoints on.
+	ListHandPosedBoxes(ctx context.Context, labelTypeID int64) ([]ListHandPosedBoxesRow, error)
 	ListInviteUses(ctx context.Context, inviteIds []int64) ([]ListInviteUsesRow, error)
 	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
 	ListJobClips(ctx context.Context, ids []int64) ([]ListJobClipsRow, error)
@@ -275,9 +282,14 @@ type Querier interface {
 	ListJobStarters(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	// Names for the targets of background jobs in the admin panel.
 	ListJobVideos(ctx context.Context, ids []int64) ([]ListJobVideosRow, error)
+	// Types that could be checked, with how many boxes ListHandPosedBoxes
+	// lists for each.
+	ListKeypointCheckTypes(ctx context.Context) ([]ListKeypointCheckTypesRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
+	// Each type's running check and its latest finished one.
+	ListLatestKeypointChecks(ctx context.Context) ([]ListLatestKeypointChecksRow, error)
 	ListLiveClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListModelTrialBoxes(ctx context.Context, trialID int64) ([]ListModelTrialBoxesRow, error)
 	ListModelTrials(ctx context.Context, arg ListModelTrialsParams) ([]ListModelTrialsRow, error)
@@ -331,6 +343,7 @@ type Querier interface {
 	LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error)
 	LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error)
 	LockPrelabelRun(ctx context.Context, id int64) (string, error)
+	LockRunningKeypointCheck(ctx context.Context, labelTypeID int64) (KeypointCheck, error)
 	LockTrackAnnotation(ctx context.Context, arg LockTrackAnnotationParams) (LockTrackAnnotationRow, error)
 	LockTrashedVideo(ctx context.Context, id int64) (LockTrashedVideoRow, error)
 	// Locking keeps a frame from being marked done while its proposals are

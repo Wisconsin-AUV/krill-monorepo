@@ -190,6 +190,21 @@ type InviteUse struct {
 	UsedAt   pgtype.Timestamptz `json:"used_at"`
 }
 
+type KeypointCheck struct {
+	ID          int64              `json:"id"`
+	LabelTypeID int64              `json:"label_type_id"`
+	JobID       int64              `json:"job_id"`
+	Status      string             `json:"status"`
+	Error       string             `json:"error"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	FinishedAt  pgtype.Timestamptz `json:"finished_at"`
+	BoxCount    int32              `json:"box_count"`
+	FoundCount  int32              `json:"found_count"`
+	TurnedCount int32              `json:"turned_count"`
+	Result      []byte             `json:"result"`
+}
+
 type LabelExample struct {
 	ID          int64              `json:"id"`
 	LabelTypeID int64              `json:"label_type_id"`
