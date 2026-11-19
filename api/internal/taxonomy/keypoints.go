@@ -256,21 +256,40 @@ func (p *Pose) validate(oriented bool) error {
 	return nil
 }
 
-// Rekeyed reports whether going from old to p removes keypoints or moves one
-// to another index, which changes what boxes' labeled keypoints mean. A
-// keypoint keeps its index when renamed, so it is taken to have moved only
-// when its name was another index's.
-func (p Pose) Rekeyed(old Pose) bool {
-	if len(p.Keypoints) < len(old.Keypoints) {
-		return true
+// Origins checks given, the index each of p's keypoints had in old, with -1
+// for a new one, and returns it filled in when empty, where every keypoint
+// keeps its index. It returns nil when every keypoint of old keeps its index,
+// since boxes' keypoints then stay as they are.
+func (p Pose) Origins(old Pose, given []int32) ([]int32, error) {
+	n, was := len(p.Keypoints), len(old.Keypoints)
+	origins := given
+	if len(given) == 0 {
+		origins = make([]int32, n)
+		for i := range origins {
+			origins[i] = -1
+			if i < was {
+				origins[i] = int32(i) //nolint:gosec // keypoints per type are capped
+			}
+		}
+	} else if len(given) != n {
+		return nil, fmt.Errorf("%d keypoints have %d origins", n, len(given))
 	}
-	oldNames := old.Names()
-	for i, k := range p.Keypoints[:len(old.Keypoints)] {
-		if j := slices.Index(oldNames, k.Name); j >= 0 && j != i {
-			return true
+	seen := map[int32]bool{}
+	for _, o := range origins {
+		switch {
+		case o < -1 || int(o) >= was:
+			return nil, fmt.Errorf("keypoint origin %d is not one of the %d keypoints", o, was)
+		case o >= 0 && seen[o]:
+			return nil, fmt.Errorf("two keypoints come from keypoint %d", o)
+		}
+		seen[o] = true
+	}
+	for j := range was {
+		if j >= n || int(origins[j]) != j {
+			return origins, nil
 		}
 	}
-	return false
+	return nil, nil
 }
 
 // SetCenters places each quad's center keypoint where its diagonals cross,
