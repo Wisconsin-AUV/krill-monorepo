@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package krill.v1;
 
+import "google/protobuf/timestamp.proto";
+import "krill/v1/stats.proto";
+
 // LabelService manages the taxonomy: object types and the attributes that
 // are assigned once per track. Export flattens type and attribute values
 // into YOLO class names, so the taxonomy can change without relabeling.
@@ -30,6 +33,13 @@ service LabelService {
   // box of the type with no keypoints labeled. Boxes it fills become
   // proposals again for a labeler to check.
   rpc FitKeypoints(FitKeypointsRequest) returns (FitKeypointsResponse) {}
+  // CheckKeypoints has a GPU worker fit the reference design's quad to boxes
+  // labelers posed by hand and scores the fit against their keypoints,
+  // leaving the boxes as they are.
+  rpc CheckKeypoints(CheckKeypointsRequest) returns (CheckKeypointsResponse) {}
+  // ListKeypointChecks returns each type that can be checked with its latest
+  // check.
+  rpc ListKeypointChecks(ListKeypointChecksRequest) returns (ListKeypointChecksResponse) {}
   // PreviewMergeLabelTypes shows what merging one type into another would
   // change.
   rpc PreviewMergeLabelTypes(PreviewMergeLabelTypesRequest) returns (PreviewMergeLabelTypesResponse) {}
@@ -217,6 +227,92 @@ message FitKeypointsRequest {
 message FitKeypointsResponse {
   // Boxes queued for fitting.
   int32 box_count = 1;
+}
+
+message CheckKeypointsRequest {
+  int64 label_type_id = 1;
+}
+
+message CheckKeypointsResponse {
+  // Boxes the check fits, or those of the check already running. 0 when the
+  // type has no boxes posed by hand.
+  int32 box_count = 1;
+}
+
+message ListKeypointChecksRequest {}
+
+message ListKeypointChecksResponse {
+  repeated KeypointCheckType types = 1;
+  // The most boxes a check fits. Types with more are sampled evenly.
+  int32 max_boxes = 2;
+}
+
+// KeypointCheckType is a type with a quad covered by its reference design.
+message KeypointCheckType {
+  int64 label_type_id = 1;
+  string name = 2;
+  string title = 3;
+  string color = 4;
+  // Boxes labelers placed keypoints on.
+  int32 posed_box_count = 5;
+  // The latest check that finished. Unset when none has.
+  KeypointCheck last = 6;
+  // Unset when no check is running.
+  KeypointCheck running = 7;
+}
+
+enum KeypointCheckStatus {
+  KEYPOINT_CHECK_STATUS_UNSPECIFIED = 0;
+  KEYPOINT_CHECK_STATUS_RUNNING = 1;
+  KEYPOINT_CHECK_STATUS_SUCCEEDED = 2;
+  KEYPOINT_CHECK_STATUS_FAILED = 3;
+}
+
+// KeypointCheck compares Fit keypoints with keypoints labelers placed. Errors
+// are in video pixels, and a box's error is its farthest keypoint's, counting
+// only keypoints labeled in both.
+message KeypointCheck {
+  int64 id = 1;
+  KeypointCheckStatus status = 2;
+  string error = 3;
+  // Unset for deleted accounts.
+  Profile created_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  int32 box_count = 7;
+  // Boxes the design was found in.
+  int32 found_count = 8;
+  // Found boxes whose quad matches the labeler's corners far better when
+  // turned a quarter or half turn, so the fit picked the wrong way up.
+  int32 turned_count = 9;
+  // Found boxes with a keypoint labeled in both, which the errors cover.
+  int32 compared_count = 10;
+  double median_error = 11;
+  double p90_error = 12;
+  // Keypoints compared on at least one box, in the type's order.
+  repeated KeypointError keypoints = 13;
+  // The boxes with the largest errors, largest first.
+  repeated KeypointCheckBox worst = 14;
+}
+
+message KeypointError {
+  // The keypoint's name when the check ran.
+  string name = 1;
+  // Boxes it was compared on.
+  int32 count = 2;
+  double median = 3;
+  double p90 = 4;
+}
+
+message KeypointCheckBox {
+  int64 annotation_id = 1;
+  int64 clip_id = 2;
+  // Index within the video.
+  int32 frame_index = 3;
+  double error = 4;
+  bool turned = 5;
+  string video_name = 6;
+  int32 clip_index = 7;
 }
 
 // AttributeValueMapping says what a source track's attribute value becomes.

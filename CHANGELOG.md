@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The admin panel's Keypoints page checks how far Fit keypoints lands from keypoints labelers placed by hand. A check fits the reference design's quad to up to 500 of a type's boxes posed by hand, leaving them as they are, and shows how many it found the design in, the median and 90th percentile error in pixels for each keypoint, how many it fit a quarter or half turn off, and links to the boxes farthest off.
+
 ### Changed
 
 - Tracking keypoints of a type with a reference design takes about 45% less time per frame.

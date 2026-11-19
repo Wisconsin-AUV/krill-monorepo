@@ -9,6 +9,7 @@ package krillv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -20,6 +21,58 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type KeypointCheckStatus int32
+
+const (
+	KeypointCheckStatus_KEYPOINT_CHECK_STATUS_UNSPECIFIED KeypointCheckStatus = 0
+	KeypointCheckStatus_KEYPOINT_CHECK_STATUS_RUNNING     KeypointCheckStatus = 1
+	KeypointCheckStatus_KEYPOINT_CHECK_STATUS_SUCCEEDED   KeypointCheckStatus = 2
+	KeypointCheckStatus_KEYPOINT_CHECK_STATUS_FAILED      KeypointCheckStatus = 3
+)
+
+// Enum value maps for KeypointCheckStatus.
+var (
+	KeypointCheckStatus_name = map[int32]string{
+		0: "KEYPOINT_CHECK_STATUS_UNSPECIFIED",
+		1: "KEYPOINT_CHECK_STATUS_RUNNING",
+		2: "KEYPOINT_CHECK_STATUS_SUCCEEDED",
+		3: "KEYPOINT_CHECK_STATUS_FAILED",
+	}
+	KeypointCheckStatus_value = map[string]int32{
+		"KEYPOINT_CHECK_STATUS_UNSPECIFIED": 0,
+		"KEYPOINT_CHECK_STATUS_RUNNING":     1,
+		"KEYPOINT_CHECK_STATUS_SUCCEEDED":   2,
+		"KEYPOINT_CHECK_STATUS_FAILED":      3,
+	}
+)
+
+func (x KeypointCheckStatus) Enum() *KeypointCheckStatus {
+	p := new(KeypointCheckStatus)
+	*p = x
+	return p
+}
+
+func (x KeypointCheckStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KeypointCheckStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_label_proto_enumTypes[0].Descriptor()
+}
+
+func (KeypointCheckStatus) Type() protoreflect.EnumType {
+	return &file_krill_v1_label_proto_enumTypes[0]
+}
+
+func (x KeypointCheckStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KeypointCheckStatus.Descriptor instead.
+func (KeypointCheckStatus) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{0}
+}
 
 type LabelAttribute struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1647,6 +1700,602 @@ func (x *FitKeypointsResponse) GetBoxCount() int32 {
 	return 0
 }
 
+type CheckKeypointsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId   int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckKeypointsRequest) Reset() {
+	*x = CheckKeypointsRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckKeypointsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckKeypointsRequest) ProtoMessage() {}
+
+func (x *CheckKeypointsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckKeypointsRequest.ProtoReflect.Descriptor instead.
+func (*CheckKeypointsRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *CheckKeypointsRequest) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+type CheckKeypointsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Boxes the check fits, or those of the check already running. 0 when the
+	// type has no boxes posed by hand.
+	BoxCount      int32 `protobuf:"varint,1,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckKeypointsResponse) Reset() {
+	*x = CheckKeypointsResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckKeypointsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckKeypointsResponse) ProtoMessage() {}
+
+func (x *CheckKeypointsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckKeypointsResponse.ProtoReflect.Descriptor instead.
+func (*CheckKeypointsResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *CheckKeypointsResponse) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
+type ListKeypointChecksRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListKeypointChecksRequest) Reset() {
+	*x = ListKeypointChecksRequest{}
+	mi := &file_krill_v1_label_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListKeypointChecksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListKeypointChecksRequest) ProtoMessage() {}
+
+func (x *ListKeypointChecksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListKeypointChecksRequest.ProtoReflect.Descriptor instead.
+func (*ListKeypointChecksRequest) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{30}
+}
+
+type ListKeypointChecksResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Types []*KeypointCheckType   `protobuf:"bytes,1,rep,name=types,proto3" json:"types,omitempty"`
+	// The most boxes a check fits. Types with more are sampled evenly.
+	MaxBoxes      int32 `protobuf:"varint,2,opt,name=max_boxes,json=maxBoxes,proto3" json:"max_boxes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListKeypointChecksResponse) Reset() {
+	*x = ListKeypointChecksResponse{}
+	mi := &file_krill_v1_label_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListKeypointChecksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListKeypointChecksResponse) ProtoMessage() {}
+
+func (x *ListKeypointChecksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListKeypointChecksResponse.ProtoReflect.Descriptor instead.
+func (*ListKeypointChecksResponse) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListKeypointChecksResponse) GetTypes() []*KeypointCheckType {
+	if x != nil {
+		return x.Types
+	}
+	return nil
+}
+
+func (x *ListKeypointChecksResponse) GetMaxBoxes() int32 {
+	if x != nil {
+		return x.MaxBoxes
+	}
+	return 0
+}
+
+// KeypointCheckType is a type with a quad covered by its reference design.
+type KeypointCheckType struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Title       string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Color       string                 `protobuf:"bytes,4,opt,name=color,proto3" json:"color,omitempty"`
+	// Boxes labelers placed keypoints on.
+	PosedBoxCount int32 `protobuf:"varint,5,opt,name=posed_box_count,json=posedBoxCount,proto3" json:"posed_box_count,omitempty"`
+	// The latest check that finished. Unset when none has.
+	Last *KeypointCheck `protobuf:"bytes,6,opt,name=last,proto3" json:"last,omitempty"`
+	// Unset when no check is running.
+	Running       *KeypointCheck `protobuf:"bytes,7,opt,name=running,proto3" json:"running,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KeypointCheckType) Reset() {
+	*x = KeypointCheckType{}
+	mi := &file_krill_v1_label_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KeypointCheckType) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeypointCheckType) ProtoMessage() {}
+
+func (x *KeypointCheckType) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeypointCheckType.ProtoReflect.Descriptor instead.
+func (*KeypointCheckType) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *KeypointCheckType) GetLabelTypeId() int64 {
+	if x != nil {
+		return x.LabelTypeId
+	}
+	return 0
+}
+
+func (x *KeypointCheckType) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *KeypointCheckType) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *KeypointCheckType) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *KeypointCheckType) GetPosedBoxCount() int32 {
+	if x != nil {
+		return x.PosedBoxCount
+	}
+	return 0
+}
+
+func (x *KeypointCheckType) GetLast() *KeypointCheck {
+	if x != nil {
+		return x.Last
+	}
+	return nil
+}
+
+func (x *KeypointCheckType) GetRunning() *KeypointCheck {
+	if x != nil {
+		return x.Running
+	}
+	return nil
+}
+
+// KeypointCheck compares Fit keypoints with keypoints labelers placed. Errors
+// are in video pixels, and a box's error is its farthest keypoint's, counting
+// only keypoints labeled in both.
+type KeypointCheck struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status KeypointCheckStatus    `protobuf:"varint,2,opt,name=status,proto3,enum=krill.v1.KeypointCheckStatus" json:"status,omitempty"`
+	Error  string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// Unset for deleted accounts.
+	CreatedBy  *Profile               `protobuf:"bytes,4,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	BoxCount   int32                  `protobuf:"varint,7,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	// Boxes the design was found in.
+	FoundCount int32 `protobuf:"varint,8,opt,name=found_count,json=foundCount,proto3" json:"found_count,omitempty"`
+	// Found boxes whose quad matches the labeler's corners far better when
+	// turned a quarter or half turn, so the fit picked the wrong way up.
+	TurnedCount int32 `protobuf:"varint,9,opt,name=turned_count,json=turnedCount,proto3" json:"turned_count,omitempty"`
+	// Found boxes with a keypoint labeled in both, which the errors cover.
+	ComparedCount int32   `protobuf:"varint,10,opt,name=compared_count,json=comparedCount,proto3" json:"compared_count,omitempty"`
+	MedianError   float64 `protobuf:"fixed64,11,opt,name=median_error,json=medianError,proto3" json:"median_error,omitempty"`
+	P90Error      float64 `protobuf:"fixed64,12,opt,name=p90_error,json=p90Error,proto3" json:"p90_error,omitempty"`
+	// Keypoints compared on at least one box, in the type's order.
+	Keypoints []*KeypointError `protobuf:"bytes,13,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
+	// The boxes with the largest errors, largest first.
+	Worst         []*KeypointCheckBox `protobuf:"bytes,14,rep,name=worst,proto3" json:"worst,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KeypointCheck) Reset() {
+	*x = KeypointCheck{}
+	mi := &file_krill_v1_label_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KeypointCheck) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeypointCheck) ProtoMessage() {}
+
+func (x *KeypointCheck) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeypointCheck.ProtoReflect.Descriptor instead.
+func (*KeypointCheck) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *KeypointCheck) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetStatus() KeypointCheckStatus {
+	if x != nil {
+		return x.Status
+	}
+	return KeypointCheckStatus_KEYPOINT_CHECK_STATUS_UNSPECIFIED
+}
+
+func (x *KeypointCheck) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *KeypointCheck) GetCreatedBy() *Profile {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return nil
+}
+
+func (x *KeypointCheck) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *KeypointCheck) GetFinishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FinishedAt
+	}
+	return nil
+}
+
+func (x *KeypointCheck) GetBoxCount() int32 {
+	if x != nil {
+		return x.BoxCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetFoundCount() int32 {
+	if x != nil {
+		return x.FoundCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetTurnedCount() int32 {
+	if x != nil {
+		return x.TurnedCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetComparedCount() int32 {
+	if x != nil {
+		return x.ComparedCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetMedianError() float64 {
+	if x != nil {
+		return x.MedianError
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetP90Error() float64 {
+	if x != nil {
+		return x.P90Error
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetKeypoints() []*KeypointError {
+	if x != nil {
+		return x.Keypoints
+	}
+	return nil
+}
+
+func (x *KeypointCheck) GetWorst() []*KeypointCheckBox {
+	if x != nil {
+		return x.Worst
+	}
+	return nil
+}
+
+type KeypointError struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The keypoint's name when the check ran.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Boxes it was compared on.
+	Count         int32   `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	Median        float64 `protobuf:"fixed64,3,opt,name=median,proto3" json:"median,omitempty"`
+	P90           float64 `protobuf:"fixed64,4,opt,name=p90,proto3" json:"p90,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KeypointError) Reset() {
+	*x = KeypointError{}
+	mi := &file_krill_v1_label_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KeypointError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeypointError) ProtoMessage() {}
+
+func (x *KeypointError) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeypointError.ProtoReflect.Descriptor instead.
+func (*KeypointError) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *KeypointError) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *KeypointError) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *KeypointError) GetMedian() float64 {
+	if x != nil {
+		return x.Median
+	}
+	return 0
+}
+
+func (x *KeypointError) GetP90() float64 {
+	if x != nil {
+		return x.P90
+	}
+	return 0
+}
+
+type KeypointCheckBox struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	AnnotationId int64                  `protobuf:"varint,1,opt,name=annotation_id,json=annotationId,proto3" json:"annotation_id,omitempty"`
+	ClipId       int64                  `protobuf:"varint,2,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
+	// Index within the video.
+	FrameIndex    int32   `protobuf:"varint,3,opt,name=frame_index,json=frameIndex,proto3" json:"frame_index,omitempty"`
+	Error         float64 `protobuf:"fixed64,4,opt,name=error,proto3" json:"error,omitempty"`
+	Turned        bool    `protobuf:"varint,5,opt,name=turned,proto3" json:"turned,omitempty"`
+	VideoName     string  `protobuf:"bytes,6,opt,name=video_name,json=videoName,proto3" json:"video_name,omitempty"`
+	ClipIndex     int32   `protobuf:"varint,7,opt,name=clip_index,json=clipIndex,proto3" json:"clip_index,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KeypointCheckBox) Reset() {
+	*x = KeypointCheckBox{}
+	mi := &file_krill_v1_label_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KeypointCheckBox) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeypointCheckBox) ProtoMessage() {}
+
+func (x *KeypointCheckBox) ProtoReflect() protoreflect.Message {
+	mi := &file_krill_v1_label_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeypointCheckBox.ProtoReflect.Descriptor instead.
+func (*KeypointCheckBox) Descriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *KeypointCheckBox) GetAnnotationId() int64 {
+	if x != nil {
+		return x.AnnotationId
+	}
+	return 0
+}
+
+func (x *KeypointCheckBox) GetClipId() int64 {
+	if x != nil {
+		return x.ClipId
+	}
+	return 0
+}
+
+func (x *KeypointCheckBox) GetFrameIndex() int32 {
+	if x != nil {
+		return x.FrameIndex
+	}
+	return 0
+}
+
+func (x *KeypointCheckBox) GetError() float64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *KeypointCheckBox) GetTurned() bool {
+	if x != nil {
+		return x.Turned
+	}
+	return false
+}
+
+func (x *KeypointCheckBox) GetVideoName() string {
+	if x != nil {
+		return x.VideoName
+	}
+	return ""
+}
+
+func (x *KeypointCheckBox) GetClipIndex() int32 {
+	if x != nil {
+		return x.ClipIndex
+	}
+	return 0
+}
+
 // AttributeValueMapping says what a source track's attribute value becomes.
 type AttributeValueMapping struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
@@ -1663,7 +2312,7 @@ type AttributeValueMapping struct {
 
 func (x *AttributeValueMapping) Reset() {
 	*x = AttributeValueMapping{}
-	mi := &file_krill_v1_label_proto_msgTypes[28]
+	mi := &file_krill_v1_label_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1675,7 +2324,7 @@ func (x *AttributeValueMapping) String() string {
 func (*AttributeValueMapping) ProtoMessage() {}
 
 func (x *AttributeValueMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[28]
+	mi := &file_krill_v1_label_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1688,7 +2337,7 @@ func (x *AttributeValueMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttributeValueMapping.ProtoReflect.Descriptor instead.
 func (*AttributeValueMapping) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{28}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *AttributeValueMapping) GetSourceAttribute() string {
@@ -1741,7 +2390,7 @@ type ExportClassChange struct {
 
 func (x *ExportClassChange) Reset() {
 	*x = ExportClassChange{}
-	mi := &file_krill_v1_label_proto_msgTypes[29]
+	mi := &file_krill_v1_label_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1753,7 +2402,7 @@ func (x *ExportClassChange) String() string {
 func (*ExportClassChange) ProtoMessage() {}
 
 func (x *ExportClassChange) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[29]
+	mi := &file_krill_v1_label_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1766,7 +2415,7 @@ func (x *ExportClassChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportClassChange.ProtoReflect.Descriptor instead.
 func (*ExportClassChange) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{29}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ExportClassChange) GetName() string {
@@ -1809,7 +2458,7 @@ type PreviewMergeLabelTypesRequest struct {
 
 func (x *PreviewMergeLabelTypesRequest) Reset() {
 	*x = PreviewMergeLabelTypesRequest{}
-	mi := &file_krill_v1_label_proto_msgTypes[30]
+	mi := &file_krill_v1_label_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1821,7 +2470,7 @@ func (x *PreviewMergeLabelTypesRequest) String() string {
 func (*PreviewMergeLabelTypesRequest) ProtoMessage() {}
 
 func (x *PreviewMergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[30]
+	mi := &file_krill_v1_label_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1834,7 +2483,7 @@ func (x *PreviewMergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewMergeLabelTypesRequest.ProtoReflect.Descriptor instead.
 func (*PreviewMergeLabelTypesRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{30}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *PreviewMergeLabelTypesRequest) GetSourceId() int64 {
@@ -1886,7 +2535,7 @@ type PreviewMergeLabelTypesResponse struct {
 
 func (x *PreviewMergeLabelTypesResponse) Reset() {
 	*x = PreviewMergeLabelTypesResponse{}
-	mi := &file_krill_v1_label_proto_msgTypes[31]
+	mi := &file_krill_v1_label_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1898,7 +2547,7 @@ func (x *PreviewMergeLabelTypesResponse) String() string {
 func (*PreviewMergeLabelTypesResponse) ProtoMessage() {}
 
 func (x *PreviewMergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[31]
+	mi := &file_krill_v1_label_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1911,7 +2560,7 @@ func (x *PreviewMergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewMergeLabelTypesResponse.ProtoReflect.Descriptor instead.
 func (*PreviewMergeLabelTypesResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{31}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *PreviewMergeLabelTypesResponse) GetTrackCount() int32 {
@@ -2010,7 +2659,7 @@ type MergeLabelTypesRequest struct {
 
 func (x *MergeLabelTypesRequest) Reset() {
 	*x = MergeLabelTypesRequest{}
-	mi := &file_krill_v1_label_proto_msgTypes[32]
+	mi := &file_krill_v1_label_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2022,7 +2671,7 @@ func (x *MergeLabelTypesRequest) String() string {
 func (*MergeLabelTypesRequest) ProtoMessage() {}
 
 func (x *MergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[32]
+	mi := &file_krill_v1_label_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2035,7 +2684,7 @@ func (x *MergeLabelTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLabelTypesRequest.ProtoReflect.Descriptor instead.
 func (*MergeLabelTypesRequest) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{32}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *MergeLabelTypesRequest) GetSourceId() int64 {
@@ -2072,7 +2721,7 @@ type MergeLabelTypesResponse struct {
 
 func (x *MergeLabelTypesResponse) Reset() {
 	*x = MergeLabelTypesResponse{}
-	mi := &file_krill_v1_label_proto_msgTypes[33]
+	mi := &file_krill_v1_label_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2084,7 +2733,7 @@ func (x *MergeLabelTypesResponse) String() string {
 func (*MergeLabelTypesResponse) ProtoMessage() {}
 
 func (x *MergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_krill_v1_label_proto_msgTypes[33]
+	mi := &file_krill_v1_label_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2097,7 +2746,7 @@ func (x *MergeLabelTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLabelTypesResponse.ProtoReflect.Descriptor instead.
 func (*MergeLabelTypesResponse) Descriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{33}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *MergeLabelTypesResponse) GetTrackCount() int32 {
@@ -2132,7 +2781,7 @@ var File_krill_v1_label_proto protoreflect.FileDescriptor
 
 const file_krill_v1_label_proto_rawDesc = "" +
 	"\n" +
-	"\x14krill/v1/label.proto\x12\bkrill.v1\">\n" +
+	"\x14krill/v1/label.proto\x12\bkrill.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14krill/v1/stats.proto\">\n" +
 	"\x0eLabelAttribute\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aoptions\x18\x02 \x03(\tR\aoptions\"\xb9\x05\n" +
@@ -2252,7 +2901,59 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x13FitKeypointsRequest\x12\"\n" +
 	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\"3\n" +
 	"\x14FitKeypointsResponse\x12\x1b\n" +
-	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\"\xd8\x01\n" +
+	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\";\n" +
+	"\x15CheckKeypointsRequest\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\"5\n" +
+	"\x16CheckKeypointsResponse\x12\x1b\n" +
+	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\"\x1b\n" +
+	"\x19ListKeypointChecksRequest\"l\n" +
+	"\x1aListKeypointChecksResponse\x121\n" +
+	"\x05types\x18\x01 \x03(\v2\x1b.krill.v1.KeypointCheckTypeR\x05types\x12\x1b\n" +
+	"\tmax_boxes\x18\x02 \x01(\x05R\bmaxBoxes\"\xff\x01\n" +
+	"\x11KeypointCheckType\x12\"\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x14\n" +
+	"\x05color\x18\x04 \x01(\tR\x05color\x12&\n" +
+	"\x0fposed_box_count\x18\x05 \x01(\x05R\rposedBoxCount\x12+\n" +
+	"\x04last\x18\x06 \x01(\v2\x17.krill.v1.KeypointCheckR\x04last\x121\n" +
+	"\arunning\x18\a \x01(\v2\x17.krill.v1.KeypointCheckR\arunning\"\xc7\x04\n" +
+	"\rKeypointCheck\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x125\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1d.krill.v1.KeypointCheckStatusR\x06status\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x120\n" +
+	"\n" +
+	"created_by\x18\x04 \x01(\v2\x11.krill.v1.ProfileR\tcreatedBy\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12;\n" +
+	"\vfinished_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"finishedAt\x12\x1b\n" +
+	"\tbox_count\x18\a \x01(\x05R\bboxCount\x12\x1f\n" +
+	"\vfound_count\x18\b \x01(\x05R\n" +
+	"foundCount\x12!\n" +
+	"\fturned_count\x18\t \x01(\x05R\vturnedCount\x12%\n" +
+	"\x0ecompared_count\x18\n" +
+	" \x01(\x05R\rcomparedCount\x12!\n" +
+	"\fmedian_error\x18\v \x01(\x01R\vmedianError\x12\x1b\n" +
+	"\tp90_error\x18\f \x01(\x01R\bp90Error\x125\n" +
+	"\tkeypoints\x18\r \x03(\v2\x17.krill.v1.KeypointErrorR\tkeypoints\x120\n" +
+	"\x05worst\x18\x0e \x03(\v2\x1a.krill.v1.KeypointCheckBoxR\x05worst\"c\n" +
+	"\rKeypointError\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\x12\x16\n" +
+	"\x06median\x18\x03 \x01(\x01R\x06median\x12\x10\n" +
+	"\x03p90\x18\x04 \x01(\x01R\x03p90\"\xdd\x01\n" +
+	"\x10KeypointCheckBox\x12#\n" +
+	"\rannotation_id\x18\x01 \x01(\x03R\fannotationId\x12\x17\n" +
+	"\aclip_id\x18\x02 \x01(\x03R\x06clipId\x12\x1f\n" +
+	"\vframe_index\x18\x03 \x01(\x05R\n" +
+	"frameIndex\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\x01R\x05error\x12\x16\n" +
+	"\x06turned\x18\x05 \x01(\bR\x06turned\x12\x1d\n" +
+	"\n" +
+	"video_name\x18\x06 \x01(\tR\tvideoName\x12\x1d\n" +
+	"\n" +
+	"clip_index\x18\a \x01(\x05R\tclipIndex\"\xd8\x01\n" +
 	"\x15AttributeValueMapping\x12)\n" +
 	"\x10source_attribute\x18\x01 \x01(\tR\x0fsourceAttribute\x12#\n" +
 	"\rsource_option\x18\x02 \x01(\tR\fsourceOption\x12)\n" +
@@ -2295,7 +2996,12 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"trackCount\x12\x1b\n" +
 	"\tbox_count\x18\x02 \x01(\x05R\bboxCount\x12(\n" +
 	"\x10gold_frame_count\x18\x03 \x01(\x05R\x0egoldFrameCount\x12.\n" +
-	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount2\xd0\t\n" +
+	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount*\xa6\x01\n" +
+	"\x13KeypointCheckStatus\x12%\n" +
+	"!KEYPOINT_CHECK_STATUS_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dKEYPOINT_CHECK_STATUS_RUNNING\x10\x01\x12#\n" +
+	"\x1fKEYPOINT_CHECK_STATUS_SUCCEEDED\x10\x02\x12 \n" +
+	"\x1cKEYPOINT_CHECK_STATUS_FAILED\x10\x032\x8a\v\n" +
 	"\fLabelService\x12U\n" +
 	"\x0eListLabelTypes\x12\x1f.krill.v1.ListLabelTypesRequest\x1a .krill.v1.ListLabelTypesResponse\"\x00\x12X\n" +
 	"\x0fCreateLabelType\x12 .krill.v1.CreateLabelTypeRequest\x1a!.krill.v1.CreateLabelTypeResponse\"\x00\x12X\n" +
@@ -2307,7 +3013,9 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x12DeleteLabelExample\x12#.krill.v1.DeleteLabelExampleRequest\x1a$.krill.v1.DeleteLabelExampleResponse\"\x00\x12^\n" +
 	"\x11SetLabelReference\x12\".krill.v1.SetLabelReferenceRequest\x1a#.krill.v1.SetLabelReferenceResponse\"\x00\x12O\n" +
 	"\fFitRotations\x12\x1d.krill.v1.FitRotationsRequest\x1a\x1e.krill.v1.FitRotationsResponse\"\x00\x12O\n" +
-	"\fFitKeypoints\x12\x1d.krill.v1.FitKeypointsRequest\x1a\x1e.krill.v1.FitKeypointsResponse\"\x00\x12m\n" +
+	"\fFitKeypoints\x12\x1d.krill.v1.FitKeypointsRequest\x1a\x1e.krill.v1.FitKeypointsResponse\"\x00\x12U\n" +
+	"\x0eCheckKeypoints\x12\x1f.krill.v1.CheckKeypointsRequest\x1a .krill.v1.CheckKeypointsResponse\"\x00\x12a\n" +
+	"\x12ListKeypointChecks\x12#.krill.v1.ListKeypointChecksRequest\x1a$.krill.v1.ListKeypointChecksResponse\"\x00\x12m\n" +
 	"\x16PreviewMergeLabelTypes\x12'.krill.v1.PreviewMergeLabelTypesRequest\x1a(.krill.v1.PreviewMergeLabelTypesResponse\"\x00\x12X\n" +
 	"\x0fMergeLabelTypes\x12 .krill.v1.MergeLabelTypesRequest\x1a!.krill.v1.MergeLabelTypesResponse\"\x00B\x8b\x01\n" +
 	"\fcom.krill.v1B\n" +
@@ -2325,98 +3033,123 @@ func file_krill_v1_label_proto_rawDescGZIP() []byte {
 	return file_krill_v1_label_proto_rawDescData
 }
 
-var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_krill_v1_label_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_krill_v1_label_proto_goTypes = []any{
-	(*LabelAttribute)(nil),                   // 0: krill.v1.LabelAttribute
-	(*LabelType)(nil),                        // 1: krill.v1.LabelType
-	(*KeypointDef)(nil),                      // 2: krill.v1.KeypointDef
-	(*KeypointQuad)(nil),                     // 3: krill.v1.KeypointQuad
-	(*KeypointEdge)(nil),                     // 4: krill.v1.KeypointEdge
-	(*LabelExample)(nil),                     // 5: krill.v1.LabelExample
-	(*ListLabelTypesRequest)(nil),            // 6: krill.v1.ListLabelTypesRequest
-	(*ListLabelTypesResponse)(nil),           // 7: krill.v1.ListLabelTypesResponse
-	(*CreateLabelTypeRequest)(nil),           // 8: krill.v1.CreateLabelTypeRequest
-	(*CreateLabelTypeResponse)(nil),          // 9: krill.v1.CreateLabelTypeResponse
-	(*UpdateLabelTypeRequest)(nil),           // 10: krill.v1.UpdateLabelTypeRequest
-	(*UpdateLabelTypeResponse)(nil),          // 11: krill.v1.UpdateLabelTypeResponse
-	(*DeleteLabelTypeRequest)(nil),           // 12: krill.v1.DeleteLabelTypeRequest
-	(*DeleteLabelTypeResponse)(nil),          // 13: krill.v1.DeleteLabelTypeResponse
-	(*ReorderLabelTypesRequest)(nil),         // 14: krill.v1.ReorderLabelTypesRequest
-	(*ReorderLabelTypesResponse)(nil),        // 15: krill.v1.ReorderLabelTypesResponse
-	(*CreateLabelExampleUploadRequest)(nil),  // 16: krill.v1.CreateLabelExampleUploadRequest
-	(*CreateLabelExampleUploadResponse)(nil), // 17: krill.v1.CreateLabelExampleUploadResponse
-	(*AddLabelExampleRequest)(nil),           // 18: krill.v1.AddLabelExampleRequest
-	(*AddLabelExampleResponse)(nil),          // 19: krill.v1.AddLabelExampleResponse
-	(*DeleteLabelExampleRequest)(nil),        // 20: krill.v1.DeleteLabelExampleRequest
-	(*DeleteLabelExampleResponse)(nil),       // 21: krill.v1.DeleteLabelExampleResponse
-	(*SetLabelReferenceRequest)(nil),         // 22: krill.v1.SetLabelReferenceRequest
-	(*SetLabelReferenceResponse)(nil),        // 23: krill.v1.SetLabelReferenceResponse
-	(*FitRotationsRequest)(nil),              // 24: krill.v1.FitRotationsRequest
-	(*FitRotationsResponse)(nil),             // 25: krill.v1.FitRotationsResponse
-	(*FitKeypointsRequest)(nil),              // 26: krill.v1.FitKeypointsRequest
-	(*FitKeypointsResponse)(nil),             // 27: krill.v1.FitKeypointsResponse
-	(*AttributeValueMapping)(nil),            // 28: krill.v1.AttributeValueMapping
-	(*ExportClassChange)(nil),                // 29: krill.v1.ExportClassChange
-	(*PreviewMergeLabelTypesRequest)(nil),    // 30: krill.v1.PreviewMergeLabelTypesRequest
-	(*PreviewMergeLabelTypesResponse)(nil),   // 31: krill.v1.PreviewMergeLabelTypesResponse
-	(*MergeLabelTypesRequest)(nil),           // 32: krill.v1.MergeLabelTypesRequest
-	(*MergeLabelTypesResponse)(nil),          // 33: krill.v1.MergeLabelTypesResponse
+	(KeypointCheckStatus)(0),                 // 0: krill.v1.KeypointCheckStatus
+	(*LabelAttribute)(nil),                   // 1: krill.v1.LabelAttribute
+	(*LabelType)(nil),                        // 2: krill.v1.LabelType
+	(*KeypointDef)(nil),                      // 3: krill.v1.KeypointDef
+	(*KeypointQuad)(nil),                     // 4: krill.v1.KeypointQuad
+	(*KeypointEdge)(nil),                     // 5: krill.v1.KeypointEdge
+	(*LabelExample)(nil),                     // 6: krill.v1.LabelExample
+	(*ListLabelTypesRequest)(nil),            // 7: krill.v1.ListLabelTypesRequest
+	(*ListLabelTypesResponse)(nil),           // 8: krill.v1.ListLabelTypesResponse
+	(*CreateLabelTypeRequest)(nil),           // 9: krill.v1.CreateLabelTypeRequest
+	(*CreateLabelTypeResponse)(nil),          // 10: krill.v1.CreateLabelTypeResponse
+	(*UpdateLabelTypeRequest)(nil),           // 11: krill.v1.UpdateLabelTypeRequest
+	(*UpdateLabelTypeResponse)(nil),          // 12: krill.v1.UpdateLabelTypeResponse
+	(*DeleteLabelTypeRequest)(nil),           // 13: krill.v1.DeleteLabelTypeRequest
+	(*DeleteLabelTypeResponse)(nil),          // 14: krill.v1.DeleteLabelTypeResponse
+	(*ReorderLabelTypesRequest)(nil),         // 15: krill.v1.ReorderLabelTypesRequest
+	(*ReorderLabelTypesResponse)(nil),        // 16: krill.v1.ReorderLabelTypesResponse
+	(*CreateLabelExampleUploadRequest)(nil),  // 17: krill.v1.CreateLabelExampleUploadRequest
+	(*CreateLabelExampleUploadResponse)(nil), // 18: krill.v1.CreateLabelExampleUploadResponse
+	(*AddLabelExampleRequest)(nil),           // 19: krill.v1.AddLabelExampleRequest
+	(*AddLabelExampleResponse)(nil),          // 20: krill.v1.AddLabelExampleResponse
+	(*DeleteLabelExampleRequest)(nil),        // 21: krill.v1.DeleteLabelExampleRequest
+	(*DeleteLabelExampleResponse)(nil),       // 22: krill.v1.DeleteLabelExampleResponse
+	(*SetLabelReferenceRequest)(nil),         // 23: krill.v1.SetLabelReferenceRequest
+	(*SetLabelReferenceResponse)(nil),        // 24: krill.v1.SetLabelReferenceResponse
+	(*FitRotationsRequest)(nil),              // 25: krill.v1.FitRotationsRequest
+	(*FitRotationsResponse)(nil),             // 26: krill.v1.FitRotationsResponse
+	(*FitKeypointsRequest)(nil),              // 27: krill.v1.FitKeypointsRequest
+	(*FitKeypointsResponse)(nil),             // 28: krill.v1.FitKeypointsResponse
+	(*CheckKeypointsRequest)(nil),            // 29: krill.v1.CheckKeypointsRequest
+	(*CheckKeypointsResponse)(nil),           // 30: krill.v1.CheckKeypointsResponse
+	(*ListKeypointChecksRequest)(nil),        // 31: krill.v1.ListKeypointChecksRequest
+	(*ListKeypointChecksResponse)(nil),       // 32: krill.v1.ListKeypointChecksResponse
+	(*KeypointCheckType)(nil),                // 33: krill.v1.KeypointCheckType
+	(*KeypointCheck)(nil),                    // 34: krill.v1.KeypointCheck
+	(*KeypointError)(nil),                    // 35: krill.v1.KeypointError
+	(*KeypointCheckBox)(nil),                 // 36: krill.v1.KeypointCheckBox
+	(*AttributeValueMapping)(nil),            // 37: krill.v1.AttributeValueMapping
+	(*ExportClassChange)(nil),                // 38: krill.v1.ExportClassChange
+	(*PreviewMergeLabelTypesRequest)(nil),    // 39: krill.v1.PreviewMergeLabelTypesRequest
+	(*PreviewMergeLabelTypesResponse)(nil),   // 40: krill.v1.PreviewMergeLabelTypesResponse
+	(*MergeLabelTypesRequest)(nil),           // 41: krill.v1.MergeLabelTypesRequest
+	(*MergeLabelTypesResponse)(nil),          // 42: krill.v1.MergeLabelTypesResponse
+	(*Profile)(nil),                          // 43: krill.v1.Profile
+	(*timestamppb.Timestamp)(nil),            // 44: google.protobuf.Timestamp
 }
 var file_krill_v1_label_proto_depIdxs = []int32{
-	0,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
-	5,  // 1: krill.v1.LabelType.examples:type_name -> krill.v1.LabelExample
-	2,  // 2: krill.v1.LabelType.keypoints:type_name -> krill.v1.KeypointDef
-	3,  // 3: krill.v1.LabelType.quads:type_name -> krill.v1.KeypointQuad
-	4,  // 4: krill.v1.LabelType.edges:type_name -> krill.v1.KeypointEdge
-	1,  // 5: krill.v1.ListLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
-	0,  // 6: krill.v1.CreateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
-	2,  // 7: krill.v1.CreateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
-	3,  // 8: krill.v1.CreateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
-	4,  // 9: krill.v1.CreateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
-	1,  // 10: krill.v1.CreateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
-	0,  // 11: krill.v1.UpdateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
-	2,  // 12: krill.v1.UpdateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
-	3,  // 13: krill.v1.UpdateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
-	4,  // 14: krill.v1.UpdateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
-	1,  // 15: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
-	1,  // 16: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
-	5,  // 17: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
-	1,  // 18: krill.v1.SetLabelReferenceResponse.label_type:type_name -> krill.v1.LabelType
-	28, // 19: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	28, // 20: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
-	29, // 21: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
-	28, // 22: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	6,  // 23: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
-	8,  // 24: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
-	10, // 25: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
-	12, // 26: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
-	14, // 27: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
-	16, // 28: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
-	18, // 29: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
-	20, // 30: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
-	22, // 31: krill.v1.LabelService.SetLabelReference:input_type -> krill.v1.SetLabelReferenceRequest
-	24, // 32: krill.v1.LabelService.FitRotations:input_type -> krill.v1.FitRotationsRequest
-	26, // 33: krill.v1.LabelService.FitKeypoints:input_type -> krill.v1.FitKeypointsRequest
-	30, // 34: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
-	32, // 35: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
-	7,  // 36: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
-	9,  // 37: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
-	11, // 38: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
-	13, // 39: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
-	15, // 40: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
-	17, // 41: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
-	19, // 42: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
-	21, // 43: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
-	23, // 44: krill.v1.LabelService.SetLabelReference:output_type -> krill.v1.SetLabelReferenceResponse
-	25, // 45: krill.v1.LabelService.FitRotations:output_type -> krill.v1.FitRotationsResponse
-	27, // 46: krill.v1.LabelService.FitKeypoints:output_type -> krill.v1.FitKeypointsResponse
-	31, // 47: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
-	33, // 48: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
-	36, // [36:49] is the sub-list for method output_type
-	23, // [23:36] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	1,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
+	6,  // 1: krill.v1.LabelType.examples:type_name -> krill.v1.LabelExample
+	3,  // 2: krill.v1.LabelType.keypoints:type_name -> krill.v1.KeypointDef
+	4,  // 3: krill.v1.LabelType.quads:type_name -> krill.v1.KeypointQuad
+	5,  // 4: krill.v1.LabelType.edges:type_name -> krill.v1.KeypointEdge
+	2,  // 5: krill.v1.ListLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
+	1,  // 6: krill.v1.CreateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
+	3,  // 7: krill.v1.CreateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
+	4,  // 8: krill.v1.CreateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
+	5,  // 9: krill.v1.CreateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
+	2,  // 10: krill.v1.CreateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
+	1,  // 11: krill.v1.UpdateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
+	3,  // 12: krill.v1.UpdateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
+	4,  // 13: krill.v1.UpdateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
+	5,  // 14: krill.v1.UpdateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
+	2,  // 15: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
+	2,  // 16: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
+	6,  // 17: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
+	2,  // 18: krill.v1.SetLabelReferenceResponse.label_type:type_name -> krill.v1.LabelType
+	33, // 19: krill.v1.ListKeypointChecksResponse.types:type_name -> krill.v1.KeypointCheckType
+	34, // 20: krill.v1.KeypointCheckType.last:type_name -> krill.v1.KeypointCheck
+	34, // 21: krill.v1.KeypointCheckType.running:type_name -> krill.v1.KeypointCheck
+	0,  // 22: krill.v1.KeypointCheck.status:type_name -> krill.v1.KeypointCheckStatus
+	43, // 23: krill.v1.KeypointCheck.created_by:type_name -> krill.v1.Profile
+	44, // 24: krill.v1.KeypointCheck.created_at:type_name -> google.protobuf.Timestamp
+	44, // 25: krill.v1.KeypointCheck.finished_at:type_name -> google.protobuf.Timestamp
+	35, // 26: krill.v1.KeypointCheck.keypoints:type_name -> krill.v1.KeypointError
+	36, // 27: krill.v1.KeypointCheck.worst:type_name -> krill.v1.KeypointCheckBox
+	37, // 28: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	37, // 29: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
+	38, // 30: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
+	37, // 31: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	7,  // 32: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
+	9,  // 33: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
+	11, // 34: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
+	13, // 35: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
+	15, // 36: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
+	17, // 37: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
+	19, // 38: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
+	21, // 39: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
+	23, // 40: krill.v1.LabelService.SetLabelReference:input_type -> krill.v1.SetLabelReferenceRequest
+	25, // 41: krill.v1.LabelService.FitRotations:input_type -> krill.v1.FitRotationsRequest
+	27, // 42: krill.v1.LabelService.FitKeypoints:input_type -> krill.v1.FitKeypointsRequest
+	29, // 43: krill.v1.LabelService.CheckKeypoints:input_type -> krill.v1.CheckKeypointsRequest
+	31, // 44: krill.v1.LabelService.ListKeypointChecks:input_type -> krill.v1.ListKeypointChecksRequest
+	39, // 45: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
+	41, // 46: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
+	8,  // 47: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
+	10, // 48: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
+	12, // 49: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
+	14, // 50: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
+	16, // 51: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
+	18, // 52: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
+	20, // 53: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
+	22, // 54: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
+	24, // 55: krill.v1.LabelService.SetLabelReference:output_type -> krill.v1.SetLabelReferenceResponse
+	26, // 56: krill.v1.LabelService.FitRotations:output_type -> krill.v1.FitRotationsResponse
+	28, // 57: krill.v1.LabelService.FitKeypoints:output_type -> krill.v1.FitKeypointsResponse
+	30, // 58: krill.v1.LabelService.CheckKeypoints:output_type -> krill.v1.CheckKeypointsResponse
+	32, // 59: krill.v1.LabelService.ListKeypointChecks:output_type -> krill.v1.ListKeypointChecksResponse
+	40, // 60: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
+	42, // 61: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
+	47, // [47:62] is the sub-list for method output_type
+	32, // [32:47] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_label_proto_init() }
@@ -2424,6 +3157,7 @@ func file_krill_v1_label_proto_init() {
 	if File_krill_v1_label_proto != nil {
 		return
 	}
+	file_krill_v1_stats_proto_init()
 	file_krill_v1_label_proto_msgTypes[2].OneofWrappers = []any{}
 	file_krill_v1_label_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
@@ -2431,13 +3165,14 @@ func file_krill_v1_label_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_label_proto_rawDesc), len(file_krill_v1_label_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   34,
+			NumEnums:      1,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_krill_v1_label_proto_goTypes,
 		DependencyIndexes: file_krill_v1_label_proto_depIdxs,
+		EnumInfos:         file_krill_v1_label_proto_enumTypes,
 		MessageInfos:      file_krill_v1_label_proto_msgTypes,
 	}.Build()
 	File_krill_v1_label_proto = out.File

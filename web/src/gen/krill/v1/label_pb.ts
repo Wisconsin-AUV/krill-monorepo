@@ -2,15 +2,19 @@
 // @generated from file krill/v1/label.proto (package krill.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Profile } from "./stats_pb";
+import { file_krill_v1_stats } from "./stats_pb";
+import type { Message, UnknownEnum } from "@bufbuild/protobuf";
 
 /**
  * Describes the file krill/v1/label.proto.
  */
 export const file_krill_v1_label: GenFile = /*@__PURE__*/
-  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIu8DCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZRIQCghvcmllbnRlZBgMIAEoCBIVCg1yZWZlcmVuY2VfdXJsGA0gASgJEhsKE3Vucm90YXRlZF9ib3hfY291bnQYDiABKAUSKAoJa2V5cG9pbnRzGA8gAygLMhUua3JpbGwudjEuS2V5cG9pbnREZWYSJQoFcXVhZHMYECADKAsyFi5rcmlsbC52MS5LZXlwb2ludFF1YWQSJQoFZWRnZXMYESADKAsyFi5rcmlsbC52MS5LZXlwb2ludEVkZ2USGQoRdW5wb3NlZF9ib3hfY291bnQYEiABKAUSFwoPcG9zZWRfYm94X2NvdW50GBMgASgFIjsKC0tleXBvaW50RGVmEgwKBG5hbWUYASABKAkSEwoGbWlycm9yGAIgASgFSACIAQFCCQoHX21pcnJvciJSCgxLZXlwb2ludFF1YWQSDwoHY29ybmVycxgBIAMoBRIRCglyZWZlcmVuY2UYAiABKAgSEwoGY2VudGVyGAMgASgFSACIAQFCCQoHX2NlbnRlciIoCgxLZXlwb2ludEVkZ2USDAoEZnJvbRgBIAEoBRIKCgJ0bxgCIAEoBSI4CgxMYWJlbEV4YW1wbGUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEg8KB2NhcHRpb24YAyABKAkiFwoVTGlzdExhYmVsVHlwZXNSZXF1ZXN0IkIKFkxpc3RMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUipAIKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBSABKAkSEQoJZ3VpZGVsaW5lGAYgASgJEhAKCG9yaWVudGVkGAcgASgIEigKCWtleXBvaW50cxgIIAMoCzIVLmtyaWxsLnYxLktleXBvaW50RGVmEiUKBXF1YWRzGAkgAygLMhYua3JpbGwudjEuS2V5cG9pbnRRdWFkEiUKBWVkZ2VzGAogAygLMhYua3JpbGwudjEuS2V5cG9pbnRFZGdlIkIKF0NyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiygIKFlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIsCgphdHRyaWJ1dGVzGAUgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBiABKAkSEQoJZ3VpZGVsaW5lGAcgASgJEhAKCG9yaWVudGVkGAggASgIEigKCWtleXBvaW50cxgJIAMoCzIVLmtyaWxsLnYxLktleXBvaW50RGVmEiUKBXF1YWRzGAogAygLMhYua3JpbGwudjEuS2V5cG9pbnRRdWFkEiUKBWVkZ2VzGAsgAygLMhYua3JpbGwudjEuS2V5cG9pbnRFZGdlEhgKEGtleXBvaW50X29yaWdpbnMYDCADKAUiQgoXVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2USJwoKbGFiZWxfdHlwZRgBIAEoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSIkChZEZWxldGVMYWJlbFR5cGVSZXF1ZXN0EgoKAmlkGAEgASgDIhkKF0RlbGV0ZUxhYmVsVHlwZVJlc3BvbnNlIicKGFJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBILCgNpZHMYASADKAMiRQoZUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZRIoCgtsYWJlbF90eXBlcxgBIAMoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSI4Ch9DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0EhUKDWxhYmVsX3R5cGVfaWQYASABKAMiQwogQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2USCwoDa2V5GAEgASgJEhIKCnVwbG9hZF91cmwYAiABKAkiTQoWQWRkTGFiZWxFeGFtcGxlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgsKA2tleRgCIAEoCRIPCgdjYXB0aW9uGAMgASgJIkIKF0FkZExhYmVsRXhhbXBsZVJlc3BvbnNlEicKB2V4YW1wbGUYASABKAsyFi5rcmlsbC52MS5MYWJlbEV4YW1wbGUiJwoZRGVsZXRlTGFiZWxFeGFtcGxlUmVxdWVzdBIKCgJpZBgBIAEoAyIcChpEZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSI+ChhTZXRMYWJlbFJlZmVyZW5jZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkiRAoZU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIiwKE0ZpdFJvdGF0aW9uc1JlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAyIpChRGaXRSb3RhdGlvbnNSZXNwb25zZRIRCglib3hfY291bnQYASABKAUiLAoTRml0S2V5cG9pbnRzUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIikKFEZpdEtleXBvaW50c1Jlc3BvbnNlEhEKCWJveF9jb3VudBgBIAEoBSKOAQoVQXR0cmlidXRlVmFsdWVNYXBwaW5nEhgKEHNvdXJjZV9hdHRyaWJ1dGUYASABKAkSFQoNc291cmNlX29wdGlvbhgCIAEoCRIYChB0YXJnZXRfYXR0cmlidXRlGAMgASgJEhUKDXRhcmdldF9vcHRpb24YBCABKAkSEwoLdHJhY2tfY291bnQYBSABKAUiUgoRRXhwb3J0Q2xhc3NDaGFuZ2USDAoEbmFtZRgBIAEoCRIOCgZvbGRfaWQYAiABKAUSDgoGbmV3X2lkGAMgASgFEg8KB2JlY29tZXMYBCABKAkieAodUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QSEQoJc291cmNlX2lkGAEgASgDEhEKCXRhcmdldF9pZBgCIAEoAxIxCghtYXBwaW5ncxgDIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZyL6AgoeUHJldmlld01lcmdlTGFiZWxUeXBlc1Jlc3BvbnNlEhMKC3RyYWNrX2NvdW50GAEgASgFEhEKCWJveF9jb3VudBgCIAEoBRISCgpjbGlwX2NvdW50GAMgASgFEhMKC3ZpZGVvX2NvdW50GAQgASgFEhsKE3RyYXNoZWRfdHJhY2tfY291bnQYBSABKAUSGAoQZ29sZF9mcmFtZV9jb3VudBgGIAEoBRIaChJnb2xkX2F0dGVtcHRfY291bnQYByABKAUSGQoRb3Blbl9yZXZpZXdfY291bnQYCCABKAUSFQoNZXhhbXBsZV9jb3VudBgJIAEoBRIxCghtYXBwaW5ncxgKIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZxIyCg1jbGFzc19jaGFuZ2VzGAsgAygLMhsua3JpbGwudjEuRXhwb3J0Q2xhc3NDaGFuZ2USGwoTdW5maWxsZWRfYXR0cmlidXRlcxgMIAMoCSJxChZNZXJnZUxhYmVsVHlwZXNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoAxIRCgl0YXJnZXRfaWQYAiABKAMSMQoIbWFwcGluZ3MYAyADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmcieAoXTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2USEwoLdHJhY2tfY291bnQYASABKAUSEQoJYm94X2NvdW50GAIgASgFEhgKEGdvbGRfZnJhbWVfY291bnQYAyABKAUSGwoTZHJvcHBlZF92YWx1ZV9jb3VudBgEIAEoBTLQCQoMTGFiZWxTZXJ2aWNlElUKDkxpc3RMYWJlbFR5cGVzEh8ua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXF1ZXN0GiAua3JpbGwudjEuTGlzdExhYmVsVHlwZXNSZXNwb25zZSIAElgKD0NyZWF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD1VwZGF0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXNwb25zZSIAElgKD0RlbGV0ZUxhYmVsVHlwZRIgLmtyaWxsLnYxLkRlbGV0ZUxhYmVsVHlwZVJlcXVlc3QaIS5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXNwb25zZSIAEl4KEVJlb3JkZXJMYWJlbFR5cGVzEiIua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXF1ZXN0GiMua3JpbGwudjEuUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZSIAEnMKGENyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZBIpLmtyaWxsLnYxLkNyZWF0ZUxhYmVsRXhhbXBsZVVwbG9hZFJlcXVlc3QaKi5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXNwb25zZSIAElgKD0FkZExhYmVsRXhhbXBsZRIgLmtyaWxsLnYxLkFkZExhYmVsRXhhbXBsZVJlcXVlc3QaIS5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXNwb25zZSIAEmEKEkRlbGV0ZUxhYmVsRXhhbXBsZRIjLmtyaWxsLnYxLkRlbGV0ZUxhYmVsRXhhbXBsZVJlcXVlc3QaJC5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSIAEl4KEVNldExhYmVsUmVmZXJlbmNlEiIua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXF1ZXN0GiMua3JpbGwudjEuU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZSIAEk8KDEZpdFJvdGF0aW9ucxIdLmtyaWxsLnYxLkZpdFJvdGF0aW9uc1JlcXVlc3QaHi5rcmlsbC52MS5GaXRSb3RhdGlvbnNSZXNwb25zZSIAEk8KDEZpdEtleXBvaW50cxIdLmtyaWxsLnYxLkZpdEtleXBvaW50c1JlcXVlc3QaHi5rcmlsbC52MS5GaXRLZXlwb2ludHNSZXNwb25zZSIAEm0KFlByZXZpZXdNZXJnZUxhYmVsVHlwZXMSJy5rcmlsbC52MS5QcmV2aWV3TWVyZ2VMYWJlbFR5cGVzUmVxdWVzdBooLmtyaWxsLnYxLlByZXZpZXdNZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAElgKD01lcmdlTGFiZWxUeXBlcxIgLmtyaWxsLnYxLk1lcmdlTGFiZWxUeXBlc1JlcXVlc3QaIS5rcmlsbC52MS5NZXJnZUxhYmVsVHlwZXNSZXNwb25zZSIAQosBCgxjb20ua3JpbGwudjFCCkxhYmVsUHJvdG9QAVouZ2l0aHViLmNvbS93YXV2L2tyaWxsL2FwaS9nZW4va3JpbGwvdjE7a3JpbGx2MaICA0tYWKoCCEtyaWxsLlYxygIIS3JpbGxcVjHiAhRLcmlsbFxWMVxHUEJNZXRhZGF0YeoCCUtyaWxsOjpWMWIGcHJvdG8z");
+  fileDesc("ChRrcmlsbC92MS9sYWJlbC5wcm90bxIIa3JpbGwudjEiLwoOTGFiZWxBdHRyaWJ1dGUSDAoEbmFtZRgBIAEoCRIPCgdvcHRpb25zGAIgAygJIu8DCglMYWJlbFR5cGUSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIQCghwb3NpdGlvbhgFIAEoBRIsCgphdHRyaWJ1dGVzGAYgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSEwoLdHJhY2tfY291bnQYByABKAUSEQoJYm94X2NvdW50GAggASgFEg0KBXRpdGxlGAkgASgJEhEKCWd1aWRlbGluZRgKIAEoCRIoCghleGFtcGxlcxgLIAMoCzIWLmtyaWxsLnYxLkxhYmVsRXhhbXBsZRIQCghvcmllbnRlZBgMIAEoCBIVCg1yZWZlcmVuY2VfdXJsGA0gASgJEhsKE3Vucm90YXRlZF9ib3hfY291bnQYDiABKAUSKAoJa2V5cG9pbnRzGA8gAygLMhUua3JpbGwudjEuS2V5cG9pbnREZWYSJQoFcXVhZHMYECADKAsyFi5rcmlsbC52MS5LZXlwb2ludFF1YWQSJQoFZWRnZXMYESADKAsyFi5rcmlsbC52MS5LZXlwb2ludEVkZ2USGQoRdW5wb3NlZF9ib3hfY291bnQYEiABKAUSFwoPcG9zZWRfYm94X2NvdW50GBMgASgFIjsKC0tleXBvaW50RGVmEgwKBG5hbWUYASABKAkSEwoGbWlycm9yGAIgASgFSACIAQFCCQoHX21pcnJvciJSCgxLZXlwb2ludFF1YWQSDwoHY29ybmVycxgBIAMoBRIRCglyZWZlcmVuY2UYAiABKAgSEwoGY2VudGVyGAMgASgFSACIAQFCCQoHX2NlbnRlciIoCgxLZXlwb2ludEVkZ2USDAoEZnJvbRgBIAEoBRIKCgJ0bxgCIAEoBSI4CgxMYWJlbEV4YW1wbGUSCgoCaWQYASABKAMSCwoDdXJsGAIgASgJEg8KB2NhcHRpb24YAyABKAkiFwoVTGlzdExhYmVsVHlwZXNSZXF1ZXN0IkIKFkxpc3RMYWJlbFR5cGVzUmVzcG9uc2USKAoLbGFiZWxfdHlwZXMYASADKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUipAIKFkNyZWF0ZUxhYmVsVHlwZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVjb2xvchgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIsCgphdHRyaWJ1dGVzGAQgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBSABKAkSEQoJZ3VpZGVsaW5lGAYgASgJEhAKCG9yaWVudGVkGAcgASgIEigKCWtleXBvaW50cxgIIAMoCzIVLmtyaWxsLnYxLktleXBvaW50RGVmEiUKBXF1YWRzGAkgAygLMhYua3JpbGwudjEuS2V5cG9pbnRRdWFkEiUKBWVkZ2VzGAogAygLMhYua3JpbGwudjEuS2V5cG9pbnRFZGdlIkIKF0NyZWF0ZUxhYmVsVHlwZVJlc3BvbnNlEicKCmxhYmVsX3R5cGUYASABKAsyEy5rcmlsbC52MS5MYWJlbFR5cGUiygIKFlVwZGF0ZUxhYmVsVHlwZVJlcXVlc3QSCgoCaWQYASABKAMSDAoEbmFtZRgCIAEoCRINCgVjb2xvchgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIsCgphdHRyaWJ1dGVzGAUgAygLMhgua3JpbGwudjEuTGFiZWxBdHRyaWJ1dGUSDQoFdGl0bGUYBiABKAkSEQoJZ3VpZGVsaW5lGAcgASgJEhAKCG9yaWVudGVkGAggASgIEigKCWtleXBvaW50cxgJIAMoCzIVLmtyaWxsLnYxLktleXBvaW50RGVmEiUKBXF1YWRzGAogAygLMhYua3JpbGwudjEuS2V5cG9pbnRRdWFkEiUKBWVkZ2VzGAsgAygLMhYua3JpbGwudjEuS2V5cG9pbnRFZGdlEhgKEGtleXBvaW50X29yaWdpbnMYDCADKAUiQgoXVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2USJwoKbGFiZWxfdHlwZRgBIAEoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSIkChZEZWxldGVMYWJlbFR5cGVSZXF1ZXN0EgoKAmlkGAEgASgDIhkKF0RlbGV0ZUxhYmVsVHlwZVJlc3BvbnNlIicKGFJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBILCgNpZHMYASADKAMiRQoZUmVvcmRlckxhYmVsVHlwZXNSZXNwb25zZRIoCgtsYWJlbF90eXBlcxgBIAMoCzITLmtyaWxsLnYxLkxhYmVsVHlwZSI4Ch9DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0EhUKDWxhYmVsX3R5cGVfaWQYASABKAMiQwogQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2USCwoDa2V5GAEgASgJEhIKCnVwbG9hZF91cmwYAiABKAkiTQoWQWRkTGFiZWxFeGFtcGxlUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgsKA2tleRgCIAEoCRIPCgdjYXB0aW9uGAMgASgJIkIKF0FkZExhYmVsRXhhbXBsZVJlc3BvbnNlEicKB2V4YW1wbGUYASABKAsyFi5rcmlsbC52MS5MYWJlbEV4YW1wbGUiJwoZRGVsZXRlTGFiZWxFeGFtcGxlUmVxdWVzdBIKCgJpZBgBIAEoAyIcChpEZWxldGVMYWJlbEV4YW1wbGVSZXNwb25zZSI+ChhTZXRMYWJlbFJlZmVyZW5jZVJlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAxILCgNrZXkYAiABKAkiRAoZU2V0TGFiZWxSZWZlcmVuY2VSZXNwb25zZRInCgpsYWJlbF90eXBlGAEgASgLMhMua3JpbGwudjEuTGFiZWxUeXBlIiwKE0ZpdFJvdGF0aW9uc1JlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAyIpChRGaXRSb3RhdGlvbnNSZXNwb25zZRIRCglib3hfY291bnQYASABKAUiLAoTRml0S2V5cG9pbnRzUmVxdWVzdBIVCg1sYWJlbF90eXBlX2lkGAEgASgDIikKFEZpdEtleXBvaW50c1Jlc3BvbnNlEhEKCWJveF9jb3VudBgBIAEoBSIuChVDaGVja0tleXBvaW50c1JlcXVlc3QSFQoNbGFiZWxfdHlwZV9pZBgBIAEoAyIrChZDaGVja0tleXBvaW50c1Jlc3BvbnNlEhEKCWJveF9jb3VudBgBIAEoBSIbChlMaXN0S2V5cG9pbnRDaGVja3NSZXF1ZXN0IlsKGkxpc3RLZXlwb2ludENoZWNrc1Jlc3BvbnNlEioKBXR5cGVzGAEgAygLMhsua3JpbGwudjEuS2V5cG9pbnRDaGVja1R5cGUSEQoJbWF4X2JveGVzGAIgASgFIsABChFLZXlwb2ludENoZWNrVHlwZRIVCg1sYWJlbF90eXBlX2lkGAEgASgDEgwKBG5hbWUYAiABKAkSDQoFdGl0bGUYAyABKAkSDQoFY29sb3IYBCABKAkSFwoPcG9zZWRfYm94X2NvdW50GAUgASgFEiUKBGxhc3QYBiABKAsyFy5rcmlsbC52MS5LZXlwb2ludENoZWNrEigKB3J1bm5pbmcYByABKAsyFy5rcmlsbC52MS5LZXlwb2ludENoZWNrIrcDCg1LZXlwb2ludENoZWNrEgoKAmlkGAEgASgDEi0KBnN0YXR1cxgCIAEoDjIdLmtyaWxsLnYxLktleXBvaW50Q2hlY2tTdGF0dXMSDQoFZXJyb3IYAyABKAkSJQoKY3JlYXRlZF9ieRgEIAEoCzIRLmtyaWxsLnYxLlByb2ZpbGUSLgoKY3JlYXRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWJveF9jb3VudBgHIAEoBRITCgtmb3VuZF9jb3VudBgIIAEoBRIUCgx0dXJuZWRfY291bnQYCSABKAUSFgoOY29tcGFyZWRfY291bnQYCiABKAUSFAoMbWVkaWFuX2Vycm9yGAsgASgBEhEKCXA5MF9lcnJvchgMIAEoARIqCglrZXlwb2ludHMYDSADKAsyFy5rcmlsbC52MS5LZXlwb2ludEVycm9yEikKBXdvcnN0GA4gAygLMhoua3JpbGwudjEuS2V5cG9pbnRDaGVja0JveCJJCg1LZXlwb2ludEVycm9yEgwKBG5hbWUYASABKAkSDQoFY291bnQYAiABKAUSDgoGbWVkaWFuGAMgASgBEgsKA3A5MBgEIAEoASKWAQoQS2V5cG9pbnRDaGVja0JveBIVCg1hbm5vdGF0aW9uX2lkGAEgASgDEg8KB2NsaXBfaWQYAiABKAMSEwoLZnJhbWVfaW5kZXgYAyABKAUSDQoFZXJyb3IYBCABKAESDgoGdHVybmVkGAUgASgIEhIKCnZpZGVvX25hbWUYBiABKAkSEgoKY2xpcF9pbmRleBgHIAEoBSKOAQoVQXR0cmlidXRlVmFsdWVNYXBwaW5nEhgKEHNvdXJjZV9hdHRyaWJ1dGUYASABKAkSFQoNc291cmNlX29wdGlvbhgCIAEoCRIYChB0YXJnZXRfYXR0cmlidXRlGAMgASgJEhUKDXRhcmdldF9vcHRpb24YBCABKAkSEwoLdHJhY2tfY291bnQYBSABKAUiUgoRRXhwb3J0Q2xhc3NDaGFuZ2USDAoEbmFtZRgBIAEoCRIOCgZvbGRfaWQYAiABKAUSDgoGbmV3X2lkGAMgASgFEg8KB2JlY29tZXMYBCABKAkieAodUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QSEQoJc291cmNlX2lkGAEgASgDEhEKCXRhcmdldF9pZBgCIAEoAxIxCghtYXBwaW5ncxgDIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZyL6AgoeUHJldmlld01lcmdlTGFiZWxUeXBlc1Jlc3BvbnNlEhMKC3RyYWNrX2NvdW50GAEgASgFEhEKCWJveF9jb3VudBgCIAEoBRISCgpjbGlwX2NvdW50GAMgASgFEhMKC3ZpZGVvX2NvdW50GAQgASgFEhsKE3RyYXNoZWRfdHJhY2tfY291bnQYBSABKAUSGAoQZ29sZF9mcmFtZV9jb3VudBgGIAEoBRIaChJnb2xkX2F0dGVtcHRfY291bnQYByABKAUSGQoRb3Blbl9yZXZpZXdfY291bnQYCCABKAUSFQoNZXhhbXBsZV9jb3VudBgJIAEoBRIxCghtYXBwaW5ncxgKIAMoCzIfLmtyaWxsLnYxLkF0dHJpYnV0ZVZhbHVlTWFwcGluZxIyCg1jbGFzc19jaGFuZ2VzGAsgAygLMhsua3JpbGwudjEuRXhwb3J0Q2xhc3NDaGFuZ2USGwoTdW5maWxsZWRfYXR0cmlidXRlcxgMIAMoCSJxChZNZXJnZUxhYmVsVHlwZXNSZXF1ZXN0EhEKCXNvdXJjZV9pZBgBIAEoAxIRCgl0YXJnZXRfaWQYAiABKAMSMQoIbWFwcGluZ3MYAyADKAsyHy5rcmlsbC52MS5BdHRyaWJ1dGVWYWx1ZU1hcHBpbmcieAoXTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2USEwoLdHJhY2tfY291bnQYASABKAUSEQoJYm94X2NvdW50GAIgASgFEhgKEGdvbGRfZnJhbWVfY291bnQYAyABKAUSGwoTZHJvcHBlZF92YWx1ZV9jb3VudBgEIAEoBSqmAQoTS2V5cG9pbnRDaGVja1N0YXR1cxIlCiFLRVlQT0lOVF9DSEVDS19TVEFUVVNfVU5TUEVDSUZJRUQQABIhCh1LRVlQT0lOVF9DSEVDS19TVEFUVVNfUlVOTklORxABEiMKH0tFWVBPSU5UX0NIRUNLX1NUQVRVU19TVUNDRUVERUQQAhIgChxLRVlQT0lOVF9DSEVDS19TVEFUVVNfRkFJTEVEEAMyigsKDExhYmVsU2VydmljZRJVCg5MaXN0TGFiZWxUeXBlcxIfLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVxdWVzdBogLmtyaWxsLnYxLkxpc3RMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9DcmVhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5DcmVhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuQ3JlYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9VcGRhdGVMYWJlbFR5cGUSIC5rcmlsbC52MS5VcGRhdGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuVXBkYXRlTGFiZWxUeXBlUmVzcG9uc2UiABJYCg9EZWxldGVMYWJlbFR5cGUSIC5rcmlsbC52MS5EZWxldGVMYWJlbFR5cGVSZXF1ZXN0GiEua3JpbGwudjEuRGVsZXRlTGFiZWxUeXBlUmVzcG9uc2UiABJeChFSZW9yZGVyTGFiZWxUeXBlcxIiLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVxdWVzdBojLmtyaWxsLnYxLlJlb3JkZXJMYWJlbFR5cGVzUmVzcG9uc2UiABJzChhDcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWQSKS5rcmlsbC52MS5DcmVhdGVMYWJlbEV4YW1wbGVVcGxvYWRSZXF1ZXN0Gioua3JpbGwudjEuQ3JlYXRlTGFiZWxFeGFtcGxlVXBsb2FkUmVzcG9uc2UiABJYCg9BZGRMYWJlbEV4YW1wbGUSIC5rcmlsbC52MS5BZGRMYWJlbEV4YW1wbGVSZXF1ZXN0GiEua3JpbGwudjEuQWRkTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJhChJEZWxldGVMYWJlbEV4YW1wbGUSIy5rcmlsbC52MS5EZWxldGVMYWJlbEV4YW1wbGVSZXF1ZXN0GiQua3JpbGwudjEuRGVsZXRlTGFiZWxFeGFtcGxlUmVzcG9uc2UiABJeChFTZXRMYWJlbFJlZmVyZW5jZRIiLmtyaWxsLnYxLlNldExhYmVsUmVmZXJlbmNlUmVxdWVzdBojLmtyaWxsLnYxLlNldExhYmVsUmVmZXJlbmNlUmVzcG9uc2UiABJPCgxGaXRSb3RhdGlvbnMSHS5rcmlsbC52MS5GaXRSb3RhdGlvbnNSZXF1ZXN0Gh4ua3JpbGwudjEuRml0Um90YXRpb25zUmVzcG9uc2UiABJPCgxGaXRLZXlwb2ludHMSHS5rcmlsbC52MS5GaXRLZXlwb2ludHNSZXF1ZXN0Gh4ua3JpbGwudjEuRml0S2V5cG9pbnRzUmVzcG9uc2UiABJVCg5DaGVja0tleXBvaW50cxIfLmtyaWxsLnYxLkNoZWNrS2V5cG9pbnRzUmVxdWVzdBogLmtyaWxsLnYxLkNoZWNrS2V5cG9pbnRzUmVzcG9uc2UiABJhChJMaXN0S2V5cG9pbnRDaGVja3MSIy5rcmlsbC52MS5MaXN0S2V5cG9pbnRDaGVja3NSZXF1ZXN0GiQua3JpbGwudjEuTGlzdEtleXBvaW50Q2hlY2tzUmVzcG9uc2UiABJtChZQcmV2aWV3TWVyZ2VMYWJlbFR5cGVzEicua3JpbGwudjEuUHJldmlld01lcmdlTGFiZWxUeXBlc1JlcXVlc3QaKC5rcmlsbC52MS5QcmV2aWV3TWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2UiABJYCg9NZXJnZUxhYmVsVHlwZXMSIC5rcmlsbC52MS5NZXJnZUxhYmVsVHlwZXNSZXF1ZXN0GiEua3JpbGwudjEuTWVyZ2VMYWJlbFR5cGVzUmVzcG9uc2UiAEKLAQoMY29tLmtyaWxsLnYxQgpMYWJlbFByb3RvUAFaLmdpdGh1Yi5jb20vd2F1di9rcmlsbC9hcGkvZ2VuL2tyaWxsL3YxO2tyaWxsdjGiAgNLWFiqAghLcmlsbC5WMcoCCEtyaWxsXFYx4gIUS3JpbGxcVjFcR1BCTWV0YWRhdGHqAglLcmlsbDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_krill_v1_stats]);
 
 /**
  * @generated from message krill.v1.LabelAttribute
@@ -766,6 +770,319 @@ export const FitKeypointsResponseSchema: GenMessage<FitKeypointsResponse> = /*@_
   messageDesc(file_krill_v1_label, 27);
 
 /**
+ * @generated from message krill.v1.CheckKeypointsRequest
+ */
+export type CheckKeypointsRequest = Message<"krill.v1.CheckKeypointsRequest"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+};
+
+/**
+ * Describes the message krill.v1.CheckKeypointsRequest.
+ * Use `create(CheckKeypointsRequestSchema)` to create a new message.
+ */
+export const CheckKeypointsRequestSchema: GenMessage<CheckKeypointsRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 28);
+
+/**
+ * @generated from message krill.v1.CheckKeypointsResponse
+ */
+export type CheckKeypointsResponse = Message<"krill.v1.CheckKeypointsResponse"> & {
+  /**
+   * Boxes the check fits, or those of the check already running. 0 when the
+   * type has no boxes posed by hand.
+   *
+   * @generated from field: int32 box_count = 1;
+   */
+  boxCount: number;
+};
+
+/**
+ * Describes the message krill.v1.CheckKeypointsResponse.
+ * Use `create(CheckKeypointsResponseSchema)` to create a new message.
+ */
+export const CheckKeypointsResponseSchema: GenMessage<CheckKeypointsResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 29);
+
+/**
+ * @generated from message krill.v1.ListKeypointChecksRequest
+ */
+export type ListKeypointChecksRequest = Message<"krill.v1.ListKeypointChecksRequest"> & {
+};
+
+/**
+ * Describes the message krill.v1.ListKeypointChecksRequest.
+ * Use `create(ListKeypointChecksRequestSchema)` to create a new message.
+ */
+export const ListKeypointChecksRequestSchema: GenMessage<ListKeypointChecksRequest> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 30);
+
+/**
+ * @generated from message krill.v1.ListKeypointChecksResponse
+ */
+export type ListKeypointChecksResponse = Message<"krill.v1.ListKeypointChecksResponse"> & {
+  /**
+   * @generated from field: repeated krill.v1.KeypointCheckType types = 1;
+   */
+  types: KeypointCheckType[];
+
+  /**
+   * The most boxes a check fits. Types with more are sampled evenly.
+   *
+   * @generated from field: int32 max_boxes = 2;
+   */
+  maxBoxes: number;
+};
+
+/**
+ * Describes the message krill.v1.ListKeypointChecksResponse.
+ * Use `create(ListKeypointChecksResponseSchema)` to create a new message.
+ */
+export const ListKeypointChecksResponseSchema: GenMessage<ListKeypointChecksResponse> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 31);
+
+/**
+ * KeypointCheckType is a type with a quad covered by its reference design.
+ *
+ * @generated from message krill.v1.KeypointCheckType
+ */
+export type KeypointCheckType = Message<"krill.v1.KeypointCheckType"> & {
+  /**
+   * @generated from field: int64 label_type_id = 1;
+   */
+  labelTypeId: bigint;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string color = 4;
+   */
+  color: string;
+
+  /**
+   * Boxes labelers placed keypoints on.
+   *
+   * @generated from field: int32 posed_box_count = 5;
+   */
+  posedBoxCount: number;
+
+  /**
+   * The latest check that finished. Unset when none has.
+   *
+   * @generated from field: krill.v1.KeypointCheck last = 6;
+   */
+  last?: KeypointCheck | undefined;
+
+  /**
+   * Unset when no check is running.
+   *
+   * @generated from field: krill.v1.KeypointCheck running = 7;
+   */
+  running?: KeypointCheck | undefined;
+};
+
+/**
+ * Describes the message krill.v1.KeypointCheckType.
+ * Use `create(KeypointCheckTypeSchema)` to create a new message.
+ */
+export const KeypointCheckTypeSchema: GenMessage<KeypointCheckType> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 32);
+
+/**
+ * KeypointCheck compares Fit keypoints with keypoints labelers placed. Errors
+ * are in video pixels, and a box's error is its farthest keypoint's, counting
+ * only keypoints labeled in both.
+ *
+ * @generated from message krill.v1.KeypointCheck
+ */
+export type KeypointCheck = Message<"krill.v1.KeypointCheck"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: krill.v1.KeypointCheckStatus status = 2;
+   */
+  status: KeypointCheckStatus;
+
+  /**
+   * @generated from field: string error = 3;
+   */
+  error: string;
+
+  /**
+   * Unset for deleted accounts.
+   *
+   * @generated from field: krill.v1.Profile created_by = 4;
+   */
+  createdBy?: Profile | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 5;
+   */
+  createdAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 6;
+   */
+  finishedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: int32 box_count = 7;
+   */
+  boxCount: number;
+
+  /**
+   * Boxes the design was found in.
+   *
+   * @generated from field: int32 found_count = 8;
+   */
+  foundCount: number;
+
+  /**
+   * Found boxes whose quad matches the labeler's corners far better when
+   * turned a quarter or half turn, so the fit picked the wrong way up.
+   *
+   * @generated from field: int32 turned_count = 9;
+   */
+  turnedCount: number;
+
+  /**
+   * Found boxes with a keypoint labeled in both, which the errors cover.
+   *
+   * @generated from field: int32 compared_count = 10;
+   */
+  comparedCount: number;
+
+  /**
+   * @generated from field: double median_error = 11;
+   */
+  medianError: number;
+
+  /**
+   * @generated from field: double p90_error = 12;
+   */
+  p90Error: number;
+
+  /**
+   * Keypoints compared on at least one box, in the type's order.
+   *
+   * @generated from field: repeated krill.v1.KeypointError keypoints = 13;
+   */
+  keypoints: KeypointError[];
+
+  /**
+   * The boxes with the largest errors, largest first.
+   *
+   * @generated from field: repeated krill.v1.KeypointCheckBox worst = 14;
+   */
+  worst: KeypointCheckBox[];
+};
+
+/**
+ * Describes the message krill.v1.KeypointCheck.
+ * Use `create(KeypointCheckSchema)` to create a new message.
+ */
+export const KeypointCheckSchema: GenMessage<KeypointCheck> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 33);
+
+/**
+ * @generated from message krill.v1.KeypointError
+ */
+export type KeypointError = Message<"krill.v1.KeypointError"> & {
+  /**
+   * The keypoint's name when the check ran.
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * Boxes it was compared on.
+   *
+   * @generated from field: int32 count = 2;
+   */
+  count: number;
+
+  /**
+   * @generated from field: double median = 3;
+   */
+  median: number;
+
+  /**
+   * @generated from field: double p90 = 4;
+   */
+  p90: number;
+};
+
+/**
+ * Describes the message krill.v1.KeypointError.
+ * Use `create(KeypointErrorSchema)` to create a new message.
+ */
+export const KeypointErrorSchema: GenMessage<KeypointError> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 34);
+
+/**
+ * @generated from message krill.v1.KeypointCheckBox
+ */
+export type KeypointCheckBox = Message<"krill.v1.KeypointCheckBox"> & {
+  /**
+   * @generated from field: int64 annotation_id = 1;
+   */
+  annotationId: bigint;
+
+  /**
+   * @generated from field: int64 clip_id = 2;
+   */
+  clipId: bigint;
+
+  /**
+   * Index within the video.
+   *
+   * @generated from field: int32 frame_index = 3;
+   */
+  frameIndex: number;
+
+  /**
+   * @generated from field: double error = 4;
+   */
+  error: number;
+
+  /**
+   * @generated from field: bool turned = 5;
+   */
+  turned: boolean;
+
+  /**
+   * @generated from field: string video_name = 6;
+   */
+  videoName: string;
+
+  /**
+   * @generated from field: int32 clip_index = 7;
+   */
+  clipIndex: number;
+};
+
+/**
+ * Describes the message krill.v1.KeypointCheckBox.
+ * Use `create(KeypointCheckBoxSchema)` to create a new message.
+ */
+export const KeypointCheckBoxSchema: GenMessage<KeypointCheckBox> = /*@__PURE__*/
+  messageDesc(file_krill_v1_label, 35);
+
+/**
  * AttributeValueMapping says what a source track's attribute value becomes.
  *
  * @generated from message krill.v1.AttributeValueMapping
@@ -806,7 +1123,7 @@ export type AttributeValueMapping = Message<"krill.v1.AttributeValueMapping"> & 
  * Use `create(AttributeValueMappingSchema)` to create a new message.
  */
 export const AttributeValueMappingSchema: GenMessage<AttributeValueMapping> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 28);
+  messageDesc(file_krill_v1_label, 36);
 
 /**
  * @generated from message krill.v1.ExportClassChange
@@ -843,7 +1160,7 @@ export type ExportClassChange = Message<"krill.v1.ExportClassChange"> & {
  * Use `create(ExportClassChangeSchema)` to create a new message.
  */
 export const ExportClassChangeSchema: GenMessage<ExportClassChange> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 29);
+  messageDesc(file_krill_v1_label, 37);
 
 /**
  * @generated from message krill.v1.PreviewMergeLabelTypesRequest
@@ -872,7 +1189,7 @@ export type PreviewMergeLabelTypesRequest = Message<"krill.v1.PreviewMergeLabelT
  * Use `create(PreviewMergeLabelTypesRequestSchema)` to create a new message.
  */
 export const PreviewMergeLabelTypesRequestSchema: GenMessage<PreviewMergeLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 30);
+  messageDesc(file_krill_v1_label, 38);
 
 /**
  * @generated from message krill.v1.PreviewMergeLabelTypesResponse
@@ -958,7 +1275,7 @@ export type PreviewMergeLabelTypesResponse = Message<"krill.v1.PreviewMergeLabel
  * Use `create(PreviewMergeLabelTypesResponseSchema)` to create a new message.
  */
 export const PreviewMergeLabelTypesResponseSchema: GenMessage<PreviewMergeLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 31);
+  messageDesc(file_krill_v1_label, 39);
 
 /**
  * @generated from message krill.v1.MergeLabelTypesRequest
@@ -987,7 +1304,7 @@ export type MergeLabelTypesRequest = Message<"krill.v1.MergeLabelTypesRequest"> 
  * Use `create(MergeLabelTypesRequestSchema)` to create a new message.
  */
 export const MergeLabelTypesRequestSchema: GenMessage<MergeLabelTypesRequest> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 32);
+  messageDesc(file_krill_v1_label, 40);
 
 /**
  * @generated from message krill.v1.MergeLabelTypesResponse
@@ -1021,7 +1338,43 @@ export type MergeLabelTypesResponse = Message<"krill.v1.MergeLabelTypesResponse"
  * Use `create(MergeLabelTypesResponseSchema)` to create a new message.
  */
 export const MergeLabelTypesResponseSchema: GenMessage<MergeLabelTypesResponse> = /*@__PURE__*/
-  messageDesc(file_krill_v1_label, 33);
+  messageDesc(file_krill_v1_label, 41);
+
+/**
+ * @generated from enum krill.v1.KeypointCheckStatus
+ */
+export const KeypointCheckStatus = {
+  /**
+   * @generated from enum value: KEYPOINT_CHECK_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED: 0,
+
+  /**
+   * @generated from enum value: KEYPOINT_CHECK_STATUS_RUNNING = 1;
+   */
+  RUNNING: 1,
+
+  /**
+   * @generated from enum value: KEYPOINT_CHECK_STATUS_SUCCEEDED = 2;
+   */
+  SUCCEEDED: 2,
+
+  /**
+   * @generated from enum value: KEYPOINT_CHECK_STATUS_FAILED = 3;
+   */
+  FAILED: 3,
+} as const;
+
+/**
+ * @generated from enum krill.v1.KeypointCheckStatus
+ */
+export type KeypointCheckStatus = (typeof KeypointCheckStatus)[keyof typeof KeypointCheckStatus] | UnknownEnum;
+
+/**
+ * Describes the enum krill.v1.KeypointCheckStatus.
+ */
+export const KeypointCheckStatusSchema: GenEnum<KeypointCheckStatus> = /*@__PURE__*/
+  enumDesc(file_krill_v1_label, 0);
 
 /**
  * LabelService manages the taxonomy: object types and the attributes that
@@ -1137,6 +1490,29 @@ export const LabelService: GenService<{
     methodKind: "unary";
     input: typeof FitKeypointsRequestSchema;
     output: typeof FitKeypointsResponseSchema;
+  },
+  /**
+   * CheckKeypoints has a GPU worker fit the reference design's quad to boxes
+   * labelers posed by hand and scores the fit against their keypoints,
+   * leaving the boxes as they are.
+   *
+   * @generated from rpc krill.v1.LabelService.CheckKeypoints
+   */
+  checkKeypoints: {
+    methodKind: "unary";
+    input: typeof CheckKeypointsRequestSchema;
+    output: typeof CheckKeypointsResponseSchema;
+  },
+  /**
+   * ListKeypointChecks returns each type that can be checked with its latest
+   * check.
+   *
+   * @generated from rpc krill.v1.LabelService.ListKeypointChecks
+   */
+  listKeypointChecks: {
+    methodKind: "unary";
+    input: typeof ListKeypointChecksRequestSchema;
+    output: typeof ListKeypointChecksResponseSchema;
   },
   /**
    * PreviewMergeLabelTypes shows what merging one type into another would

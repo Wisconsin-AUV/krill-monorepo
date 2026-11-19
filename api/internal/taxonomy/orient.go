@@ -22,10 +22,13 @@ const OrientQueue = "orient"
 
 // OrientArgs fits a rotated box to each box of an oriented label type that
 // has none, or with Keypoints, the reference quad to each box of a type with
-// keypoints that has none labeled.
+// keypoints that has none labeled. With Check too, it fits the quad to boxes
+// posed by hand instead and records how far it lands from their keypoints in
+// the type's running keypoint check, leaving the boxes as they are.
 type OrientArgs struct {
 	LabelTypeID int64 `json:"label_type_id"`
 	Keypoints   bool  `json:"keypoints,omitempty"`
+	Check       bool  `json:"check,omitempty"`
 }
 
 func (OrientArgs) Kind() string { return "orient" }
@@ -129,15 +132,8 @@ func (s *Service) FitKeypoints(ctx context.Context, req *krillv1.FitKeypointsReq
 	if err != nil {
 		return nil, rpc.DBError(err, "label type")
 	}
-	pose, err := ParsePose(lt)
-	if err != nil {
-		return nil, rpc.Internal(err, "decode label type")
-	}
-	if !pose.HasReference() {
-		return nil, rpc.Invalid("label type has no quad covered by its reference design")
-	}
-	if !lt.ReferenceKey.Valid {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("label type has no reference design"))
+	if err := fittable(lt); err != nil {
+		return nil, err
 	}
 	n, err := s.q.CountUnposedBoxes(ctx, lt.ID)
 	if err != nil {
@@ -150,4 +146,19 @@ func (s *Service) FitKeypoints(ctx context.Context, req *krillv1.FitKeypointsReq
 		return nil, rpc.Internal(err, "queue fitting")
 	}
 	return &krillv1.FitKeypointsResponse{BoxCount: n}, nil
+}
+
+// fittable checks that the worker can fit keypoints to boxes of lt.
+func fittable(lt db.LabelType) error {
+	pose, err := ParsePose(lt)
+	if err != nil {
+		return rpc.Internal(err, "decode label type")
+	}
+	if !pose.HasReference() {
+		return rpc.Invalid("label type has no quad covered by its reference design")
+	}
+	if !lt.ReferenceKey.Valid {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("label type has no reference design"))
+	}
+	return nil
 }
