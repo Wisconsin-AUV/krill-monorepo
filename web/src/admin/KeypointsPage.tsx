@@ -113,7 +113,7 @@ function Result({ check }: { check: KeypointCheck }) {
                         to={`/clips/${b.clipId}?frame=${b.frameIndex}`}
                         className="max-w-72 truncate font-medium text-zinc-950 hover:underline dark:text-white"
                       >
-                        {b.videoName} · Clip {b.clipIndex + 1} · Frame {b.frameIndex}
+                        {b.videoName} · Clip {b.clipIndex + 1} · Frame {b.frameIndex + 1}
                       </Link>
                       {b.turned && <Badge color="amber">Turned</Badge>}
                     </div>
