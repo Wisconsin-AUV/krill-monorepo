@@ -5,7 +5,7 @@ import { clsx } from 'clsx'
 import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { FormError } from '@/components/ui/Callout'
+import { Callout, FormError } from '@/components/ui/Callout'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/Dialog'
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/ui/Fieldset'
 import { Input } from '@/components/ui/Input'
@@ -13,7 +13,13 @@ import { Switch } from '@/components/ui/Switch'
 import { Text } from '@/components/ui/Text'
 import { Textarea } from '@/components/ui/Textarea'
 import { KeypointsEditor } from '@/components/KeypointsEditor'
-import { keypointsBody, keypointsComplete, toKeypointsDraft } from '@/components/keypointsDraft'
+import {
+  keypointOrigins,
+  keypointsBody,
+  keypointsComplete,
+  removedKeypoints,
+  toKeypointsDraft,
+} from '@/components/keypointsDraft'
 import { LabelService, type LabelType } from '@/gen/krill/v1/label_pb'
 import { invalidateService } from '@/lib/queryClient'
 import { exportClasses, palette } from '@/lib/labels'
@@ -67,6 +73,8 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
     .filter((a) => a.name.trim())
     .map((a) => ({ name: a.name.trim().toLowerCase(), options: parseOptions(a.options) }))
   const classes = exportClasses(name.trim().toLowerCase() || 'name', parsed)
+  const posed = type?.posedBoxCount ?? 0
+  const removed = type && posed > 0 ? removedKeypoints(type, keypoints) : []
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -80,7 +88,7 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
       attributes: parsed,
       ...keypointsBody(keypoints),
     }
-    if (type) update.mutate({ id: type.id, ...body })
+    if (type) update.mutate({ id: type.id, ...body, keypointOrigins: keypointOrigins(keypoints) })
     else create.mutate(body)
   }
 
@@ -172,6 +180,13 @@ function LabelTypeForm({ type, onClose }: { type?: LabelType; onClose: () => voi
           </Field>
 
           {!oriented && <KeypointsEditor draft={keypoints} onChange={setKeypoints} />}
+
+          {removed.length > 0 && (
+            <Callout type="warning">
+              Saving clears {removed.join(', ')} from the {plural(posed, 'box', 'boxes')} with
+              keypoints labeled.
+            </Callout>
+          )}
 
           {type && (type.oriented || hasReferenceQuad(type)) && <Reference type={type} />}
 

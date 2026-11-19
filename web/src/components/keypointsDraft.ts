@@ -4,6 +4,9 @@ export interface KeypointDraft {
   id: number
   name: string
   mirror: number | null
+  // Index in the saved type, which boxes' labeled keypoints are stored by.
+  // Null for a keypoint the type doesn't have yet.
+  origin: number | null
 }
 
 export interface QuadDraft {
@@ -41,6 +44,7 @@ export function toKeypointsDraft(type?: LabelType): KeypointsDraft {
       id: ids[i] ?? nextId++,
       name: k.name,
       mirror: id(k.mirror),
+      origin: i,
     })),
     quads: (type?.quads ?? []).map((q) => ({
       id: nextId++,
@@ -74,4 +78,15 @@ export function keypointsBody(d: KeypointsDraft) {
     })),
     edges: d.edges.map((e) => ({ from: at(e.from) ?? 0, to: at(e.to) ?? 0 })),
   }
+}
+
+export function keypointOrigins(d: KeypointsDraft): number[] {
+  return d.keypoints.map((k) => k.origin ?? -1)
+}
+
+// Keypoints of the saved type the draft no longer has, which saving clears
+// from every box.
+export function removedKeypoints(type: LabelType, d: KeypointsDraft): string[] {
+  const kept = new Set(d.keypoints.map((k) => k.origin))
+  return type.keypoints.filter((_, i) => !kept.has(i)).map((k) => k.name)
 }

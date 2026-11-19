@@ -387,6 +387,13 @@ type Querier interface {
 	// after the list loaded keeps their clip.
 	ReleaseStuckClaims(ctx context.Context, arg ReleaseStuckClaimsParams) ([]ReleaseStuckClaimsRow, error)
 	ReleaseUserClaims(ctx context.Context, userID uuid.UUID) (int64, error)
+	// @origins holds, for each of the type's keypoints, the index it had in
+	// boxes' keypoints, or -1 for one they don't have. A box left with no
+	// keypoint labeled gets none, so fitting keypoints picks it up again.
+	RemapBoxKeypoints(ctx context.Context, arg RemapBoxKeypointsParams) (int64, error)
+	RemapGoldAttemptKeypoints(ctx context.Context, arg RemapGoldAttemptKeypointsParams) error
+	// Like RemapBoxKeypoints, for the boxes gold frames copied.
+	RemapGoldFrameKeypoints(ctx context.Context, arg RemapGoldFrameKeypointsParams) error
 	RemoveApprovedEmail(ctx context.Context, email string) (ApprovedEmail, error)
 	// Only the latest scan, since an older one's orphans were checked against an
 	// older state of the bucket.

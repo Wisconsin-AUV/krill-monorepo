@@ -474,7 +474,10 @@ func beatsBaseline(r *krillv1.TrainingRun) bool {
 }
 
 // autoPin pins a scheduled run's model when settings allow and it beats the
-// pinned one, or when nothing is pinned yet.
+// pinned one, when nothing is pinned yet, or when the pinned one finds
+// another kind of box. A run is only compared against a model of its own
+// task, so without the last case a type gaining keypoints or a rotation
+// would keep pre-labeling with a model that can't label them.
 func (p *Pipeline) autoPin(ctx context.Context, id int64) error {
 	if !p.Config().RetrainAutoPin {
 		return nil
@@ -490,11 +493,12 @@ func (p *Pipeline) autoPin(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	_, err = p.q.GetPinnedTrainingRun(ctx)
+	pinned, err := p.q.GetPinnedTrainingRun(ctx)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 	case err != nil:
 		return err
+	case runTask(pinned) != runTask(row.TrainingRun):
 	case !beatsBaseline(run):
 		return nil
 	}

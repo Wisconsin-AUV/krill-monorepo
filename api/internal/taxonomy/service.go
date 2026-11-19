@@ -182,6 +182,7 @@ func (s *Service) list(ctx context.Context, q *db.Queries) ([]*krillv1.LabelType
 		out[i].Examples = byType[r.LabelType.ID]
 		out[i].UnrotatedBoxCount = r.UnrotatedBoxCount
 		out[i].UnposedBoxCount = r.UnposedBoxCount
+		out[i].PosedBoxCount = r.PosedBoxCount
 		if k := r.LabelType.ReferenceKey; k.Valid {
 			if out[i].ReferenceUrl, err = s.store.PresignGet(ctx, k.String, urlExpiry, ""); err != nil {
 				slog.WarnContext(ctx, "presign label reference", "label_type_id", r.LabelType.ID, "err", err)
@@ -253,14 +254,20 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 	if err != nil {
 		return nil, rpc.Internal(err, "decode label type")
 	}
-	if in.pose.Rekeyed(oldPose) {
-		posed, err := q.CountPosedBoxes(ctx, before.ID)
-		if err != nil {
-			return nil, rpc.Internal(err, "count boxes")
+	origins, err := in.pose.Origins(oldPose, req.GetKeypointOrigins())
+	if err != nil {
+		return nil, rpc.Invalid("%s", err)
+	}
+	var remapped int64
+	if origins != nil {
+		if remapped, err = q.RemapBoxKeypoints(ctx, db.RemapBoxKeypointsParams{LabelTypeID: before.ID, Origins: origins}); err != nil {
+			return nil, rpc.Internal(err, "remap keypoints")
 		}
-		if posed > 0 {
-			return nil, connect.NewError(connect.CodeFailedPrecondition,
-				fmt.Errorf("%d boxes have keypoints labeled; keypoints can only be added after the last one", posed))
+		if err := q.RemapGoldFrameKeypoints(ctx, db.RemapGoldFrameKeypointsParams{LabelTypeID: before.ID, Origins: origins}); err != nil {
+			return nil, rpc.Internal(err, "remap gold frame keypoints")
+		}
+		if err := q.RemapGoldAttemptKeypoints(ctx, db.RemapGoldAttemptKeypointsParams{LabelTypeID: before.ID, Origins: origins}); err != nil {
+			return nil, rpc.Internal(err, "remap gold attempt keypoints")
 		}
 	}
 	lt, err := q.UpdateLabelType(ctx, db.UpdateLabelTypeParams{
@@ -278,6 +285,9 @@ func (s *Service) UpdateLabelType(ctx context.Context, req *krillv1.UpdateLabelT
 		details := map[string]any{"changed": changed}
 		if before.Name != lt.Name {
 			details["from"], details["to"] = before.Name, lt.Name
+		}
+		if remapped > 0 {
+			details["remapped_boxes"] = remapped
 		}
 		if err := record(ctx, q, audit.LabelTypeUpdate, lt, details); err != nil {
 			return nil, err

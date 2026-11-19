@@ -149,8 +149,13 @@ export function KeypointsEditor({
 
   function addQuad() {
     const p = prefix.trim().toLowerCase()
-    const corners = cornerSuffixes.map((s) => ({ id: draftId(), name: `${p}_${s}`, mirror: null }))
-    const mid = center ? { id: draftId(), name: `${p}_center`, mirror: null } : null
+    const corners = cornerSuffixes.map((s) => ({
+      id: draftId(),
+      name: `${p}_${s}`,
+      mirror: null,
+      origin: null,
+    }))
+    const mid = center ? { id: draftId(), name: `${p}_center`, mirror: null, origin: null } : null
     onChange({
       ...draft,
       keypoints: [...keypoints, ...corners, ...(mid ? [mid] : [])],
@@ -217,7 +222,9 @@ export function KeypointsEditor({
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button
             outline
-            onClick={() => setKeypoints([...keypoints, { id: draftId(), name: '', mirror: null }])}
+            onClick={() =>
+              setKeypoints([...keypoints, { id: draftId(), name: '', mirror: null, origin: null }])
+            }
           >
             <PlusIcon data-slot="icon" />
             Add keypoint

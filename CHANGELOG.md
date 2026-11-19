@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - Tracking keypoints of a type with a reference design takes about 45% less time per frame.
+- Keypoints can be removed from or reordered in a type whose boxes have keypoints labeled. Boxes and gold frames keep each remaining keypoint where it was placed, and the type's settings say which keypoints saving clears and from how many boxes.
+- A scheduled model is pinned on its own when the pinned model finds another kind of box, so the first pose or OBB model no longer has to be pinned by hand.
 
 ### Fixed
 
