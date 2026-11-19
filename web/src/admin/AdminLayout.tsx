@@ -24,6 +24,7 @@ import {
   QueueListIcon,
   TrashIcon,
   UsersIcon,
+  ViewfinderCircleIcon,
 } from '@heroicons/react/20/solid'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { Avatar } from '@/components/ui/Avatar'
@@ -120,6 +121,12 @@ const sections = [
         label: 'Pre-labelers',
         to: '/admin/prelabelers',
         icon: AdjustmentsHorizontalIcon,
+        permission: Permission.MANAGE_SYSTEM,
+      },
+      {
+        label: 'Keypoints',
+        to: '/admin/keypoints',
+        icon: ViewfinderCircleIcon,
         permission: Permission.MANAGE_SYSTEM,
       },
       {
