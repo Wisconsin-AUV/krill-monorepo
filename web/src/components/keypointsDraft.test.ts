@@ -1,7 +1,13 @@
 import { create } from '@bufbuild/protobuf'
 import { describe, expect, it } from 'vitest'
 import { LabelTypeSchema } from '@/gen/krill/v1/label_pb'
-import { keypointsBody, toKeypointsDraft } from './keypointsDraft'
+import {
+  draftId,
+  keypointOrigins,
+  keypointsBody,
+  removedKeypoints,
+  toKeypointsDraft,
+} from './keypointsDraft'
 
 const type = create(LabelTypeSchema, {
   keypoints: [
@@ -41,5 +47,19 @@ describe('keypointsBody', () => {
     expect(body.keypoints[6]?.mirror).toBe(5)
     expect(body.quads).toEqual([{ corners: [4, 3, 2, 1], reference: true, center: 0 }])
     expect(body.edges).toEqual([{ from: 6, to: 4 }])
+  })
+})
+
+describe('keypointOrigins', () => {
+  it('points each keypoint at where boxes stored it', () => {
+    const draft = toKeypointsDraft(type)
+    const [left, right, ...paper] = draft.keypoints
+    const edited = {
+      ...draft,
+      keypoints: [right!, left!, { id: draftId(), name: 'nose', mirror: null, origin: null }],
+    }
+    expect(keypointOrigins(edited)).toEqual([1, 0, -1])
+    expect(removedKeypoints(type, edited)).toEqual(paper.map((k) => k.name))
+    expect(removedKeypoints(type, draft)).toEqual([])
   })
 })
