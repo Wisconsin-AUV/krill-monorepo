@@ -70,6 +70,9 @@ var policy = map[string]krillv1.Permission{
 	krillv1connect.LabelServiceFitKeypointsProcedure:             manageLabelTypes,
 	krillv1connect.LabelServicePreviewMergeLabelTypesProcedure:   manageLabelTypes,
 	krillv1connect.LabelServiceMergeLabelTypesProcedure:          manageLabelTypes,
+	// Keypoint checks are on the admin panel's pipeline pages.
+	krillv1connect.LabelServiceCheckKeypointsProcedure:     manageSystem,
+	krillv1connect.LabelServiceListKeypointChecksProcedure: manageSystem,
 
 	krillv1connect.AnnotationServiceCreateTrackProcedure:       label,
 	krillv1connect.AnnotationServiceUpdateTrackProcedure:       label,

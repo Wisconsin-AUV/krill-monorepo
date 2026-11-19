@@ -66,6 +66,12 @@ const (
 	// LabelServiceFitKeypointsProcedure is the fully-qualified name of the LabelService's FitKeypoints
 	// RPC.
 	LabelServiceFitKeypointsProcedure = "/krill.v1.LabelService/FitKeypoints"
+	// LabelServiceCheckKeypointsProcedure is the fully-qualified name of the LabelService's
+	// CheckKeypoints RPC.
+	LabelServiceCheckKeypointsProcedure = "/krill.v1.LabelService/CheckKeypoints"
+	// LabelServiceListKeypointChecksProcedure is the fully-qualified name of the LabelService's
+	// ListKeypointChecks RPC.
+	LabelServiceListKeypointChecksProcedure = "/krill.v1.LabelService/ListKeypointChecks"
 	// LabelServicePreviewMergeLabelTypesProcedure is the fully-qualified name of the LabelService's
 	// PreviewMergeLabelTypes RPC.
 	LabelServicePreviewMergeLabelTypesProcedure = "/krill.v1.LabelService/PreviewMergeLabelTypes"
@@ -100,6 +106,13 @@ type LabelServiceClient interface {
 	// box of the type with no keypoints labeled. Boxes it fills become
 	// proposals again for a labeler to check.
 	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
+	// CheckKeypoints has a GPU worker fit the reference design's quad to boxes
+	// labelers posed by hand and scores the fit against their keypoints,
+	// leaving the boxes as they are.
+	CheckKeypoints(context.Context, *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error)
+	// ListKeypointChecks returns each type that can be checked with its latest
+	// check.
+	ListKeypointChecks(context.Context, *v1.ListKeypointChecksRequest) (*v1.ListKeypointChecksResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -185,6 +198,18 @@ func NewLabelServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(labelServiceMethods.ByName("FitKeypoints")),
 			connect.WithClientOptions(opts...),
 		),
+		checkKeypoints: connect.NewClient[v1.CheckKeypointsRequest, v1.CheckKeypointsResponse](
+			httpClient,
+			baseURL+LabelServiceCheckKeypointsProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("CheckKeypoints")),
+			connect.WithClientOptions(opts...),
+		),
+		listKeypointChecks: connect.NewClient[v1.ListKeypointChecksRequest, v1.ListKeypointChecksResponse](
+			httpClient,
+			baseURL+LabelServiceListKeypointChecksProcedure,
+			connect.WithSchema(labelServiceMethods.ByName("ListKeypointChecks")),
+			connect.WithClientOptions(opts...),
+		),
 		previewMergeLabelTypes: connect.NewClient[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse](
 			httpClient,
 			baseURL+LabelServicePreviewMergeLabelTypesProcedure,
@@ -213,6 +238,8 @@ type labelServiceClient struct {
 	setLabelReference        *connect.Client[v1.SetLabelReferenceRequest, v1.SetLabelReferenceResponse]
 	fitRotations             *connect.Client[v1.FitRotationsRequest, v1.FitRotationsResponse]
 	fitKeypoints             *connect.Client[v1.FitKeypointsRequest, v1.FitKeypointsResponse]
+	checkKeypoints           *connect.Client[v1.CheckKeypointsRequest, v1.CheckKeypointsResponse]
+	listKeypointChecks       *connect.Client[v1.ListKeypointChecksRequest, v1.ListKeypointChecksResponse]
 	previewMergeLabelTypes   *connect.Client[v1.PreviewMergeLabelTypesRequest, v1.PreviewMergeLabelTypesResponse]
 	mergeLabelTypes          *connect.Client[v1.MergeLabelTypesRequest, v1.MergeLabelTypesResponse]
 }
@@ -316,6 +343,24 @@ func (c *labelServiceClient) FitKeypoints(ctx context.Context, req *v1.FitKeypoi
 	return nil, err
 }
 
+// CheckKeypoints calls krill.v1.LabelService.CheckKeypoints.
+func (c *labelServiceClient) CheckKeypoints(ctx context.Context, req *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error) {
+	response, err := c.checkKeypoints.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListKeypointChecks calls krill.v1.LabelService.ListKeypointChecks.
+func (c *labelServiceClient) ListKeypointChecks(ctx context.Context, req *v1.ListKeypointChecksRequest) (*v1.ListKeypointChecksResponse, error) {
+	response, err := c.listKeypointChecks.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // PreviewMergeLabelTypes calls krill.v1.LabelService.PreviewMergeLabelTypes.
 func (c *labelServiceClient) PreviewMergeLabelTypes(ctx context.Context, req *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
 	response, err := c.previewMergeLabelTypes.CallUnary(ctx, connect.NewRequest(req))
@@ -360,6 +405,13 @@ type LabelServiceHandler interface {
 	// box of the type with no keypoints labeled. Boxes it fills become
 	// proposals again for a labeler to check.
 	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
+	// CheckKeypoints has a GPU worker fit the reference design's quad to boxes
+	// labelers posed by hand and scores the fit against their keypoints,
+	// leaving the boxes as they are.
+	CheckKeypoints(context.Context, *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error)
+	// ListKeypointChecks returns each type that can be checked with its latest
+	// check.
+	ListKeypointChecks(context.Context, *v1.ListKeypointChecksRequest) (*v1.ListKeypointChecksResponse, error)
 	// PreviewMergeLabelTypes shows what merging one type into another would
 	// change.
 	PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error)
@@ -441,6 +493,18 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(labelServiceMethods.ByName("FitKeypoints")),
 		connect.WithHandlerOptions(opts...),
 	)
+	labelServiceCheckKeypointsHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceCheckKeypointsProcedure,
+		svc.CheckKeypoints,
+		connect.WithSchema(labelServiceMethods.ByName("CheckKeypoints")),
+		connect.WithHandlerOptions(opts...),
+	)
+	labelServiceListKeypointChecksHandler := connect.NewUnaryHandlerSimple(
+		LabelServiceListKeypointChecksProcedure,
+		svc.ListKeypointChecks,
+		connect.WithSchema(labelServiceMethods.ByName("ListKeypointChecks")),
+		connect.WithHandlerOptions(opts...),
+	)
 	labelServicePreviewMergeLabelTypesHandler := connect.NewUnaryHandlerSimple(
 		LabelServicePreviewMergeLabelTypesProcedure,
 		svc.PreviewMergeLabelTypes,
@@ -477,6 +541,10 @@ func NewLabelServiceHandler(svc LabelServiceHandler, opts ...connect.HandlerOpti
 			labelServiceFitRotationsHandler.ServeHTTP(w, r)
 		case LabelServiceFitKeypointsProcedure:
 			labelServiceFitKeypointsHandler.ServeHTTP(w, r)
+		case LabelServiceCheckKeypointsProcedure:
+			labelServiceCheckKeypointsHandler.ServeHTTP(w, r)
+		case LabelServiceListKeypointChecksProcedure:
+			labelServiceListKeypointChecksHandler.ServeHTTP(w, r)
 		case LabelServicePreviewMergeLabelTypesProcedure:
 			labelServicePreviewMergeLabelTypesHandler.ServeHTTP(w, r)
 		case LabelServiceMergeLabelTypesProcedure:
@@ -532,6 +600,14 @@ func (UnimplementedLabelServiceHandler) FitRotations(context.Context, *v1.FitRot
 
 func (UnimplementedLabelServiceHandler) FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.FitKeypoints is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) CheckKeypoints(context.Context, *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.CheckKeypoints is not implemented"))
+}
+
+func (UnimplementedLabelServiceHandler) ListKeypointChecks(context.Context, *v1.ListKeypointChecksRequest) (*v1.ListKeypointChecksResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("krill.v1.LabelService.ListKeypointChecks is not implemented"))
 }
 
 func (UnimplementedLabelServiceHandler) PreviewMergeLabelTypes(context.Context, *v1.PreviewMergeLabelTypesRequest) (*v1.PreviewMergeLabelTypesResponse, error) {
