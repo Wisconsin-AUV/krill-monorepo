@@ -103,8 +103,10 @@ type LabelType struct {
 	Edges []*KeypointEdge `protobuf:"bytes,17,rep,name=edges,proto3" json:"edges,omitempty"`
 	// Boxes of a type with keypoints that have none labeled.
 	UnposedBoxCount int32 `protobuf:"varint,18,opt,name=unposed_box_count,json=unposedBoxCount,proto3" json:"unposed_box_count,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Boxes with keypoints labeled, counting tracks in the trash.
+	PosedBoxCount int32 `protobuf:"varint,19,opt,name=posed_box_count,json=posedBoxCount,proto3" json:"posed_box_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LabelType) Reset() {
@@ -259,6 +261,13 @@ func (x *LabelType) GetEdges() []*KeypointEdge {
 func (x *LabelType) GetUnposedBoxCount() int32 {
 	if x != nil {
 		return x.UnposedBoxCount
+	}
+	return 0
+}
+
+func (x *LabelType) GetPosedBoxCount() int32 {
+	if x != nil {
+		return x.PosedBoxCount
 	}
 	return 0
 }
@@ -738,20 +747,24 @@ func (x *CreateLabelTypeResponse) GetLabelType() *LabelType {
 }
 
 type UpdateLabelTypeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Color         string                 `protobuf:"bytes,3,opt,name=color,proto3" json:"color,omitempty"`
-	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Attributes    []*LabelAttribute      `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty"`
-	Title         string                 `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
-	Guideline     string                 `protobuf:"bytes,7,opt,name=guideline,proto3" json:"guideline,omitempty"`
-	Oriented      bool                   `protobuf:"varint,8,opt,name=oriented,proto3" json:"oriented,omitempty"`
-	Keypoints     []*KeypointDef         `protobuf:"bytes,9,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
-	Quads         []*KeypointQuad        `protobuf:"bytes,10,rep,name=quads,proto3" json:"quads,omitempty"`
-	Edges         []*KeypointEdge        `protobuf:"bytes,11,rep,name=edges,proto3" json:"edges,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Color       string                 `protobuf:"bytes,3,opt,name=color,proto3" json:"color,omitempty"`
+	Description string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Attributes  []*LabelAttribute      `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	Title       string                 `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
+	Guideline   string                 `protobuf:"bytes,7,opt,name=guideline,proto3" json:"guideline,omitempty"`
+	Oriented    bool                   `protobuf:"varint,8,opt,name=oriented,proto3" json:"oriented,omitempty"`
+	Keypoints   []*KeypointDef         `protobuf:"bytes,9,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
+	Quads       []*KeypointQuad        `protobuf:"bytes,10,rep,name=quads,proto3" json:"quads,omitempty"`
+	Edges       []*KeypointEdge        `protobuf:"bytes,11,rep,name=edges,proto3" json:"edges,omitempty"`
+	// For each of keypoints, its index before the update, or -1 for a new one.
+	// Boxes' labeled keypoints follow it, and keypoints no entry names are
+	// cleared from them. Empty keeps each keypoint at its index.
+	KeypointOrigins []int32 `protobuf:"varint,12,rep,packed,name=keypoint_origins,json=keypointOrigins,proto3" json:"keypoint_origins,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *UpdateLabelTypeRequest) Reset() {
@@ -857,6 +870,13 @@ func (x *UpdateLabelTypeRequest) GetQuads() []*KeypointQuad {
 func (x *UpdateLabelTypeRequest) GetEdges() []*KeypointEdge {
 	if x != nil {
 		return x.Edges
+	}
+	return nil
+}
+
+func (x *UpdateLabelTypeRequest) GetKeypointOrigins() []int32 {
+	if x != nil {
+		return x.KeypointOrigins
 	}
 	return nil
 }
@@ -2115,7 +2135,7 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x14krill/v1/label.proto\x12\bkrill.v1\">\n" +
 	"\x0eLabelAttribute\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aoptions\x18\x02 \x03(\tR\aoptions\"\x91\x05\n" +
+	"\aoptions\x18\x02 \x03(\tR\aoptions\"\xb9\x05\n" +
 	"\tLabelType\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -2138,7 +2158,8 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\tkeypoints\x18\x0f \x03(\v2\x15.krill.v1.KeypointDefR\tkeypoints\x12,\n" +
 	"\x05quads\x18\x10 \x03(\v2\x16.krill.v1.KeypointQuadR\x05quads\x12,\n" +
 	"\x05edges\x18\x11 \x03(\v2\x16.krill.v1.KeypointEdgeR\x05edges\x12*\n" +
-	"\x11unposed_box_count\x18\x12 \x01(\x05R\x0funposedBoxCount\"I\n" +
+	"\x11unposed_box_count\x18\x12 \x01(\x05R\x0funposedBoxCount\x12&\n" +
+	"\x0fposed_box_count\x18\x13 \x01(\x05R\rposedBoxCount\"I\n" +
 	"\vKeypointDef\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\x06mirror\x18\x02 \x01(\x05H\x00R\x06mirror\x88\x01\x01B\t\n" +
@@ -2175,7 +2196,7 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	" \x03(\v2\x16.krill.v1.KeypointEdgeR\x05edges\"M\n" +
 	"\x17CreateLabelTypeResponse\x122\n" +
 	"\n" +
-	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"\x8f\x03\n" +
+	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"\xba\x03\n" +
 	"\x16UpdateLabelTypeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -2190,7 +2211,8 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\tkeypoints\x18\t \x03(\v2\x15.krill.v1.KeypointDefR\tkeypoints\x12,\n" +
 	"\x05quads\x18\n" +
 	" \x03(\v2\x16.krill.v1.KeypointQuadR\x05quads\x12,\n" +
-	"\x05edges\x18\v \x03(\v2\x16.krill.v1.KeypointEdgeR\x05edges\"M\n" +
+	"\x05edges\x18\v \x03(\v2\x16.krill.v1.KeypointEdgeR\x05edges\x12)\n" +
+	"\x10keypoint_origins\x18\f \x03(\x05R\x0fkeypointOrigins\"M\n" +
 	"\x17UpdateLabelTypeResponse\x122\n" +
 	"\n" +
 	"label_type\x18\x01 \x01(\v2\x13.krill.v1.LabelTypeR\tlabelType\"(\n" +

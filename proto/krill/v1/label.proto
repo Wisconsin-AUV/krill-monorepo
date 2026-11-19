@@ -72,6 +72,8 @@ message LabelType {
   repeated KeypointEdge edges = 17;
   // Boxes of a type with keypoints that have none labeled.
   int32 unposed_box_count = 18;
+  // Boxes with keypoints labeled, counting tracks in the trash.
+  int32 posed_box_count = 19;
 }
 
 message KeypointDef {
@@ -141,6 +143,10 @@ message UpdateLabelTypeRequest {
   repeated KeypointDef keypoints = 9;
   repeated KeypointQuad quads = 10;
   repeated KeypointEdge edges = 11;
+  // For each of keypoints, its index before the update, or -1 for a new one.
+  // Boxes' labeled keypoints follow it, and keypoints no entry names are
+  // cleared from them. Empty keeps each keypoint at its index.
+  repeated int32 keypoint_origins = 12;
 }
 
 message UpdateLabelTypeResponse {
