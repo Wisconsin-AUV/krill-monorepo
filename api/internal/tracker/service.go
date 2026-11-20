@@ -274,6 +274,9 @@ func (s *Service) ReportOrient(ctx context.Context, req *krillv1.ReportOrientReq
 	if t.msg.GetOrient() == nil {
 		return nil, rpc.Invalid("task %d is not an orient task", t.id)
 	}
+	if t.orient.check != nil {
+		return s.reportCheckedKeypoints(t, req)
+	}
 	if t.orient.pose != nil {
 		return s.reportFittedKeypoints(ctx, t, req)
 	}
@@ -352,6 +355,29 @@ func (s *Service) reportFittedKeypoints(ctx context.Context, t *task, req *krill
 		if _, err := s.q.SetFittedKeypoints(ctx, p); err != nil {
 			t.finish(err)
 			return nil, rpc.Internal(err, "save boxes")
+		}
+	}
+	if req.GetDone() {
+		t.finish(nil)
+	} else {
+		t.touch()
+	}
+	return &krillv1.ReportOrientResponse{}, nil
+}
+
+// reportCheckedKeypoints adds the keypoints fitted for a keypoint check to it
+// without saving them.
+func (s *Service) reportCheckedKeypoints(t *task, req *krillv1.ReportOrientRequest) (*krillv1.ReportOrientResponse, error) {
+	for _, b := range req.GetBoxes() {
+		if _, ok := t.orient.updatedAt[b.GetAnnotationId()]; !ok {
+			return nil, rpc.Invalid("box %d is not part of the task", b.GetAnnotationId())
+		}
+		kps, err := annotation.ClampKeypoints(b.GetBox().GetKeypoints(), *t.orient.pose)
+		if err != nil {
+			return nil, rpc.Invalid("box %d: %s", b.GetAnnotationId(), err)
+		}
+		if kps != nil {
+			t.orient.check.add(b.GetAnnotationId(), kps)
 		}
 	}
 	if req.GetDone() {

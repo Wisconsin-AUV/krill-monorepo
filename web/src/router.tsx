@@ -155,6 +155,11 @@ export const router = createBrowserRouter([
                       import('@/admin/ModelRunPage').then((m) => ({ Component: m.ModelRunPage })),
                   },
                   {
+                    path: 'keypoints',
+                    lazy: () =>
+                      import('@/admin/KeypointsPage').then((m) => ({ Component: m.KeypointsPage })),
+                  },
+                  {
                     path: 'distractors',
                     lazy: () =>
                       import('@/admin/DistractorsPage').then((m) => ({

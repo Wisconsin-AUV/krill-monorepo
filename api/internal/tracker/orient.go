@@ -2,6 +2,7 @@ package tracker
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -34,6 +35,8 @@ type orientBoxes struct {
 	pose *taxonomy.Pose
 	// updatedAt is when each of the task's boxes last changed before the fit.
 	updatedAt map[int64]pgtype.Timestamptz
+	// check is set when the task scores keypoints rather than saving them.
+	check *keypointCheck
 }
 
 type OrientWorker struct {
@@ -57,6 +60,9 @@ func (w *OrientWorker) Work(ctx context.Context, job *river.Job[taxonomy.OrientA
 	}
 	if err != nil {
 		return fmt.Errorf("load label type: %w", err)
+	}
+	if job.Args.Check {
+		return w.check(ctx, job.ID, lt)
 	}
 	var pose *taxonomy.Pose
 	var rows []db.ListUnrotatedBoxesRow
@@ -85,23 +91,96 @@ func (w *OrientWorker) Work(ctx context.Context, job *river.Job[taxonomy.OrientA
 			return fmt.Errorf("list boxes: %w", err)
 		}
 	}
-	ref, err := referenceURL(ctx, w.store, lt)
+	frames, err := w.fit(ctx, job.ID, lt, pose, rows, nil)
 	if err != nil {
 		return err
+	}
+	if pose != nil {
+		slog.Info("keypoints fit", "label_type_id", lt.ID, "frames", frames, "boxes", len(rows))
+	} else {
+		slog.Info("rotations fit", "label_type_id", lt.ID, "frames", frames, "boxes", len(rows))
+	}
+	return nil
+}
+
+// check fits keypoints to boxes labelers posed and records how far they land
+// in the check the job belongs to. The check fails with the job.
+func (w *OrientWorker) check(ctx context.Context, jobID int64, lt db.LabelType) error {
+	q := db.New(w.pool)
+	c, err := q.GetRunningKeypointCheckByJob(ctx, jobID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("load check: %w", err)
+	}
+	err = w.runCheck(ctx, q, jobID, lt, c.ID)
+	if err != nil {
+		if ferr := q.FailKeypointCheck(context.WithoutCancel(ctx), db.FailKeypointCheckParams{ID: c.ID, Error: err.Error()}); ferr != nil {
+			slog.ErrorContext(ctx, "fail keypoint check", "id", c.ID, "err", ferr)
+		}
+	}
+	return err
+}
+
+func (w *OrientWorker) runCheck(ctx context.Context, q *db.Queries, jobID int64, lt db.LabelType, checkID int64) error {
+	pose, err := taxonomy.ParsePose(lt)
+	if err != nil {
+		return err
+	}
+	if !pose.HasReference() || !lt.ReferenceKey.Valid {
+		return errors.New("the label type no longer has a quad covered by a reference design")
+	}
+	posed, err := q.ListHandPosedBoxes(ctx, lt.ID)
+	if err != nil {
+		return fmt.Errorf("list boxes: %w", err)
+	}
+	posed = sampleEvenly(posed, taxonomy.MaxCheckBoxes)
+	check := newKeypointCheck(pose, posed)
+	rows := make([]db.ListUnrotatedBoxesRow, len(posed))
+	for i, r := range posed {
+		rows[i] = db.ListUnrotatedBoxesRow{
+			ID: r.ID, FrameID: r.FrameID, FrameIdx: r.FrameIdx, VideoID: r.VideoID,
+			X: r.X, Y: r.Y, Width: r.Width, Height: r.Height, UpdatedAt: r.UpdatedAt,
+		}
+	}
+	if _, err := w.fit(ctx, jobID, lt, &pose, rows, check); err != nil {
+		return err
+	}
+	found, turned, res := check.result()
+	raw, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+	err = q.FinishKeypointCheck(ctx, db.FinishKeypointCheckParams{
+		ID:          checkID,
+		BoxCount:    int32(len(posed)), //nolint:gosec // at most MaxCheckBoxes
+		FoundCount:  int32(found),      //nolint:gosec // at most MaxCheckBoxes
+		TurnedCount: int32(turned),     //nolint:gosec // at most MaxCheckBoxes
+		Result:      raw,
+	})
+	if err != nil {
+		return fmt.Errorf("save check: %w", err)
+	}
+	slog.Info("keypoints checked", "label_type_id", lt.ID, "boxes", len(posed), "found", found, "turned", turned, "median", res.Median, "p90", res.P90)
+	return nil
+}
+
+// fit sends rows to the worker a chunk of frames at a time and returns how
+// many frames they're on.
+func (w *OrientWorker) fit(ctx context.Context, jobID int64, lt db.LabelType, pose *taxonomy.Pose, rows []db.ListUnrotatedBoxesRow, check *keypointCheck) (int, error) {
+	ref, err := referenceURL(ctx, w.store, lt)
+	if err != nil {
+		return 0, err
 	}
 	frames := groupByFrame(rows)
 	for start := 0; start < len(frames); start += orientChunk {
 		chunk := frames[start:min(start+orientChunk, len(frames))]
-		if err := w.orient(ctx, job.ID, lt.ID, ref, pose, chunk); err != nil {
-			return err
+		if err := w.orient(ctx, jobID, lt.ID, ref, pose, chunk, check); err != nil {
+			return 0, err
 		}
 	}
-	if pose != nil {
-		slog.Info("keypoints fit", "label_type_id", lt.ID, "frames", len(frames), "boxes", len(rows))
-	} else {
-		slog.Info("rotations fit", "label_type_id", lt.ID, "frames", len(frames), "boxes", len(rows))
-	}
-	return nil
+	return len(frames), nil
 }
 
 // groupByFrame splits rows, which are ordered by frame, into one slice per
@@ -117,14 +196,14 @@ func groupByFrame(rows []db.ListUnrotatedBoxesRow) [][]db.ListUnrotatedBoxesRow 
 	return out
 }
 
-func (w *OrientWorker) orient(ctx context.Context, jobID, labelTypeID int64, ref string, pose *taxonomy.Pose, frames [][]db.ListUnrotatedBoxesRow) error {
+func (w *OrientWorker) orient(ctx context.Context, jobID, labelTypeID int64, ref string, pose *taxonomy.Pose, frames [][]db.ListUnrotatedBoxesRow, check *keypointCheck) error {
 	id := w.dispatcher.nextID()
 	msg := &krillv1.OrientTask{Id: id, ReferenceUrl: ref, Frames: make([]*krillv1.OrientFrame, len(frames))}
 	if pose != nil {
 		msg.KeypointCount = int32(pose.Count()) //nolint:gosec // keypoints per type are capped
 		msg.Quads = pose.QuadsProto()
 	}
-	boxes := &orientBoxes{labelTypeID: labelTypeID, pose: pose, updatedAt: map[int64]pgtype.Timestamptz{}}
+	boxes := &orientBoxes{labelTypeID: labelTypeID, pose: pose, updatedAt: map[int64]pgtype.Timestamptz{}, check: check}
 	for i, rows := range frames {
 		f := rows[0]
 		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(f.VideoID, f.FrameIdx), frameURLExpiry)

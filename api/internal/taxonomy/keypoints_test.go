@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"slices"
+	"strconv"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -73,26 +74,35 @@ func TestValidatePose(t *testing.T) {
 	}
 }
 
-func TestRekeyed(t *testing.T) {
+func TestOrigins(t *testing.T) {
 	old := Pose{Keypoints: keypoints("a", "b", "c")}
 	tests := []struct {
-		name string
-		new  []string
-		want bool
+		name  string
+		count int
+		given []int32
+		want  []int32
 	}{
-		{"unchanged", []string{"a", "b", "c"}, false},
-		{"renamed", []string{"a", "x", "c"}, false},
-		{"appended", []string{"a", "b", "c", "d"}, false},
-		{"removed last", []string{"a", "b"}, true},
-		{"removed middle", []string{"a", "c"}, true},
-		{"swapped", []string{"b", "a", "c"}, true},
+		{"unchanged", 3, nil, nil},
+		{"appended", 4, nil, nil},
+		{"appended with origins", 4, []int32{0, 1, 2, -1}, nil},
+		{"removed last", 2, nil, []int32{0, 1}},
+		{"removed middle", 2, []int32{0, 2}, []int32{0, 2}},
+		{"swapped", 3, []int32{1, 0, 2}, []int32{1, 0, 2}},
+		{"replaced", 3, []int32{0, 1, -1}, []int32{0, 1, -1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := (Pose{Keypoints: keypoints(tt.new...)}).Rekeyed(old); got != tt.want {
-				t.Errorf("Rekeyed = %v, want %v", got, tt.want)
+			p := Pose{Keypoints: make([]Keypoint, tt.count)}
+			got, err := p.Origins(old, tt.given)
+			if err != nil || !slices.Equal(got, tt.want) {
+				t.Errorf("Origins = %v, %v, want %v", got, err, tt.want)
 			}
 		})
+	}
+	for _, given := range [][]int32{{0, 1}, {0, 0, 1}, {0, 1, 3}, {0, 1, -2}} {
+		if _, err := (Pose{Keypoints: make([]Keypoint, 3)}).Origins(old, given); err == nil {
+			t.Errorf("Origins(%v) accepted", given)
+		}
 	}
 }
 
@@ -123,7 +133,7 @@ func TestSetCenters(t *testing.T) {
 	}
 }
 
-func TestKeypointEditsKeepLabeledBoxes(t *testing.T) {
+func TestKeypointEditsMoveLabeledKeypoints(t *testing.T) {
 	url := os.Getenv("KRILL_TEST_DATABASE_URL")
 	if url == "" {
 		t.Skip("KRILL_TEST_DATABASE_URL is not set")
@@ -162,25 +172,59 @@ func TestKeypointEditsKeepLabeledBoxes(t *testing.T) {
 	clipID := scalar(`INSERT INTO clips (video_id, idx, start_frame, frame_count) VALUES ($1, 0, 0, 1) RETURNING id`, videoID)
 	frameID := scalar(`INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, 0, 0) RETURNING id`, videoID, clipID)
 	trackID := scalar(`INSERT INTO tracks (clip_id, label_type_id) VALUES ($1, $2) RETURNING id`, clipID, bin)
-	scalar(`INSERT INTO annotations (track_id, frame_id, x, y, width, height, keypoints)
+	boxID := scalar(`INSERT INTO annotations (track_id, frame_id, x, y, width, height, keypoints)
 		VALUES ($1, $2, 0.1, 0.1, 0.2, 0.2, '{0.1, 0.1, 2, 0, 0, 0}') RETURNING id`, trackID, frameID)
+	if _, err := pool.Exec(ctx, `INSERT INTO gold_frames (frame_id, boxes) VALUES ($1, $2)`, frameID,
+		`[{"label_type_id": `+strconv.FormatInt(bin, 10)+`, "x": 0.1, "keypoints": [0.1, 0.1, 2, 0, 0, 0]}, {"label_type_id": 0, "keypoints": [0.5, 0.5, 2]}]`); err != nil {
+		t.Fatal(err)
+	}
 
-	update := func(names ...string) error {
-		req := &krillv1.UpdateLabelTypeRequest{Id: bin, Name: binName, Color: "#ffffff"}
+	update := func(origins []int32, names ...string) error {
+		req := &krillv1.UpdateLabelTypeRequest{Id: bin, Name: binName, Color: "#ffffff", KeypointOrigins: origins}
 		for _, n := range names {
 			req.Keypoints = append(req.Keypoints, &krillv1.KeypointDef{Name: n})
 		}
 		_, err := s.UpdateLabelType(ctx, req)
 		return err
 	}
-	if err := update("right", "left"); connect.CodeOf(err) != connect.CodeFailedPrecondition {
-		t.Errorf("reorder: err = %v, want failed precondition", err)
+	boxKeypoints := func() []float64 {
+		t.Helper()
+		var kps []float64
+		if err := pool.QueryRow(ctx, `SELECT keypoints FROM annotations WHERE id = $1`, boxID).Scan(&kps); err != nil {
+			t.Fatal(err)
+		}
+		return kps
 	}
-	if err := update("left"); connect.CodeOf(err) != connect.CodeFailedPrecondition {
-		t.Errorf("remove: err = %v, want failed precondition", err)
+	goldKeypoints := func(i int) string {
+		t.Helper()
+		var kps string
+		if err := pool.QueryRow(ctx, `SELECT coalesce(boxes -> $2::int ->> 'keypoints', '') FROM gold_frames WHERE frame_id = $1`, frameID, i).Scan(&kps); err != nil {
+			t.Fatal(err)
+		}
+		return kps
 	}
-	if err := update("port", "starboard", "handle"); err != nil {
-		t.Errorf("rename and append: err = %v", err)
+
+	if err := update(nil, "port", "starboard", "handle"); err != nil {
+		t.Fatalf("rename and append: err = %v", err)
+	}
+	if got := boxKeypoints(); !slices.Equal(got, []float64{0.1, 0.1, 2, 0, 0, 0}) {
+		t.Errorf("after rename and append, box keypoints = %v, want unchanged", got)
+	}
+	if err := update([]int32{0, 0}, "a", "b"); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("two keypoints from one: err = %v, want invalid argument", err)
+	}
+
+	if err := update([]int32{2, 0}, "handle", "port"); err != nil {
+		t.Fatalf("remove and reorder: err = %v", err)
+	}
+	if got := boxKeypoints(); !slices.Equal(got, []float64{0, 0, 0, 0.1, 0.1, 2}) {
+		t.Errorf("after remove and reorder, box keypoints = %v, want port's moved to the second", got)
+	}
+	if got := goldKeypoints(0); got != "[0, 0, 0, 0.1, 0.1, 2]" {
+		t.Errorf("after remove and reorder, gold keypoints = %s, want port's moved to the second", got)
+	}
+	if got := goldKeypoints(1); got != "[0.5, 0.5, 2]" {
+		t.Errorf("another type's gold keypoints = %s, want unchanged", got)
 	}
 
 	_, err = s.MergeLabelTypes(ctx, &krillv1.MergeLabelTypesRequest{SourceId: bin, TargetId: other})
@@ -189,5 +233,15 @@ func TestKeypointEditsKeepLabeledBoxes(t *testing.T) {
 	}
 	if _, err := s.MergeLabelTypes(ctx, &krillv1.MergeLabelTypesRequest{SourceId: other, TargetId: bin}); err != nil {
 		t.Errorf("merge a type with none labeled: err = %v", err)
+	}
+
+	if err := update([]int32{0}, "handle"); err != nil {
+		t.Fatalf("remove the only labeled keypoint: err = %v", err)
+	}
+	if got := boxKeypoints(); got != nil {
+		t.Errorf("with its only labeled keypoint removed, box keypoints = %v, want none", got)
+	}
+	if got := goldKeypoints(0); got != "" {
+		t.Errorf("with its only labeled keypoint removed, gold keypoints = %s, want none", got)
 	}
 }

@@ -19,6 +19,7 @@ from krill_worker.heartbeat import Heartbeat
 from krill_worker.keypoints import (
     KeypointTracker,
     Schema,
+    Segment,
     find_print,
     from_proto,
     load_design,
@@ -59,7 +60,11 @@ class Tracker(Protocol):
         self, frames: Iterable[tuple[Frame, Embedding | None]], prompt: Prompt
     ) -> Iterator[Mask | None]: ...
 
-    def segment(self, frame: Frame, prompts: Sequence[Prompt]) -> list[Mask | None]: ...
+    def segment(
+        self, frame: Frame, prompts: Sequence[Prompt], embedding: Embedding | None = None
+    ) -> list[Mask | None]: ...
+
+    def features(self, frame: Frame) -> Embedding: ...
 
     def find_similar(self, frame: Frame, box: Box) -> list[Box]: ...
 
@@ -70,6 +75,20 @@ class Tracker(Protocol):
 
 class TaskCancelledError(Exception):
     """The API stopped waiting on the task, so its results would be thrown away."""
+
+
+def segmenter(tracker: Tracker, frame: Frame, embedding: Embedding | None) -> Segment:
+    """SAM's mask of a box on frame. The frame is encoded on the first box
+    asked for, unless its embedding is given, and never again."""
+    features = embedding
+
+    def segment(box: Box) -> Mask | None:
+        nonlocal features
+        if features is None:
+            features = tracker.features(frame)
+        return tracker.segment(frame, [BoxPrompt(box)], features)[0]
+
+    return segment
 
 
 def never() -> bool:
@@ -103,13 +122,19 @@ def run_track(
         reference = load_reference(fetch(task.reference_url))
     schema = Schema.of(task.keypoint_count, task.quads)
     keypoints: KeypointTracker | None = None
+    # SAM segments the sheet under a print on every frame from the same image
+    # features tracking takes, so frames without stored ones are encoded once
+    # for both, rather than again for the sheet.
+    sheets = schema.reference is not None and bool(task.reference_url)
     # The tracker takes the frames, so the ones it was given wait here for
     # fitting rotated boxes and keypoints to them.
-    given: deque[Frame] = deque()
+    given: deque[tuple[Frame, Embedding | None]] = deque()
 
     def feed() -> Iterator[tuple[Frame, Embedding | None]]:
         for frame, embedding in prefetch(load, task.frames):
-            given.append(frame)
+            if embedding is None and sheets:
+                embedding = tracker.features(frame)
+            given.append((frame, embedding))
             yield frame, embedding
 
     start = last_report = time.monotonic()
@@ -120,14 +145,15 @@ def run_track(
         if cancelled():
             raise TaskCancelledError
         frame_id = f.id
-        frame = given.popleft()
+        frame, embedding = given.popleft()
+        segment = segmenter(tracker, frame, embedding)
         if schema.count and keypoints is None:
-            keypoints = start_keypoints(tracker, task, schema, frame, mask)
+            keypoints = start_keypoints(tracker, task, schema, frame, mask, segment)
         points = None
         if keypoints is not None:
             # Stepped on every frame, so keypoints follow the object through
             # frames where its box is dropped.
-            points = keypoints.step(frame, mask)
+            points = keypoints.step(frame, mask, segment)
             if f.keypoints:
                 keypoints.anchor(from_proto(f.keypoints, schema.count, frame.shape))
                 points = keypoints.points.copy()
@@ -164,6 +190,7 @@ def start_keypoints(
     schema: Schema,
     frame: Frame,
     mask: Mask | None,
+    segment: Segment,
 ) -> KeypointTracker:
     """Keypoints on the prompt frame: the ones the labeler placed, plus the
     quad they pointed at.
@@ -187,7 +214,7 @@ def start_keypoints(
             point = PointPrompt(task.fill.point.x, task.fill.point.y)
             surface = tracker.segment(frame, [point])[0]
         if surface is not None and surface.any():
-            keypoints.fill(frame, task.fill.quad, surface)
+            keypoints.fill(frame, task.fill.quad, surface, segment)
     return keypoints
 
 
@@ -268,12 +295,14 @@ def run_fit_keypoints(
             raise TaskCancelledError
         gray = np.asarray(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY), np.uint8)
         boxes = [(b.box.x, b.box.y, b.box.width, b.box.height) for b in f.boxes]
-        masks = tracker.segment(frame, [BoxPrompt(b) for b in boxes])
+        embedding = tracker.features(frame)
+        masks = tracker.segment(frame, [BoxPrompt(b) for b in boxes], embedding)
+        segment = segmenter(tracker, frame, embedding)
         for b, box, mask in zip(f.boxes, boxes, masks, strict=True):
             total += 1
             if mask is None or not mask.any():
                 continue
-            fit_print = find_print(frame, gray, mask, design, None)
+            fit_print = find_print(frame, gray, mask, design, None, segment)
             if fit_print is None:
                 continue
             corners, paper = fit_print

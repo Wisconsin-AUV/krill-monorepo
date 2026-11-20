@@ -16,7 +16,11 @@ SELECT
     (
         SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id JOIN live_clips c ON c.id = t.clip_id
         WHERE t.label_type_id = lt.id AND lt.keypoints <> '[]' AND a.keypoints IS NULL AND a.status <> 'rejected'
-    )::int AS unposed_box_count
+    )::int AS unposed_box_count,
+    (
+        SELECT count(*) FROM annotations a JOIN tracks t ON t.id = a.track_id
+        WHERE t.label_type_id = lt.id AND a.keypoints IS NOT NULL
+    )::int AS posed_box_count
 FROM label_types lt
 ORDER BY lt.position, lt.id;
 
@@ -195,6 +199,61 @@ SELECT count(*)::int
 FROM annotations a
 JOIN tracks t ON t.id = a.track_id
 WHERE t.label_type_id = $1 AND a.keypoints IS NOT NULL;
+
+-- name: RemapBoxKeypoints :execrows
+-- @origins holds, for each of the type's keypoints, the index it had in
+-- boxes' keypoints, or -1 for one they don't have. A box left with no
+-- keypoint labeled gets none, so fitting keypoints picks it up again.
+UPDATE annotations a SET keypoints = (
+    SELECT CASE WHEN bool_or(o >= 0 AND a.keypoints[3 * o + 3] <> 0) THEN
+        array_agg(CASE WHEN o >= 0 THEN coalesce(a.keypoints[3 * o + j], 0) ELSE 0 END ORDER BY i, j)
+    END
+    FROM unnest(@origins::int[]) WITH ORDINALITY AS m (o, i)
+    CROSS JOIN generate_series(1, 3) AS j
+)
+FROM tracks t
+WHERE t.id = a.track_id AND t.label_type_id = @label_type_id AND a.keypoints IS NOT NULL;
+
+-- name: RemapGoldFrameKeypoints :exec
+-- Like RemapBoxKeypoints, for the boxes gold frames copied.
+UPDATE gold_frames g SET boxes = (
+    SELECT jsonb_agg(
+        CASE WHEN (b.box ->> 'label_type_id')::bigint = @label_type_id::bigint AND jsonb_typeof(b.box -> 'keypoints') = 'array' THEN
+            (b.box - 'keypoints') || coalesce((
+                SELECT CASE WHEN bool_or(o >= 0 AND (b.box -> 'keypoints' ->> (3 * o + 2))::float8 <> 0) THEN
+                    jsonb_build_object('keypoints', jsonb_agg(
+                        CASE WHEN o >= 0 THEN coalesce(b.box -> 'keypoints' -> (3 * o + j - 1), '0') ELSE '0' END ORDER BY i, j
+                    ))
+                END
+                FROM unnest(@origins::int[]) WITH ORDINALITY AS m (o, i)
+                CROSS JOIN generate_series(1, 3) AS j
+            ), '{}')
+        ELSE b.box END
+        ORDER BY b.n
+    )
+    FROM jsonb_array_elements(g.boxes) WITH ORDINALITY AS b (box, n)
+)
+WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', @label_type_id::bigint));
+
+-- name: RemapGoldAttemptKeypoints :exec
+UPDATE gold_attempts g SET boxes = (
+    SELECT jsonb_agg(
+        CASE WHEN (b.box ->> 'label_type_id')::bigint = @label_type_id::bigint AND jsonb_typeof(b.box -> 'keypoints') = 'array' THEN
+            (b.box - 'keypoints') || coalesce((
+                SELECT CASE WHEN bool_or(o >= 0 AND (b.box -> 'keypoints' ->> (3 * o + 2))::float8 <> 0) THEN
+                    jsonb_build_object('keypoints', jsonb_agg(
+                        CASE WHEN o >= 0 THEN coalesce(b.box -> 'keypoints' -> (3 * o + j - 1), '0') ELSE '0' END ORDER BY i, j
+                    ))
+                END
+                FROM unnest(@origins::int[]) WITH ORDINALITY AS m (o, i)
+                CROSS JOIN generate_series(1, 3) AS j
+            ), '{}')
+        ELSE b.box END
+        ORDER BY b.n
+    )
+    FROM jsonb_array_elements(g.boxes) WITH ORDINALITY AS b (box, n)
+)
+WHERE g.boxes @> jsonb_build_array(jsonb_build_object('label_type_id', @label_type_id::bigint));
 
 -- name: ListUnposedBoxes :many
 SELECT a.id, a.frame_id, f.idx AS frame_idx, f.video_id, a.x, a.y, a.width, a.height, a.updated_at
