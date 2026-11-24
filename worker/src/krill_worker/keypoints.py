@@ -478,16 +478,23 @@ def transform(h: npt.NDArray[np.float64], points: npt.NDArray[np.float64]) -> Po
     return np.asarray(out.reshape(-1, 2), np.float32)
 
 
-def snap(corners: Points, mask: Mask) -> Points:
+def snap(corners: Points, mask: Mask, floor: Points | None = None) -> Points:
     """Corners moved onto the mask outline's corners: all four when they line
-    up with it, else only the ones outside it.
+    up with it, else the ones outside it and, given the print on the crate's
+    floor, the ones the move takes away from the print's side.
 
     Looking straight down, a crate's outline is its rim, and snapping to it
     stops the rim's keypoints drifting. Seen at an angle the outline takes in
-    the near wall down to the floor, so the near corners belong inside it,
-    and snapping them would pull the rim down the wall a little more each
-    frame. The rim is never outside the crate's outline though, so a corner
-    that drifted out goes back to the outline's nearest corner.
+    the near walls down to the floor, so the corner between them belongs
+    inside it, and snapping it would pull the rim down the wall a little more
+    each frame. The rim is never outside the crate's outline though, so a
+    corner that drifted out goes back to the outline's nearest corner.
+
+    The other corners stay on the outline at any angle, but flow, following
+    the floor and walls below the rim, sinks them inside it as the camera
+    closes in. The floor shows shifted toward the near walls, so a corner
+    whose snap points away from where the print shifted is climbing back up
+    a far wall rather than sliding down a near one.
     """
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
@@ -504,10 +511,15 @@ def snap(corners: Points, mask: Mask) -> Points:
         return np.asarray(vertices[nearest], np.float32)
     out = corners.copy()
     hull = outline.reshape(-1, 1, 2)
+    shift = None if floor is None else floor.mean(axis=0) - corners.mean(axis=0)
     for i, c in enumerate(corners):
+        if not near[i]:
+            continue
+        target = vertices[nearest[i]]
         outside = cv2.pointPolygonTest(hull, (float(c[0]), float(c[1])), True) < -OUTSIDE_PIXELS
-        if outside and near[i]:
-            out[i] = vertices[nearest[i]]
+        rising = shift is not None and float((target - c) @ shift) <= 0
+        if outside or rising:
+            out[i] = target
     return out
 
 
@@ -682,11 +694,14 @@ class KeypointTracker:
         if ref is not None and self.design is not None:
             self._find_print(rgb, gray, mask, ref, segment)
         self._ride()
+        floor = None
+        if ref is not None and (self.points[list(ref.corners), 2] > UNLABELED).all():
+            floor = self.points[list(ref.corners), :2].astype(np.float32)
         for q in self.schema.quads:
             if q is ref or not (self.points[list(q.corners), 2] > UNLABELED).all():
                 continue
             idx = list(q.corners)
-            self.points[idx, :2] = snap(self.points[idx, :2].astype(np.float32), mask)
+            self.points[idx, :2] = snap(self.points[idx, :2].astype(np.float32), mask, floor)
         self._out_of_frame(gray.shape)
         place_centers(self.points, self.schema)
         self.prev = (gray, mask)
