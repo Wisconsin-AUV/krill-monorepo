@@ -6,7 +6,7 @@
 #   scripts/keypoints/overlay.sh --track --model facebook/sam2.1-hiera-small \
 #       --model facebook/sam2.1-hiera-base-plus GX012079:5:14-49
 #
-# LABEL_TYPE (name or id, default bin_blood_new) picks the label type and OUT
+# LABEL_TYPE (name or id, default bin_blood) picks the label type and OUT
 # (default /tmp/keypoint-overlays) where images go. Models load from the
 # krill-hf volume; set HF_TOKEN to download ones it lacks, such as SAM 3.
 set -euo pipefail
@@ -15,7 +15,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd)
 deploy=${KRILL_DEPLOY:-/srv/krill/app/deploy}
 project=${KRILL_PROJECT:-krill-server}
-label_type=${LABEL_TYPE:-bin_blood_new}
+label_type=${LABEL_TYPE:-bin_blood}
 out=${OUT:-/tmp/keypoint-overlays}
 image=${KRILL_WORKER_IMAGE:-$(docker inspect --format '{{.Config.Image}}' "$project-worker-1")}
 
