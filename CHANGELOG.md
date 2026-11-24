@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Tracked keypoints on a crate's rim no longer sink into the crate as the camera closes in on it at an angle. Rim corners on the far side are put back on the crate's outline every frame, while the corner between the near walls stays off it.
+
 ## [0.10.0] - 2026-11-20
 
 ### Added

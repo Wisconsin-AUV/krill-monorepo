@@ -214,6 +214,19 @@ def test_snap_pulls_back_a_corner_that_drifted_out_of_the_outline() -> None:
     assert np.abs(got[2:] - RIM[2:]).max() < 1
 
 
+def test_snap_lifts_a_far_corner_that_sank_inside_back_onto_the_outline() -> None:
+    seen = polygon_mask([(100, 100), (200, 100), (200, 206), (100, 206)])
+    # The floor shows shifted toward the near wall at the bottom.
+    floor = np.array([[115, 125], [185, 125], [185, 195], [115, 195]], np.float32)
+    sunk = RIM.copy()
+    sunk[0] = (103, 106)
+
+    got = snap(sunk, seen, floor)
+
+    assert got[0] == pytest.approx((100, 100), abs=1.5)
+    assert np.abs(got[2:] - RIM[2:]).max() < 1
+
+
 def test_snap_moves_the_whole_rim_onto_an_outline_seen_from_above() -> None:
     shifted = polygon_mask([(104, 103), (204, 103), (204, 203), (104, 203)])
 
