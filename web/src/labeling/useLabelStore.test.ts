@@ -11,7 +11,7 @@ import {
 import { FrameSchema, GetClipResponseSchema } from '@/gen/krill/v1/clip_pb'
 import { LabelTypeSchema } from '@/gen/krill/v1/label_pb'
 import { isLabeled } from '@/lib/keypoints'
-import { placeKeypoint } from './keypointEdit'
+import { keypointKeys, placeKeypoint } from './keypointEdit'
 import { localBackend } from './localBackend'
 import { useLabelStore, type AnnotationBackend } from './useLabelStore'
 
@@ -107,5 +107,41 @@ describe('setKeypoints', () => {
 
     const kps = useLabelStore.getState().boxes['1']['1'].box?.keypoints ?? []
     expect(kps.map(isLabeled)).toEqual([true, true, true])
+  })
+})
+
+describe('keypointKeys', () => {
+  it('places the keypoint picked by number, then the next unlabeled one after it', async () => {
+    const clip = create(GetClipResponseSchema, {
+      frames: [create(FrameSchema, { id: 1n })],
+      annotations: [{ trackId: 1n, frameId: 1n, box: { width: 0.5, height: 0.5 } }],
+    })
+    const setBox: AnnotationBackend['setBox'] = async (req) =>
+      create(SetBoxResponseSchema, {
+        annotation: { trackId: req.trackId, frameId: req.frameId, box: req.box },
+      })
+    useLabelStore.getState().load(clip, { ...localBackend(), setBox })
+    useLabelStore.getState().select(1n)
+    const type = create(LabelTypeSchema, {
+      keypoints: ['a', 'b', 'c', 'd', 'center'].map((name) => ({ name })),
+      quads: [{ corners: [0, 1, 2, 3], center: 4 }],
+    })
+    const keys = keypointKeys(type, 1n, 1n)
+    const press = (key: string) => keys[key](new KeyboardEvent('keydown', { key }))
+    const place = (x: number) => placeKeypoint(type, 1n, 1n, { x, y: 0.2 }, false)
+
+    place(0.1)
+    press('3')
+    place(0.3)
+    place(0.4)
+    press('5')
+    press('9')
+    place(0.2)
+    await vi.waitFor(() => expect(useLabelStore.getState().pending).toBe(0))
+
+    const kps = useLabelStore.getState().boxes['1']['1'].box?.keypoints ?? []
+    expect(kps.slice(0, 4).map((k) => k.x)).toEqual([0.1, 0.2, 0.3, 0.4])
+    expect(isLabeled(kps[4])).toBe(true)
+    expect(useLabelStore.getState().selectedTrackId).toBe(1n)
   })
 })

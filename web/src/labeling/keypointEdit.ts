@@ -104,7 +104,21 @@ export function keypointKeys(
     const from = activeKeypoint(labels().keypointFocus, kps, type, trackId, frameId)
     labels().focusKeypoint({ trackId, frameId, index: stepIndex(type, from, delta) })
   }
+  // Every digit is taken while a box with keypoints is selected, so one past
+  // the type's keypoints or on a derived center does nothing rather than
+  // falling through to picking a label type, which would drop the selection.
+  const derived = derivedIndexes(type.quads)
+  const pick = Object.fromEntries(
+    Array.from({ length: 9 }, (_, index) => [
+      String(index + 1),
+      () => {
+        if (index < type.keypoints.length && !derived.has(index))
+          labels().focusKeypoint({ trackId, frameId, index })
+      },
+    ]),
+  )
   return {
+    ...pick,
     o: () => {
       const t = target(type, trackId, frameId)
       if (!t) return
