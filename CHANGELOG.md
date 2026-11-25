@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - Number keys 1 to 9 pick which keypoint the next click places while a box with keypoints is selected, so a corner hidden behind a crate's wall can be skipped without the next click landing on it.
+- Once two of a quad's corners are placed, a click places the unplaced corner nearest it, so a sheet's corners left by tracking or Fit keypoints can be filled in without picking which one first. The name by the cursor follows it. A keypoint picked with a number key, W or Q, or by clicking its mark still takes the next click wherever it lands.
 
 ### Changed
 

@@ -9,7 +9,7 @@ import { FrameCanvas } from '@/workspace/FrameCanvas'
 import { loadFrame } from '@/workspace/imageCache'
 import { useWorkspaceStore } from '@/workspace/useWorkspaceStore'
 import { AnnotationLayer, type TrackInfo } from './AnnotationLayer'
-import { activeKeypoint, placeKeypoint } from './keypointEdit'
+import { clickedKeypoint, placeKeypoint } from './keypointEdit'
 import { Loupe } from './Loupe'
 import type { TrackReview } from './review'
 import { TrackingShimmer } from './TrackingShimmer'
@@ -103,20 +103,31 @@ export function LabelCanvas({
   const poseKeypoints = poseType
     ? padKeypoints(selectedHere?.box?.keypoints ?? [], poseType.keypoints.length)
     : []
-  const active =
-    poseType && frame && selectedTrackId !== null
-      ? activeKeypoint(keypointFocus, poseKeypoints, poseType, selectedTrackId, frame.id)
-      : null
-
   const toNorm = (p: { x: number; y: number }) => ({
     x: p.x / imageSize.width,
     y: p.y / imageSize.height,
   })
+  const aspect = imageSize.width / imageSize.height
+
+  // Follows the pointer, so the name by the cursor is the keypoint a click
+  // there places.
+  const active =
+    poseType && frame && selectedTrackId !== null
+      ? clickedKeypoint(
+          keypointFocus,
+          poseKeypoints,
+          poseType,
+          selectedTrackId,
+          frame.id,
+          pointer && toNorm(pointer),
+          aspect,
+        )
+      : null
 
   // p is in image pixels.
   function place(p: { x: number; y: number }, hidden: boolean): boolean {
     if (!poseType || !frame || selectedTrackId === null) return false
-    return placeKeypoint(poseType, selectedTrackId, frame.id, toNorm(p), hidden)
+    return placeKeypoint(poseType, selectedTrackId, frame.id, toNorm(p), hidden, aspect)
   }
 
   function onSelectedClick(p: { x: number; y: number }, evt: MouseEvent) {

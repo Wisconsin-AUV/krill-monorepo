@@ -21,6 +21,7 @@ Types with keypoints still get a box around the whole object. Then click to plac
 
 - Place a keypoint only where you can see it. Leave one that something covers or that's outside the frame unlabeled instead of guessing where it is, and clear one placed there (X).
 - To skip one, press the number of the keypoint you'll place next (1 to 9), or step to it with W and Q.
+- Once two of a quad's corners are placed, by you, tracking, or Fit keypoints, a click places the unplaced corner nearest it, whatever the cursor named before. Pressing a corner's number makes the next click place that one wherever it lands.
 - A quad's corners go clockwise from the top left of the surface as it was printed, not as it appears on screen. A sheet turned on its side starts from the corner that was its top left.
 - When the type has a reference design, it is laid over the quad. If the design looks turned or stretched, a corner is wrong.
 - Shift+click a print inside the selected box to have SAM find its corners. Fix or clear any keypoint SAM got wrong on one frame and press R. Tracking keeps the keypoints you placed on later frames.

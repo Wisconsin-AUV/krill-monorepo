@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { KeypointVisibility } from '@/gen/krill/v1/annotation_pb'
 import { LabelTypeSchema } from '@/gen/krill/v1/label_pb'
 import {
+  nearestUnplaced,
   nextUnlabeled,
   padKeypoints,
   promptQuad,
@@ -132,5 +133,35 @@ describe('keypoints', () => {
     const both = [...paper, ...square(0.1, 0.9)]
     expect(promptQuad(bin, both, null, { x: 0.5, y: 0.5 })).toBe(0)
     expect(promptQuad(bin, both, null, { x: 0.2, y: 0.2 })).toBe(1)
+  })
+
+  it('guesses the unplaced corner a click is for from the placed ones', () => {
+    const placed = (...corners: ({ x: number; y: number } | null)[]) =>
+      padKeypoints(
+        corners.map((p) => (p ? at(p) : at({ x: 0, y: 0 }, UNSPECIFIED))),
+        sheet.keypoints.length,
+      )
+    const nearest = (kps: ReturnType<typeof placed>, x: number, y: number, aspect = 1) =>
+      nearestUnplaced(kps, sheet, { x, y }, aspect)
+
+    // A wall hides the bottom edge: which bottom corner is by the side of it.
+    const top = placed({ x: 0.2, y: 0.2 }, { x: 0.6, y: 0.2 })
+    expect(nearest(top, 0.55, 0.5)).toBe(2)
+    expect(nearest(top, 0.25, 0.45)).toBe(3)
+    // Placed across a diagonal, by the side of it.
+    const diagonal = placed({ x: 0.2, y: 0.2 }, null, { x: 0.6, y: 0.6 })
+    expect(nearest(diagonal, 0.5, 0.3)).toBe(1)
+    expect(nearest(diagonal, 0.3, 0.5)).toBe(3)
+    // The last corner wherever the click is.
+    const three = placed({ x: 0.2, y: 0.2 }, { x: 0.6, y: 0.2 }, { x: 0.6, y: 0.6 })
+    expect(nearest(three, 0.9, 0.1)).toBe(3)
+    // One corner doesn't say where the rest are.
+    expect(nearest(placed({ x: 0.2, y: 0.2 }), 0.6, 0.6)).toBeNull()
+    expect(nearest(placed(), 0.6, 0.6)).toBeNull()
+    // The square guessed is one in pixels: the top edge here is steeper on
+    // a wide frame, which turns the bottom corners' sides.
+    const slanted = placed({ x: 0.2, y: 0.2 }, { x: 0.4, y: 0.4 })
+    expect(nearest(slanted, 0.15, 0.55)).toBe(2)
+    expect(nearest(slanted, 0.15, 0.55, 2)).toBe(3)
   })
 })

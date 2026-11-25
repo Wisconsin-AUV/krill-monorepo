@@ -4,6 +4,7 @@ import {
   derivedIndexes,
   hasKeypoints,
   isLabeled,
+  nearestUnplaced,
   nextUnlabeled,
   padKeypoints,
   setKeypoint,
@@ -33,26 +34,46 @@ export function activeKeypoint(
   return onBox(focus, trackId, frameId) ? focus.index : nextUnlabeled(kps, type, -1)
 }
 
+// The keypoint a click at a normalized point places: the one the labeler
+// picked, else the unplaced corner nearest it once a quad's placed corners
+// say where the rest are, else the active one. aspect is the frame's width
+// over its height.
+export function clickedKeypoint(
+  focus: KeypointFocus | null,
+  kps: readonly KeypointValue[],
+  type: LabelType,
+  trackId: bigint,
+  frameId: bigint,
+  point: { x: number; y: number } | null,
+  aspect: number,
+): number | null {
+  const active = activeKeypoint(focus, kps, type, trackId, frameId)
+  if (!point || (onBox(focus, trackId, frameId) && !focus.advanced)) return active
+  return nearestUnplaced(kps, type, point, aspect) ?? active
+}
+
 const outside = (p: { x: number; y: number }) => p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1
 
-// Places the active keypoint at a normalized point and moves on to the next
-// unlabeled one. False when there is none to place.
+// Places the keypoint clickedKeypoint names at a normalized point and moves
+// on to the next unlabeled one. False when there is none to place.
 export function placeKeypoint(
   type: LabelType,
   trackId: bigint,
   frameId: bigint,
   point: { x: number; y: number },
   hidden: boolean,
+  aspect: number,
 ): boolean {
   const kps = boxKeypoints(type, trackId, frameId)
   if (!kps) return false
-  const index = activeKeypoint(labels().keypointFocus, kps, type, trackId, frameId)
+  const focus = labels().keypointFocus
+  const index = clickedKeypoint(focus, kps, type, trackId, frameId, point, aspect)
   if (index === null) return false
   const visibility =
     hidden || outside(point) ? KeypointVisibility.HIDDEN : KeypointVisibility.VISIBLE
   const next = setKeypoint(kps, type, index, { ...point, visibility })
   labels().focusKeypoint(
-    { trackId, frameId, index: nextUnlabeled(next, type, index) },
+    { trackId, frameId, index: nextUnlabeled(next, type, index), advanced: true },
     { trackId, frameId, index },
   )
   void labels().setKeypoints(trackId, frameId, next)

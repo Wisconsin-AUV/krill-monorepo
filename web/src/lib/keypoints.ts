@@ -162,6 +162,72 @@ function polygonArea(poly: readonly Point[]): number {
   return Math.abs(sum) / 2
 }
 
+const UNIT_SQUARE: readonly Point[] = [
+  { x: 0, y: 0 },
+  { x: 1, y: 0 },
+  { x: 1, y: 1 },
+  { x: 0, y: 1 },
+]
+
+// Where a quad's missing corners would be from its placed ones: the fourth
+// of a parallelogram through three, or a square on two. Corners go clockwise
+// on screen, which is what tells the side of two placed corners the others
+// are on. Empty when fewer than two are placed.
+function guessCorners(corners: readonly (Point | null)[]): Map<number, Point> {
+  const placed = [0, 1, 2, 3].filter((i) => corners[i])
+  const missing = [0, 1, 2, 3].filter((i) => !corners[i])
+  const at = (i: number) => corners[i % 4] as Point
+  const out = new Map<number, Point>()
+  if (placed.length === 3) {
+    const k = missing[0]
+    out.set(k, {
+      x: at(k + 1).x + at(k + 3).x - at(k + 2).x,
+      y: at(k + 1).y + at(k + 3).y - at(k + 2).y,
+    })
+  } else if (placed.length === 2) {
+    // The similarity taking the unit square's corners to the placed two,
+    // as complex numbers: z = z0 + s * (u - u0).
+    const [i, j] = placed
+    const du = { x: UNIT_SQUARE[j].x - UNIT_SQUARE[i].x, y: UNIT_SQUARE[j].y - UNIT_SQUARE[i].y }
+    const dz = { x: at(j).x - at(i).x, y: at(j).y - at(i).y }
+    const n = du.x * du.x + du.y * du.y
+    const s = { x: (dz.x * du.x + dz.y * du.y) / n, y: (dz.y * du.x - dz.x * du.y) / n }
+    for (const k of missing) {
+      const u = { x: UNIT_SQUARE[k].x - UNIT_SQUARE[i].x, y: UNIT_SQUARE[k].y - UNIT_SQUARE[i].y }
+      out.set(k, { x: at(i).x + s.x * u.x - s.y * u.y, y: at(i).y + s.x * u.y + s.y * u.x })
+    }
+  }
+  return out
+}
+
+// The unlabeled quad corner whose guessed spot is nearest a point, or null
+// when no quad has enough corners placed to guess from. aspect is the
+// frame's width over its height, since the square a guess assumes is one in
+// pixels.
+export function nearestUnplaced(
+  kps: readonly KeypointValue[],
+  type: LabelType,
+  point: Point,
+  aspect: number,
+): number | null {
+  const px = (p: Point) => ({ x: p.x * aspect, y: p.y })
+  const target = px(point)
+  let best: number | null = null
+  let bestDist = Infinity
+  for (const q of type.quads) {
+    if (q.corners.length !== 4) continue
+    const corners = q.corners.map((c) => (isLabeled(kps[c]) ? px(kps[c]) : null))
+    for (const [i, p] of guessCorners(corners)) {
+      const d = (p.x - target.x) ** 2 + (p.y - target.y) ** 2
+      if (d < bestDist) {
+        best = q.corners[i]
+        bestDist = d
+      }
+    }
+  }
+  return best
+}
+
 // Maps the unit square onto a quad, (0,0), (1,0), (1,1), (0,1) to its corners
 // in order (Heckbert's square-to-quad projection).
 export function squareToQuad(c: readonly Point[]): (u: number, v: number) => Point {
