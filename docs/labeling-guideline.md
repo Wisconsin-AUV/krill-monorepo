@@ -19,10 +19,10 @@ Each section needs example images of correct and incorrect labels.
 
 Types with keypoints still get a box around the whole object. Then place each keypoint, in the order the number and name by the cursor show.
 
-- Place a keypoint where it is, even when something covers it or it's outside the frame, and mark it hidden (Alt+click, or O). Clear it (X) only when you can't tell where it is.
+- Place a keypoint only where you can see it. Leave one that something covers or that's outside the frame unlabeled instead of guessing where it is, and clear one placed there (X).
 - A quad's corners go clockwise from the top left of the surface as it was printed, not as it appears on screen. A sheet turned on its side starts from the corner that was its top left.
 - When the type has a reference design, it is laid over the quad. If the design looks turned or stretched, a corner is wrong.
-- Shift+click a print inside the selected box to have SAM find its corners. Fix any keypoint SAM got wrong on one frame and press R. Tracking keeps the keypoints you placed on later frames.
+- Shift+click a print inside the selected box to have SAM find its corners. Fix or clear any keypoint SAM got wrong on one frame and press R. Tracking keeps the keypoints you placed on later frames.
 
 ## Roles
 
@@ -41,7 +41,7 @@ Every type except `gate`, `torpedo_board`, and `table` has a `role` attribute fo
 ## Bins
 
 - `bin`: the whole bin, including the sheet inside it.
-- Keypoints go on the sheet's four corners, not on the crate. The center is placed for you once all four corners are.
+- Keypoints go on the sheet's four corners, not on the crate. A corner hidden by the crate's wall stays unlabeled. The center is placed for you only once all four corners are.
 
 ## Table / Octagon
 
