@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format follows
 
 - Number keys 1 to 9 pick which keypoint the next click places while a box with keypoints is selected, so a corner hidden behind a crate's wall can be skipped without the next click landing on it.
 
+### Changed
+
+- Tracking, Shift+click fill, and Fit keypoints leave a sheet's corners unlabeled where a crate's wall hides them, as labelers do, instead of placing them on the wall's top edge where the paper disappears or marking them hidden. A wall that hides only the sheet's blank margin isn't noticed, and its corners stay a few pixels from the sheet's own.
+
 ### Fixed
 
 - Tracked keypoints on a crate's rim no longer sink into the crate as the camera closes in on it at an angle. Rim corners on the far side are put back on the crate's outline every frame, while the corner between the near walls stays off it.
