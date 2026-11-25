@@ -34,6 +34,9 @@ export interface KeypointFocus {
   trackId: bigint
   frameId: bigint
   index: number | null
+  // Moved on to after a place rather than picked by the labeler, so a click
+  // nearer another unplaced corner places that one instead.
+  advanced?: boolean
 }
 
 // trackId is unset until the server accepts the request.

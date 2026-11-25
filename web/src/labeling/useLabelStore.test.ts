@@ -92,7 +92,7 @@ describe('setKeypoints', () => {
     const type = create(LabelTypeSchema, {
       keypoints: ['a', 'b', 'c'].map((name) => ({ name })),
     })
-    const place = () => placeKeypoint(type, 1n, 1n, { x: 0.2, y: 0.2 }, false)
+    const place = () => placeKeypoint(type, 1n, 1n, { x: 0.2, y: 0.2 }, false, 1)
 
     place()
     place()
@@ -110,38 +110,80 @@ describe('setKeypoints', () => {
   })
 })
 
+// A selected box of a sheet type with keypoints 1 to 4 its corners and 5 its
+// center.
+function poseSheet() {
+  const clip = create(GetClipResponseSchema, {
+    frames: [create(FrameSchema, { id: 1n })],
+    annotations: [{ trackId: 1n, frameId: 1n, box: { width: 0.5, height: 0.5 } }],
+  })
+  const setBox: AnnotationBackend['setBox'] = async (req) =>
+    create(SetBoxResponseSchema, {
+      annotation: { trackId: req.trackId, frameId: req.frameId, box: req.box },
+    })
+  useLabelStore.getState().load(clip, { ...localBackend(), setBox })
+  useLabelStore.getState().select(1n)
+  const type = create(LabelTypeSchema, {
+    keypoints: ['tl', 'tr', 'br', 'bl', 'center'].map((name) => ({ name })),
+    quads: [{ corners: [0, 1, 2, 3], center: 4 }],
+  })
+  const keys = keypointKeys(type, 1n, 1n)
+  return {
+    press: (key: string) => keys[key](new KeyboardEvent('keydown', { key })),
+    place: (x: number, y: number) => placeKeypoint(type, 1n, 1n, { x, y }, false, 1),
+    placed: async () => {
+      await vi.waitFor(() => expect(useLabelStore.getState().pending).toBe(0))
+      const kps = useLabelStore.getState().boxes['1']['1'].box?.keypoints ?? []
+      return kps.map((k) => (isLabeled(k) ? [k.x, k.y] : null))
+    },
+  }
+}
+
 describe('keypointKeys', () => {
   it('places the keypoint picked by number, then the next unlabeled one after it', async () => {
-    const clip = create(GetClipResponseSchema, {
-      frames: [create(FrameSchema, { id: 1n })],
-      annotations: [{ trackId: 1n, frameId: 1n, box: { width: 0.5, height: 0.5 } }],
-    })
-    const setBox: AnnotationBackend['setBox'] = async (req) =>
-      create(SetBoxResponseSchema, {
-        annotation: { trackId: req.trackId, frameId: req.frameId, box: req.box },
-      })
-    useLabelStore.getState().load(clip, { ...localBackend(), setBox })
-    useLabelStore.getState().select(1n)
-    const type = create(LabelTypeSchema, {
-      keypoints: ['a', 'b', 'c', 'd', 'center'].map((name) => ({ name })),
-      quads: [{ corners: [0, 1, 2, 3], center: 4 }],
-    })
-    const keys = keypointKeys(type, 1n, 1n)
-    const press = (key: string) => keys[key](new KeyboardEvent('keydown', { key }))
-    const place = (x: number) => placeKeypoint(type, 1n, 1n, { x, y: 0.2 }, false)
+    const { press, place, placed } = poseSheet()
 
-    place(0.1)
+    place(0.1, 0.1)
     press('3')
-    place(0.3)
-    place(0.4)
+    place(0.4, 0.4)
+    place(0.1, 0.4)
     press('5')
     press('9')
-    place(0.2)
-    await vi.waitFor(() => expect(useLabelStore.getState().pending).toBe(0))
+    place(0.4, 0.1)
 
-    const kps = useLabelStore.getState().boxes['1']['1'].box?.keypoints ?? []
-    expect(kps.slice(0, 4).map((k) => k.x)).toEqual([0.1, 0.2, 0.3, 0.4])
-    expect(isLabeled(kps[4])).toBe(true)
+    const kps = await placed()
+    expect(kps.slice(0, 4)).toEqual([
+      [0.1, 0.1],
+      [0.4, 0.1],
+      [0.4, 0.4],
+      [0.1, 0.4],
+    ])
+    expect(kps[4]).not.toBeNull()
     expect(useLabelStore.getState().selectedTrackId).toBe(1n)
+  })
+})
+
+describe('placeKeypoint', () => {
+  it('places the unplaced corner nearest a click once two corners show where the rest are', async () => {
+    const { place, placed } = poseSheet()
+
+    place(0.2, 0.2)
+    place(0.6, 0.2)
+    // A wall hides the bottom right, so the labeler clicks the bottom left
+    // while the bottom right is up next.
+    place(0.25, 0.5)
+
+    expect(await placed()).toEqual([[0.2, 0.2], [0.6, 0.2], null, [0.25, 0.5], null])
+  })
+
+  it('places a picked corner wherever the click is', async () => {
+    const { press, place, placed } = poseSheet()
+
+    place(0.2, 0.2)
+    place(0.6, 0.2)
+    press('3')
+    place(0.25, 0.5)
+
+    expect(await placed()).toEqual([[0.2, 0.2], [0.6, 0.2], [0.25, 0.5], null, null])
   })
 })
