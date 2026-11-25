@@ -147,3 +147,74 @@ func TestReportOrientChecksKeypointsWithoutSavingThem(t *testing.T) {
 		t.Errorf("worst = %+v, want the turned box first", res.Worst)
 	}
 }
+
+func TestReportTrackChecksTrackingWithoutSavingIt(t *testing.T) {
+	f := newKeypointFixture(t)
+	ctx := t.Context()
+	track := f.scalar(t, `INSERT INTO tracks (clip_id, label_type_id) VALUES ($1, $2) RETURNING id`, f.clip, f.labelType)
+	box := func(frame int64, kps []float64) {
+		f.scalar(t, `INSERT INTO annotations (track_id, frame_id, x, y, width, height, keypoints, status, source)
+			VALUES ($1, $2, 0.1, 0.1, 0.3, 0.3, $3, 'verified', 'human') RETURNING id`, track, frame, kps)
+	}
+	box(f.frames[0], square(0.1, 0.1, 0.1))
+	box(f.frames[1], square(0.1, 0.1, 0.1))
+	// The bottom left is behind a wall on the last frame.
+	behind := square(0.1, 0.1, 0.1)
+	behind[11] = 0
+	box(f.frames[2], behind)
+
+	rows, err := f.q.ListHandPosedTrackBoxes(ctx, f.labelType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runs := taxonomy.CheckRuns(rows)
+	if len(runs) != 1 || len(runs[0]) != 3 {
+		t.Fatalf("runs = %v, want the track's three boxes", runs)
+	}
+	pose := taxonomy.Pose{
+		Keypoints: []taxonomy.Keypoint{{Name: "tl"}, {Name: "tr"}, {Name: "br"}, {Name: "bl"}},
+		Quads:     []taxonomy.Quad{{Corners: []int32{0, 1, 2, 3}, Reference: true}},
+	}
+	check := newTrackingCheck(pose, runs)
+	d := NewDispatcher()
+	s := &Service{dispatcher: d, q: f.q}
+	msg := &krillv1.TrackTask{Id: 13, KeypointCount: 4}
+	for _, id := range f.frames {
+		msg.Frames = append(msg.Frames, &krillv1.TaskFrame{Id: id})
+	}
+	task := newTask(13, 0, msg)
+	task.tracking = &trackedRun{check: check, posed: map[int64]int64{rows[1].FrameID: rows[1].ID, rows[2].FrameID: rows[2].ID}}
+	d.add(task)
+	// Tracking drifts 30 px down by the last frame and loses the bottom
+	// right, but places the bottom left the labeler couldn't see.
+	last := quad(0.1, 0.13)
+	last[2] = &krillv1.Keypoint{}
+	_, err = s.ReportTrack(ctx, &krillv1.ReportTrackRequest{TaskId: 13, Done: true, Boxes: []*krillv1.TrackedBox{
+		{FrameId: f.frames[0], Box: &krillv1.Box{Keypoints: quad(0.1, 0.1)}},
+		{FrameId: f.frames[1], Box: &krillv1.Box{Keypoints: quad(0.1, 0.102)}},
+		{FrameId: f.frames[2], Box: &krillv1.Box{Keypoints: last}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := <-task.done; err != nil {
+		t.Fatal(err)
+	}
+
+	if n := f.scalar(t, `SELECT count(*) FROM annotations WHERE track_id = $1`, track); n != 3 {
+		t.Errorf("%d boxes on the track, want the labeler's 3 and no proposals", n)
+	}
+	for _, r := range rows {
+		if kps, _, source := f.keypoints(t, r.ID); !slices.Equal(kps, r.Keypoints) || source != "human" {
+			t.Errorf("box %d = %v %s, want the labeler's keypoints", r.ID, kps, source)
+		}
+	}
+
+	found, res := check.result()
+	if found != 2 || res.Compared != 2 || res.Missed != 1 || res.Extra != 1 || res.Tracks != 1 || res.Frames != 3 {
+		t.Errorf("found %d, result %+v, want 2 found, 1 missed, 1 extra over 1 track of 3 frames", found, res)
+	}
+	if math.Abs(res.Median-16) > 1e-6 || len(res.Worst) != 2 || res.Worst[0].AnnotationID != rows[2].ID || res.Worst[0].FramesTracked != 2 {
+		t.Errorf("median %v, worst %+v, want 16 and the last frame first, 2 frames in", res.Median, res.Worst)
+	}
+}

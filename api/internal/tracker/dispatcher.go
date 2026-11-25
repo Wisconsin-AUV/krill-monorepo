@@ -33,6 +33,8 @@ type task struct {
 	frames  map[int64]bool
 	// orient is set for orient tasks.
 	orient *orientBoxes
+	// tracking is set for track tasks of a tracking check.
+	tracking *trackedRun
 	// model is set by ReportEmbed before done is signaled.
 	model atomic.Pointer[string]
 	// picked is closed when a worker takes the task, at pickedAt.

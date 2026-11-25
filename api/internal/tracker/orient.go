@@ -62,7 +62,11 @@ func (w *OrientWorker) Work(ctx context.Context, job *river.Job[taxonomy.OrientA
 		return fmt.Errorf("load label type: %w", err)
 	}
 	if job.Args.Check {
-		return w.check(ctx, job.ID, lt)
+		run := w.runCheck
+		if job.Args.Tracking {
+			run = w.runTrackingCheck
+		}
+		return w.check(ctx, job.ID, lt, run)
 	}
 	var pose *taxonomy.Pose
 	var rows []db.ListUnrotatedBoxesRow
@@ -103,9 +107,9 @@ func (w *OrientWorker) Work(ctx context.Context, job *river.Job[taxonomy.OrientA
 	return nil
 }
 
-// check fits keypoints to boxes labelers posed and records how far they land
-// in the check the job belongs to. The check fails with the job.
-func (w *OrientWorker) check(ctx context.Context, jobID int64, lt db.LabelType) error {
+// check runs the keypoint check the job belongs to, which fails with the
+// job.
+func (w *OrientWorker) check(ctx context.Context, jobID int64, lt db.LabelType, run func(context.Context, *db.Queries, int64, db.LabelType, int64) error) error {
 	q := db.New(w.pool)
 	c, err := q.GetRunningKeypointCheckByJob(ctx, jobID)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -114,7 +118,7 @@ func (w *OrientWorker) check(ctx context.Context, jobID int64, lt db.LabelType) 
 	if err != nil {
 		return fmt.Errorf("load check: %w", err)
 	}
-	err = w.runCheck(ctx, q, jobID, lt, c.ID)
+	err = run(ctx, q, jobID, lt, c.ID)
 	if err != nil {
 		if ferr := q.FailKeypointCheck(context.WithoutCancel(ctx), db.FailKeypointCheckParams{ID: c.ID, Error: err.Error()}); ferr != nil {
 			slog.ErrorContext(ctx, "fail keypoint check", "id", c.ID, "err", ferr)
@@ -123,6 +127,8 @@ func (w *OrientWorker) check(ctx context.Context, jobID int64, lt db.LabelType) 
 	return err
 }
 
+// runCheck fits keypoints to boxes labelers posed and records how far they
+// land.
 func (w *OrientWorker) runCheck(ctx context.Context, q *db.Queries, jobID int64, lt db.LabelType, checkID int64) error {
 	pose, err := taxonomy.ParsePose(lt)
 	if err != nil {

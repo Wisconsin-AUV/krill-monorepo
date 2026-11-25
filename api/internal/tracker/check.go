@@ -39,9 +39,7 @@ func (c *keypointCheck) add(annotationID int64, keypoints []float64) {
 func (c *keypointCheck) result() (found, turned int, res taxonomy.CheckResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	perKeypoint := make([][]float64, c.pose.Count())
-	var boxErrors []float64
-	var compared []taxonomy.CheckedBox
+	var boxes []scoredBox
 	for _, b := range c.boxes {
 		fitted, ok := c.fitted[b.ID]
 		if !ok {
@@ -58,9 +56,29 @@ func (c *keypointCheck) result() (found, turned int, res taxonomy.CheckResult) {
 		if box.Turned {
 			turned++
 		}
-		errs := keypointErrors(b.Keypoints, fitted, c.pose.Count(), w, h)
+		boxes = append(boxes, scoredBox{box: box, hand: b.Keypoints, placed: fitted, w: w, h: h})
+	}
+	return found, turned, score(c.pose, boxes)
+}
+
+// scoredBox is a box posed by hand with the keypoints a check placed on it,
+// normalized to a w by h frame.
+type scoredBox struct {
+	box          taxonomy.CheckedBox
+	hand, placed []float64
+	w, h         float64
+}
+
+// score is how far the placed keypoints are from the labelers', over boxes
+// with a keypoint labeled in both.
+func score(pose taxonomy.Pose, boxes []scoredBox) (res taxonomy.CheckResult) {
+	perKeypoint := make([][]float64, pose.Count())
+	var boxErrors []float64
+	var compared []taxonomy.CheckedBox
+	for _, b := range boxes {
+		box := b.box
 		n := 0
-		for i, e := range errs {
+		for i, e := range keypointErrors(b.hand, b.placed, pose.Count(), b.w, b.h) {
 			if math.IsNaN(e) {
 				continue
 			}
@@ -81,13 +99,13 @@ func (c *keypointCheck) result() (found, turned int, res taxonomy.CheckResult) {
 		if len(errs) == 0 {
 			continue
 		}
-		e := taxonomy.KeypointError{Name: c.pose.Keypoints[i].Name, Count: len(errs)}
+		e := taxonomy.KeypointError{Name: pose.Keypoints[i].Name, Count: len(errs)}
 		e.Median, e.P90 = medianP90(errs)
 		res.Keypoints = append(res.Keypoints, e)
 	}
 	slices.SortStableFunc(compared, func(a, b taxonomy.CheckedBox) int { return cmp.Compare(b.Error, a.Error) })
 	res.Worst = compared[:min(len(compared), checkWorst)]
-	return found, turned, res
+	return res
 }
 
 // keypointErrors is the distance in pixels between each of count keypoints
