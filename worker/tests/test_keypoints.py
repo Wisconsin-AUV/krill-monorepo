@@ -155,6 +155,42 @@ def test_find_print_leaves_a_design_that_looks_the_same_turned() -> None:
     assert max(nearest) < 3
 
 
+def walled_crate() -> tuple[Frame, Mask, Design]:
+    """A drop printed on a sheet at PAPER, with the crate's near wall over its
+    bottom quarter, so the paper that shows ends at the wall's top edge."""
+    art = np.full((240, 240, 3), 255, np.uint8)
+    cv2.circle(art, (120, 150), 55, (60, 20, 220), -1)
+    cv2.fillPoly(art, [np.array([[68, 130], [172, 130], [120, 30]], np.int32)], (60, 20, 220))
+    rgb, mask = printed_crate(art)
+    wall = np.array([[40, 178], [260, 194], [260, 280], [40, 280]], np.int32)
+    cv2.fillPoly(rgb, [wall], (30, 55, 95))
+    return rgb, mask, load_design(png(art))
+
+
+def test_fill_leaves_corners_where_a_wall_cuts_the_sheet_hidden() -> None:
+    rgb, mask, art = walled_crate()
+
+    filled = fill_quad(rgb, mask, art)
+
+    assert filled is not None
+    corners, visibility = filled
+    assert np.abs(corners[:2] - PAPER[:2]).max() < 3
+    assert visibility == [VISIBLE, VISIBLE, HIDDEN, HIDDEN]
+
+
+def test_tracking_reports_corners_where_a_wall_cuts_the_sheet_unlabeled() -> None:
+    rgb, mask, art = walled_crate()
+    tracker = KeypointTracker(SCHEMA, art, np.zeros((6, 3)))
+    tracker.fill(rgb, 0, mask)
+
+    for _ in range(3):
+        points = tracker.step(rgb, mask)
+
+    assert points[:4, 2].tolist() == [VISIBLE, VISIBLE, UNLABELED, UNLABELED]
+    assert points[4, 2] == UNLABELED
+    assert np.abs(points[:2, :2] - PAPER[:2]).max() < 3
+
+
 def test_tracked_print_drifts_back_onto_the_sheet() -> None:
     rgb, mask = bin_frame(341)
     start = np.zeros((6, 3))
@@ -183,7 +219,11 @@ def test_tracked_print_keeps_its_size_when_a_wall_covers_part_of_it() -> None:
     for _ in range(5):
         points = tracker.step(rgb, mask)
 
-    assert np.abs(points[:4, :2] - PRINT_341).max() < 2
+    assert np.abs(tracker.points[:4, :2] - PRINT_341).max() < 2
+    # Labelers leave the corners behind the wall unlabeled, and the center
+    # with them.
+    assert points[:4, 2].tolist() == [VISIBLE, UNLABELED, UNLABELED, VISIBLE]
+    assert points[4, 2] == UNLABELED
 
 
 def polygon_mask(points: list[tuple[int, int]]) -> Mask:

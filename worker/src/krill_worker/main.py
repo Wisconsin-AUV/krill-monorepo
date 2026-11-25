@@ -23,8 +23,7 @@ from krill_worker.keypoints import (
     find_print,
     from_proto,
     load_design,
-    place_centers,
-    print_visibility,
+    shown,
 )
 from krill_worker.keypoints import to_proto as keypoints_proto
 from krill_worker.logs import LogBuffer
@@ -156,7 +155,7 @@ def run_track(
             points = keypoints.step(frame, mask, segment)
             if f.keypoints:
                 keypoints.anchor(from_proto(f.keypoints, schema.count, frame.shape))
-                points = keypoints.points.copy()
+                points = keypoints.shown()
         box = None if mask is None else mask_box(mask)
         if box is not None and not cut_off(box):
             corners = fit(frame, box, mask, reference) if task.oriented else None
@@ -305,11 +304,11 @@ def run_fit_keypoints(
             fit_print = find_print(frame, gray, mask, design, None, segment)
             if fit_print is None:
                 continue
-            corners, paper = fit_print
+            corners, visibility = fit_print
             points = np.zeros((schema.count, 3))
-            for i, c, v in zip(q.corners, corners, print_visibility(corners, paper), strict=True):
+            for i, c, v in zip(q.corners, corners, visibility, strict=True):
                 points[i] = (c[0], c[1], v)
-            place_centers(points, schema)
+            points = shown(points, schema)
             batch.append(
                 worker_pb2.OrientBox(
                     annotation_id=b.annotation_id,
