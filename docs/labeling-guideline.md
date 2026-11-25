@@ -17,9 +17,10 @@ Each section needs example images of correct and incorrect labels.
 
 ## Keypoints
 
-Types with keypoints still get a box around the whole object. Then place each keypoint, in the order the number and name by the cursor show.
+Types with keypoints still get a box around the whole object. Then click to place the keypoint whose number and name show by the cursor.
 
 - Place a keypoint only where you can see it. Leave one that something covers or that's outside the frame unlabeled instead of guessing where it is, and clear one placed there (X).
+- To skip one, press the number of the keypoint you'll place next (1 to 9), or step to it with W and Q.
 - A quad's corners go clockwise from the top left of the surface as it was printed, not as it appears on screen. A sheet turned on its side starts from the corner that was its top left.
 - When the type has a reference design, it is laid over the quad. If the design looks turned or stretched, a corner is wrong.
 - Shift+click a print inside the selected box to have SAM find its corners. Fix or clear any keypoint SAM got wrong on one frame and press R. Tracking keeps the keypoints you placed on later frames.
