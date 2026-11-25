@@ -58,7 +58,7 @@ export const starterTypes: StarterType[] = [
     name: 'bin',
     title: 'Bin',
     description: 'A bin on the pool floor.',
-    guideline: 'Box the whole bin opening, including the image.',
+    guideline: 'Box the whole bin, including the sheet.',
     attributes: [],
   },
   {
