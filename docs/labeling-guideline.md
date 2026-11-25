@@ -40,8 +40,8 @@ Every type except `gate`, `torpedo_board`, and `table` has a `role` attribute fo
 
 ## Bins
 
-- `bin`: the whole bin opening, including the image inside it.
-- With keypoints, the sheet's four corners and the four outer corners of the crate's top rim. On angled views the rim corners go on the top of the near wall, not where the crate meets the floor.
+- `bin`: the whole bin, including the sheet inside it.
+- Keypoints go on the sheet's four corners, not on the crate. The center is placed for you once all four corners are.
 
 ## Table / Octagon
 
