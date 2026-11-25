@@ -22,6 +22,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type KeypointCheckKind int32
+
+const (
+	KeypointCheckKind_KEYPOINT_CHECK_KIND_UNSPECIFIED KeypointCheckKind = 0
+	// Fit keypoints on each box posed by hand.
+	KeypointCheckKind_KEYPOINT_CHECK_KIND_FIT KeypointCheckKind = 1
+	// Tracking from a track's first box posed by hand through its last,
+	// without the labelers' keypoints in between.
+	KeypointCheckKind_KEYPOINT_CHECK_KIND_TRACKING KeypointCheckKind = 2
+)
+
+// Enum value maps for KeypointCheckKind.
+var (
+	KeypointCheckKind_name = map[int32]string{
+		0: "KEYPOINT_CHECK_KIND_UNSPECIFIED",
+		1: "KEYPOINT_CHECK_KIND_FIT",
+		2: "KEYPOINT_CHECK_KIND_TRACKING",
+	}
+	KeypointCheckKind_value = map[string]int32{
+		"KEYPOINT_CHECK_KIND_UNSPECIFIED": 0,
+		"KEYPOINT_CHECK_KIND_FIT":         1,
+		"KEYPOINT_CHECK_KIND_TRACKING":    2,
+	}
+)
+
+func (x KeypointCheckKind) Enum() *KeypointCheckKind {
+	p := new(KeypointCheckKind)
+	*p = x
+	return p
+}
+
+func (x KeypointCheckKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KeypointCheckKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_krill_v1_label_proto_enumTypes[0].Descriptor()
+}
+
+func (KeypointCheckKind) Type() protoreflect.EnumType {
+	return &file_krill_v1_label_proto_enumTypes[0]
+}
+
+func (x KeypointCheckKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KeypointCheckKind.Descriptor instead.
+func (KeypointCheckKind) EnumDescriptor() ([]byte, []int) {
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{0}
+}
+
 type KeypointCheckStatus int32
 
 const (
@@ -58,11 +110,11 @@ func (x KeypointCheckStatus) String() string {
 }
 
 func (KeypointCheckStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_krill_v1_label_proto_enumTypes[0].Descriptor()
+	return file_krill_v1_label_proto_enumTypes[1].Descriptor()
 }
 
 func (KeypointCheckStatus) Type() protoreflect.EnumType {
-	return &file_krill_v1_label_proto_enumTypes[0]
+	return &file_krill_v1_label_proto_enumTypes[1]
 }
 
 func (x KeypointCheckStatus) Number() protoreflect.EnumNumber {
@@ -71,7 +123,7 @@ func (x KeypointCheckStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KeypointCheckStatus.Descriptor instead.
 func (KeypointCheckStatus) EnumDescriptor() ([]byte, []int) {
-	return file_krill_v1_label_proto_rawDescGZIP(), []int{0}
+	return file_krill_v1_label_proto_rawDescGZIP(), []int{1}
 }
 
 type LabelAttribute struct {
@@ -1701,8 +1753,10 @@ func (x *FitKeypointsResponse) GetBoxCount() int32 {
 }
 
 type CheckKeypointsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	LabelTypeId   int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	LabelTypeId int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
+	// Unspecified checks Fit keypoints.
+	Kind          KeypointCheckKind `protobuf:"varint,2,opt,name=kind,proto3,enum=krill.v1.KeypointCheckKind" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1744,10 +1798,17 @@ func (x *CheckKeypointsRequest) GetLabelTypeId() int64 {
 	return 0
 }
 
+func (x *CheckKeypointsRequest) GetKind() KeypointCheckKind {
+	if x != nil {
+		return x.Kind
+	}
+	return KeypointCheckKind_KEYPOINT_CHECK_KIND_UNSPECIFIED
+}
+
 type CheckKeypointsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Boxes the check fits, or those of the check already running. 0 when the
-	// type has no boxes posed by hand.
+	// Boxes the check scores, or those of the check of the same kind already
+	// running. 0 when the type has none to check.
 	BoxCount      int32 `protobuf:"varint,1,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1830,9 +1891,12 @@ type ListKeypointChecksResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Types []*KeypointCheckType   `protobuf:"bytes,1,rep,name=types,proto3" json:"types,omitempty"`
 	// The most boxes a check fits. Types with more are sampled evenly.
-	MaxBoxes      int32 `protobuf:"varint,2,opt,name=max_boxes,json=maxBoxes,proto3" json:"max_boxes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	MaxBoxes int32 `protobuf:"varint,2,opt,name=max_boxes,json=maxBoxes,proto3" json:"max_boxes,omitempty"`
+	// The most frames a tracking check tracks in all. Types with more have
+	// their tracks sampled evenly.
+	MaxTrackedFrames int32 `protobuf:"varint,3,opt,name=max_tracked_frames,json=maxTrackedFrames,proto3" json:"max_tracked_frames,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ListKeypointChecksResponse) Reset() {
@@ -1879,7 +1943,14 @@ func (x *ListKeypointChecksResponse) GetMaxBoxes() int32 {
 	return 0
 }
 
-// KeypointCheckType is a type with a quad covered by its reference design.
+func (x *ListKeypointChecksResponse) GetMaxTrackedFrames() int32 {
+	if x != nil {
+		return x.MaxTrackedFrames
+	}
+	return 0
+}
+
+// KeypointCheckType is a type with keypoints.
 type KeypointCheckType struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	LabelTypeId int64                  `protobuf:"varint,1,opt,name=label_type_id,json=labelTypeId,proto3" json:"label_type_id,omitempty"`
@@ -1891,9 +1962,17 @@ type KeypointCheckType struct {
 	// The latest check that finished. Unset when none has.
 	Last *KeypointCheck `protobuf:"bytes,6,opt,name=last,proto3" json:"last,omitempty"`
 	// Unset when no check is running.
-	Running       *KeypointCheck `protobuf:"bytes,7,opt,name=running,proto3" json:"running,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Running *KeypointCheck `protobuf:"bytes,7,opt,name=running,proto3" json:"running,omitempty"`
+	// Tracks with at least two boxes posed by hand, which tracking checks.
+	PosedTrackCount int32 `protobuf:"varint,8,opt,name=posed_track_count,json=posedTrackCount,proto3" json:"posed_track_count,omitempty"`
+	// Its keypoints include a quad covered by its reference design, which Fit
+	// keypoints needs.
+	Fittable bool `protobuf:"varint,9,opt,name=fittable,proto3" json:"fittable,omitempty"`
+	// last and running are Fit keypoints checks, and these tracking ones.
+	LastTracking    *KeypointCheck `protobuf:"bytes,10,opt,name=last_tracking,json=lastTracking,proto3" json:"last_tracking,omitempty"`
+	RunningTracking *KeypointCheck `protobuf:"bytes,11,opt,name=running_tracking,json=runningTracking,proto3" json:"running_tracking,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *KeypointCheckType) Reset() {
@@ -1975,9 +2054,37 @@ func (x *KeypointCheckType) GetRunning() *KeypointCheck {
 	return nil
 }
 
-// KeypointCheck compares Fit keypoints with keypoints labelers placed. Errors
-// are in video pixels, and a box's error is its farthest keypoint's, counting
-// only keypoints labeled in both.
+func (x *KeypointCheckType) GetPosedTrackCount() int32 {
+	if x != nil {
+		return x.PosedTrackCount
+	}
+	return 0
+}
+
+func (x *KeypointCheckType) GetFittable() bool {
+	if x != nil {
+		return x.Fittable
+	}
+	return false
+}
+
+func (x *KeypointCheckType) GetLastTracking() *KeypointCheck {
+	if x != nil {
+		return x.LastTracking
+	}
+	return nil
+}
+
+func (x *KeypointCheckType) GetRunningTracking() *KeypointCheck {
+	if x != nil {
+		return x.RunningTracking
+	}
+	return nil
+}
+
+// KeypointCheck compares Fit keypoints or tracking with keypoints labelers
+// placed. Errors are in video pixels, and a box's error is its farthest
+// keypoint's, counting only keypoints labeled in both.
 type KeypointCheck struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1987,8 +2094,11 @@ type KeypointCheck struct {
 	CreatedBy  *Profile               `protobuf:"bytes,4,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	BoxCount   int32                  `protobuf:"varint,7,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
-	// Boxes the design was found in.
+	// Boxes posed by hand it scores: in a tracking check, every one after each
+	// track's first.
+	BoxCount int32 `protobuf:"varint,7,opt,name=box_count,json=boxCount,proto3" json:"box_count,omitempty"`
+	// Boxes the design was found in, or that tracking still placed keypoints
+	// on.
 	FoundCount int32 `protobuf:"varint,8,opt,name=found_count,json=foundCount,proto3" json:"found_count,omitempty"`
 	// Found boxes whose quad matches the labeler's corners far better when
 	// turned a quarter or half turn, so the fit picked the wrong way up.
@@ -2000,7 +2110,16 @@ type KeypointCheck struct {
 	// Keypoints compared on at least one box, in the type's order.
 	Keypoints []*KeypointError `protobuf:"bytes,13,rep,name=keypoints,proto3" json:"keypoints,omitempty"`
 	// The boxes with the largest errors, largest first.
-	Worst         []*KeypointCheckBox `protobuf:"bytes,14,rep,name=worst,proto3" json:"worst,omitempty"`
+	Worst []*KeypointCheckBox `protobuf:"bytes,14,rep,name=worst,proto3" json:"worst,omitempty"`
+	Kind  KeypointCheckKind   `protobuf:"varint,15,opt,name=kind,proto3,enum=krill.v1.KeypointCheckKind" json:"kind,omitempty"`
+	// Tracks and frames a tracking check followed.
+	TrackCount int32 `protobuf:"varint,16,opt,name=track_count,json=trackCount,proto3" json:"track_count,omitempty"`
+	FrameCount int32 `protobuf:"varint,17,opt,name=frame_count,json=frameCount,proto3" json:"frame_count,omitempty"`
+	// In a tracking check's found boxes, keypoints the labeler placed that
+	// tracking left unlabeled, and ones tracking placed that the labeler left
+	// unlabeled, such as corners behind a crate's wall. Centers aren't counted.
+	MissedCount   int32 `protobuf:"varint,18,opt,name=missed_count,json=missedCount,proto3" json:"missed_count,omitempty"`
+	ExtraCount    int32 `protobuf:"varint,19,opt,name=extra_count,json=extraCount,proto3" json:"extra_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2133,6 +2252,41 @@ func (x *KeypointCheck) GetWorst() []*KeypointCheckBox {
 	return nil
 }
 
+func (x *KeypointCheck) GetKind() KeypointCheckKind {
+	if x != nil {
+		return x.Kind
+	}
+	return KeypointCheckKind_KEYPOINT_CHECK_KIND_UNSPECIFIED
+}
+
+func (x *KeypointCheck) GetTrackCount() int32 {
+	if x != nil {
+		return x.TrackCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetFrameCount() int32 {
+	if x != nil {
+		return x.FrameCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetMissedCount() int32 {
+	if x != nil {
+		return x.MissedCount
+	}
+	return 0
+}
+
+func (x *KeypointCheck) GetExtraCount() int32 {
+	if x != nil {
+		return x.ExtraCount
+	}
+	return 0
+}
+
 type KeypointError struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The keypoint's name when the check ran.
@@ -2208,11 +2362,13 @@ type KeypointCheckBox struct {
 	AnnotationId int64                  `protobuf:"varint,1,opt,name=annotation_id,json=annotationId,proto3" json:"annotation_id,omitempty"`
 	ClipId       int64                  `protobuf:"varint,2,opt,name=clip_id,json=clipId,proto3" json:"clip_id,omitempty"`
 	// Index within the video.
-	FrameIndex    int32   `protobuf:"varint,3,opt,name=frame_index,json=frameIndex,proto3" json:"frame_index,omitempty"`
-	Error         float64 `protobuf:"fixed64,4,opt,name=error,proto3" json:"error,omitempty"`
-	Turned        bool    `protobuf:"varint,5,opt,name=turned,proto3" json:"turned,omitempty"`
-	VideoName     string  `protobuf:"bytes,6,opt,name=video_name,json=videoName,proto3" json:"video_name,omitempty"`
-	ClipIndex     int32   `protobuf:"varint,7,opt,name=clip_index,json=clipIndex,proto3" json:"clip_index,omitempty"`
+	FrameIndex int32   `protobuf:"varint,3,opt,name=frame_index,json=frameIndex,proto3" json:"frame_index,omitempty"`
+	Error      float64 `protobuf:"fixed64,4,opt,name=error,proto3" json:"error,omitempty"`
+	Turned     bool    `protobuf:"varint,5,opt,name=turned,proto3" json:"turned,omitempty"`
+	VideoName  string  `protobuf:"bytes,6,opt,name=video_name,json=videoName,proto3" json:"video_name,omitempty"`
+	ClipIndex  int32   `protobuf:"varint,7,opt,name=clip_index,json=clipIndex,proto3" json:"clip_index,omitempty"`
+	// Frames since the track's first box posed by hand, in a tracking check.
+	FramesTracked int32 `protobuf:"varint,8,opt,name=frames_tracked,json=framesTracked,proto3" json:"frames_tracked,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2292,6 +2448,13 @@ func (x *KeypointCheckBox) GetVideoName() string {
 func (x *KeypointCheckBox) GetClipIndex() int32 {
 	if x != nil {
 		return x.ClipIndex
+	}
+	return 0
+}
+
+func (x *KeypointCheckBox) GetFramesTracked() int32 {
+	if x != nil {
+		return x.FramesTracked
 	}
 	return 0
 }
@@ -2901,15 +3064,17 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x13FitKeypointsRequest\x12\"\n" +
 	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\"3\n" +
 	"\x14FitKeypointsResponse\x12\x1b\n" +
-	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\";\n" +
+	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\"l\n" +
 	"\x15CheckKeypointsRequest\x12\"\n" +
-	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\"5\n" +
+	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12/\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x1b.krill.v1.KeypointCheckKindR\x04kind\"5\n" +
 	"\x16CheckKeypointsResponse\x12\x1b\n" +
 	"\tbox_count\x18\x01 \x01(\x05R\bboxCount\"\x1b\n" +
-	"\x19ListKeypointChecksRequest\"l\n" +
+	"\x19ListKeypointChecksRequest\"\x9a\x01\n" +
 	"\x1aListKeypointChecksResponse\x121\n" +
 	"\x05types\x18\x01 \x03(\v2\x1b.krill.v1.KeypointCheckTypeR\x05types\x12\x1b\n" +
-	"\tmax_boxes\x18\x02 \x01(\x05R\bmaxBoxes\"\xff\x01\n" +
+	"\tmax_boxes\x18\x02 \x01(\x05R\bmaxBoxes\x12,\n" +
+	"\x12max_tracked_frames\x18\x03 \x01(\x05R\x10maxTrackedFrames\"\xc9\x03\n" +
 	"\x11KeypointCheckType\x12\"\n" +
 	"\rlabel_type_id\x18\x01 \x01(\x03R\vlabelTypeId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -2917,7 +3082,12 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\x05color\x18\x04 \x01(\tR\x05color\x12&\n" +
 	"\x0fposed_box_count\x18\x05 \x01(\x05R\rposedBoxCount\x12+\n" +
 	"\x04last\x18\x06 \x01(\v2\x17.krill.v1.KeypointCheckR\x04last\x121\n" +
-	"\arunning\x18\a \x01(\v2\x17.krill.v1.KeypointCheckR\arunning\"\xc7\x04\n" +
+	"\arunning\x18\a \x01(\v2\x17.krill.v1.KeypointCheckR\arunning\x12*\n" +
+	"\x11posed_track_count\x18\b \x01(\x05R\x0fposedTrackCount\x12\x1a\n" +
+	"\bfittable\x18\t \x01(\bR\bfittable\x12<\n" +
+	"\rlast_tracking\x18\n" +
+	" \x01(\v2\x17.krill.v1.KeypointCheckR\flastTracking\x12B\n" +
+	"\x10running_tracking\x18\v \x01(\v2\x17.krill.v1.KeypointCheckR\x0frunningTracking\"\xfe\x05\n" +
 	"\rKeypointCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x125\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1d.krill.v1.KeypointCheckStatusR\x06status\x12\x14\n" +
@@ -2937,12 +3107,20 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\fmedian_error\x18\v \x01(\x01R\vmedianError\x12\x1b\n" +
 	"\tp90_error\x18\f \x01(\x01R\bp90Error\x125\n" +
 	"\tkeypoints\x18\r \x03(\v2\x17.krill.v1.KeypointErrorR\tkeypoints\x120\n" +
-	"\x05worst\x18\x0e \x03(\v2\x1a.krill.v1.KeypointCheckBoxR\x05worst\"c\n" +
+	"\x05worst\x18\x0e \x03(\v2\x1a.krill.v1.KeypointCheckBoxR\x05worst\x12/\n" +
+	"\x04kind\x18\x0f \x01(\x0e2\x1b.krill.v1.KeypointCheckKindR\x04kind\x12\x1f\n" +
+	"\vtrack_count\x18\x10 \x01(\x05R\n" +
+	"trackCount\x12\x1f\n" +
+	"\vframe_count\x18\x11 \x01(\x05R\n" +
+	"frameCount\x12!\n" +
+	"\fmissed_count\x18\x12 \x01(\x05R\vmissedCount\x12\x1f\n" +
+	"\vextra_count\x18\x13 \x01(\x05R\n" +
+	"extraCount\"c\n" +
 	"\rKeypointError\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\x05R\x05count\x12\x16\n" +
 	"\x06median\x18\x03 \x01(\x01R\x06median\x12\x10\n" +
-	"\x03p90\x18\x04 \x01(\x01R\x03p90\"\xdd\x01\n" +
+	"\x03p90\x18\x04 \x01(\x01R\x03p90\"\x84\x02\n" +
 	"\x10KeypointCheckBox\x12#\n" +
 	"\rannotation_id\x18\x01 \x01(\x03R\fannotationId\x12\x17\n" +
 	"\aclip_id\x18\x02 \x01(\x03R\x06clipId\x12\x1f\n" +
@@ -2953,7 +3131,8 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"\n" +
 	"video_name\x18\x06 \x01(\tR\tvideoName\x12\x1d\n" +
 	"\n" +
-	"clip_index\x18\a \x01(\x05R\tclipIndex\"\xd8\x01\n" +
+	"clip_index\x18\a \x01(\x05R\tclipIndex\x12%\n" +
+	"\x0eframes_tracked\x18\b \x01(\x05R\rframesTracked\"\xd8\x01\n" +
 	"\x15AttributeValueMapping\x12)\n" +
 	"\x10source_attribute\x18\x01 \x01(\tR\x0fsourceAttribute\x12#\n" +
 	"\rsource_option\x18\x02 \x01(\tR\fsourceOption\x12)\n" +
@@ -2996,7 +3175,11 @@ const file_krill_v1_label_proto_rawDesc = "" +
 	"trackCount\x12\x1b\n" +
 	"\tbox_count\x18\x02 \x01(\x05R\bboxCount\x12(\n" +
 	"\x10gold_frame_count\x18\x03 \x01(\x05R\x0egoldFrameCount\x12.\n" +
-	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount*\xa6\x01\n" +
+	"\x13dropped_value_count\x18\x04 \x01(\x05R\x11droppedValueCount*w\n" +
+	"\x11KeypointCheckKind\x12#\n" +
+	"\x1fKEYPOINT_CHECK_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17KEYPOINT_CHECK_KIND_FIT\x10\x01\x12 \n" +
+	"\x1cKEYPOINT_CHECK_KIND_TRACKING\x10\x02*\xa6\x01\n" +
 	"\x13KeypointCheckStatus\x12%\n" +
 	"!KEYPOINT_CHECK_STATUS_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dKEYPOINT_CHECK_STATUS_RUNNING\x10\x01\x12#\n" +
@@ -3033,123 +3216,128 @@ func file_krill_v1_label_proto_rawDescGZIP() []byte {
 	return file_krill_v1_label_proto_rawDescData
 }
 
-var file_krill_v1_label_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_krill_v1_label_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_krill_v1_label_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_krill_v1_label_proto_goTypes = []any{
-	(KeypointCheckStatus)(0),                 // 0: krill.v1.KeypointCheckStatus
-	(*LabelAttribute)(nil),                   // 1: krill.v1.LabelAttribute
-	(*LabelType)(nil),                        // 2: krill.v1.LabelType
-	(*KeypointDef)(nil),                      // 3: krill.v1.KeypointDef
-	(*KeypointQuad)(nil),                     // 4: krill.v1.KeypointQuad
-	(*KeypointEdge)(nil),                     // 5: krill.v1.KeypointEdge
-	(*LabelExample)(nil),                     // 6: krill.v1.LabelExample
-	(*ListLabelTypesRequest)(nil),            // 7: krill.v1.ListLabelTypesRequest
-	(*ListLabelTypesResponse)(nil),           // 8: krill.v1.ListLabelTypesResponse
-	(*CreateLabelTypeRequest)(nil),           // 9: krill.v1.CreateLabelTypeRequest
-	(*CreateLabelTypeResponse)(nil),          // 10: krill.v1.CreateLabelTypeResponse
-	(*UpdateLabelTypeRequest)(nil),           // 11: krill.v1.UpdateLabelTypeRequest
-	(*UpdateLabelTypeResponse)(nil),          // 12: krill.v1.UpdateLabelTypeResponse
-	(*DeleteLabelTypeRequest)(nil),           // 13: krill.v1.DeleteLabelTypeRequest
-	(*DeleteLabelTypeResponse)(nil),          // 14: krill.v1.DeleteLabelTypeResponse
-	(*ReorderLabelTypesRequest)(nil),         // 15: krill.v1.ReorderLabelTypesRequest
-	(*ReorderLabelTypesResponse)(nil),        // 16: krill.v1.ReorderLabelTypesResponse
-	(*CreateLabelExampleUploadRequest)(nil),  // 17: krill.v1.CreateLabelExampleUploadRequest
-	(*CreateLabelExampleUploadResponse)(nil), // 18: krill.v1.CreateLabelExampleUploadResponse
-	(*AddLabelExampleRequest)(nil),           // 19: krill.v1.AddLabelExampleRequest
-	(*AddLabelExampleResponse)(nil),          // 20: krill.v1.AddLabelExampleResponse
-	(*DeleteLabelExampleRequest)(nil),        // 21: krill.v1.DeleteLabelExampleRequest
-	(*DeleteLabelExampleResponse)(nil),       // 22: krill.v1.DeleteLabelExampleResponse
-	(*SetLabelReferenceRequest)(nil),         // 23: krill.v1.SetLabelReferenceRequest
-	(*SetLabelReferenceResponse)(nil),        // 24: krill.v1.SetLabelReferenceResponse
-	(*FitRotationsRequest)(nil),              // 25: krill.v1.FitRotationsRequest
-	(*FitRotationsResponse)(nil),             // 26: krill.v1.FitRotationsResponse
-	(*FitKeypointsRequest)(nil),              // 27: krill.v1.FitKeypointsRequest
-	(*FitKeypointsResponse)(nil),             // 28: krill.v1.FitKeypointsResponse
-	(*CheckKeypointsRequest)(nil),            // 29: krill.v1.CheckKeypointsRequest
-	(*CheckKeypointsResponse)(nil),           // 30: krill.v1.CheckKeypointsResponse
-	(*ListKeypointChecksRequest)(nil),        // 31: krill.v1.ListKeypointChecksRequest
-	(*ListKeypointChecksResponse)(nil),       // 32: krill.v1.ListKeypointChecksResponse
-	(*KeypointCheckType)(nil),                // 33: krill.v1.KeypointCheckType
-	(*KeypointCheck)(nil),                    // 34: krill.v1.KeypointCheck
-	(*KeypointError)(nil),                    // 35: krill.v1.KeypointError
-	(*KeypointCheckBox)(nil),                 // 36: krill.v1.KeypointCheckBox
-	(*AttributeValueMapping)(nil),            // 37: krill.v1.AttributeValueMapping
-	(*ExportClassChange)(nil),                // 38: krill.v1.ExportClassChange
-	(*PreviewMergeLabelTypesRequest)(nil),    // 39: krill.v1.PreviewMergeLabelTypesRequest
-	(*PreviewMergeLabelTypesResponse)(nil),   // 40: krill.v1.PreviewMergeLabelTypesResponse
-	(*MergeLabelTypesRequest)(nil),           // 41: krill.v1.MergeLabelTypesRequest
-	(*MergeLabelTypesResponse)(nil),          // 42: krill.v1.MergeLabelTypesResponse
-	(*Profile)(nil),                          // 43: krill.v1.Profile
-	(*timestamppb.Timestamp)(nil),            // 44: google.protobuf.Timestamp
+	(KeypointCheckKind)(0),                   // 0: krill.v1.KeypointCheckKind
+	(KeypointCheckStatus)(0),                 // 1: krill.v1.KeypointCheckStatus
+	(*LabelAttribute)(nil),                   // 2: krill.v1.LabelAttribute
+	(*LabelType)(nil),                        // 3: krill.v1.LabelType
+	(*KeypointDef)(nil),                      // 4: krill.v1.KeypointDef
+	(*KeypointQuad)(nil),                     // 5: krill.v1.KeypointQuad
+	(*KeypointEdge)(nil),                     // 6: krill.v1.KeypointEdge
+	(*LabelExample)(nil),                     // 7: krill.v1.LabelExample
+	(*ListLabelTypesRequest)(nil),            // 8: krill.v1.ListLabelTypesRequest
+	(*ListLabelTypesResponse)(nil),           // 9: krill.v1.ListLabelTypesResponse
+	(*CreateLabelTypeRequest)(nil),           // 10: krill.v1.CreateLabelTypeRequest
+	(*CreateLabelTypeResponse)(nil),          // 11: krill.v1.CreateLabelTypeResponse
+	(*UpdateLabelTypeRequest)(nil),           // 12: krill.v1.UpdateLabelTypeRequest
+	(*UpdateLabelTypeResponse)(nil),          // 13: krill.v1.UpdateLabelTypeResponse
+	(*DeleteLabelTypeRequest)(nil),           // 14: krill.v1.DeleteLabelTypeRequest
+	(*DeleteLabelTypeResponse)(nil),          // 15: krill.v1.DeleteLabelTypeResponse
+	(*ReorderLabelTypesRequest)(nil),         // 16: krill.v1.ReorderLabelTypesRequest
+	(*ReorderLabelTypesResponse)(nil),        // 17: krill.v1.ReorderLabelTypesResponse
+	(*CreateLabelExampleUploadRequest)(nil),  // 18: krill.v1.CreateLabelExampleUploadRequest
+	(*CreateLabelExampleUploadResponse)(nil), // 19: krill.v1.CreateLabelExampleUploadResponse
+	(*AddLabelExampleRequest)(nil),           // 20: krill.v1.AddLabelExampleRequest
+	(*AddLabelExampleResponse)(nil),          // 21: krill.v1.AddLabelExampleResponse
+	(*DeleteLabelExampleRequest)(nil),        // 22: krill.v1.DeleteLabelExampleRequest
+	(*DeleteLabelExampleResponse)(nil),       // 23: krill.v1.DeleteLabelExampleResponse
+	(*SetLabelReferenceRequest)(nil),         // 24: krill.v1.SetLabelReferenceRequest
+	(*SetLabelReferenceResponse)(nil),        // 25: krill.v1.SetLabelReferenceResponse
+	(*FitRotationsRequest)(nil),              // 26: krill.v1.FitRotationsRequest
+	(*FitRotationsResponse)(nil),             // 27: krill.v1.FitRotationsResponse
+	(*FitKeypointsRequest)(nil),              // 28: krill.v1.FitKeypointsRequest
+	(*FitKeypointsResponse)(nil),             // 29: krill.v1.FitKeypointsResponse
+	(*CheckKeypointsRequest)(nil),            // 30: krill.v1.CheckKeypointsRequest
+	(*CheckKeypointsResponse)(nil),           // 31: krill.v1.CheckKeypointsResponse
+	(*ListKeypointChecksRequest)(nil),        // 32: krill.v1.ListKeypointChecksRequest
+	(*ListKeypointChecksResponse)(nil),       // 33: krill.v1.ListKeypointChecksResponse
+	(*KeypointCheckType)(nil),                // 34: krill.v1.KeypointCheckType
+	(*KeypointCheck)(nil),                    // 35: krill.v1.KeypointCheck
+	(*KeypointError)(nil),                    // 36: krill.v1.KeypointError
+	(*KeypointCheckBox)(nil),                 // 37: krill.v1.KeypointCheckBox
+	(*AttributeValueMapping)(nil),            // 38: krill.v1.AttributeValueMapping
+	(*ExportClassChange)(nil),                // 39: krill.v1.ExportClassChange
+	(*PreviewMergeLabelTypesRequest)(nil),    // 40: krill.v1.PreviewMergeLabelTypesRequest
+	(*PreviewMergeLabelTypesResponse)(nil),   // 41: krill.v1.PreviewMergeLabelTypesResponse
+	(*MergeLabelTypesRequest)(nil),           // 42: krill.v1.MergeLabelTypesRequest
+	(*MergeLabelTypesResponse)(nil),          // 43: krill.v1.MergeLabelTypesResponse
+	(*Profile)(nil),                          // 44: krill.v1.Profile
+	(*timestamppb.Timestamp)(nil),            // 45: google.protobuf.Timestamp
 }
 var file_krill_v1_label_proto_depIdxs = []int32{
-	1,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
-	6,  // 1: krill.v1.LabelType.examples:type_name -> krill.v1.LabelExample
-	3,  // 2: krill.v1.LabelType.keypoints:type_name -> krill.v1.KeypointDef
-	4,  // 3: krill.v1.LabelType.quads:type_name -> krill.v1.KeypointQuad
-	5,  // 4: krill.v1.LabelType.edges:type_name -> krill.v1.KeypointEdge
-	2,  // 5: krill.v1.ListLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
-	1,  // 6: krill.v1.CreateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
-	3,  // 7: krill.v1.CreateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
-	4,  // 8: krill.v1.CreateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
-	5,  // 9: krill.v1.CreateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
-	2,  // 10: krill.v1.CreateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
-	1,  // 11: krill.v1.UpdateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
-	3,  // 12: krill.v1.UpdateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
-	4,  // 13: krill.v1.UpdateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
-	5,  // 14: krill.v1.UpdateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
-	2,  // 15: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
-	2,  // 16: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
-	6,  // 17: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
-	2,  // 18: krill.v1.SetLabelReferenceResponse.label_type:type_name -> krill.v1.LabelType
-	33, // 19: krill.v1.ListKeypointChecksResponse.types:type_name -> krill.v1.KeypointCheckType
-	34, // 20: krill.v1.KeypointCheckType.last:type_name -> krill.v1.KeypointCheck
-	34, // 21: krill.v1.KeypointCheckType.running:type_name -> krill.v1.KeypointCheck
-	0,  // 22: krill.v1.KeypointCheck.status:type_name -> krill.v1.KeypointCheckStatus
-	43, // 23: krill.v1.KeypointCheck.created_by:type_name -> krill.v1.Profile
-	44, // 24: krill.v1.KeypointCheck.created_at:type_name -> google.protobuf.Timestamp
-	44, // 25: krill.v1.KeypointCheck.finished_at:type_name -> google.protobuf.Timestamp
-	35, // 26: krill.v1.KeypointCheck.keypoints:type_name -> krill.v1.KeypointError
-	36, // 27: krill.v1.KeypointCheck.worst:type_name -> krill.v1.KeypointCheckBox
-	37, // 28: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	37, // 29: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
-	38, // 30: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
-	37, // 31: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
-	7,  // 32: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
-	9,  // 33: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
-	11, // 34: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
-	13, // 35: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
-	15, // 36: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
-	17, // 37: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
-	19, // 38: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
-	21, // 39: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
-	23, // 40: krill.v1.LabelService.SetLabelReference:input_type -> krill.v1.SetLabelReferenceRequest
-	25, // 41: krill.v1.LabelService.FitRotations:input_type -> krill.v1.FitRotationsRequest
-	27, // 42: krill.v1.LabelService.FitKeypoints:input_type -> krill.v1.FitKeypointsRequest
-	29, // 43: krill.v1.LabelService.CheckKeypoints:input_type -> krill.v1.CheckKeypointsRequest
-	31, // 44: krill.v1.LabelService.ListKeypointChecks:input_type -> krill.v1.ListKeypointChecksRequest
-	39, // 45: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
-	41, // 46: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
-	8,  // 47: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
-	10, // 48: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
-	12, // 49: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
-	14, // 50: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
-	16, // 51: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
-	18, // 52: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
-	20, // 53: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
-	22, // 54: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
-	24, // 55: krill.v1.LabelService.SetLabelReference:output_type -> krill.v1.SetLabelReferenceResponse
-	26, // 56: krill.v1.LabelService.FitRotations:output_type -> krill.v1.FitRotationsResponse
-	28, // 57: krill.v1.LabelService.FitKeypoints:output_type -> krill.v1.FitKeypointsResponse
-	30, // 58: krill.v1.LabelService.CheckKeypoints:output_type -> krill.v1.CheckKeypointsResponse
-	32, // 59: krill.v1.LabelService.ListKeypointChecks:output_type -> krill.v1.ListKeypointChecksResponse
-	40, // 60: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
-	42, // 61: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
-	47, // [47:62] is the sub-list for method output_type
-	32, // [32:47] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	2,  // 0: krill.v1.LabelType.attributes:type_name -> krill.v1.LabelAttribute
+	7,  // 1: krill.v1.LabelType.examples:type_name -> krill.v1.LabelExample
+	4,  // 2: krill.v1.LabelType.keypoints:type_name -> krill.v1.KeypointDef
+	5,  // 3: krill.v1.LabelType.quads:type_name -> krill.v1.KeypointQuad
+	6,  // 4: krill.v1.LabelType.edges:type_name -> krill.v1.KeypointEdge
+	3,  // 5: krill.v1.ListLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
+	2,  // 6: krill.v1.CreateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
+	4,  // 7: krill.v1.CreateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
+	5,  // 8: krill.v1.CreateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
+	6,  // 9: krill.v1.CreateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
+	3,  // 10: krill.v1.CreateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
+	2,  // 11: krill.v1.UpdateLabelTypeRequest.attributes:type_name -> krill.v1.LabelAttribute
+	4,  // 12: krill.v1.UpdateLabelTypeRequest.keypoints:type_name -> krill.v1.KeypointDef
+	5,  // 13: krill.v1.UpdateLabelTypeRequest.quads:type_name -> krill.v1.KeypointQuad
+	6,  // 14: krill.v1.UpdateLabelTypeRequest.edges:type_name -> krill.v1.KeypointEdge
+	3,  // 15: krill.v1.UpdateLabelTypeResponse.label_type:type_name -> krill.v1.LabelType
+	3,  // 16: krill.v1.ReorderLabelTypesResponse.label_types:type_name -> krill.v1.LabelType
+	7,  // 17: krill.v1.AddLabelExampleResponse.example:type_name -> krill.v1.LabelExample
+	3,  // 18: krill.v1.SetLabelReferenceResponse.label_type:type_name -> krill.v1.LabelType
+	0,  // 19: krill.v1.CheckKeypointsRequest.kind:type_name -> krill.v1.KeypointCheckKind
+	34, // 20: krill.v1.ListKeypointChecksResponse.types:type_name -> krill.v1.KeypointCheckType
+	35, // 21: krill.v1.KeypointCheckType.last:type_name -> krill.v1.KeypointCheck
+	35, // 22: krill.v1.KeypointCheckType.running:type_name -> krill.v1.KeypointCheck
+	35, // 23: krill.v1.KeypointCheckType.last_tracking:type_name -> krill.v1.KeypointCheck
+	35, // 24: krill.v1.KeypointCheckType.running_tracking:type_name -> krill.v1.KeypointCheck
+	1,  // 25: krill.v1.KeypointCheck.status:type_name -> krill.v1.KeypointCheckStatus
+	44, // 26: krill.v1.KeypointCheck.created_by:type_name -> krill.v1.Profile
+	45, // 27: krill.v1.KeypointCheck.created_at:type_name -> google.protobuf.Timestamp
+	45, // 28: krill.v1.KeypointCheck.finished_at:type_name -> google.protobuf.Timestamp
+	36, // 29: krill.v1.KeypointCheck.keypoints:type_name -> krill.v1.KeypointError
+	37, // 30: krill.v1.KeypointCheck.worst:type_name -> krill.v1.KeypointCheckBox
+	0,  // 31: krill.v1.KeypointCheck.kind:type_name -> krill.v1.KeypointCheckKind
+	38, // 32: krill.v1.PreviewMergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	38, // 33: krill.v1.PreviewMergeLabelTypesResponse.mappings:type_name -> krill.v1.AttributeValueMapping
+	39, // 34: krill.v1.PreviewMergeLabelTypesResponse.class_changes:type_name -> krill.v1.ExportClassChange
+	38, // 35: krill.v1.MergeLabelTypesRequest.mappings:type_name -> krill.v1.AttributeValueMapping
+	8,  // 36: krill.v1.LabelService.ListLabelTypes:input_type -> krill.v1.ListLabelTypesRequest
+	10, // 37: krill.v1.LabelService.CreateLabelType:input_type -> krill.v1.CreateLabelTypeRequest
+	12, // 38: krill.v1.LabelService.UpdateLabelType:input_type -> krill.v1.UpdateLabelTypeRequest
+	14, // 39: krill.v1.LabelService.DeleteLabelType:input_type -> krill.v1.DeleteLabelTypeRequest
+	16, // 40: krill.v1.LabelService.ReorderLabelTypes:input_type -> krill.v1.ReorderLabelTypesRequest
+	18, // 41: krill.v1.LabelService.CreateLabelExampleUpload:input_type -> krill.v1.CreateLabelExampleUploadRequest
+	20, // 42: krill.v1.LabelService.AddLabelExample:input_type -> krill.v1.AddLabelExampleRequest
+	22, // 43: krill.v1.LabelService.DeleteLabelExample:input_type -> krill.v1.DeleteLabelExampleRequest
+	24, // 44: krill.v1.LabelService.SetLabelReference:input_type -> krill.v1.SetLabelReferenceRequest
+	26, // 45: krill.v1.LabelService.FitRotations:input_type -> krill.v1.FitRotationsRequest
+	28, // 46: krill.v1.LabelService.FitKeypoints:input_type -> krill.v1.FitKeypointsRequest
+	30, // 47: krill.v1.LabelService.CheckKeypoints:input_type -> krill.v1.CheckKeypointsRequest
+	32, // 48: krill.v1.LabelService.ListKeypointChecks:input_type -> krill.v1.ListKeypointChecksRequest
+	40, // 49: krill.v1.LabelService.PreviewMergeLabelTypes:input_type -> krill.v1.PreviewMergeLabelTypesRequest
+	42, // 50: krill.v1.LabelService.MergeLabelTypes:input_type -> krill.v1.MergeLabelTypesRequest
+	9,  // 51: krill.v1.LabelService.ListLabelTypes:output_type -> krill.v1.ListLabelTypesResponse
+	11, // 52: krill.v1.LabelService.CreateLabelType:output_type -> krill.v1.CreateLabelTypeResponse
+	13, // 53: krill.v1.LabelService.UpdateLabelType:output_type -> krill.v1.UpdateLabelTypeResponse
+	15, // 54: krill.v1.LabelService.DeleteLabelType:output_type -> krill.v1.DeleteLabelTypeResponse
+	17, // 55: krill.v1.LabelService.ReorderLabelTypes:output_type -> krill.v1.ReorderLabelTypesResponse
+	19, // 56: krill.v1.LabelService.CreateLabelExampleUpload:output_type -> krill.v1.CreateLabelExampleUploadResponse
+	21, // 57: krill.v1.LabelService.AddLabelExample:output_type -> krill.v1.AddLabelExampleResponse
+	23, // 58: krill.v1.LabelService.DeleteLabelExample:output_type -> krill.v1.DeleteLabelExampleResponse
+	25, // 59: krill.v1.LabelService.SetLabelReference:output_type -> krill.v1.SetLabelReferenceResponse
+	27, // 60: krill.v1.LabelService.FitRotations:output_type -> krill.v1.FitRotationsResponse
+	29, // 61: krill.v1.LabelService.FitKeypoints:output_type -> krill.v1.FitKeypointsResponse
+	31, // 62: krill.v1.LabelService.CheckKeypoints:output_type -> krill.v1.CheckKeypointsResponse
+	33, // 63: krill.v1.LabelService.ListKeypointChecks:output_type -> krill.v1.ListKeypointChecksResponse
+	41, // 64: krill.v1.LabelService.PreviewMergeLabelTypes:output_type -> krill.v1.PreviewMergeLabelTypesResponse
+	43, // 65: krill.v1.LabelService.MergeLabelTypes:output_type -> krill.v1.MergeLabelTypesResponse
+	51, // [51:66] is the sub-list for method output_type
+	36, // [36:51] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_krill_v1_label_proto_init() }
@@ -3165,7 +3353,7 @@ func file_krill_v1_label_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_krill_v1_label_proto_rawDesc), len(file_krill_v1_label_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   1,

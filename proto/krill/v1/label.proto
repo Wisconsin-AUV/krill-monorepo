@@ -34,8 +34,9 @@ service LabelService {
   // proposals again for a labeler to check.
   rpc FitKeypoints(FitKeypointsRequest) returns (FitKeypointsResponse) {}
   // CheckKeypoints has a GPU worker fit the reference design's quad to boxes
-  // labelers posed by hand and scores the fit against their keypoints,
-  // leaving the boxes as they are.
+  // labelers posed by hand, or track tracks on from their first box posed by
+  // hand, and scores the keypoints it places against the labelers', leaving
+  // the boxes as they are.
   rpc CheckKeypoints(CheckKeypointsRequest) returns (CheckKeypointsResponse) {}
   // ListKeypointChecks returns each type that can be checked with its latest
   // check.
@@ -231,11 +232,13 @@ message FitKeypointsResponse {
 
 message CheckKeypointsRequest {
   int64 label_type_id = 1;
+  // Unspecified checks Fit keypoints.
+  KeypointCheckKind kind = 2;
 }
 
 message CheckKeypointsResponse {
-  // Boxes the check fits, or those of the check already running. 0 when the
-  // type has no boxes posed by hand.
+  // Boxes the check scores, or those of the check of the same kind already
+  // running. 0 when the type has none to check.
   int32 box_count = 1;
 }
 
@@ -245,9 +248,12 @@ message ListKeypointChecksResponse {
   repeated KeypointCheckType types = 1;
   // The most boxes a check fits. Types with more are sampled evenly.
   int32 max_boxes = 2;
+  // The most frames a tracking check tracks in all. Types with more have
+  // their tracks sampled evenly.
+  int32 max_tracked_frames = 3;
 }
 
-// KeypointCheckType is a type with a quad covered by its reference design.
+// KeypointCheckType is a type with keypoints.
 message KeypointCheckType {
   int64 label_type_id = 1;
   string name = 2;
@@ -259,6 +265,23 @@ message KeypointCheckType {
   KeypointCheck last = 6;
   // Unset when no check is running.
   KeypointCheck running = 7;
+  // Tracks with at least two boxes posed by hand, which tracking checks.
+  int32 posed_track_count = 8;
+  // Its keypoints include a quad covered by its reference design, which Fit
+  // keypoints needs.
+  bool fittable = 9;
+  // last and running are Fit keypoints checks, and these tracking ones.
+  KeypointCheck last_tracking = 10;
+  KeypointCheck running_tracking = 11;
+}
+
+enum KeypointCheckKind {
+  KEYPOINT_CHECK_KIND_UNSPECIFIED = 0;
+  // Fit keypoints on each box posed by hand.
+  KEYPOINT_CHECK_KIND_FIT = 1;
+  // Tracking from a track's first box posed by hand through its last,
+  // without the labelers' keypoints in between.
+  KEYPOINT_CHECK_KIND_TRACKING = 2;
 }
 
 enum KeypointCheckStatus {
@@ -268,9 +291,9 @@ enum KeypointCheckStatus {
   KEYPOINT_CHECK_STATUS_FAILED = 3;
 }
 
-// KeypointCheck compares Fit keypoints with keypoints labelers placed. Errors
-// are in video pixels, and a box's error is its farthest keypoint's, counting
-// only keypoints labeled in both.
+// KeypointCheck compares Fit keypoints or tracking with keypoints labelers
+// placed. Errors are in video pixels, and a box's error is its farthest
+// keypoint's, counting only keypoints labeled in both.
 message KeypointCheck {
   int64 id = 1;
   KeypointCheckStatus status = 2;
@@ -279,8 +302,11 @@ message KeypointCheck {
   Profile created_by = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp finished_at = 6;
+  // Boxes posed by hand it scores: in a tracking check, every one after each
+  // track's first.
   int32 box_count = 7;
-  // Boxes the design was found in.
+  // Boxes the design was found in, or that tracking still placed keypoints
+  // on.
   int32 found_count = 8;
   // Found boxes whose quad matches the labeler's corners far better when
   // turned a quarter or half turn, so the fit picked the wrong way up.
@@ -293,6 +319,15 @@ message KeypointCheck {
   repeated KeypointError keypoints = 13;
   // The boxes with the largest errors, largest first.
   repeated KeypointCheckBox worst = 14;
+  KeypointCheckKind kind = 15;
+  // Tracks and frames a tracking check followed.
+  int32 track_count = 16;
+  int32 frame_count = 17;
+  // In a tracking check's found boxes, keypoints the labeler placed that
+  // tracking left unlabeled, and ones tracking placed that the labeler left
+  // unlabeled, such as corners behind a crate's wall. Centers aren't counted.
+  int32 missed_count = 18;
+  int32 extra_count = 19;
 }
 
 message KeypointError {
@@ -313,6 +348,8 @@ message KeypointCheckBox {
   bool turned = 5;
   string video_name = 6;
   int32 clip_index = 7;
+  // Frames since the track's first box posed by hand, in a tracking check.
+  int32 frames_tracked = 8;
 }
 
 // AttributeValueMapping says what a source track's attribute value becomes.
