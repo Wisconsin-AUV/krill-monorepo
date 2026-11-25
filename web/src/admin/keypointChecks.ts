@@ -1,7 +1,7 @@
 import type { KeypointCheck, KeypointCheckType } from '@/gen/krill/v1/label_pb'
 
 export function anyChecking(types: KeypointCheckType[] | undefined) {
-  return types?.some((t) => t.running) ?? false
+  return types?.some((t) => t.running || t.runningTracking) ?? false
 }
 
 // Errors under 10 px keep a decimal, since a pixel or two is the difference
