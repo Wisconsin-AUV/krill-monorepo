@@ -29,13 +29,14 @@ func (q *Queries) CountHandPosedBoxes(ctx context.Context, labelTypeID int64) (i
 }
 
 const createKeypointCheck = `-- name: CreateKeypointCheck :one
-INSERT INTO keypoint_checks (label_type_id, job_id, box_count, created_by)
-VALUES ($1, $2, $3, $4::uuid)
-RETURNING id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result
+INSERT INTO keypoint_checks (label_type_id, kind, job_id, box_count, created_by)
+VALUES ($1, $2, $3, $4, $5::uuid)
+RETURNING id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result, kind
 `
 
 type CreateKeypointCheckParams struct {
 	LabelTypeID int64       `json:"label_type_id"`
+	Kind        string      `json:"kind"`
 	JobID       int64       `json:"job_id"`
 	BoxCount    int32       `json:"box_count"`
 	CreatedBy   pgtype.UUID `json:"created_by"`
@@ -44,6 +45,7 @@ type CreateKeypointCheckParams struct {
 func (q *Queries) CreateKeypointCheck(ctx context.Context, arg CreateKeypointCheckParams) (KeypointCheck, error) {
 	row := q.db.QueryRow(ctx, createKeypointCheck,
 		arg.LabelTypeID,
+		arg.Kind,
 		arg.JobID,
 		arg.BoxCount,
 		arg.CreatedBy,
@@ -62,6 +64,7 @@ func (q *Queries) CreateKeypointCheck(ctx context.Context, arg CreateKeypointChe
 		&i.FoundCount,
 		&i.TurnedCount,
 		&i.Result,
+		&i.Kind,
 	)
 	return i, err
 }
@@ -112,7 +115,7 @@ func (q *Queries) FinishKeypointCheck(ctx context.Context, arg FinishKeypointChe
 }
 
 const getRunningKeypointCheckByJob = `-- name: GetRunningKeypointCheckByJob :one
-SELECT id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result FROM keypoint_checks WHERE job_id = $1 AND status = 'running'
+SELECT id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result, kind FROM keypoint_checks WHERE job_id = $1 AND status = 'running'
 `
 
 func (q *Queries) GetRunningKeypointCheckByJob(ctx context.Context, jobID int64) (KeypointCheck, error) {
@@ -131,6 +134,7 @@ func (q *Queries) GetRunningKeypointCheckByJob(ctx context.Context, jobID int64)
 		&i.FoundCount,
 		&i.TurnedCount,
 		&i.Result,
+		&i.Kind,
 	)
 	return i, err
 }
@@ -200,30 +204,102 @@ func (q *Queries) ListHandPosedBoxes(ctx context.Context, labelTypeID int64) ([]
 	return items, nil
 }
 
+const listHandPosedTrackBoxes = `-- name: ListHandPosedTrackBoxes :many
+SELECT
+    a.id, a.track_id, a.frame_id, f.idx AS frame_idx, f.video_id, c.id AS clip_id, a.x, a.y, a.width, a.height,
+    a.keypoints, v.width AS video_width, v.height AS video_height
+FROM annotations a
+JOIN tracks t ON t.id = a.track_id
+JOIN live_clips c ON c.id = t.clip_id
+JOIN videos v ON v.id = c.video_id
+JOIN frames f ON f.id = a.frame_id
+WHERE t.label_type_id = $1 AND a.source = 'human' AND a.keypoints IS NOT NULL
+    AND a.status <> 'rejected' AND v.status = 'ready'
+ORDER BY a.track_id, f.idx
+`
+
+type ListHandPosedTrackBoxesRow struct {
+	ID          int64     `json:"id"`
+	TrackID     int64     `json:"track_id"`
+	FrameID     int64     `json:"frame_id"`
+	FrameIdx    int32     `json:"frame_idx"`
+	VideoID     int64     `json:"video_id"`
+	ClipID      int64     `json:"clip_id"`
+	X           float64   `json:"x"`
+	Y           float64   `json:"y"`
+	Width       float64   `json:"width"`
+	Height      float64   `json:"height"`
+	Keypoints   []float64 `json:"keypoints"`
+	VideoWidth  int32     `json:"video_width"`
+	VideoHeight int32     `json:"video_height"`
+}
+
+// ListHandPosedBoxes by track, in frame order.
+func (q *Queries) ListHandPosedTrackBoxes(ctx context.Context, labelTypeID int64) ([]ListHandPosedTrackBoxesRow, error) {
+	rows, err := q.db.Query(ctx, listHandPosedTrackBoxes, labelTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListHandPosedTrackBoxesRow
+	for rows.Next() {
+		var i ListHandPosedTrackBoxesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TrackID,
+			&i.FrameID,
+			&i.FrameIdx,
+			&i.VideoID,
+			&i.ClipID,
+			&i.X,
+			&i.Y,
+			&i.Width,
+			&i.Height,
+			&i.Keypoints,
+			&i.VideoWidth,
+			&i.VideoHeight,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listKeypointCheckTypes = `-- name: ListKeypointCheckTypes :many
 SELECT
     lt.id, lt.name, lt.color, lt.description, lt.position, lt.attributes, lt.created_at, lt.title, lt.guideline, lt.oriented, lt.reference_key, lt.keypoints, lt.quads, lt.keypoint_edges,
-    (
-        SELECT count(*)
+    posed.box_count::int AS posed_box_count,
+    posed.track_count::int AS posed_track_count
+FROM label_types lt
+CROSS JOIN LATERAL (
+    SELECT coalesce(sum(n), 0) AS box_count, count(*) FILTER (WHERE n >= 2) AS track_count
+    FROM (
+        SELECT count(*) AS n
         FROM annotations a
         JOIN tracks t ON t.id = a.track_id
         JOIN live_clips c ON c.id = t.clip_id
         JOIN videos v ON v.id = c.video_id
         WHERE t.label_type_id = lt.id AND a.source = 'human' AND a.keypoints IS NOT NULL
             AND a.status <> 'rejected' AND v.status = 'ready'
-    )::int AS posed_box_count
-FROM label_types lt
-WHERE lt.keypoints <> '[]' AND lt.reference_key IS NOT NULL
+        GROUP BY a.track_id
+    ) per_track
+) posed
+WHERE lt.keypoints <> '[]'
 ORDER BY lt.position, lt.id
 `
 
 type ListKeypointCheckTypesRow struct {
-	LabelType     LabelType `json:"label_type"`
-	PosedBoxCount int32     `json:"posed_box_count"`
+	LabelType       LabelType `json:"label_type"`
+	PosedBoxCount   int32     `json:"posed_box_count"`
+	PosedTrackCount int32     `json:"posed_track_count"`
 }
 
-// Types that could be checked, with how many boxes ListHandPosedBoxes
-// lists for each.
+// Types with keypoints, with how many boxes ListHandPosedBoxes lists for
+// each and how many tracks have two or more of them.
 func (q *Queries) ListKeypointCheckTypes(ctx context.Context) ([]ListKeypointCheckTypesRow, error) {
 	rows, err := q.db.Query(ctx, listKeypointCheckTypes)
 	if err != nil {
@@ -249,6 +325,7 @@ func (q *Queries) ListKeypointCheckTypes(ctx context.Context) ([]ListKeypointChe
 			&i.LabelType.Quads,
 			&i.LabelType.KeypointEdges,
 			&i.PosedBoxCount,
+			&i.PosedTrackCount,
 		); err != nil {
 			return nil, err
 		}
@@ -261,13 +338,13 @@ func (q *Queries) ListKeypointCheckTypes(ctx context.Context) ([]ListKeypointChe
 }
 
 const listLatestKeypointChecks = `-- name: ListLatestKeypointChecks :many
-SELECT DISTINCT ON (k.label_type_id, k.status = 'running')
-    k.id, k.label_type_id, k.job_id, k.status, k.error, k.created_by, k.created_at, k.finished_at, k.box_count, k.found_count, k.turned_count, k.result,
+SELECT DISTINCT ON (k.label_type_id, k.kind, k.status = 'running')
+    k.id, k.label_type_id, k.job_id, k.status, k.error, k.created_by, k.created_at, k.finished_at, k.box_count, k.found_count, k.turned_count, k.result, k.kind,
     u.id AS creator_id, u.name AS creator_name, u.username AS creator_username,
     u.role AS creator_role, u.created_at AS creator_created_at
 FROM keypoint_checks k
 LEFT JOIN users u ON u.id = k.created_by
-ORDER BY k.label_type_id, k.status = 'running', k.created_at DESC, k.id DESC
+ORDER BY k.label_type_id, k.kind, k.status = 'running', k.created_at DESC, k.id DESC
 `
 
 type ListLatestKeypointChecksRow struct {
@@ -279,7 +356,7 @@ type ListLatestKeypointChecksRow struct {
 	CreatorCreatedAt pgtype.Timestamptz `json:"creator_created_at"`
 }
 
-// Each type's running check and its latest finished one.
+// Each type's running check of each kind and its latest finished one.
 func (q *Queries) ListLatestKeypointChecks(ctx context.Context) ([]ListLatestKeypointChecksRow, error) {
 	rows, err := q.db.Query(ctx, listLatestKeypointChecks)
 	if err != nil {
@@ -302,6 +379,7 @@ func (q *Queries) ListLatestKeypointChecks(ctx context.Context) ([]ListLatestKey
 			&i.KeypointCheck.FoundCount,
 			&i.KeypointCheck.TurnedCount,
 			&i.KeypointCheck.Result,
+			&i.KeypointCheck.Kind,
 			&i.CreatorID,
 			&i.CreatorName,
 			&i.CreatorUsername,
@@ -319,11 +397,16 @@ func (q *Queries) ListLatestKeypointChecks(ctx context.Context) ([]ListLatestKey
 }
 
 const lockRunningKeypointCheck = `-- name: LockRunningKeypointCheck :one
-SELECT id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result FROM keypoint_checks WHERE label_type_id = $1 AND status = 'running' FOR UPDATE
+SELECT id, label_type_id, job_id, status, error, created_by, created_at, finished_at, box_count, found_count, turned_count, result, kind FROM keypoint_checks WHERE label_type_id = $1 AND kind = $2 AND status = 'running' FOR UPDATE
 `
 
-func (q *Queries) LockRunningKeypointCheck(ctx context.Context, labelTypeID int64) (KeypointCheck, error) {
-	row := q.db.QueryRow(ctx, lockRunningKeypointCheck, labelTypeID)
+type LockRunningKeypointCheckParams struct {
+	LabelTypeID int64  `json:"label_type_id"`
+	Kind        string `json:"kind"`
+}
+
+func (q *Queries) LockRunningKeypointCheck(ctx context.Context, arg LockRunningKeypointCheckParams) (KeypointCheck, error) {
+	row := q.db.QueryRow(ctx, lockRunningKeypointCheck, arg.LabelTypeID, arg.Kind)
 	var i KeypointCheck
 	err := row.Scan(
 		&i.ID,
@@ -338,6 +421,7 @@ func (q *Queries) LockRunningKeypointCheck(ctx context.Context, labelTypeID int6
 		&i.FoundCount,
 		&i.TurnedCount,
 		&i.Result,
+		&i.Kind,
 	)
 	return i, err
 }

@@ -22,8 +22,12 @@ describe('anyChecking', () => {
   it('is true while a type has a check running', () => {
     const idle = create(KeypointCheckTypeSchema, { last: create(KeypointCheckSchema, {}) })
     const busy = create(KeypointCheckTypeSchema, { running: create(KeypointCheckSchema, {}) })
+    const tracking = create(KeypointCheckTypeSchema, {
+      runningTracking: create(KeypointCheckSchema, {}),
+    })
     expect(anyChecking([idle])).toBe(false)
     expect(anyChecking([idle, busy])).toBe(true)
+    expect(anyChecking([idle, tracking])).toBe(true)
     expect(anyChecking(undefined)).toBe(false)
   })
 })

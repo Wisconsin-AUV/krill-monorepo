@@ -203,6 +203,7 @@ type KeypointCheck struct {
 	FoundCount  int32              `json:"found_count"`
 	TurnedCount int32              `json:"turned_count"`
 	Result      []byte             `json:"result"`
+	Kind        string             `json:"kind"`
 }
 
 type LabelExample struct {

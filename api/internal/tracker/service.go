@@ -72,6 +72,9 @@ func (s *Service) ReportTrack(ctx context.Context, req *krillv1.ReportTrackReque
 	if t.msg.GetTrack() == nil {
 		return nil, rpc.Invalid("task %d is not a track task", t.id)
 	}
+	if t.tracking != nil {
+		return reportCheckedTrack(t, req)
+	}
 	msg := t.msg.GetTrack()
 	pose := taxonomy.Pose{Keypoints: make([]taxonomy.Keypoint, msg.GetKeypointCount()), Quads: taxonomy.QuadsFromProto(msg.GetQuads())}
 	n := len(req.GetBoxes())
@@ -386,6 +389,29 @@ func (s *Service) reportCheckedKeypoints(t *task, req *krillv1.ReportOrientReque
 		t.touch()
 	}
 	return &krillv1.ReportOrientResponse{}, nil
+}
+
+// reportCheckedTrack adds the keypoints tracked for a tracking check to it
+// without saving them.
+func reportCheckedTrack(t *task, req *krillv1.ReportTrackRequest) (*krillv1.ReportTrackResponse, error) {
+	for _, b := range req.GetBoxes() {
+		if !t.frames[b.GetFrameId()] {
+			return nil, rpc.Invalid("frame %d is not part of the task", b.GetFrameId())
+		}
+		kps, err := annotation.ClampKeypoints(b.GetBox().GetKeypoints(), t.tracking.check.pose)
+		if err != nil {
+			return nil, rpc.Invalid("frame %d: %s", b.GetFrameId(), err)
+		}
+		if id, ok := t.tracking.posed[b.GetFrameId()]; ok && kps != nil {
+			t.tracking.check.add(id, kps)
+		}
+	}
+	if req.GetDone() {
+		t.finish(nil)
+	} else {
+		t.touch()
+	}
+	return &krillv1.ReportTrackResponse{}, nil
 }
 
 func (s *Service) FailTask(_ context.Context, req *krillv1.FailTaskRequest) (*krillv1.FailTaskResponse, error) {

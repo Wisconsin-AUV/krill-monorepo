@@ -274,6 +274,8 @@ type Querier interface {
 	ListGoldLabelers(ctx context.Context, recent int32) ([]ListGoldLabelersRow, error)
 	// Boxes a labeler placed keypoints on.
 	ListHandPosedBoxes(ctx context.Context, labelTypeID int64) ([]ListHandPosedBoxesRow, error)
+	// ListHandPosedBoxes by track, in frame order.
+	ListHandPosedTrackBoxes(ctx context.Context, labelTypeID int64) ([]ListHandPosedTrackBoxesRow, error)
 	ListInviteUses(ctx context.Context, inviteIds []int64) ([]ListInviteUsesRow, error)
 	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
 	ListJobClips(ctx context.Context, ids []int64) ([]ListJobClipsRow, error)
@@ -282,13 +284,13 @@ type Querier interface {
 	ListJobStarters(ctx context.Context, ids []uuid.UUID) ([]User, error)
 	// Names for the targets of background jobs in the admin panel.
 	ListJobVideos(ctx context.Context, ids []int64) ([]ListJobVideosRow, error)
-	// Types that could be checked, with how many boxes ListHandPosedBoxes
-	// lists for each.
+	// Types with keypoints, with how many boxes ListHandPosedBoxes lists for
+	// each and how many tracks have two or more of them.
 	ListKeypointCheckTypes(ctx context.Context) ([]ListKeypointCheckTypesRow, error)
 	ListLabelExamples(ctx context.Context) ([]LabelExample, error)
 	ListLabelTypes(ctx context.Context) ([]ListLabelTypesRow, error)
 	ListLargestStorageOrphans(ctx context.Context, arg ListLargestStorageOrphansParams) ([]ListLargestStorageOrphansRow, error)
-	// Each type's running check and its latest finished one.
+	// Each type's running check of each kind and its latest finished one.
 	ListLatestKeypointChecks(ctx context.Context) ([]ListLatestKeypointChecksRow, error)
 	ListLiveClipIDs(ctx context.Context, videoID int64) ([]int64, error)
 	ListModelTrialBoxes(ctx context.Context, trialID int64) ([]ListModelTrialBoxesRow, error)
@@ -343,7 +345,7 @@ type Querier interface {
 	LockLabelTypes(ctx context.Context, ids []int64) ([]LabelType, error)
 	LockLiveClips(ctx context.Context, ids []int64) ([]LockLiveClipsRow, error)
 	LockPrelabelRun(ctx context.Context, id int64) (string, error)
-	LockRunningKeypointCheck(ctx context.Context, labelTypeID int64) (KeypointCheck, error)
+	LockRunningKeypointCheck(ctx context.Context, arg LockRunningKeypointCheckParams) (KeypointCheck, error)
 	LockTrackAnnotation(ctx context.Context, arg LockTrackAnnotationParams) (LockTrackAnnotationRow, error)
 	LockTrashedVideo(ctx context.Context, id int64) (LockTrashedVideoRow, error)
 	// Locking keeps a frame from being marked done while its proposals are

@@ -24,11 +24,14 @@ const OrientQueue = "orient"
 // has none, or with Keypoints, the reference quad to each box of a type with
 // keypoints that has none labeled. With Check too, it fits the quad to boxes
 // posed by hand instead and records how far it lands from their keypoints in
-// the type's running keypoint check, leaving the boxes as they are.
+// the type's running keypoint check, leaving the boxes as they are. With
+// Tracking as well, it tracks tracks posed by hand from their first posed box
+// and scores the rest of them instead.
 type OrientArgs struct {
 	LabelTypeID int64 `json:"label_type_id"`
 	Keypoints   bool  `json:"keypoints,omitempty"`
 	Check       bool  `json:"check,omitempty"`
+	Tracking    bool  `json:"tracking,omitempty"`
 }
 
 func (OrientArgs) Kind() string { return "orient" }

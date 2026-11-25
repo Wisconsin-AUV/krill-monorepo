@@ -107,8 +107,9 @@ type LabelServiceClient interface {
 	// proposals again for a labeler to check.
 	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
 	// CheckKeypoints has a GPU worker fit the reference design's quad to boxes
-	// labelers posed by hand and scores the fit against their keypoints,
-	// leaving the boxes as they are.
+	// labelers posed by hand, or track tracks on from their first box posed by
+	// hand, and scores the keypoints it places against the labelers', leaving
+	// the boxes as they are.
 	CheckKeypoints(context.Context, *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error)
 	// ListKeypointChecks returns each type that can be checked with its latest
 	// check.
@@ -406,8 +407,9 @@ type LabelServiceHandler interface {
 	// proposals again for a labeler to check.
 	FitKeypoints(context.Context, *v1.FitKeypointsRequest) (*v1.FitKeypointsResponse, error)
 	// CheckKeypoints has a GPU worker fit the reference design's quad to boxes
-	// labelers posed by hand and scores the fit against their keypoints,
-	// leaving the boxes as they are.
+	// labelers posed by hand, or track tracks on from their first box posed by
+	// hand, and scores the keypoints it places against the labelers', leaving
+	// the boxes as they are.
 	CheckKeypoints(context.Context, *v1.CheckKeypointsRequest) (*v1.CheckKeypointsResponse, error)
 	// ListKeypointChecks returns each type that can be checked with its latest
 	// check.

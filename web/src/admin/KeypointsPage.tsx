@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/Table'
 import { Text } from '@/components/ui/Text'
 import {
+  KeypointCheckKind,
   KeypointCheckStatus,
   LabelService,
   type KeypointCheck,
@@ -40,15 +41,19 @@ function boxes(n: number) {
 
 function Result({ check }: { check: KeypointCheck }) {
   const compared = check.comparedCount > 0
+  const tracking = check.kind === KeypointCheckKind.TRACKING
   return (
     <>
-      <div className="mt-6 grid gap-8 sm:grid-cols-4">
+      <div className={`mt-6 grid gap-8 sm:grid-cols-4 ${tracking ? 'lg:grid-cols-5' : ''}`}>
         <Stat
-          title="Found"
+          title={tracking ? 'Kept' : 'Found'}
           value={`${Math.round(foundShare(check) * 100)}%`}
           detail={
             <div className="flex items-center gap-3">
-              <Meter label="Boxes found" value={foundShare(check)} />
+              <Meter
+                label={tracking ? 'Boxes tracking kept keypoints on' : 'Boxes found'}
+                value={foundShare(check)}
+              />
               <span className="shrink-0 tabular-nums">
                 {formatNumber(check.foundCount)}/{formatNumber(check.boxCount)}
               </span>
@@ -65,11 +70,26 @@ function Result({ check }: { check: KeypointCheck }) {
           value={compared ? formatPixels(check.p90Error) : '—'}
           detail={`Over ${boxes(check.comparedCount)}`}
         />
-        <Stat
-          title="Turned"
-          value={formatNumber(check.turnedCount)}
-          detail="Fit a quarter or half turn off"
-        />
+        {tracking ? (
+          <>
+            <Stat
+              title="Lost"
+              value={formatNumber(check.missedCount)}
+              detail="Labeled by hand, left unlabeled by tracking"
+            />
+            <Stat
+              title="Extra"
+              value={formatNumber(check.extraCount)}
+              detail="Placed where the labeler left none, as behind a wall"
+            />
+          </>
+        ) : (
+          <Stat
+            title="Turned"
+            value={formatNumber(check.turnedCount)}
+            detail="Fit a quarter or half turn off"
+          />
+        )}
       </div>
       {compared && (
         <div className="mt-8 grid gap-x-10 gap-y-8 lg:grid-cols-2">
@@ -101,6 +121,7 @@ function Result({ check }: { check: KeypointCheck }) {
             <TableHead>
               <TableRow>
                 <TableHeader>Farthest off</TableHeader>
+                {tracking && <TableHeader className="text-right">Frames in</TableHeader>}
                 <TableHeader className="text-right">Error</TableHeader>
               </TableRow>
             </TableHead>
@@ -118,6 +139,11 @@ function Result({ check }: { check: KeypointCheck }) {
                       {b.turned && <Badge color="amber">Turned</Badge>}
                     </div>
                   </TableCell>
+                  {tracking && (
+                    <TableCell className={`text-right tabular-nums ${muted}`}>
+                      {formatNumber(b.framesTracked)}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right tabular-nums">{formatPixels(b.error)}</TableCell>
                 </TableRow>
               ))}
@@ -129,23 +155,39 @@ function Result({ check }: { check: KeypointCheck }) {
   )
 }
 
-function TypeCheck({ type }: { type: KeypointCheckType }) {
+// One kind of check of a type: its latest result and the button that runs
+// another.
+function CheckBlock({
+  type,
+  kind,
+  title,
+  last,
+  running,
+  scope,
+  disabled,
+}: {
+  type: KeypointCheckType
+  kind: KeypointCheckKind
+  title: string
+  last?: KeypointCheck
+  running?: KeypointCheck
+  // What a check covers, or why it can't run.
+  scope: string
+  disabled: boolean
+}) {
   const start = useMutation(LabelService.method.checkKeypoints, {
     onSuccess: () => invalidateService(LabelService),
     onError: (err) => flash.error('Could not start a check', err),
   })
-  const { last, running } = type
   const finished = last?.finishedAt ? timestampDate(last.finishedAt) : null
+  const tracking = kind === KeypointCheckKind.TRACKING
   return (
-    <section className="mt-12">
+    <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Subheading className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full" style={{ backgroundColor: type.color }} />
-            {type.title || type.name}
-          </Subheading>
+          <h3 className="text-sm/6 font-semibold text-zinc-950 dark:text-white">{title}</h3>
           <p className={`text-sm/6 ${muted}`}>
-            {boxes(type.posedBoxCount)} posed by hand
+            {scope}
             {finished && (
               <span title={finished.toLocaleString()}>
                 {' '}
@@ -153,12 +195,19 @@ function TypeCheck({ type }: { type: KeypointCheckType }) {
                 {last?.createdBy && ` by ${last.createdBy.name}`}
               </span>
             )}
+            {last?.status === KeypointCheckStatus.SUCCEEDED && tracking && (
+              <>
+                {' '}
+                · {plural(last.trackCount, 'track', 'tracks')} over{' '}
+                {plural(last.frameCount, 'frame', 'frames')}
+              </>
+            )}
           </p>
         </div>
         <Button
           outline
-          disabled={start.isPending || !!running || type.posedBoxCount === 0}
-          onClick={() => start.mutate({ labelTypeId: type.labelTypeId })}
+          disabled={start.isPending || !!running || disabled}
+          onClick={() => start.mutate({ labelTypeId: type.labelTypeId, kind })}
         >
           <ArrowPathIcon data-slot="icon" className={running ? 'animate-spin' : ''} />
           {running ? `Checking ${boxes(running.boxCount)}` : 'Check'}
@@ -172,8 +221,43 @@ function TypeCheck({ type }: { type: KeypointCheckType }) {
       {last?.status === KeypointCheckStatus.SUCCEEDED ? (
         <Result check={last} />
       ) : (
-        !last && !running && <p className={`mt-4 text-sm/6 ${muted}`}>Not checked yet</p>
+        !last &&
+        !running &&
+        !disabled && <p className={`mt-4 text-sm/6 ${muted}`}>Not checked yet</p>
       )}
+    </div>
+  )
+}
+
+function TypeCheck({ type }: { type: KeypointCheckType }) {
+  return (
+    <section className="mt-12">
+      <Subheading className="flex items-center gap-2">
+        <span className="size-2.5 rounded-full" style={{ backgroundColor: type.color }} />
+        {type.title || type.name}
+      </Subheading>
+      <CheckBlock
+        type={type}
+        kind={KeypointCheckKind.FIT}
+        title="Fit keypoints"
+        last={type.last}
+        running={type.running}
+        scope={
+          type.fittable
+            ? `${boxes(type.posedBoxCount)} posed by hand`
+            : 'Needs a quad covered by a reference design'
+        }
+        disabled={!type.fittable || type.posedBoxCount === 0}
+      />
+      <CheckBlock
+        type={type}
+        kind={KeypointCheckKind.TRACKING}
+        title="Tracking"
+        last={type.lastTracking}
+        running={type.runningTracking}
+        scope={`${plural(type.posedTrackCount, 'track', 'tracks')} posed by hand on two or more boxes`}
+        disabled={type.posedTrackCount === 0}
+      />
     </section>
   )
 }
@@ -189,9 +273,12 @@ export function KeypointsPage() {
       <Heading>Keypoints</Heading>
       {data && (
         <Text className="mt-1 max-w-2xl">
-          How far Fit keypoints lands from keypoints labelers placed by hand. A check fits up to{' '}
-          {formatNumber(data.maxBoxes)} of a type&apos;s posed boxes, picked evenly across its
-          videos, and leaves them as they are.
+          How far Fit keypoints and tracking land from keypoints labelers placed by hand, leaving
+          the boxes as they are. A fit check fits up to {formatNumber(data.maxBoxes)} of a
+          type&apos;s posed boxes, picked evenly across its videos. A tracking check tracks each
+          track from its first posed box through its last without the labeler&apos;s keypoints in
+          between, up to {formatNumber(data.maxTrackedFrames)} frames in all, and scores the posed
+          boxes after the first.
         </Text>
       )}
       {isPending ? (
@@ -205,7 +292,7 @@ export function KeypointsPage() {
           <EmptyState
             icon={ViewfinderCircleIcon}
             title="No types to check"
-            description="Label types show up here once their keypoints include a quad covered by a reference design."
+            description="Label types show up here once they have keypoints."
           />
         </div>
       ) : (

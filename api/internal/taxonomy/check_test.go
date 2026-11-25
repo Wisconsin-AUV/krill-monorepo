@@ -3,6 +3,7 @@ package taxonomy
 import (
 	"context"
 	"os"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -64,8 +65,12 @@ func TestCheckKeypoints(t *testing.T) {
 	clipID := scalar(`INSERT INTO clips (video_id, idx, start_frame, frame_count) VALUES ($1, 0, 0, 1) RETURNING id`, videoID)
 	frameID := scalar(`INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, 0, 0) RETURNING id`, videoID, clipID)
 	trackID := scalar(`INSERT INTO tracks (clip_id, label_type_id) VALUES ($1, $2) RETURNING id`, clipID, sheet)
-	scalar(`INSERT INTO annotations (track_id, frame_id, x, y, width, height, keypoints, source)
-		VALUES ($1, $2, 0.1, 0.1, 0.3, 0.3, '{0.1, 0.1, 2, 0.2, 0.1, 2, 0.2, 0.2, 2, 0.1, 0.2, 2}', 'human') RETURNING id`, trackID, frameID)
+	pose := func(frameID int64) {
+		t.Helper()
+		scalar(`INSERT INTO annotations (track_id, frame_id, x, y, width, height, keypoints, source)
+			VALUES ($1, $2, 0.1, 0.1, 0.3, 0.3, '{0.1, 0.1, 2, 0.2, 0.1, 2, 0.2, 0.2, 2, 0.1, 0.2, 2}', 'human') RETURNING id`, trackID, frameID)
+	}
+	pose(frameID)
 
 	s := NewService(pool, nil, jobs)
 	if _, err := s.CheckKeypoints(ctx, &krillv1.CheckKeypointsRequest{LabelTypeId: unprinted}); connect.CodeOf(err) != connect.CodeFailedPrecondition {
@@ -91,16 +96,19 @@ func TestCheckKeypoints(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		var found *krillv1.KeypointCheckType
 		for _, ct := range list.GetTypes() {
-			if ct.GetLabelTypeId() == unprinted {
-				t.Error("type without a design is listed")
+			if ct.GetLabelTypeId() == unprinted && ct.GetFittable() {
+				t.Error("type without a design is fittable")
 			}
 			if ct.GetLabelTypeId() == sheet {
-				return ct
+				found = ct
 			}
 		}
-		t.Fatal("type with a design isn't listed")
-		return nil
+		if found == nil || !found.GetFittable() {
+			t.Fatalf("type with a design listed as %v, want it fittable", found)
+		}
+		return found
 	}
 	ct := find()
 	if ct.GetPosedBoxCount() != 1 || ct.GetRunning() == nil || ct.GetLast() != nil {
@@ -133,5 +141,53 @@ func TestCheckKeypoints(t *testing.T) {
 	last := find().GetLast()
 	if last.GetMedianError() != 3.5 || len(last.GetKeypoints()) != 1 || last.GetWorst()[0].GetVideoName() != "v" {
 		t.Errorf("finished check = %v, want its result with the worst box's video named", last)
+	}
+
+	tracking := &krillv1.CheckKeypointsRequest{LabelTypeId: sheet, Kind: krillv1.KeypointCheckKind_KEYPOINT_CHECK_KIND_TRACKING}
+	if res, err := s.CheckKeypoints(ctx, tracking); err != nil || res.GetBoxCount() != 0 {
+		t.Errorf("tracking a track posed on one box: %v, %v, want nothing to check", res, err)
+	}
+	pose(scalar(`INSERT INTO frames (video_id, clip_id, idx, phash) VALUES ($1, $2, 5, 0) RETURNING id`, videoID, clipID))
+	if res, err := s.CheckKeypoints(ctx, tracking); err != nil || res.GetBoxCount() != 1 {
+		t.Fatalf("tracking a track posed on two boxes: %v, %v, want its second box scored", res, err)
+	}
+	ct = find()
+	if ct.GetPosedTrackCount() != 1 || ct.GetRunningTracking().GetKind() != krillv1.KeypointCheckKind_KEYPOINT_CHECK_KIND_TRACKING || ct.GetRunning() == nil {
+		t.Errorf("listed %v, want a tracking check running beside the fit check", ct)
+	}
+	if ct.GetRunning().GetKind() != krillv1.KeypointCheckKind_KEYPOINT_CHECK_KIND_FIT {
+		t.Errorf("fit check's kind = %v", ct.GetRunning().GetKind())
+	}
+}
+
+func TestSampleCheckRuns(t *testing.T) {
+	box := func(track int64, idx int32) db.ListHandPosedTrackBoxesRow {
+		return db.ListHandPosedTrackBoxesRow{TrackID: track, FrameIdx: idx}
+	}
+	rows := []db.ListHandPosedTrackBoxesRow{
+		box(1, 0), box(1, 9),
+		box(2, 4),
+		box(3, 0), box(3, 2), box(3, 19),
+		box(4, 10), box(4, 14),
+	}
+	runs := CheckRuns(rows)
+	if len(runs) != 3 || runs[0][0].TrackID != 1 || len(runs[1]) != 3 || runs[2][0].TrackID != 4 {
+		t.Fatalf("runs = %v, want tracks 1, 3, and 4", runs)
+	}
+	frames := func(runs [][]db.ListHandPosedTrackBoxesRow) (out []int) {
+		for _, r := range runs {
+			out = append(out, RunFrames(r))
+		}
+		return out
+	}
+	if got := frames(SampleCheckRuns(runs, 35)); !slices.Equal(got, []int{10, 20, 5}) {
+		t.Errorf("35 frames: %v, want every run", got)
+	}
+	// Two runs spread evenly over three are the first two, which don't fit.
+	if got := frames(SampleCheckRuns(runs, 20)); !slices.Equal(got, []int{10}) {
+		t.Errorf("20 frames: %v, want the first run", got)
+	}
+	if got := SampleCheckRuns(runs, 4); got != nil {
+		t.Errorf("4 frames: %v, want none", got)
 	}
 }

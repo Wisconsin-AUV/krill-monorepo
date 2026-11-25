@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows
 
 - Number keys 1 to 9 pick which keypoint the next click places while a box with keypoints is selected, so a corner hidden behind a crate's wall can be skipped without the next click landing on it.
 - Once two of a quad's corners are placed, a click places the unplaced corner nearest it, so a sheet's corners left by tracking or Fit keypoints can be filled in without picking which one first. The name by the cursor follows it. A keypoint picked with a number key, W or Q, or by clicking its mark still takes the next click wherever it lands.
+- The admin panel's Keypoints page checks tracking too. A tracking check follows each track that has keypoints placed by hand on two or more boxes from the first of them, without the labeler's keypoints in between, and scores its later ones: how many tracking kept keypoints on, the median and 90th percentile error for each keypoint, keypoints it lost or placed where the labeler left none, and how many frames in the boxes farthest off were. Types without a reference design are listed for tracking checks.
 
 ### Changed
 

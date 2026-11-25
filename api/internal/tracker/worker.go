@@ -89,7 +89,6 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 	}
 	msg := &krillv1.TrackTask{
 		Id:            id,
-		Frames:        make([]*krillv1.TaskFrame, len(frames)),
 		Oriented:      lt.Oriented,
 		KeypointCount: int32(pose.Count()), //nolint:gosec // keypoints per type are capped
 		Quads:         pose.QuadsProto(),
@@ -117,21 +116,12 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 			}
 		}
 	}
-	for i, f := range frames {
-		url, err := w.store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
-		if err != nil {
-			return err
-		}
-		msg.Frames[i] = &krillv1.TaskFrame{Id: f.ID, Url: url}
-		// The prompt frame's keypoints come with the prompt.
-		if i > 0 {
-			msg.Frames[i].Keypoints = annotation.Keypoints(annotation.PadKeypoints(labeled[f.ID], pose.Count()))
-		}
-		if msg.EmbeddingModel != "" {
-			if msg.Frames[i].EmbeddingUrl, err = w.store.PresignGetInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry); err != nil {
-				return err
-			}
-		}
+	if msg.Frames, err = taskFrames(ctx, w.store, clip, frames); err != nil {
+		return err
+	}
+	// The prompt frame's keypoints come with the prompt.
+	for i := 1; i < len(frames); i++ {
+		msg.Frames[i].Keypoints = annotation.Keypoints(annotation.PadKeypoints(labeled[frames[i].ID], pose.Count()))
 	}
 	switch {
 	case args.Point != nil:
@@ -152,6 +142,25 @@ func (w *Worker) track(ctx context.Context, id, jobID int64, args annotation.Tra
 	t := newTask(id, args.TrackID, msg)
 	t.jobID = jobID
 	return run(ctx, w.dispatcher, t, pickupTimeout)
+}
+
+// taskFrames presigns frames of clip for the worker, with their embeddings
+// when the clip has them.
+func taskFrames(ctx context.Context, store *storage.Store, clip db.Clip, frames []db.Frame) ([]*krillv1.TaskFrame, error) {
+	out := make([]*krillv1.TaskFrame, len(frames))
+	for i, f := range frames {
+		url, err := store.PresignGetInternal(ctx, storage.FrameKey(clip.VideoID, f.Idx), frameURLExpiry)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = &krillv1.TaskFrame{Id: f.ID, Url: url}
+		if clip.EmbeddedAt.Valid {
+			if out[i].EmbeddingUrl, err = store.PresignGetInternal(ctx, storage.EmbeddingKey(clip.VideoID, f.Idx), frameURLExpiry); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return out, nil
 }
 
 // referenceURL presigns the label type's reference design, or returns "" when
