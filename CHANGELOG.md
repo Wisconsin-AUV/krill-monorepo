@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Number keys 1 to 9 pick which keypoint the next click places while a box with keypoints is selected, so a corner hidden behind a crate's wall can be skipped without the next click landing on it.
+
 ### Fixed
 
 - Tracked keypoints on a crate's rim no longer sink into the crate as the camera closes in on it at an angle. Rim corners on the far side are put back on the crate's outline every frame, while the corner between the near walls stays off it.
