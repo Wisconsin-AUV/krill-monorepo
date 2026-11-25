@@ -108,6 +108,19 @@ SHEET_MAX = 0.8
 # along a wall, doesn't stretch its hull, which would then reach over paper
 # in shadow, and shadow reads as ink.
 AREA_OPEN = 0.08
+# How far an edge of the paper that shows is pushed out behind a crate's
+# wall, as shares of the sheet's side, looking for the paper the wall hides.
+CUT_STEPS = (0.05, 0.1, 0.15, 0.2, 0.3, 0.4)
+# How much better the design must match with an edge pushed out for that edge
+# to be the wall's rather than the sheet's. Pushing out a sheet's own edge
+# gains up to 0.11, where the ink runs to the paper's edge, and an edge a
+# wall cuts 0.11 to 0.32.
+CUT_GAIN = 0.12
+# Under this score a print's fit is too loose, as on a blurred frame, to tell
+# a wall's edge from noise.
+CUT_SCORE = 0.55
+# Which way each edge of the unit square, from corner k to the next, faces.
+OUTWARD = np.array([[0, -1], [1, 0], [0, 1], [-1, 0]], np.float64)
 
 
 @dataclass(frozen=True)
@@ -350,8 +363,8 @@ def find_print(
     design: Design,
     guess: Points | None,
     segment: Segment | None = None,
-) -> tuple[Points, Gray] | None:
-    """The print's corners in design order and the paper that shows, or None.
+) -> tuple[Points, list[int]] | None:
+    """The print's corners in design order and whether each shows, or None.
 
     guess, where the print was tracked to, is pulled toward a fresh find from
     the sheet's outline, or replaced by it when that matches clearly better,
@@ -370,7 +383,7 @@ def find_print(
         corners, s, margin = turned(img, quad(outline), design, area)
         if s < MIN_FOUND_SCORE or margin < MIN_TURN_MARGIN or clipped(corners, sheet.shape):
             return None
-        return corners, sheet
+        return corners, print_visibility(corners, sheet, cut_edges(img, corners, design, area))
     best, best_score = guess, score(img, guess, design, area)
     # A print can't turn a quarter between frames, so the fresh find starts
     # from the corner nearest the tracked print's first.
@@ -387,7 +400,7 @@ def find_print(
             best_score = score(img, best, design, area)
     if best_score < MIN_SCORE:
         return None
-    return best, sheet
+    return best, print_visibility(best, sheet, cut_edges(img, best, design, area))
 
 
 def nearest_turn(q: Points, to: Points) -> Points:
@@ -410,15 +423,51 @@ def clipped(corners: Points, shape: tuple[int, ...]) -> bool:
     return bool(on_edge.any()) or np.sqrt(abs(cv2.contourArea(corners))) < MIN_SIDE
 
 
-def print_visibility(corners: Points, paper: Gray) -> list[int]:
-    """Visible for corners with paper just inside them, hidden for the rest."""
+def cut_edges(img: Gray, corners: Points, design: Design, area: Gray) -> list[bool]:
+    """Which of the quad's edges, edge k running from corner k to the next,
+    are where a crate's wall cuts the sheet off rather than the sheet's own.
+
+    The paper that shows ends at the top of the wall, so a quad around it is
+    short on that side and squeezes the design. Pushing the edge out behind
+    the wall, in the sheet's own plane, lines the design up with the ink
+    again, and the paper it takes in doesn't count since it doesn't show.
+    Blank margin has nothing to line up though, so a wall that hides only
+    margin isn't found, and the corners stay where the paper disappears, a
+    few pixels from the sheet's own.
+    """
+    cut = [False] * 4
+    base = score(img, corners, design, area)
+    if base < CUT_SCORE:
+        return cut
+    to_frame = np.asarray(cv2.getPerspectiveTransform(UNIT_SQUARE, corners), np.float64)
+    best, edge = base, None
+    # Only one edge: with one pushed far out, pushing out another to square
+    # the quad up again also gains, though that edge is the sheet's.
+    for e in range(4):
+        for t in CUT_STEPS:
+            moved = UNIT_SQUARE.astype(np.float64)
+            moved[[e, (e + 1) % 4]] += t * OUTWARD[e]
+            s = score(img, transform(to_frame, moved), design, area)
+            if s > best:
+                best, edge = s, e
+    if edge is not None and best >= base + CUT_GAIN:
+        cut[edge] = True
+    return cut
+
+
+def print_visibility(
+    corners: Points, paper: Gray, cut: Sequence[bool] = (False, False, False, False)
+) -> list[int]:
+    """Visible for corners with paper just inside them, hidden for the rest
+    and for both ends of an edge a crate's wall cuts off."""
     h, w = paper.shape
     center = corners.mean(axis=0)
     out: list[int] = []
-    for p in corners:
+    for i, p in enumerate(corners):
         x, y = (p + (center - p) * INSET).round().astype(int)
         inside = 0 <= p[0] < w and 0 <= p[1] < h and 0 <= x < w and 0 <= y < h
-        out.append(VISIBLE if inside and paper[y, x] > 0 else HIDDEN)
+        seen = inside and paper[y, x] > 0 and not (cut[i] or cut[i - 1])
+        out.append(VISIBLE if seen else HIDDEN)
     return out
 
 
@@ -560,6 +609,18 @@ def place_centers(points: Keypoints, schema: Schema) -> None:
             points[q.center] = (c[0], c[1], HIDDEN if (v == HIDDEN).all() else VISIBLE)
 
 
+def shown(points: Keypoints, schema: Schema) -> Keypoints:
+    """points as labelers place them, who leave a printed sheet's corners
+    unlabeled where they don't show rather than guess where they are."""
+    out = points.copy()
+    ref = schema.reference
+    if ref is not None:
+        idx = list(ref.corners)
+        out[idx, 2] = np.where(out[idx, 2] == HIDDEN, UNLABELED, out[idx, 2])
+        place_centers(out, schema)
+    return out
+
+
 def fill_quad(
     rgb: Frame, mask: Mask, design: Design | None, segment: Segment | None = None
 ) -> tuple[Points, list[int]] | None:
@@ -579,8 +640,10 @@ def fill_quad(
             outline = largest(contours)
             if outline is not None:
                 area = print_area(bright)
-                corners, _, _ = turned(ink_on(rgb, bright, area), quad(outline), design, area)
-                return corners, print_visibility(corners, sheet)
+                img = ink_on(rgb, bright, area)
+                corners, _, _ = turned(img, quad(outline), design, area)
+                cut = cut_edges(img, corners, design, area)
+                return corners, print_visibility(corners, sheet, cut)
     contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     outline = largest(contours)
     if outline is None:
@@ -613,6 +676,9 @@ class KeypointTracker:
     far enough above its print to shift against it as the camera moves, but
     ones flow loses, or that were only labeled on earlier frames, are put back
     from where they sat on the print.
+
+    A print's corners behind a crate's wall are kept, hidden, to carry the
+    print on, but reported unlabeled.
     """
 
     def __init__(
@@ -687,7 +753,7 @@ class KeypointTracker:
         if mask is None or not mask.any():
             self.prev = None
             self.points[:, 2] = UNLABELED
-            return self.points.copy()
+            return self.shown()
         self._lose_strays(mask)
         self._lose_folded(before)
         ref = self.schema.reference
@@ -705,7 +771,10 @@ class KeypointTracker:
         self._out_of_frame(gray.shape)
         place_centers(self.points, self.schema)
         self.prev = (gray, mask)
-        return self.points.copy()
+        return self.shown()
+
+    def shown(self) -> Keypoints:
+        return shown(self.points, self.schema)
 
     def _find_print(
         self, rgb: Frame, gray: Gray, mask: Mask, q: Quad, segment: Segment | None
@@ -719,8 +788,8 @@ class KeypointTracker:
             # A tracked print stays where the motion took it, which is how
             # prints mostly hidden by the crate stay labeled.
             return
-        corners, paper = found
-        for i, c, v in zip(idx, corners, print_visibility(corners, paper), strict=True):
+        corners, visibility = found
+        for i, c, v in zip(idx, corners, visibility, strict=True):
             self.points[i] = (c[0], c[1], v)
             self.given[i] = VISIBLE
 

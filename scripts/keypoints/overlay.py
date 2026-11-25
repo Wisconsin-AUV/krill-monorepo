@@ -565,7 +565,7 @@ def track(
                 for b in labels.boxes.get((vid, idx), []):
                     if b.track_id == start.track_id and b.source == "human" and b.keypoints:
                         tracker.anchor(points(b.keypoints, labels.schema.count, image.shape))
-                        pts = tracker.points.copy()
+                        pts = tracker.shown()
             out[(start.track_id, vid, idx)] = (mask, pts)
     return out
 
